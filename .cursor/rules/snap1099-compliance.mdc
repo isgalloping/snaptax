@@ -1,0 +1,27 @@
+---
+description: Snap1099 欧盟/美国隐私合规 — 法律文案、Privacy UI、Delete Account
+globs: docs/legal/**/*,components/legal/**/*,components/settings/PrivacyDataSection.tsx,app/privacy/**/*,app/terms/**/*
+alwaysApply: false
+---
+
+# Snap1099 合规规范
+
+**Spec:** `docs/product/PRODUCT-SPEC.md` §2.3（v1.2 为准）  
+**Legal:** `docs/legal/privacy.md` · `docs/prd/privacy.updated.md` §4
+
+## 数据（v1.2）
+
+- **离线：** 仅 IndexedDB，不调 OpenAI
+- **联网（含 Ghost）：** 调用 API → **OpenAI**；数据存 **美国**（Blob + Postgres，`ghost_id`）
+- **MVP：** 美国单区域；用户知情（脚注 + Privacy §4 + Settings Data storage）
+- **登录后：** Ghost 小票关联 `user_id`；仍在美国基础设施
+
+## UI
+
+- 脚注含 **US processing** 告知
+- Settings：`Processed and stored in the United States...`
+- 同步 `lib/legal/content.ts` 与 `docs/legal/`
+
+## 禁止
+
+居中 Modal · Cookie 墙 · 登录前禁止联网 AI（已废止）

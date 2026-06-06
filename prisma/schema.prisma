@@ -1,0 +1,94 @@
+// Snap1099 — PostgreSQL schema
+// Spec: docs/superpowers/specs/2026-06-05-db-product-alignment-design.md
+// DDL: db/init-table.sql
+// Column comments: db/init-table.sql COMMENT ON (Prisma 6 不支持 schema @comment)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// OAuth 登录用户（多通道预留，MVP 仅 google）
+model SnaptaxUser {
+  id                 String   @id @default(uuid()) @db.Uuid
+  userId             String   @map("user_id") @db.VarChar(255)
+  userName           String?  @map("user_name") @db.VarChar(255)
+  userEmail          String   @map("user_email") @db.VarChar(255)
+  industry           String?  @db.VarChar(128)
+  authChannel        String   @map("auth_channel") @db.VarChar(128)
+  dataRegion         String   @default("us") @map("data_region") @db.VarChar(8)
+  dataRegionLockedAt DateTime @default(now()) @map("data_region_locked_at") @db.Timestamptz(3)
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  ghostAccount       SnaptaxGhostAccount?
+  receipts           SnaptaxReceipt[]
+  seasonEntitlements SnaptaxSeasonEntitlement[]
+
+  @@unique([authChannel, userId], map: "snaptax_users_auth_channel_user_id_key")
+  @@index([userEmail], map: "snaptax_users_user_email_idx")
+  @@map("snaptax_users")
+}
+
+/// Ghost 与正式用户的一对一绑定（仅 Google 登录后 INSERT）
+model SnaptaxGhostAccount {
+  id        String   @id @default(uuid()) @db.Uuid
+  ghostId   String   @unique @map("ghost_id") @db.VarChar(255)
+  userId    String   @unique @map("user_id") @db.Uuid
+  boundAt   DateTime @default(now()) @map("bound_at") @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  user SnaptaxUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("snaptax_ghost_account")
+}
+
+/// 小票元数据（image_url = Vercel Blob pathname）
+model SnaptaxReceipt {
+  id           String    @id @default(uuid()) @db.Uuid
+  userId       String?   @map("user_id") @db.Uuid
+  ghostId      String?   @map("ghost_id") @db.VarChar(255)
+  imageUrl     String    @map("image_url") @db.VarChar(2048)
+  status       String    @default("processing") @db.VarChar(32)
+  amount       Decimal?  @db.Decimal(10, 2)
+  currency     String?   @db.VarChar(32)
+  merchantName String?   @map("merchant_name") @db.VarChar(255)
+  category     String?   @db.VarChar(128)
+  deductible   Boolean   @default(true)
+  aiRaw        Json?     @map("ai_raw")
+  capturedAt   DateTime  @map("captured_at") @db.Timestamptz(3)
+  snapAt       DateTime? @map("snap_at") @db.Timestamptz(3)
+  processedAt  DateTime? @map("processed_at") @db.Timestamptz(3)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  user SnaptaxUser? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, capturedAt(sort: Desc)], map: "snaptax_receipts_user_captured_idx")
+  @@index([ghostId, capturedAt(sort: Desc)], map: "snaptax_receipts_ghost_captured_idx")
+  @@index([userId, snapAt(sort: Desc)], map: "snaptax_receipts_user_snap_idx")
+  @@map("snaptax_receipts")
+}
+
+/// 报税季付费权益（每用户每季一条）
+model SnaptaxSeasonEntitlement {
+  id            String   @id @default(uuid()) @db.Uuid
+  userId        String   @map("user_id") @db.Uuid
+  taxSeason     String   @map("tax_season") @db.VarChar(255)
+  transactionId String   @unique @map("transaction_id") @db.VarChar(128)
+  paidAt        DateTime @map("paid_at") @db.Timestamptz(3)
+  amount        Decimal  @db.Decimal(10, 2)
+  channelCode   String   @map("channel_code") @db.VarChar(64)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  user SnaptaxUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, taxSeason], map: "snaptax_season_entitlements_user_season_key")
+  @@map("snaptax_season_entitlements")
+}

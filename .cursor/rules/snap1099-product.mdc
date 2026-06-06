@@ -1,0 +1,40 @@
+---
+description: Snap1099 产品铁律与登录/付费门控 — 功能与 PRD 相关改动时必读
+alwaysApply: true
+---
+
+# Snap1099 产品铁律
+
+完整规范：`docs/product/PRODUCT-SPEC.md` · PRD：`docs/prd/0.0.1.md`
+
+## 核心约束
+
+- **用户：** 北美 1099 蓝领；**哲学：** 前台傻瓜、后台聪明
+- **2 逻辑页：** 主界面 + 设置/导出；主界面单屏三段式，**核心拍照零 Modal**
+- **视觉：** 黑 `#000000` / 白 `#FFFFFF` / 黄 `#EAB308`；热区 ≥64px，核心 >96px；`active:scale-95`
+- **离线：** PWA 须离线可开主界面；离线可拍照；IndexedDB 队列
+
+## 账户
+
+- 启动：**Ghost** 零阻断（无登录表单）
+- 凭证：**仅 Google**（禁止手机号注册）
+- 绑定：Google 登录后 **静默** Ghost↔Google，数据无感
+
+## 门控
+
+| 类型 | 触发 | 可跳过 |
+|------|------|--------|
+| 软引导 | 第3张票 或 首次进设置 | 是（仅一次「稍后再说」） |
+| 硬拦截 | Export / View on All Devices | 否 |
+
+## 付费
+
+- **Paddle Overlay** $49/报税季；本季 **Export Again** 无限次
+- Paywall 必含换机警告；已付费不重复弹 Paywall
+
+## 禁止
+
+- 核心流程 Modal；手机号注册；Paywall 用原生 Apple/Google Pay 按钮代替 Paddle
+- 未提醒换机需 Google 登录的数据「云同步」承诺
+
+改 UI/功能前对照 `docs/product/PRODUCT-SPEC.md` §11 实现状态。

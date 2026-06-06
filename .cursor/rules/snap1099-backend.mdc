@@ -1,0 +1,38 @@
+---
+description: Snap1099 后端与 Vercel 集成 — 编写 API、数据库、Webhook 时遵循 docs/tech
+globs: app/api/**/*,lib/server/**/*,lib/prisma.ts,lib/time/**/*,prisma/**/*
+alwaysApply: false
+---
+
+# Snap1099 后端规范
+
+**Tech docs:** `docs/tech/README.md` · **API:** `docs/tech/03-api.md`  
+**数据库规范:** `docs/tech/DB-DESIGN-SPEC.md` · **表结构:** `docs/tech/04-data-model.md`
+
+## Stack
+
+- Route Handlers in `app/api/`
+- **PostgreSQL**（Vercel Postgres / Neon）+ **Prisma** (`lib/prisma.ts`)
+- Vercel Blob for receipt images（库内 `image_url`）
+- OpenAI gpt-4o Vision · Paddle Webhook · Google JWT verify
+
+## Conventions
+
+- 数据访问仅通过 `prisma` 单例；模型 `SnaptaxUser` / `SnaptaxGhostAccount` / `SnaptaxReceipt` / `SnaptaxSeasonEntitlement`
+- Schema 变更：先对齐 `db/init-table.sql` 与 `DB-DESIGN-SPEC.md`，再 `prisma migrate dev` → 提交 `prisma/migrations/`
+- Auth: session cookie OR `X-Ghost-Id` header（varchar ghost_id）
+- Errors: `{ error: { code, message } }` — see 03-api.md
+- Webhook: verify signatures; idempotent on `transaction_id`
+- Never expose secrets client-side
+- **时间 UTC：** 入库/API 一律 UTC instant；JSON 用 ISO 8601 `…Z`；复用 **`lib/time/utc.ts`**（服务端可 import 同模块）
+- Receipt 上传：`captured_at = utcNow()`；`snap_at` 来自客户端 ISO **须含时区**（客户端应用 `toUtcISOString`）
+
+## Key flows
+
+- Ghost bind: `POST /api/auth/google` → upsert `snaptax_users` + insert `snaptax_ghost_account` + migrate receipts
+- Receipt: upload → Blob → OpenAI → `snaptax_receipts.status`
+- Export: `snaptax_season_entitlements` 本季权益 → ExcelJS → share
+
+## 数据库
+
+改表/索引/注释时同时加载 rule：`snap1099-database.mdc`

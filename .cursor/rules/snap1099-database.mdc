@@ -1,0 +1,49 @@
+---
+description: Snap1099 PostgreSQL 数据库设计 — 改表、DDL、Prisma、索引、注释时遵循
+globs: db/**/*,prisma/**/*,lib/prisma.ts,lib/server/**/*,lib/time/**/*
+alwaysApply: false
+---
+
+# Snap1099 数据库规范
+
+**Canonical：** `docs/tech/DB-DESIGN-SPEC.md`  
+**表明细：** `docs/tech/04-data-model.md` · **DDL：** `db/init-table.sql` · **Prisma：** `prisma/schema.prisma`
+
+## 铁律
+
+- 引擎 **PostgreSQL**；表名 **`snaptax_` 前缀** + snake_case 列名
+- 子表 FK 一律 → **`snaptax_users.id`**（UUID）；OAuth 外部 ID 在 `user_id` + `auth_channel`
+- **`ghost_id` 全表 `varchar(255)`**；Ghost↔User 一对一
+- 枚举 **E3**：库内无 ENUM/CHECK；应用层 Zod/常量校验 + `COMMENT ON` 文档化
+- 数据访问仅 **`prisma` 单例**；Route Handler 不裸写 SQL
+- **时间 UTC 铁律**（见下）
+
+## 时间 · UTC（库 + 应用）
+
+| 层 | 规则 |
+|----|------|
+| PostgreSQL | 全时间列 **`TIMESTAMPTZ(3)`**；库内 UTC |
+| Prisma | `DateTime` + **`@db.Timestamptz(3)`** |
+| 服务端写入 | `captured_at` / `snap_at` / `processed_at` 等用 **`Date` UTC  instant** 或解析客户端 **`…Z` ISO 字符串** |
+| API JSON | ISO 8601 **带 `Z` 或 offset**，如 `2026-06-05T11:30:00.000Z`（见 `03-api.md`） |
+| 客户端持久化 | **`lib/time/utc.ts`**：`utcNow()` · `toUtcISOString()` · `parseUtcISOString()` |
+| IndexedDB | 时间字段存 **UTC ISO 字符串**（`receiptDb` 已封装） |
+| UI 展示 | **仅** `formatReceiptTime` 等 formatter 转用户 **本地** 时区；禁止把本地字符串写入 DB/API |
+
+**禁止：** 无时区 `TIMESTAMP(3)` 新列 · API 返回 `YYYY-MM-DD HH:mm:ss` 无后缀 · 业务代码裸 `new Date()` 写库（用 `utcNow()`） · 把 `toLocaleString` 结果当持久化值
+
+## 改表检查清单
+
+- [ ] 同步 `db/init-table.sql` + `prisma/schema.prisma` + `04-data-model.md`
+- [ ] 新索引对应真实 API 查询；Webhook 幂等键保持 UNIQUE
+- [ ] `COMMENT ON` 中文注释 + Prisma `@comment`
+- [ ] 金额 `NUMERIC(10,2)`；时间 **`TIMESTAMPTZ(3)`**；审计列 `created_at`/`updated_at`
+- [ ] `prisma migrate dev` 生成 migration 并提交
+
+## Prisma 模型
+
+`SnaptaxUser` · `SnaptaxGhostAccount` · `SnaptaxReceipt` · `SnaptaxSeasonEntitlement`
+
+## 禁止
+
+- 无 `snaptax_` 前缀新表 · `ghost_id` 用 UUID 类型 · 子表存 `auth_channel` 代替 user FK · 仅改 Prisma 不改 DDL

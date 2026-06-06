@@ -1,0 +1,39 @@
+---
+description: Snap1099 UI 组件规范 — 配色、热区、小票三态、底部面板
+globs: components/**/*.tsx,app/**/*.tsx,lib/format.ts,lib/storage/**/*
+alwaysApply: false
+---
+
+# Snap1099 UI 规范
+
+## 组件模式
+
+- 底部滑出面板：登录 / Paywall / 注册引导 / **Terms·Privacy·Delete Account**（非居中 Modal）
+- 返回：`[ < BACK ]` 左上角，min 64×64px
+- 列表卡片：左金额/状态 + 右分类标签；Processing 用黄色左边框
+
+## 小票三态（勿增第四种 unless PRD 更新）
+
+1. `Processing...` + `Uploading`（黄）
+2. 金额 + 商户 + 白底黑字标签（如 `TRUCK GAS`）
+3. `Receipt blurry. Tap to resnap`（红，整行可点重拍）
+
+## 文案（保持英文 UI 字符串）
+
+- 快门：`SNAP RECEIPT`
+- 合规脚注：`By snapping... Terms & Privacy Policy. Online processing stores data in the United States.`
+- 设置 Data storage：`Processed and stored in the United States...`
+- 在线：`Ready / Online` · 离线：`Offline · Queued`
+- Google：`Continue with Google`
+- 导出：`EXPORT IRS TAX PACK` / 已付费：`Export Again`
+- 支付：`Pay $49 with Paddle`
+
+## 时间展示
+
+- 持久化/API：**UTC** — 使用 `lib/time/utc.ts`（`utcNow` / `toUtcISOString`），禁止裸 `new Date()` 写入 IndexedDB
+- 列表/卡片展示：`formatReceiptTime` 转**用户本地**时区（Today / Yesterday / 本地 clock）
+
+## 参考
+
+- 视觉：`docs/ui/ui.html`
+- 交互：`docs/prd/0.0.1.md` §2.2

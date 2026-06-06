@@ -59,6 +59,8 @@ CREATE TABLE snaptax_receipts (
   merchant_name VARCHAR(255),
   category      VARCHAR(128),
   deductible    BOOLEAN NOT NULL DEFAULT TRUE,
+  tax_amount    NUMERIC(10, 2) NOT NULL DEFAULT 0,
+  data_region   VARCHAR(8) NOT NULL DEFAULT 'us',
   ai_raw        JSONB,
   captured_at   TIMESTAMPTZ(3) NOT NULL,
   snap_at       TIMESTAMPTZ(3),
@@ -155,6 +157,8 @@ COMMENT ON COLUMN snaptax_receipts.currency IS '币种（如 USD）';
 COMMENT ON COLUMN snaptax_receipts.merchant_name IS '商户名称，AI 识别结果';
 COMMENT ON COLUMN snaptax_receipts.category IS '费用类别；应用层枚举：TRUCK GAS, TOOLS, SUPPLIES, EQUIPMENT, MATERIALS, PERSONAL, OTHER';
 COMMENT ON COLUMN snaptax_receipts.deductible IS '是否可抵扣，默认 true';
+COMMENT ON COLUMN snaptax_receipts.tax_amount IS '估算省税（US/EU 语义不同）；仅 OpenAI Vision 路径写入';
+COMMENT ON COLUMN snaptax_receipts.data_region IS '税法辖区快照 us|eu；与物理驻留解耦';
 COMMENT ON COLUMN snaptax_receipts.ai_raw IS 'OpenAI Vision 原始 JSON 响应';
 COMMENT ON COLUMN snaptax_receipts.captured_at IS '上传/入库时间（TIMESTAMPTZ UTC）';
 COMMENT ON COLUMN snaptax_receipts.snap_at IS '拍照时间，可与 captured_at 不同（离线延迟上传）；TIMESTAMPTZ UTC';

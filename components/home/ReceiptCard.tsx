@@ -36,7 +36,7 @@ export function ReceiptCard({ receipt, onResnap }: ReceiptCardProps) {
           <p className="text-lg font-extrabold text-red-500">
             Receipt blurry. Tap to resnap
           </p>
-          <p className="mt-0.5 text-xs text-zinc-400">照片太糊，点击重拍</p>
+          <p className="mt-0.5 text-xs text-zinc-400">Tap to resnap</p>
         </div>
       </button>
     );

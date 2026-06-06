@@ -134,7 +134,7 @@ Privacy Policy · Terms · **Data storage（美国）** · legal@snap1099.com ·
 
 ### 4.4 登录后
 
-Google 成功 → 绑定 Ghost → **关联/迁移** 已有 `ghost_id` 小票至 `user_id`（含此前在美国云端的数据）
+Google 成功 → 绑定 Ghost → 迁移小票 → **若登录锁定区 ≠ Ghost 语言候选区** 则 OpenAI 重算，否则跳过重算
 
 ---
 
@@ -148,6 +148,23 @@ Google 成功 → 绑定 Ghost → **关联/迁移** 已有 `ghost_id` 小票至
 
 - **离线：** 保持 A，入队；**联网后** 上传并调 OpenAI → B/C  
 - **在线 Ghost：** 拍完即走 API 流水线，不 mock  
+
+### 5.1 Est. Tax Saved（分区域省税估算）
+
+> **Canonical：** [2026-06-07-tax-savings-regional-design.md](../superpowers/specs/2026-06-07-tax-savings-regional-design.md)
+
+| 项 | 规则 |
+|----|------|
+| 顶栏数字 | **`SUM(tax_amount)`**（`status=done`）；禁止客户端硬编码 `×0.25` |
+| **US** | \(\sum(\text{amount} \times \text{deduction\_ratio}) \times 25\%\)；科目比例由 OpenAI + IRS 兜底表 |
+| **EU** | 可抵扣商业小票：**`tax_amount = vat_amount`**（进项 VAT） |
+| **OpenAI** | **所有** `tax_amount` 变更须经 **Vision 读图** → Zod → 服务端公式；禁止无 Vision 重算 |
+| **登录后** | 锁定 `users.data_region`；**与 Ghost 语言候选区一致 → 不重算**；不一致 → OpenAI 重算历史小票（`taxRecalcQueued`） |
+| 区域 R1 | Ghost：`Accept-Language` → `snap1099_region_candidate` → Header **`X-Tax-Region`** |
+| 存储 | `snaptax_receipts.tax_amount` + **`data_region` 冗余**；细节进 `ai_raw` |
+|  disclaimer | **Est.** — 非税务建议（Terms） |
+
+**说明：** `data_region` = 税法计算辖区；MVP 云端物理驻留仍 **美国单库**（§2.3）。
 
 ---
 
@@ -171,7 +188,7 @@ Google 成功 → 绑定 Ghost → **关联/迁移** 已有 `ghost_id` 小票至
 |----|------|
 | `snaptax_users` | OAuth 用户；MVP 可保留 `data_region=us` 或暂省略分域 |
 | `snaptax_ghost_account` | Ghost ↔ User 一对一 |
-| `snaptax_receipts` | 小票；**未登录** 挂 `ghost_id`；**联网** 写美国 Blob + PG |
+| `snaptax_receipts` | 小票；**未登录** 挂 `ghost_id`；含 **`tax_amount`**、**`data_region`** |
 | `snaptax_season_entitlements` | Paddle 报税季权益 |
 
 **MVP 约束：** 单区域美国部署；Ghost 小票 API 须 **HMAC Ghost token**（见 §2.5）。
@@ -202,12 +219,15 @@ Next.js 16 · React 19 · Tailwind 4 · Serwist · **PostgreSQL（美国）** ·
 |------|---------------|------|
 | 主界面 + 拍照 + 三态 | ✅ | ✅（AI 仍为 client mock，待接 API） |
 | 未登录 **联网 OpenAI** | ✅ | ❌ |
-| 美国存储 + 知情 UI | ✅ | ✅（脚注 + Settings Data storage） |
-| Privacy §4 国际传输 | ✅ | ✅（`lib/legal/content.ts` + `/privacy`） |
-| Google + Ghost 绑定 | ✅ | ❌（仍为手机号 Register UI） |
-| Paddle | ✅ | ❌ |
+| 美国存储 + 知情 UI | ✅ | ✅ |
+| Google 软/硬引导 UI | ✅ | ✅（mock GIS；待真实 OAuth） |
+| 设置页账户区 + 多端 + Paywall UI | ✅ | ✅（Paddle mock） |
+| Privacy §4 国际传输 | ✅ | ✅ |
+| Google + Ghost 绑定（后端） | ✅ | ❌ |
+| Paddle（后端 Webhook） | ✅ | ❌ |
 | Ghost 小票 API（美国） | ✅ | ❌ |
 | DB DDL + Prisma + UTC | ✅ | ✅ |
+| 分区域省税 US/EU + R1 | ✅ | ❌（代码仍 ×0.25 mock） |
 
 ---
 
@@ -221,6 +241,8 @@ Next.js 16 · React 19 · Tailwind 4 · Serwist · **PostgreSQL（美国）** ·
 - [ ] Google 登录后是否迁移 Ghost 数据？  
 - [ ] Ghost 是否用 **HMAC token**，而非裸 `X-Ghost-Id`？  
 - [ ] OpenAI / Blob 是否 **仅服务端**、Blob 是否私有？  
+- [ ] 顶栏是否 **SUM(tax_amount)**，且 **仅 OpenAI Vision 路径** 更新 `tax_amount`？  
+- [ ] Google 登录后 **仅 region 不一致** 时是否排队 OpenAI 重算？  
 
 ---
 
@@ -234,5 +256,8 @@ Next.js 16 · React 19 · Tailwind 4 · Serwist · **PostgreSQL（美国）** ·
 | [specs/2026-06-05-compliance-privacy-design.md](../superpowers/specs/2026-06-05-compliance-privacy-design.md) | 合规 ADR（v1.2 以本文为准覆盖分区域 MVP） |
 | [specs/2026-06-05-api-security-design.md](../superpowers/specs/2026-06-05-api-security-design.md) | API 安全 ADR（Ghost HMAC、OpenAI、IDOR、限流） |
 | [specs/2026-06-06-product-tech-code-consistency-audit.md](../superpowers/specs/2026-06-06-product-tech-code-consistency-audit.md) | 产品/技术/代码一致性审计 |
+| [specs/2026-06-07-tax-savings-regional-design.md](../superpowers/specs/2026-06-07-tax-savings-regional-design.md) | 分区域省税 US/EU + R1 |
+| [specs/2026-06-07-mvp-master-roadmap-design.md](../superpowers/specs/2026-06-07-mvp-master-roadmap-design.md) | MVP 总路线图 |
+| [plans/2026-06-07-mvp-master-implementation.md](../superpowers/plans/2026-06-07-mvp-master-implementation.md) | **MVP 总落地计划** |
 
 **变更流程：** 产品决策 → **本文件** → PRD → `docs/legal/` → UI 文案（`lib/legal/content.ts`）

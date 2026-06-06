@@ -62,7 +62,7 @@ export function SnapButton({ onCapture, resnapId }: SnapButtonProps) {
             SNAP RECEIPT
           </span>
           <span className="mt-1 text-xs font-bold opacity-80">
-            {resnapId ? "重拍小票" : "拍小票 (自动归类)"}
+            {resnapId ? "Resnap receipt" : "Auto-categorize on snap"}
           </span>
         </button>
 

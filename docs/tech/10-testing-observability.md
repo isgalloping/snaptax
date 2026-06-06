@@ -39,9 +39,13 @@
 
 ## 10.5 日志
 
-- 结构化 JSON log in API routes
-- 禁止 log 小票图片 / PII 全文
-- Vercel Runtime Logs + 可选 Axiom drain
+> **Canonical：** [2026-06-06-logging-design.md](../superpowers/specs/2026-06-06-logging-design.md) · Rule：`.cursor/rules/snap1099-logging.mdc`
+
+- **单行 key=value** 结构化 `LogEntry`（API `api.*` + 业务 `biz.*` 同一字段集；**非 JSON**）
+- **必填：** `module`, `success`, `durationMs`, `ts`；身份：`userId`, `ghostId`, `email`（脱敏）, `authChannel`
+- **禁止：** 小票图片、密钥、JWT/Cookie 全文、完整 AI 响应、生产 stack trace
+- 输出：Vercel Runtime Logs；路线图 Log Drain → Axiom
+- Route Handler 使用 `withRequestLog`（实施见 [logging plan](../superpowers/plans/2026-06-06-logging.md)）
 
 ## 10.6 告警（生产）
 

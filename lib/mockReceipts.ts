@@ -10,7 +10,13 @@ const MERCHANTS = [
   "Walmart",
 ];
 
-const CATEGORIES = ["Truck Gas", "Tools", "Supplies", "Equipment", "Materials"];
+const CATEGORIES = [
+  "TRUCK GAS",
+  "TOOLS",
+  "SUPPLIES",
+  "EQUIPMENT",
+  "MATERIALS",
+] as const;
 
 export function createSeedReceipts(): Receipt[] {
   const today = utcNow();
@@ -22,7 +28,7 @@ export function createSeedReceipts(): Receipt[] {
       status: "done",
       amount: 45.2,
       merchant: "Shell Gas",
-      category: "Truck Gas",
+      category: "TRUCK GAS",
       timestamp: today,
     },
     {
@@ -30,7 +36,7 @@ export function createSeedReceipts(): Receipt[] {
       status: "done",
       amount: 120,
       merchant: "Lowes Supplies",
-      category: "Tools",
+      category: "TOOLS",
       timestamp: yesterday,
     },
   ];

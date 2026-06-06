@@ -17,7 +17,14 @@
 
 - **Cursor Rule**：`.cursor/rules/snap1099-product.mdc`（全局产品铁律）
 - **Cursor Rule**：`.cursor/rules/snap1099-ui.mdc`（UI 组件约束）
+- **Cursor Rule**：`.cursor/rules/snap1099-backend.mdc`（API / Prisma / 集成）
+- **Cursor Rule**：`.cursor/rules/snap1099-database.mdc`（改表 / DDL / Prisma）
+- **Cursor Rule**：`.cursor/rules/snap1099-compliance.mdc`（合规 / 隐私 UI）
+- **Cursor Rule**：`.cursor/rules/snap1099-logging.mdc`（单行 key=value 日志）
+- **Cursor Rule**：`.cursor/rules/snap1099-tax.mdc`（US/EU 省税 · OpenAI 路径）
 - **Cursor Skill**：`.cursor/skills/snap1099-product/SKILL.md`（功能开发前必读流程）
+
+**MVP 落地：** [`docs/superpowers/plans/2026-06-07-mvp-master-implementation.md`](../superpowers/plans/2026-06-07-mvp-master-implementation.md)
 
 ## 代码与 PRD 差距（实现前请核对 PRODUCT-SPEC §实现状态）
 

@@ -25,13 +25,20 @@
 - [../superpowers/specs/2026-06-05-google-auth-prd-design.md](../superpowers/specs/2026-06-05-google-auth-prd-design.md)
 - [../superpowers/specs/2026-06-05-paddle-paywall-design.md](../superpowers/specs/2026-06-05-paddle-paywall-design.md)
 - [../superpowers/specs/2026-06-05-db-init-table-design.md](../superpowers/specs/2026-06-05-db-init-table-design.md)
-- [../superpowers/specs/2026-06-05-compliance-privacy-design.md](../superpowers/specs/2026-06-05-compliance-privacy-design.md)
+- [../superpowers/specs/2026-06-05-db-product-alignment-design.md](../superpowers/specs/2026-06-05-db-product-alignment-design.md)
+- [../superpowers/specs/2026-06-05-api-security-design.md](../superpowers/specs/2026-06-05-api-security-design.md)
+- [../superpowers/specs/2026-06-05-compliance-privacy-design.md](../superpowers/specs/2026-06-05-compliance-privacy-design.md) — **MVP 行为以 PRODUCT-SPEC v1.2 为准**
+- [../superpowers/specs/2026-06-06-product-tech-code-consistency-audit.md](../superpowers/specs/2026-06-06-product-tech-code-consistency-audit.md)
+- [../superpowers/specs/2026-06-06-logging-design.md](../superpowers/specs/2026-06-06-logging-design.md)
+- [../superpowers/specs/2026-06-07-tax-savings-regional-design.md](../superpowers/specs/2026-06-07-tax-savings-regional-design.md)
+- [../superpowers/specs/2026-06-07-mvp-master-roadmap-design.md](../superpowers/specs/2026-06-07-mvp-master-roadmap-design.md)
+- [../superpowers/plans/2026-06-07-mvp-master-implementation.md](../superpowers/plans/2026-06-07-mvp-master-implementation.md) — **MVP 总落地**
 
 ## 代码地图（当前 → 目标）
 
 | 模块 | 现状 | 目标 |
 |------|------|------|
-| 身份 | 手机号 RegisterSheet | Google + Ghost API |
+| 身份 UI | Google 软/硬引导 + 账户区（mock 登录） | Google GIS + Ghost API |
 | 小票 | Client mock AI | API + OpenAI + Blob + **Prisma** |
-| 付费 | Mock 按钮 | Paddle.js + Webhook + **Prisma** entitlements |
-| 存储 | 仅 IndexedDB | IndexedDB + **PostgreSQL**（Prisma sync） |
+| 付费 UI | Paywall 面板 + mock Paddle | Paddle.js Overlay + Webhook |
+| 存储 | IndexedDB + 本地 auth/付费状态 | IndexedDB + **PostgreSQL** sync |

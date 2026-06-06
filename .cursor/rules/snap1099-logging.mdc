@@ -1,0 +1,64 @@
+---
+description: Snap1099 结构化日志 — API 与业务事件统一单行 key=value
+globs: app/api/**/*,lib/server/**/*,lib/integrations/**/*
+alwaysApply: false
+---
+
+# Snap1099 日志规范
+
+**Canonical：** `docs/superpowers/specs/2026-06-06-logging-design.md`  
+**可观测性：** `docs/tech/10-testing-observability.md` §10.5
+
+## 铁律
+
+- **单行 key=value**（logfmt）：一条事件一行 → `console.log(formatLogLine(entry))`
+- **禁止 JSON**：不用 `JSON.stringify`、不输出 `meta={...}` 嵌套对象
+- **统一字段集**：HTTP API（`api.*`）与非 HTTP 业务（`biz.*`）共用 `LogEntry`
+- **必填：** `ts`, `level`, `module`, `success`, `durationMs`
+- **身份：** `userId`, `ghostId`, `email`（**脱敏**）, `authChannel` — 有值才输出
+- **请求：** API 填 `method`, `route`, `httpStatus`；业务事件省略这三项
+- **扩展：** meta 白名单键 **展平** 到同一行（如 `receiptId=…`）
+
+## module 枚举
+
+`api.auth` · `api.receipt` · `api.user` · `api.entitlement` · `api.webhook`  
+`biz.openai` · `biz.blob` · `biz.ghost` · `biz.paddle` · `biz.export`
+
+## 脱敏
+
+- `email` → `maskEmail()`：首字符 + `***@domain`
+- **禁止 log：** Cookie 值、JWT 全文、API Key、小票 base64、完整 `ai_raw`、Google credential
+- IP → 仅 `ipHash`（SHA256 前 8 hex），不 log 原始 IP
+
+## Route Handler
+
+- 新 Route **必须**经 `withRequestLog(module, handler)` 或等价 `logEvent` 收尾
+- 含 OpenAI/Blob 的路径：**额外** `biz.openai` / `biz.blob` 事件，**同一 `requestId`**
+
+## success 语义
+
+| 结果 | success | level |
+|------|---------|-------|
+| 2xx | true | info |
+| 4xx 预期 | false | warn |
+| 5xx / 抛错 | false | error |
+
+## meta 白名单（新增须改 spec）
+
+`receiptId` · `status` · `errorCode` · `errorMessage` · `taxSeason` · `transactionId` · `openaiModel` · `tokenUsagePrompt` · `tokenUsageCompletion` · `ipHash`
+
+## 改代码检查清单
+
+- [ ] 每条新 API 有 access log（`module` 正确）
+- [ ] 输出为 **单行** key=value，非 JSON
+- [ ] `durationMs` 为整数毫秒
+- [ ] `email` 经 `maskEmail`，未写明文
+- [ ] 无密钥/原图/完整 AI 响应进 log
+- [ ] OpenAI 子调用有独立 `biz.openai` 行
+
+## 禁止
+
+- 绕过 `logEvent` / `formatLogLine` 的随意 `console.log`
+- `JSON.stringify` 整行日志
+- 客户端 `console.log` 含 email/ghost 作为服务端等价物
+- stack trace 进生产 `errorMessage`（开发环境 optional）

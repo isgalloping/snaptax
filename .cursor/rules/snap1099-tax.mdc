@@ -1,0 +1,48 @@
+---
+description: Snap1099 分区域省税 — US/EU 公式、OpenAI Vision 唯一路径、登录条件重算
+globs: lib/tax/**/*,lib/openai/**/*,lib/receipts/**/*,components/home/TaxHeader.tsx,components/home/HomeScreen.tsx,lib/client/taxRegion.ts
+alwaysApply: false
+---
+
+# Snap1099 省税规范
+
+**Canonical：** `docs/superpowers/specs/2026-06-07-tax-savings-regional-design.md`  
+**产品：** `docs/product/PRODUCT-SPEC.md` §5.1
+
+## 铁律
+
+- **顶栏 Est. Tax Saved** = **`SUM(tax_amount)`**（`status=done`）；**禁止** 客户端 `amount×0.25`
+- **`tax_amount` 变更唯一路径：** `processReceiptTax` → **OpenAI Vision 读图** → Zod → `computeTaxAmount` → DB
+- **禁止** 无 Vision 的 `UPDATE tax_amount` 或纯 DB 字段公式重算
+- **US：** `(amount × deduction_ratio) × TAX_US_MARGINAL_RATE`（默认 0.25）；ratio 由 AI + `usCategories` 兜底
+- **EU：** `deductible` 时 `tax_amount = vat_amount`；AI 必须提取 `vat_rate` / `vat_amount`
+
+## 区域 R1
+
+- Ghost：`Accept-Language` → `localStorage.snap1099_region_candidate`
+- API Header：**`X-Tax-Region: us|eu`**
+- 小票 **`data_region`** 冗余快照；`users.data_region` 登录锁定
+
+## Google 登录重算
+
+```
+if (lockedRegion === ghostCandidate) → taxRecalcQueued = 0（不重算）
+else → 历史小票逐张 OpenAI Vision（lockedRegion）
+```
+
+- 客户端 **仅 `taxRecalcQueued > 0`** 时轮询
+
+## 改代码检查清单
+
+- [ ] 新小票 upload 带 `X-Tax-Region`
+- [ ] Vision 分 US/EU prompt
+- [ ] `tax_amount` / `data_region` 写入 receipts
+- [ ] 登录绑定调 `shouldRecalcOnLogin`
+- [ ] Export Summary 读 `tax_amount`
+- [ ] Terms：Est. 非税务建议
+
+## 禁止
+
+- `HomeScreen` 本地省税公式
+- 登录 region 一致仍批量 Vision
+- EU 用户仅用 US Schedule C prompt

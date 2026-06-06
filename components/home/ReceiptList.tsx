@@ -53,7 +53,7 @@ export function ReceiptList({ receipts, onResnap }: ReceiptListProps) {
       <div className="flex-1 space-y-3 overflow-y-auto pr-1">
         {visible.length === 0 ? (
           <p className="py-4 text-center text-sm text-zinc-500">
-            拍第一张小票开始记账
+            Snap your first receipt to get started
           </p>
         ) : (
           visible.map((receipt) => (

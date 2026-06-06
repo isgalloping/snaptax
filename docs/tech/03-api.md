@@ -23,15 +23,20 @@ Base URL: `https://{domain}/api`
 { "credential": "<Google ID Token JWT>" }
 ```
 Cookie: **`snap1099_ghost`**（必填，HMAC Ghost token）  
-Header: `X-Ghost-Id`（可选；若存在须与 Cookie token 内 `ghostId` 一致）
+Cookie: **`snap1099_ghost`**（必填，HMAC Ghost token）  
+Header: `X-Ghost-Id`（可选；若存在须与 Cookie token 内 `ghostId` 一致）  
+Header: **`X-Tax-Region`**（`us` \| `eu`；与客户端 `snap1099_region_candidate` 一致，用于锁定 `users.data_region`）
 
 **Response 200**
 ```json
 {
-  "user": { "id": "usr_...", "email": "user@gmail.com" },
-  "bound": true
+  "user": { "id": "usr_...", "email": "user@gmail.com", "dataRegion": "eu" },
+  "bound": true,
+  "taxRecalcQueued": 0
 }
 ```
+
+`taxRecalcQueued`：登录锁定区与 Ghost 语言候选区 **不一致** 时为待 OpenAI 重算张数；一致为 `0`。详见 [省税设计](../superpowers/specs/2026-06-07-tax-savings-regional-design.md)。
 
 ### `POST /api/auth/logout`
 
@@ -76,6 +81,8 @@ Query: `limit=3`（默认最近 3 条）
       "merchant": "Shell Gas",
       "category": "TRUCK GAS",
       "deductible": true,
+      "taxAmount": 11.30,
+      "dataRegion": "us",
       "capturedAt": "2026-06-05T11:30:00Z"
     }
   ],
@@ -83,11 +90,14 @@ Query: `limit=3`（默认最近 3 条）
 }
 ```
 
+`taxSavedEstimate` = `SUM(tax_amount)` where `status=done`。**禁止** 客户端 `amount×0.25`。
+
 ### `POST /api/receipts`
 
 `multipart/form-data`: `file` (image/jpeg)
 
-Header: session 或 `X-Ghost-Id`
+Header: **`snap1099_ghost` Cookie**（Ghost）或 session  
+Header: **`X-Tax-Region`**（`us` \| `eu`；缺省 `us`）→ 写入 `receipt.data_region`
 
 **Response 201**
 ```json

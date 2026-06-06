@@ -17,7 +17,7 @@ North American 1099 contractor receipt app — PWA, offline-first, Ghost → Goo
 
 ## Cursor
 
-- Rules: `.cursor/rules/snap1099-product.mdc`, `snap1099-ui.mdc`, `snap1099-backend.mdc`, `snap1099-database.mdc`, `snap1099-compliance.mdc`
+- Rules: `.cursor/rules/snap1099-product.mdc`, `snap1099-ui.mdc`, `snap1099-backend.mdc`, `snap1099-database.mdc`, `snap1099-compliance.mdc`, `snap1099-logging.mdc`, `snap1099-tax.mdc`
 - Skill: `.cursor/skills/snap1099-product/SKILL.md`
 
 ## Database
@@ -29,6 +29,20 @@ North American 1099 contractor receipt app — PWA, offline-first, Ghost → Goo
 
 - **Spec:** `docs/superpowers/specs/2026-06-05-compliance-privacy-design.md`
 - **Legal:** `docs/legal/privacy.md` · `docs/legal/terms.md`
+
+## Observability
+
+- **Logging spec:** `docs/superpowers/specs/2026-06-06-logging-design.md`
+- **Rule:** `.cursor/rules/snap1099-logging.mdc`（API / `lib/server/*` 单行 key=value 日志）
+
+## Tax (Est. Tax Saved)
+
+- **Spec:** `docs/superpowers/specs/2026-06-07-tax-savings-regional-design.md`
+- **Rule:** `.cursor/rules/snap1099-tax.mdc`
+
+## MVP implementation
+
+- **Master plan:** `docs/superpowers/plans/2026-06-07-mvp-master-implementation.md`
 
 ## Stack
 

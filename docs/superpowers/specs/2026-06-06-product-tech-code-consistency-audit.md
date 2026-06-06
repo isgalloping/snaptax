@@ -1,7 +1,7 @@
 # Snap1099 产品规范 · 技术文档 · 代码 一致性审计
 
 **日期：** 2026-06-06  
-**状态：** 待批准（审计报告 + 修改计划；不含代码实施）  
+**状态：** Phase 0 已完成（2026-06-06）；**2026-06-07 增补** tax + MVP master plan；Phase 1+ 待实施  
 **Canonical 产品文档：** `docs/product/PRODUCT-SPEC.md` v1.2  
 **审计方法：** PRODUCT-SPEC → `docs/tech/*` → ADR specs → `db/` / `prisma/` → 客户端/服务端代码
 
@@ -14,8 +14,9 @@
 | 数据库 DDL / Prisma | ● | ○ `data_region` 宽度 | |
 | 合规 UI / 法律文案 | ● | | |
 | API / 后端 | | | ● 无 `app/api/` |
-| 身份（Google vs 手机） | | | ● 仍为手机号 UI |
+| 身份（Google vs 手机） | ● Google UI 已落地 | | |
 | 小票流水线（OpenAI） | | | ● 仍为 client mock |
+| 分区域省税 tax_amount | | | ● 代码 ×0.25；DDL 待加列 |
 | Ghost 安全（HMAC） | | ○ 文档混用 `X-Ghost-Id` | ● 代码未实现 |
 | ADR / 技术文档交叉引用 | | ○ 旧 ADR 与 v1.2 冲突 | |
 
@@ -45,12 +46,13 @@
 | ID | 产品要求 (PRODUCT-SPEC) | 现状 | 严重度 |
 |----|-------------------------|------|--------|
 | C1 | §2.2 / §5：联网 Ghost 走 **API + OpenAI**，禁止 mock | `HomeScreen` 调用 `mockProcessReceipt()`；无 `app/api/receipts` | **P0** |
-| C2 | §2.4 / §4：唯一凭证 **Google**；禁止手机号注册 | `RegisterBanner` / `RegisterSheet` 仍为手机号+验证码 | **P0** |
+| C2 | §2.4：唯一凭证 **Google** | ~~RegisterBanner 手机号~~ → **Google 软/硬引导已实现** | ~~P0~~ **已关闭** |
 | C3 | §2.5：Ghost **HMAC Cookie**；`POST /api/ghost/register` | 无 API；无 `ghostClient` / `ensureGhostSession` | **P0** |
 | C4 | §2.3.3：Delete Account 已登录 → `DELETE /api/users/me` | `PrivacyDataSection` 仅 `clearLocalAppData()` + TODO | **P0** |
 | C5 | §6 / §11：Paddle 付费 + Export | 无 Paddle / export API / UI 集成 | **P0** |
 | C6 | §4.4：Google 登录后 Ghost 小票迁移 | 无 auth API / 无 sync | **P0** |
 | C7 | §11：`lib/prisma.ts` 数据访问 | 文件不存在 | **P0** |
+| C8 | §5.1：分区域省税 · OpenAI 路径 | `HomeScreen` `×0.25`；无 `tax_amount` 列 | **P0** |
 
 ### 3.2 产品 ↔ 技术文档（P1 · 文档债）
 
@@ -118,12 +120,13 @@
 
 | 序 | 任务 | 对齐产品 |
 |----|------|----------|
-| 2.1 | 删除手机号 `RegisterBanner`/`RegisterSheet` → **Google 软引导** Bottom Sheet | §2.4 / PRD §2.3 |
+| 2.1 | ~~删除手机号 RegisterBanner~~ → **Google 软引导** | ✅ 已完成 |
 | 2.2 | `lib/storage/ghostClient.ts`：`ensureGhostSession()` | §2.5 |
 | 2.3 | `HomeScreen`：在线时 `POST /api/receipts` + 轮询；移除 `mockProcessReceipt` | §5 |
 | 2.4 | 离线队列：`online` → upload + `snap_at`/`captured_at` UTC ISO | §2.2 |
 | 2.5 | `PrivacyDataSection`：已登录调 `DELETE /api/users/me`；未登录调 Ghost 删 API | §2.3.3 |
 | 2.6 | Mock 分类改为 `TRUCK GAS` 等 uppercase 枚举 | §7 / AI pipeline |
+| 2.7 | 省税：`taxRegion` · 移除 `×0.25` · 登录 `taxRecalcQueued` | tax spec · **`2026-06-07-mvp-master-implementation.md` Phase 2 |
 
 **验收：** PRODUCT-SPEC §12「未登录联网 OpenAI」「Ghost API」→ ✅。
 
@@ -176,9 +179,11 @@
 
 | 计划 | 覆盖 Phase |
 |------|------------|
+| [**2026-06-07-mvp-master-implementation.md**](../plans/2026-06-07-mvp-master-implementation.md) | **0–3 总编排** |
 | [2026-06-05-api-security.md](../plans/2026-06-05-api-security.md) | 1 |
-| [2026-06-05-db-product-alignment.md](../plans/2026-06-05-db-product-alignment.md) | 已完成 DDL |
-| [2026-06-05-compliance-privacy.md](../plans/2026-06-05-compliance-privacy.md) | 0 文档修订 |
-| google-auth / paddle ADR + plans | 3 |
+| [2026-06-07-tax-savings-regional.md](../plans/2026-06-07-tax-savings-regional.md) | 1–2 |
+| [2026-06-06-logging.md](../plans/2026-06-06-logging.md) | 1 |
+| [2026-06-05-db-product-alignment.md](../plans/2026-06-05-db-product-alignment.md) | 已完成 DDL 基线 |
+| google-auth / paddle ADR | 3 |
 
 **变更流程：** 本审计批准 → Phase 0 文档 PR → Phase 1+ 按既有 implementation plan 执行。

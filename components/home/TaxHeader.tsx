@@ -34,15 +34,25 @@ export function TaxHeader({
     receiptCount === 1 ? "1 receipt" : `${receiptCount} receipts`;
 
   return (
-    <header className="relative min-h-[120px] max-h-[22vh] shrink-0 overflow-hidden">
+    <header className="relative min-h-[132px] max-h-[24vh] shrink-0 overflow-hidden">
+      <div
+        className="absolute inset-0 bg-cover bg-[85%_center] bg-no-repeat"
+        style={{ backgroundImage: `url(${homeVisual.heroImage})` }}
+        aria-hidden
+      />
       <div
         className="absolute inset-0"
-        style={{ background: homeVisual.heroGradient }}
+        style={{ background: homeVisual.heroOverlay }}
+        aria-hidden
+      />
+      <div
+        className="absolute inset-0"
+        style={{ background: homeVisual.heroTint }}
         aria-hidden
       />
       <div className="relative z-10 flex items-center justify-between px-4 py-3">
         <div className="min-w-0 flex-1 pr-3">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-300">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-200">
             Estimated Tax Saved
           </p>
           <p
@@ -52,7 +62,7 @@ export function TaxHeader({
           >
             {taxSaved === null ? "$- - -" : formatCurrency(taxSaved)}
           </p>
-          <p className="mt-0.5 flex items-center gap-1 truncate text-[11px] font-bold text-zinc-400">
+          <p className="mt-0.5 flex items-center gap-1 truncate text-[11px] font-bold text-zinc-300">
             <ReceiptIcon className="h-3 w-3 shrink-0" />
             <span>
               {receiptLabel} • {formatCurrency(totalExpenses)} tracked

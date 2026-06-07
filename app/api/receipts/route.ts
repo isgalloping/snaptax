@@ -33,13 +33,13 @@ export const GET = withRequestLog(
     try {
       const actor = await getActor(request);
       const limit = Math.min(
-        50,
-        Math.max(1, Number(new URL(request.url).searchParams.get("limit") ?? 3)),
+        100,
+        Math.max(1, Number(new URL(request.url).searchParams.get("limit") ?? 100)),
       );
       const where = receiptWhereForActor(actor);
       const receipts = await prisma.snaptaxReceipt.findMany({
         where,
-        orderBy: { capturedAt: "desc" },
+        orderBy: { updatedAt: "desc" },
         take: limit,
       });
       const agg = await prisma.snaptaxReceipt.aggregate({

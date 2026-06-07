@@ -24,6 +24,8 @@ export interface Receipt {
   imageUrl?: string | null;
   /** Event instant; persist/API as UTC ISO 8601 (`…Z`). */
   timestamp: Date;
+  /** Last mutation instant; sort/sync window key. Falls back to timestamp when omitted. */
+  updatedAt?: Date;
   subtitle?: string;
   pendingUpload?: boolean;
 }

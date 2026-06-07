@@ -12,6 +12,11 @@ export interface StoredReceipt extends Receipt {
   writeBudgetRemaining?: number;
 }
 
+type SerializedReceipt = Omit<StoredReceipt, "timestamp" | "updatedAt"> & {
+  timestamp: string;
+  updatedAt?: string;
+};
+
 function openDb(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
@@ -31,18 +36,30 @@ function openDb(): Promise<IDBDatabase> {
   });
 }
 
-function serializeReceipt(receipt: StoredReceipt): Omit<StoredReceipt, "timestamp"> & { timestamp: string } {
+function serializeReceipt(receipt: StoredReceipt): SerializedReceipt {
+  const { updatedAt, ...rest } = receipt;
   return {
-    ...receipt,
+    ...rest,
     timestamp: toUtcISOString(receipt.timestamp),
+    updatedAt: updatedAt ? toUtcISOString(updatedAt) : undefined,
   };
 }
 
-function deserializeReceipt(raw: Omit<StoredReceipt, "timestamp"> & { timestamp: string }): StoredReceipt {
+function deserializeReceipt(raw: SerializedReceipt): StoredReceipt {
+  const timestamp = parseUtcISOString(raw.timestamp);
   return {
     ...raw,
-    timestamp: parseUtcISOString(raw.timestamp),
+    timestamp,
+    updatedAt: raw.updatedAt ? parseUtcISOString(raw.updatedAt) : timestamp,
   };
+}
+
+function receiptUpdatedAt(receipt: Pick<Receipt, "updatedAt" | "timestamp">): Date {
+  return receipt.updatedAt ?? receipt.timestamp;
+}
+
+function sortByUpdatedAtDesc(a: StoredReceipt, b: StoredReceipt): number {
+  return receiptUpdatedAt(b).getTime() - receiptUpdatedAt(a).getTime();
 }
 
 export async function loadReceipts(): Promise<StoredReceipt[]> {
@@ -53,8 +70,8 @@ export async function loadReceipts(): Promise<StoredReceipt[]> {
 
     request.onerror = () => reject(request.error);
     request.onsuccess = () => {
-      const rows = (request.result as Array<Omit<StoredReceipt, "timestamp"> & { timestamp: string }>) ?? [];
-      resolve(rows.map(deserializeReceipt).sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()));
+      const rows = (request.result as SerializedReceipt[]) ?? [];
+      resolve(rows.map(deserializeReceipt).sort(sortByUpdatedAtDesc));
     };
   });
 }

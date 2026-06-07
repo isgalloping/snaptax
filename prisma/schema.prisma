@@ -73,6 +73,8 @@ model SnaptaxReceipt {
 
   @@index([userId, capturedAt(sort: Desc)], map: "snaptax_receipts_user_captured_idx")
   @@index([ghostId, capturedAt(sort: Desc)], map: "snaptax_receipts_ghost_captured_idx")
+  @@index([userId, updatedAt(sort: Desc)], map: "snaptax_receipts_user_updated_idx")
+  @@index([ghostId, updatedAt(sort: Desc)], map: "snaptax_receipts_ghost_updated_idx")
   @@index([userId, snapAt(sort: Desc)], map: "snaptax_receipts_user_snap_idx")
   @@map("snaptax_receipts")
 }

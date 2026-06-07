@@ -1,6 +1,15 @@
 export const homeVisual = {
+  /** Wealth hero — static asset under public/photo/ */
+  heroImage: "/photo/hero.png",
+  /** Left vignette + bottom fade — text legibility over photo */
+  heroOverlay:
+    "linear-gradient(90deg, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.35) 42%, rgba(0,0,0,0.05) 72%, transparent 100%), linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.45) 55%, #000 100%)",
+  /** Brand yellow tint — stacked above overlay (option C) */
+  heroTint:
+    "linear-gradient(180deg, rgba(234,179,8,0.18) 0%, rgba(0,0,0,0.55) 48%, #000 100%)",
+  /** @deprecated alias — use heroTint */
   heroGradient:
-    "linear-gradient(180deg, rgba(234,179,8,0.18) 0%, rgba(0,0,0,0.75) 45%, #000 100%)",
+    "linear-gradient(180deg, rgba(234,179,8,0.18) 0%, rgba(0,0,0,0.55) 48%, #000 100%)",
   status: {
     analyzing: "text-blue-400",
     uploading: "text-yellow-400",

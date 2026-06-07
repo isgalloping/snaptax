@@ -22,6 +22,7 @@ interface SettingsScreenProps {
   currentSeason: string;
   isSignedIn: boolean;
   onSignInWithGoogle: () => Promise<{ user: GoogleUser; taxRecalcQueued: number }>;
+  onPostLoginSync?: (taxRecalcQueued: number) => Promise<void>;
   onSeasonPaid: () => void;
   refreshSeasonPaid?: () => Promise<void>;
 }
@@ -36,6 +37,7 @@ export function SettingsScreen({
   currentSeason,
   isSignedIn,
   onSignInWithGoogle,
+  onPostLoginSync,
   onSeasonPaid,
   refreshSeasonPaid,
 }: SettingsScreenProps) {
@@ -87,7 +89,8 @@ export function SettingsScreen({
   };
 
   const handleGoogleSuccess = async () => {
-    await onSignInWithGoogle();
+    const { taxRecalcQueued } = await onSignInWithGoogle();
+    await onPostLoginSync?.(taxRecalcQueued);
     setGoogleSheet(null);
     if (pendingAfterSignIn) {
       await runAfterGoogleSignIn(pendingAfterSignIn);

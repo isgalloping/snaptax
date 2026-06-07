@@ -13,6 +13,7 @@ export function serializeReceipt(r: SnaptaxReceipt) {
     dataRegion: r.dataRegion,
     capturedAt: r.capturedAt.toISOString(),
     snapAt: r.snapAt?.toISOString() ?? null,
+    updatedAt: r.updatedAt.toISOString(),
   };
 }
 

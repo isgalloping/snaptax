@@ -35,9 +35,9 @@ alwaysApply: false
 ## 改表检查清单
 
 - [ ] 同步 `db/init-table.sql` + `prisma/schema.prisma` + `04-data-model.md`
+- 金额 `NUMERIC(10,2)`；时间 **`TIMESTAMPTZ(3)`**；审计列 `created_at`/`updated_at`
+- **`snaptax_receipts`：** `tax_amount NUMERIC(10,2) DEFAULT 0` · `data_region VARCHAR(8) DEFAULT 'us'`（税法辖区快照，见 tax spec）
 - [ ] 新索引对应真实 API 查询；Webhook 幂等键保持 UNIQUE
-- [ ] `COMMENT ON` 中文注释 + Prisma `@comment`
-- [ ] 金额 `NUMERIC(10,2)`；时间 **`TIMESTAMPTZ(3)`**；审计列 `created_at`/`updated_at`
 - [ ] `prisma migrate dev` 生成 migration 并提交
 
 ## Prisma 模型

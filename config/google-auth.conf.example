@@ -1,0 +1,14 @@
+# 复制为 google-auth.conf（已 gitignore），值来自 Google Cloud Console / .env.local
+# 项目 ID
+google.projectId=your-gcp-project
+
+google.clientId=YOUR_CLIENT_ID.apps.googleusercontent.com
+google.clientSecret=YOUR_CLIENT_SECRET
+
+# OAuth 回调（Auth.js basePath=/api/auth）
+google.redirectUri.local=http://localhost:3000/api/auth/callback/google
+
+# 环境变量映射
+# AUTH_GOOGLE_ID     <- google.clientId
+# AUTH_GOOGLE_SECRET <- google.clientSecret
+# NEXT_PUBLIC_GOOGLE_CLIENT_ID <- google.clientId

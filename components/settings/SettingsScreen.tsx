@@ -3,14 +3,27 @@
 import { useState } from "react";
 import type { Industry } from "@/lib/types";
 import { INDUSTRIES } from "@/lib/types";
-
+import type { GoogleUser } from "@/lib/client/authStorage";
+import { exportTaxPack, fetchSeasonPaid } from "@/lib/client/authApi";
+import { apiFetch } from "@/lib/client/ghostClient";
+import { AccountStatusBlock } from "@/components/auth/AccountStatusBlock";
+import { GoogleSignInSheet, type GoogleSignInMode } from "@/components/auth/GoogleSignInSheet";
+import { SyncInstructionsSheet } from "@/components/auth/SyncInstructionsSheet";
 import { PrivacyDataSection } from "@/components/settings/PrivacyDataSection";
+import { PaywallSheet } from "@/components/settings/PaywallSheet";
 
 interface SettingsScreenProps {
   industry: Industry | null;
   onIndustryChange: (industry: Industry) => void;
   onBack: () => void;
   onLocalDataCleared?: () => void;
+  googleUser: GoogleUser | null;
+  seasonPaid: boolean;
+  currentSeason: string;
+  isSignedIn: boolean;
+  onSignInWithGoogle: () => Promise<{ user: GoogleUser; taxRecalcQueued: number }>;
+  onSeasonPaid: () => void;
+  refreshSeasonPaid?: () => Promise<void>;
 }
 
 export function SettingsScreen({
@@ -18,21 +31,108 @@ export function SettingsScreen({
   onIndustryChange,
   onBack,
   onLocalDataCleared,
+  googleUser,
+  seasonPaid,
+  currentSeason,
+  isSignedIn,
+  onSignInWithGoogle,
+  onSeasonPaid,
+  refreshSeasonPaid,
 }: SettingsScreenProps) {
+  const [googleSheet, setGoogleSheet] = useState<GoogleSignInMode | null>(null);
   const [showPaywall, setShowPaywall] = useState(false);
-  const [paid, setPaid] = useState(false);
+  const [showSyncHelp, setShowSyncHelp] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [pendingAfterSignIn, setPendingAfterSignIn] = useState<
+    "export" | "sync" | null
+  >(null);
 
-  const handleExport = () => {
-    setShowPaywall(true);
+  const clearError = () => setErrorMessage(null);
+
+  const shareExportFile = async () => {
+    const file = await exportTaxPack(currentSeason);
+    if (navigator.share) {
+      await navigator
+        .share({
+          files: [file],
+          title: `Snap1099 Tax Pack ${currentSeason}`,
+          text: "Your IRS-ready expense export",
+        })
+        .catch(() => {});
+    } else {
+      const url = URL.createObjectURL(file);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = file.name;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
   };
 
-  const handlePay = () => {
-    setPaid(true);
-    setShowPaywall(false);
-    if (navigator.share) {
-      void navigator.share({
-        title: "Snap1099 Tax Pack 2026",
-        text: "Your IRS-ready expense export",
+  const runAfterGoogleSignIn = async (action: "export" | "sync") => {
+    if (action === "export") {
+      const paid = await fetchSeasonPaid(currentSeason).catch(() => seasonPaid);
+      if (paid) {
+        try {
+          await shareExportFile();
+        } catch {
+          setErrorMessage("Export failed. Please try again.");
+        }
+      } else {
+        setShowPaywall(true);
+      }
+    } else {
+      setShowSyncHelp(true);
+    }
+  };
+
+  const handleGoogleSuccess = async () => {
+    await onSignInWithGoogle();
+    setGoogleSheet(null);
+    if (pendingAfterSignIn) {
+      await runAfterGoogleSignIn(pendingAfterSignIn);
+      setPendingAfterSignIn(null);
+    }
+  };
+
+  const requireGoogle = (mode: GoogleSignInMode, after: "export" | "sync") => {
+    clearError();
+    if (googleUser) {
+      void runAfterGoogleSignIn(after);
+      return;
+    }
+    setPendingAfterSignIn(after);
+    setGoogleSheet(mode);
+  };
+
+  const handleViewAllDevices = () => {
+    requireGoogle("hard-sync", "sync");
+  };
+
+  const handleExport = () => {
+    requireGoogle("hard-export", "export");
+  };
+
+  const handleExportAgain = async () => {
+    clearError();
+    try {
+      await shareExportFile();
+    } catch (err) {
+      if (err instanceof Error && err.message === "PAYMENT_REQUIRED") {
+        setShowPaywall(true);
+      } else {
+        setErrorMessage("Export failed. Please try again.");
+      }
+    }
+  };
+
+  const handleIndustryChange = async (value: Industry) => {
+    onIndustryChange(value);
+    if (isSignedIn && navigator.onLine) {
+      await apiFetch("/api/users/me", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ industry: value }),
       }).catch(() => {});
     }
   };
@@ -53,6 +153,16 @@ export function SettingsScreen({
       </header>
 
       <div className="flex-1 overflow-y-auto p-6">
+        <AccountStatusBlock
+          googleUser={googleUser}
+          seasonPaid={seasonPaid}
+          seasonLabel={currentSeason}
+          onSignIn={() => {
+            clearError();
+            setGoogleSheet("soft");
+          }}
+        />
+
         <section className="mb-8">
           <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-zinc-400">
             Your Industry
@@ -62,7 +172,7 @@ export function SettingsScreen({
               <button
                 key={item.id}
                 type="button"
-                onClick={() => onIndustryChange(item.id)}
+                onClick={() => void handleIndustryChange(item.id)}
                 className={`min-h-16 rounded-xl border-2 p-4 text-left text-sm font-bold transition-transform active:scale-95 ${
                   industry === item.id
                     ? "border-yellow-500 bg-yellow-950 text-yellow-400"
@@ -75,7 +185,23 @@ export function SettingsScreen({
           </div>
         </section>
 
-        <PrivacyDataSection onLocalDataCleared={onLocalDataCleared} />
+        <section className="mb-8">
+          <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-zinc-400">
+            Multi-Device
+          </h2>
+          <button
+            type="button"
+            onClick={handleViewAllDevices}
+            className="w-full min-h-16 rounded-xl border-2 border-zinc-600 bg-zinc-800 p-4 text-left text-sm font-bold text-white transition-transform active:scale-95"
+          >
+            View on All Devices
+          </button>
+        </section>
+
+        <PrivacyDataSection
+          isSignedIn={isSignedIn}
+          onLocalDataCleared={onLocalDataCleared}
+        />
 
         <section>
           <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-zinc-400">
@@ -83,47 +209,58 @@ export function SettingsScreen({
           </h2>
           <button
             type="button"
-            onClick={handleExport}
-            disabled={paid}
-            className="w-full min-h-16 rounded-xl border-4 border-white bg-yellow-500 py-4 text-lg font-black uppercase tracking-wider text-black transition-transform active:scale-95 disabled:opacity-60"
+            onClick={seasonPaid ? () => void handleExportAgain() : handleExport}
+            className="w-full min-h-16 rounded-xl border-4 border-white bg-yellow-500 py-4 text-lg font-black uppercase tracking-wider text-black transition-transform active:scale-95"
           >
-            {paid ? "Exported ✓" : "Export IRS Tax Pack"}
+            {seasonPaid ? "Export Again" : "Export IRS Tax Pack"}
           </button>
-          {paid && (
-            <p className="mt-3 text-center text-sm text-green-400">
-              2026 报税包已就绪，可通过分享发送给 CPA
-            </p>
-          )}
         </section>
+
+        {errorMessage && (
+          <p className="mt-4 text-center text-sm font-bold text-red-500" role="alert">
+            {errorMessage}
+          </p>
+        )}
       </div>
 
-      {showPaywall && (
-        <div className="fixed inset-0 z-50 flex items-end bg-black/70">
-          <div className="w-full rounded-t-3xl border-t-4 border-yellow-500 bg-zinc-900 p-6 pb-10">
-            <p className="text-4xl font-black text-white">$49.00</p>
-            <p className="mt-1 text-sm text-zinc-400">
-              One-Time for 2026 Tax Season / 一次性付清
-            </p>
-            <p className="mt-4 text-base leading-relaxed text-zinc-300">
-              一键导出符合美国国税局标准的 Excel 表格，直接发给你的 CPA
-              会计或者导入 TurboTax，帮你省去几小时的对账麻烦。
-            </p>
-            <button
-              type="button"
-              onClick={handlePay}
-              className="mt-6 w-full min-h-16 rounded-xl bg-white py-4 text-lg font-black text-black transition-transform active:scale-95"
-            >
-              Pay with Apple Pay / Google Pay
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowPaywall(false)}
-              className="mt-3 w-full min-h-16 py-3 text-sm font-bold text-zinc-400 transition-transform active:scale-95"
-            >
-              稍后再说
-            </button>
-          </div>
-        </div>
+      {googleSheet && (
+        <GoogleSignInSheet
+          mode={googleSheet}
+          onClose={() => {
+            setGoogleSheet(null);
+            setPendingAfterSignIn(null);
+          }}
+          onSuccess={handleGoogleSuccess}
+          onFailure={(msg) => {
+            setErrorMessage(msg);
+            setGoogleSheet(null);
+            setPendingAfterSignIn(null);
+          }}
+        />
+      )}
+
+      {showPaywall && googleUser && (
+        <PaywallSheet
+          seasonLabel={currentSeason}
+          userId={googleUser.email}
+          onClose={() => setShowPaywall(false)}
+          onPaid={async () => {
+            onSeasonPaid();
+            setShowPaywall(false);
+            try {
+              await shareExportFile();
+            } catch {
+              setErrorMessage("Export failed after payment. Try Export Again.");
+            }
+          }}
+        />
+      )}
+
+      {showSyncHelp && googleUser && (
+        <SyncInstructionsSheet
+          email={googleUser.email}
+          onClose={() => setShowSyncHelp(false)}
+        />
       )}
     </div>
   );

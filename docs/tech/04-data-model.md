@@ -78,7 +78,9 @@ snaptax_receipts *───1 image (image_url → Vercel Blob)
 | amount, currency | NUMERIC / varchar | 金额与币种 |
 | merchant_name, category | varchar | AI 识别 |
 | deductible | BOOLEAN | 默认 true |
-| ai_raw | JSONB | OpenAI 原始响应 |
+| **tax_amount** | NUMERIC(10,2) | 估算省税；**仅 OpenAI 路径写入**；顶栏 SUM |
+| **data_region** | varchar(8) | 税法辖区快照 `us` \| `eu`（与物理驻留解耦） |
+| ai_raw | JSONB | OpenAI 原始响应 + ratio/VAT 等 |
 | captured_at | TIMESTAMPTZ(3) | 上传时间 |
 | snap_at | TIMESTAMPTZ(3)? | 拍照时间 |
 | processed_at | TIMESTAMPTZ(3)? | AI 完成时间 |

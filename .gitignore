@@ -33,6 +33,10 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# local config with secrets (use *.example as templates)
+config/paddle.conf
+config/google-auth.conf
+
 # vercel
 .vercel
 

@@ -16,6 +16,8 @@ description: >-
 3. For database/schema changes, read `docs/tech/DB-DESIGN-SPEC.md` first
 4. For copy/interaction details, read `docs/prd/0.0.1.md` relevant section
 5. Check §11 **实现状态** — do not assume Google/Paddle/API already exist in code
+6. **MVP 落地顺序：** `docs/superpowers/plans/2026-06-07-mvp-master-implementation.md`
+7. **省税：** `docs/superpowers/specs/2026-06-07-tax-savings-regional-design.md` · rule `snap1099-tax.mdc` — no client `×0.25`
 
 ## Decision tree: auth UI
 

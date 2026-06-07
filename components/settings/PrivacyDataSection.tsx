@@ -5,8 +5,11 @@ import type { LegalDoc } from "@/lib/legal/content";
 import { LEGAL_CONTACT_EMAIL, formatDataStorageLabel } from "@/lib/legal/content";
 import { LegalSheet } from "@/components/legal/LegalSheet";
 import { clearLocalAppData } from "@/lib/storage/clearLocalData";
+import { deleteAccountApi } from "@/lib/client/authApi";
+import { ensureGhostSession } from "@/lib/client/ghostClient";
 
 interface PrivacyDataSectionProps {
+  isSignedIn?: boolean;
   onLocalDataCleared?: () => void;
 }
 
@@ -43,21 +46,31 @@ function SettingsRow({
 }
 
 export function PrivacyDataSection({
+  isSignedIn = false,
   onLocalDataCleared,
 }: PrivacyDataSectionProps) {
   const [legalDoc, setLegalDoc] = useState<LegalDoc | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const storageLabel = formatDataStorageLabel();
 
   const handleDelete = async () => {
     setDeleting(true);
+    setError(null);
     try {
-      // TODO: DELETE /api/users/me when signed in
+      if (navigator.onLine) {
+        if (!isSignedIn) {
+          await ensureGhostSession();
+        }
+        await deleteAccountApi(isSignedIn);
+      }
       await clearLocalAppData();
       setShowDeleteConfirm(false);
       onLocalDataCleared?.();
+    } catch {
+      setError("Delete failed. Please try again.");
     } finally {
       setDeleting(false);
     }
@@ -96,6 +109,11 @@ export function PrivacyDataSection({
             onClick={() => setShowDeleteConfirm(true)}
           />
         </div>
+        {error && (
+          <p className="mt-3 text-center text-sm font-bold text-red-500" role="alert">
+            {error}
+          </p>
+        )}
       </section>
 
       <LegalSheet doc={legalDoc} onClose={() => setLegalDoc(null)} />
@@ -107,8 +125,9 @@ export function PrivacyDataSection({
               Delete Account
             </p>
             <p className="mt-4 text-sm leading-relaxed text-zinc-300">
-              Clears receipts on this device and requests deletion of Ghost-linked
-              cloud data where applicable. Cannot be undone.
+              {isSignedIn
+                ? "This is irreversible. All cloud receipts and account data will be permanently deleted."
+                : "Clears all receipts on this device and cloud Ghost data. Cannot be undone."}
             </p>
             <button
               type="button"

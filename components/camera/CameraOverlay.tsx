@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  attachStreamToVideo,
   captureVideoFrame,
   getCameraErrorMessage,
   openCameraStream,
@@ -9,12 +10,14 @@ import {
 } from "@/lib/camera/capturePhoto";
 
 interface CameraOverlayProps {
+  initialStreamPromise: Promise<MediaStream>;
   onCapture: (file: File) => void;
   onClose: () => void;
   onFallback: () => void;
 }
 
 export function CameraOverlay({
+  initialStreamPromise,
   onCapture,
   onClose,
   onFallback,
@@ -31,34 +34,37 @@ export function CameraOverlay({
     setReady(false);
   }, []);
 
-  const startStream = useCallback(async () => {
-    setError(null);
-    setReady(false);
-    stopStream();
+  const startStream = useCallback(
+    async (streamSource?: Promise<MediaStream>) => {
+      setError(null);
+      setReady(false);
+      stopStream();
 
-    try {
-      const stream = await openCameraStream();
-      streamRef.current = stream;
+      try {
+        const stream = await (streamSource ?? openCameraStream());
+        streamRef.current = stream;
 
-      const video = videoRef.current;
-      if (!video) {
-        stopCameraStream(stream);
-        return;
+        const video = videoRef.current;
+        if (!video) {
+          stopCameraStream(stream);
+          setError("无法打开相机，请重试");
+          return;
+        }
+
+        await attachStreamToVideo(video, stream);
+        setReady(true);
+      } catch (err) {
+        stopStream();
+        setError(getCameraErrorMessage(err));
       }
-
-      video.srcObject = stream;
-      video.setAttribute("playsinline", "true");
-      await video.play();
-      setReady(true);
-    } catch (err) {
-      setError(getCameraErrorMessage(err));
-    }
-  }, [stopStream]);
+    },
+    [stopStream],
+  );
 
   useEffect(() => {
-    void startStream();
+    void startStream(initialStreamPromise);
     return () => stopStream();
-  }, [startStream, stopStream]);
+  }, [initialStreamPromise, startStream, stopStream]);
 
   const handleShutter = async () => {
     const video = videoRef.current;
@@ -93,15 +99,13 @@ export function CameraOverlay({
       </header>
 
       <div className="relative flex flex-1 items-center justify-center overflow-hidden">
-        {!error && (
-          <video
-            ref={videoRef}
-            autoPlay
-            muted
-            playsInline
-            className="h-full w-full object-cover"
-          />
-        )}
+        <video
+          ref={videoRef}
+          autoPlay
+          muted
+          playsInline
+          className={`h-full w-full object-cover ${error ? "hidden" : ""}`}
+        />
 
         {!ready && !error && (
           <div className="absolute inset-0 flex items-center justify-center bg-black">
@@ -110,7 +114,7 @@ export function CameraOverlay({
         )}
 
         {error && (
-          <div className="flex flex-col items-center gap-6 px-8 text-center">
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-6 bg-black px-8 text-center">
             <p className="text-lg font-bold text-red-400">{error}</p>
             <button
               type="button"

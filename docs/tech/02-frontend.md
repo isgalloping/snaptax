@@ -21,8 +21,8 @@
 HomeScreen
 ├── receipts[]        ← IndexedDB + API sync
 ├── taxSaved          ← 派生或 API
-├── ghostId           ← localStorage
-├── authUser          ← Google session context
+├── ghostSession      ← Cookie snap1099_ghost（POST /api/ghost/register）
+├── authUser          ← Google session（snap1099_session）
 ├── entitlements      ← 本季 Paddle 权益
 ├── softBannerDismissed
 └── view: home | settings

@@ -48,7 +48,7 @@ snaptax_receipts.image_url ── Blob pathname（私有对象键）
 | 变更 | 列 | 说明 |
 |------|-----|------|
 | **新增** | `data_region` | `VARCHAR(8) NOT NULL DEFAULT 'us'`；应用枚举 `eu`, `us`；MVP 写入/保持 `us` |
-| **新增** | `data_region_locked_at` | `TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP`；Google 登录确认区域时写入 |
+| **新增** | `data_region_locked_at` | `TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP`；Google 登录确认区域时写入 |
 | 不变 | 其余列 | OAuth 双 ID、`industry` 等保持 |
 
 **产品映射：** Google 登录 upsert 用户；Settings 行业六选一；Delete Account 删本行（级联子表）。

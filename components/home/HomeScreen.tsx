@@ -21,12 +21,12 @@ import {
   saveReceipt,
   type StoredReceipt,
 } from "@/lib/storage/receiptDb";
-import { GoogleSignInSheet } from "@/components/auth/GoogleSignInSheet";
 import { TaxHeader } from "./TaxHeader";
 import { SnapButton, type SnapButtonHandle } from "./SnapButton";
 import { ReceiptList } from "./ReceiptList";
-import { GoogleSoftBanner } from "./GoogleSoftBanner";
+import { sumDoneExpenses } from "@/lib/receipts/receiptStats";
 import { SettingsScreen } from "@/components/settings/SettingsScreen";
+import { ReceiptDetailSheet } from "@/components/receipts/ReceiptDetailSheet";
 
 type View = "home" | "settings";
 
@@ -49,18 +49,10 @@ export function HomeScreen() {
   const [taxSaved, setTaxSaved] = useState<number | null>(null);
   const [taxAnimating, setTaxAnimating] = useState(false);
   const [industry, setIndustry] = useState<Industry | null>(null);
-  const [hasOpenedSettings, setHasOpenedSettings] = useState(false);
-  const [showGoogleSheet, setShowGoogleSheet] = useState(false);
   const [resnapId, setResnapId] = useState<string | null>(null);
+  const [selectedReceipt, setSelectedReceipt] = useState<Receipt | null>(null);
   const pollingRef = useRef<Set<string>>(new Set());
   const snapButtonRef = useRef<SnapButtonHandle>(null);
-
-  const completedCount = receipts.filter((r) => r.status === "done").length;
-  const showSoftBanner =
-    auth.hydrated &&
-    !auth.isSignedIn &&
-    !auth.softBannerDismissed &&
-    (completedCount >= 3 || hasOpenedSettings);
 
   const refreshTaxSaved = useCallback((next: Receipt[], apiEstimate?: number) => {
     if (apiEstimate != null && navigator.onLine) {
@@ -284,24 +276,6 @@ export function HomeScreen() {
     snapButtonRef.current?.openCamera();
   }, []);
 
-  const handleSoftBannerOpen = () => {
-    setShowGoogleSheet(true);
-  };
-
-  const handleSoftGoogleSuccess = async () => {
-    const result = await auth.signInWithGoogle();
-    setShowGoogleSheet(false);
-    if (result.taxRecalcQueued > 0) {
-      const stored = await loadReceipts();
-      await syncFromServer(stored);
-    }
-  };
-
-  const handleSoftNotNow = () => {
-    auth.dismissSoftBanner();
-    setShowGoogleSheet(false);
-  };
-
   if (!hydrated || !auth.hydrated) {
     return (
       <div className="flex h-full items-center justify-center bg-black text-yellow-400">
@@ -336,11 +310,10 @@ export function HomeScreen() {
     <div className="flex h-full flex-col overflow-hidden bg-black font-sans text-white select-none">
       <TaxHeader
         taxSaved={taxSaved}
+        totalExpenses={sumDoneExpenses(receipts)}
+        receiptCount={receipts.length}
         animating={taxAnimating}
-        onSettingsClick={() => {
-          setHasOpenedSettings(true);
-          setView("settings");
-        }}
+        onSettingsClick={() => setView("settings")}
       />
 
       <div className="flex max-h-[42vh] shrink-0 flex-col items-center justify-center overflow-hidden px-6 py-4 landscape:max-h-[45vh] min-[568px]:max-h-[38vh]">
@@ -350,20 +323,29 @@ export function HomeScreen() {
           resnapId={resnapId}
         />
 
-        {showSoftBanner && (
-          <GoogleSoftBanner onSignIn={handleSoftBannerOpen} />
-        )}
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col">
-        <ReceiptList receipts={receipts} onResnap={handleResnap} />
+        <ReceiptList
+          receipts={receipts}
+          onSelect={(receipt) => setSelectedReceipt(receipt)}
+          onResnap={handleResnap}
+        />
       </div>
 
-      {showGoogleSheet && (
-        <GoogleSignInSheet
-          mode="soft"
-          onClose={handleSoftNotNow}
-          onSuccess={handleSoftGoogleSuccess}
+      {selectedReceipt && (
+        <ReceiptDetailSheet
+          receipt={selectedReceipt}
+          onClose={() => setSelectedReceipt(null)}
+          onResnap={handleResnap}
+          onReceiptUpdate={(updated) => {
+            setReceipts((prev) =>
+              prev.map((r) => (r.id === updated.id ? { ...r, ...updated } : r)),
+            );
+            setSelectedReceipt((prev) =>
+              prev?.id === updated.id ? { ...prev, ...updated } : prev,
+            );
+          }}
         />
       )}
     </div>

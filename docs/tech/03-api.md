@@ -141,6 +141,8 @@ Query: `season=2026`（默认当前报税季）
 
 需：Google session + 本季 `paid: true`
 
+**Request header（可选）：** `X-Time-Zone: America/New_York` — 客户端 `Intl.DateTimeFormat().resolvedOptions().timeZone`；缺省或非法值时导出列使用 UTC。
+
 **Response 200**
 ```json
 {

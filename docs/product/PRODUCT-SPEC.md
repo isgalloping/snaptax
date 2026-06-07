@@ -90,7 +90,7 @@ Privacy Policy · Terms · **Data storage（美国）** · legal@snap1099.com ·
 - **唯一正式凭证：** Google（禁止手机号/密码注册）  
 - **Ghost：** 零阻断启动；`ghost_id` 关联联网期间产生的小票  
 - **静默绑定：** Google 登录后 Ghost ↔ User；小票与退税额无感延续  
-- **换机：** 未 Google 登录则数据不可恢复 — 软引导、设置、Paywall **三处**提醒  
+- **换机：** 未 Google 登录则数据不可恢复 — **Settings Account** 与 **导出/多设备硬拦截** 提醒（首屏无登录横条）  
 
 ### 2.5 API 与安全铁律
 
@@ -112,14 +112,13 @@ Privacy Policy · Terms · **Data storage（美国）** · legal@snap1099.com ·
 
 ```
 主界面 (Home)
-├── 顶栏：Est. Tax Saved + 设置
-├── 中栏：SNAP RECEIPT
+├── 顶栏：Estimated Tax Saved + 汇总行 + 设置（左上）
+├── 中栏：圆形 SNAP 按钮
 ├── 合规脚注（Terms / Privacy / US processing）
-├── 可选：Google 软引导横条
-└── 底栏：Recent Receipts（三态 · 全量可滚动）
+└── 底栏：状态筛选（All / Ready / Processing / Blurry）+ 全量可滚动列表 · 点击 Bottom Sheet 详情
 
 设置/导出 (Settings)
-├── 账户状态区
+├── 账户状态区（Continue with Google · 换机备份说明）
 ├── 行业六选一
 ├── Privacy & Data（含 US storage 说明）
 ├── View on All Devices

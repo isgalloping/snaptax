@@ -1,6 +1,7 @@
 "use client";
 
 import { apiFetch } from "@/lib/client/ghostClient";
+import { clientTimeZone } from "@/lib/time/timeZone";
 import { requestGoogleCredential } from "@/lib/client/googleAuth";
 import {
   type GoogleUser,
@@ -79,7 +80,10 @@ export async function pollTaxRecalc(
 }
 
 export async function exportTaxPack(season: string): Promise<File> {
-  const res = await apiFetch("/api/export/tax-pack", { method: "POST" });
+  const res = await apiFetch("/api/export/tax-pack", {
+    method: "POST",
+    headers: { "X-Time-Zone": clientTimeZone() },
+  });
   if (res.status === 402) throw new Error("PAYMENT_REQUIRED");
   if (!res.ok) throw new Error("EXPORT_FAILED");
   const blob = await res.blob();

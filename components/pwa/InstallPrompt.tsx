@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { USER_COPY } from "@/lib/copy/userFacing";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -51,24 +52,22 @@ export function InstallPrompt() {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 border-t-4 border-yellow-500 bg-zinc-900 p-4 pb-6">
-      <p className="text-sm font-bold text-white">安装 Snap1099 到主屏幕</p>
-      <p className="mt-1 text-xs text-zinc-400">
-        像原生 App 一样快速打开，工地单手拍小票更方便
-      </p>
+      <p className="text-sm font-bold text-white">{USER_COPY.pwa.title}</p>
+      <p className="mt-1 text-xs text-zinc-400">{USER_COPY.pwa.subtitle}</p>
       <div className="mt-4 flex gap-3">
         <button
           type="button"
           onClick={() => void handleInstall()}
           className="flex-1 min-h-16 rounded-xl bg-yellow-500 py-3 text-sm font-black text-black active:scale-95"
         >
-          安装 App
+          {USER_COPY.pwa.install}
         </button>
         <button
           type="button"
           onClick={() => setDismissed(true)}
           className="min-h-16 px-4 text-sm font-bold text-zinc-400 active:scale-95"
         >
-          稍后
+          {USER_COPY.pwa.dismiss}
         </button>
       </div>
     </div>

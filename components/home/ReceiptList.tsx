@@ -1,63 +1,51 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import type { Receipt } from "@/lib/types";
-import { ReceiptCard } from "./ReceiptCard";
+import { countByStatus } from "@/lib/receipts/receiptStats";
+import { ReceiptFilterBar, type ReceiptFilter } from "./ReceiptFilterBar";
+import { ReceiptListCard } from "./ReceiptListCard";
 
 interface ReceiptListProps {
   receipts: Receipt[];
+  onSelect: (receipt: Receipt) => void;
   onResnap: (id: string) => void;
 }
 
-export function ReceiptList({ receipts, onResnap }: ReceiptListProps) {
-  const [online, setOnline] = useState(true);
+function filterReceipts(receipts: Receipt[], filter: ReceiptFilter): Receipt[] {
+  if (filter === "all") return receipts;
+  return receipts.filter((r) => r.status === filter);
+}
 
-  useEffect(() => {
-    setOnline(navigator.onLine);
-
-    const handleOnline = () => setOnline(true);
-    const handleOffline = () => setOnline(false);
-
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
-    return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
-    };
-  }, []);
+export function ReceiptList({ receipts, onSelect, onResnap }: ReceiptListProps) {
+  const [filter, setFilter] = useState<ReceiptFilter>("all");
+  const counts = useMemo(() => countByStatus(receipts), [receipts]);
+  const visible = useMemo(
+    () => filterReceipts(receipts, filter),
+    [receipts, filter],
+  );
 
   return (
     <footer className="flex min-h-0 flex-1 flex-col rounded-t-3xl border-t-2 border-zinc-800 bg-zinc-900 p-6">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-sm font-bold uppercase tracking-wider text-zinc-400">
-          Recent Receipts
-        </h2>
-        <span
-          className={`flex items-center rounded-full px-2 py-1 text-xs font-bold ${
-            online
-              ? "bg-green-950 text-green-400"
-              : "bg-yellow-950 text-yellow-400"
-          }`}
-        >
-          <span
-            className={`mr-1.5 h-2 w-2 rounded-full ${
-              online ? "animate-pulse bg-green-400" : "bg-yellow-400"
-            }`}
-          />
-          {online ? "Ready / Online" : "Offline · Queued"}
-        </span>
-      </div>
+      <ReceiptFilterBar counts={counts} active={filter} onChange={setFilter} />
+
+      <h2 className="mb-4 text-xs font-bold uppercase tracking-wider text-zinc-500">
+        All Local Receipts
+      </h2>
 
       <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
-        {receipts.length === 0 ? (
+        {visible.length === 0 ? (
           <p className="py-4 text-center text-sm text-zinc-500">
-            Snap your first receipt to get started
+            {receipts.length === 0
+              ? "Snap your first receipt to get started"
+              : "No receipts in this filter"}
           </p>
         ) : (
-          receipts.map((receipt) => (
-            <ReceiptCard
+          visible.map((receipt) => (
+            <ReceiptListCard
               key={receipt.id}
               receipt={receipt}
+              onSelect={onSelect}
               onResnap={onResnap}
             />
           ))

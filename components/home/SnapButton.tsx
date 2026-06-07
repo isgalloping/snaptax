@@ -32,8 +32,6 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
 
     const openCamera = useCallback(() => {
       if (isCameraSupported()) {
-        // Must call getUserMedia synchronously within the user-gesture handler
-        // (required on iOS Safari). useEffect runs too late.
         streamPromiseRef.current = openCameraStream();
         setCameraOpen(true);
       } else {
@@ -45,9 +43,7 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
-      if (file) {
-        onCapture(file);
-      }
+      if (file) onCapture(file);
       e.target.value = "";
     };
 
@@ -68,15 +64,15 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
           <button
             type="button"
             onClick={openCamera}
-            className="flex aspect-square w-[min(240px,70vw)] cursor-pointer flex-col items-center justify-center rounded-3xl border-8 border-white bg-yellow-500 text-black shadow-2xl transition-all active:scale-95 active:bg-yellow-400"
+            className="flex h-56 w-56 cursor-pointer flex-col items-center justify-center rounded-full border-8 border-white bg-yellow-500 text-black shadow-2xl transition-all active:scale-95 active:bg-yellow-400"
           >
-            <CameraIcon className="h-16 w-16 stroke-[2.5]" />
-            <span className="mt-4 text-xl font-black uppercase tracking-wider">
-              SNAP RECEIPT
+            <CameraIcon className="h-14 w-14 stroke-[2.5]" />
+            <span className="mt-3 text-2xl font-black uppercase tracking-wider">
+              Snap
             </span>
-            <span className="mt-1 text-xs font-bold opacity-80">
-              {resnapId ? "Resnap receipt" : "Auto-categorize on snap"}
-            </span>
+            {resnapId && (
+              <span className="mt-1 text-xs font-bold opacity-80">Resnap</span>
+            )}
           </button>
 
           <ComplianceFootnote

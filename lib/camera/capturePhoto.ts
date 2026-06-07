@@ -1,3 +1,5 @@
+import { USER_COPY } from "@/lib/copy/userFacing";
+
 export function isCameraSupported(): boolean {
   return !!(
     typeof navigator !== "undefined" &&
@@ -89,17 +91,17 @@ export function captureVideoFrame(video: HTMLVideoElement): Promise<File> {
 export function getCameraErrorMessage(error: unknown): string {
   if (error instanceof DOMException) {
     if (error.name === "NotAllowedError") {
-      return "需要相机权限才能拍小票，请在浏览器设置中允许访问相机";
+      return USER_COPY.camera.errors.notAllowed;
     }
     if (error.name === "NotFoundError") {
-      return "未检测到可用相机";
+      return USER_COPY.camera.errors.notFound;
     }
     if (error.name === "NotReadableError") {
-      return "相机正在被其他应用占用";
+      return USER_COPY.camera.errors.notReadable;
     }
     if (error.name === "AbortError") {
-      return "无法打开相机，请重试";
+      return USER_COPY.camera.errors.abort;
     }
   }
-  return "无法打开相机，请重试";
+  return USER_COPY.camera.errors.default;
 }

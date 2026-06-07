@@ -4,7 +4,6 @@ export interface GoogleUser {
 }
 
 const USER_KEY = "snap1099_google_user";
-const BANNER_DISMISSED_KEY = "snap1099_soft_banner_dismissed";
 const PAID_PREFIX = "snap1099_season_paid_";
 
 function readJson<T>(key: string): T | null {
@@ -28,16 +27,6 @@ export function saveGoogleUser(user: GoogleUser | null): void {
   } else {
     localStorage.removeItem(USER_KEY);
   }
-}
-
-export function isSoftBannerDismissed(): boolean {
-  if (typeof window === "undefined") return false;
-  return localStorage.getItem(BANNER_DISMISSED_KEY) === "1";
-}
-
-export function dismissSoftBannerForever(): void {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(BANNER_DISMISSED_KEY, "1");
 }
 
 export function isSeasonPaid(season = "2026"): boolean {

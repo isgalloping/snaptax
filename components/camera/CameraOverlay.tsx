@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { USER_COPY } from "@/lib/copy/userFacing";
 import {
   attachStreamToVideo,
   captureVideoFrame,
@@ -47,7 +48,7 @@ export function CameraOverlay({
         const video = videoRef.current;
         if (!video) {
           stopCameraStream(stream);
-          setError("无法打开相机，请重试");
+          setError(USER_COPY.camera.openFailed);
           return;
         }
 
@@ -76,7 +77,7 @@ export function CameraOverlay({
       stopStream();
       onCapture(file);
     } catch {
-      setError("拍照失败，请重试");
+      setError(USER_COPY.camera.captureFailed);
       setCapturing(false);
     }
   };
@@ -109,7 +110,9 @@ export function CameraOverlay({
 
         {!ready && !error && (
           <div className="absolute inset-0 flex items-center justify-center bg-black">
-            <p className="text-lg font-bold text-yellow-400">正在打开相机…</p>
+            <p className="text-lg font-bold text-yellow-400">
+              {USER_COPY.camera.opening}
+            </p>
           </div>
         )}
 
@@ -121,7 +124,7 @@ export function CameraOverlay({
               onClick={() => void startStream()}
               className="min-h-16 rounded-xl bg-yellow-500 px-8 py-4 text-lg font-black text-black active:scale-95"
             >
-              重试
+              {USER_COPY.camera.retry}
             </button>
             <button
               type="button"
@@ -131,7 +134,7 @@ export function CameraOverlay({
               }}
               className="min-h-16 text-sm font-bold text-zinc-400 active:scale-95"
             >
-              从相册选择
+              {USER_COPY.camera.chooseGallery}
             </button>
           </div>
         )}

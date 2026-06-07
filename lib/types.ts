@@ -18,6 +18,10 @@ export interface Receipt {
   category?: string;
   taxAmount?: number;
   dataRegion?: TaxRegion;
+  currency?: string;
+  deductible?: boolean;
+  /** Reserved for future Blob signed URL; MVP uses IndexedDB photo. */
+  imageUrl?: string | null;
   /** Event instant; persist/API as UTC ISO 8601 (`…Z`). */
   timestamp: Date;
   subtitle?: string;

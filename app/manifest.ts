@@ -1,10 +1,11 @@
 import type { MetadataRoute } from "next";
+import { USER_COPY } from "@/lib/copy/userFacing";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "Snap1099",
     short_name: "Snap1099",
-    description: "拍小票自动归类，1099 合同工极简记账助手",
+    description: USER_COPY.app.description,
     start_url: "/",
     scope: "/",
     display: "standalone",

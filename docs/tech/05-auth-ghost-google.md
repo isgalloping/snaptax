@@ -5,7 +5,7 @@
 - 首次打开 **零阻断** Ghost
 - Google 为 **唯一** 正式凭证
 - 登录后 **静默绑定**，UI 数据无感
-- 换机未登录 → 数据不可恢复（客户端 + 三处提醒）
+- 换机未登录 → 数据不可恢复（Settings Account + 导出/多设备硬拦截提醒）
 
 ## 5.2 Ghost 登记与 HMAC（MVP）
 
@@ -66,8 +66,8 @@ sequenceDiagram
 
 | 场景 | 检查 |
 |------|------|
-| 软引导横条 | `!session && !softBannerDismissed && (receipts>=3 \|\| firstSettings)` |
-| Export / Multi-device | `session` required |
+| 自愿登录 | Settings → Account → Continue with Google |
+| Export / Multi-device | `session` required (hard sheet in Settings) |
 | API 写操作（未绑定） | 有效 **Ghost HMAC Cookie** |
 | API 写操作（已绑定 Google） | **Session** required（Ghost token 只读或拒绝写） |
 

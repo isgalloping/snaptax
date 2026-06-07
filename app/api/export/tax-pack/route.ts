@@ -4,7 +4,10 @@ import { apiError, mapErrorToResponse } from "@/lib/api/errors";
 import { getActor } from "@/lib/auth/getActor";
 import { prisma } from "@/lib/prisma";
 import { currentTaxSeason } from "@/lib/tax/season";
+import type { TaxRegion } from "@/lib/tax/types";
 import { withRequestLog } from "@/lib/server/log/withRequestLog";
+import { formatLocalDate, formatLocalDateTime } from "@/lib/format";
+import { parseRequestTimeZone } from "@/lib/time/timeZone";
 import { utcNow } from "@/lib/time/utc";
 
 export const POST = withRequestLog("api.entitlement", async (request, _context) => {
@@ -38,6 +41,10 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
       return apiError("NO_RECEIPTS", "No completed receipts to export", 422);
     }
 
+    const timeZone = parseRequestTimeZone(request.headers.get("X-Time-Zone"));
+    const region = (user.dataRegion ?? "us") as TaxRegion;
+    const exportedAt = utcNow();
+
     const workbook = new ExcelJS.Workbook();
     const expenses = workbook.addWorksheet("Expenses");
     expenses.columns = [
@@ -62,7 +69,7 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
       totalTaxSaved += taxAmount;
 
       expenses.addRow({
-        date: r.capturedAt.toISOString().slice(0, 10),
+        date: formatLocalDate(r.snapAt ?? r.capturedAt, timeZone, region),
         merchant: r.merchantName ?? "",
         amount,
         category: r.category ?? "",
@@ -79,7 +86,7 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
     summary.addRow(["Est. Tax Saved", totalTaxSaved]);
     summary.addRow(["Industry", user.industry ?? "general"]);
     summary.addRow(["Data Region", user.dataRegion]);
-    summary.addRow(["Exported At", utcNow().toISOString()]);
+    summary.addRow(["Exported At", formatLocalDateTime(exportedAt, timeZone, region)]);
 
     const buffer = await workbook.xlsx.writeBuffer();
     const filename = `Snap1099-${season}-Tax-Pack.xlsx`;

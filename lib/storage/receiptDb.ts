@@ -9,6 +9,7 @@ const PHOTOS_STORE = "photos";
 export interface StoredReceipt extends Receipt {
   timestamp: Date;
   pendingUpload?: boolean;
+  writeBudgetRemaining?: number;
 }
 
 function openDb(): Promise<IDBDatabase> {

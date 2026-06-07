@@ -90,19 +90,17 @@ export async function uploadReceipt(
   return fetchReceiptById(created.id);
 }
 
-export async function pollReceiptUntilSettled(
-  id: string,
-  opts: { intervalMs?: number; maxAttempts?: number } = {},
-): Promise<ApiReceipt> {
-  const intervalMs = opts.intervalMs ?? 1500;
-  const maxAttempts = opts.maxAttempts ?? 40;
+export type ProcessTriggerResult =
+  | { ok: true }
+  | { ok: false; reason: "not_found" | "failed"; status: number };
 
-  for (let i = 0; i < maxAttempts; i++) {
-    const receipt = await fetchReceiptById(id);
-    if (receipt.status !== "processing") return receipt;
-    await new Promise((r) => setTimeout(r, intervalMs));
-  }
-  return fetchReceiptById(id);
+export async function triggerReceiptProcess(
+  id: string,
+): Promise<ProcessTriggerResult> {
+  const res = await apiFetch(`/api/receipts/${id}/process`, { method: "POST" });
+  if (res.ok) return { ok: true };
+  if (res.status === 404) return { ok: false, reason: "not_found", status: 404 };
+  return { ok: false, reason: "failed", status: res.status };
 }
 
 export async function deleteReceiptRemote(id: string): Promise<void> {

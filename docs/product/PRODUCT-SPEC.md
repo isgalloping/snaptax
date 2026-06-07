@@ -112,10 +112,9 @@ Privacy Policy · Terms · **Data storage（美国）** · legal@snap1099.com ·
 
 ```
 主界面 (Home)
-├── 顶栏：Estimated Tax Saved + 汇总行 + 设置（左上）
-├── 中栏：圆形 SNAP 按钮
-├── 合规脚注（Terms / Privacy / US processing）
-└── 底栏：状态筛选（All / Ready / Processing / Blurry）+ 全量可滚动列表 · 点击 Bottom Sheet 详情
+├── 顶栏（hero 渐变 ~120px–22vh）：Tax Saved + 副标题（小票 icon）+ 刷新/设置
+├── 快门区：140px 三列（相机 · SNAP RECEIPT + 副标题 · chevron）+ 合规脚注
+└── 底栏（flex-1）：四态筛选 + stuck ⚠️ + PULL TO REFRESH + 圆形徽章卡片（Analyzing 蓝 / Paused 黄）
 
 设置/导出 (Settings)
 ├── 账户状态区（Continue with Google · 换机备份说明）

@@ -69,6 +69,28 @@ export function formatReceiptDetailDateTime(
   }).format(date);
 }
 
+/** Receipt detail hero: long date + time (`June 7, 2026 at 2:43 PM`). */
+export function formatReceiptDetailLongDateTime(
+  date: Date,
+  timeZone = "UTC",
+  region: TaxRegion = "us",
+): string {
+  const locale = localeForRegion(region);
+  const datePart = new Intl.DateTimeFormat(locale, {
+    timeZone,
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  }).format(date);
+  const timePart = new Intl.DateTimeFormat(locale, {
+    timeZone,
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: region === "us",
+  }).format(date);
+  return `${datePart} at ${timePart}`;
+}
+
 /** Excel export date column in the user's IANA timezone. */
 export function formatLocalDate(
   date: Date,

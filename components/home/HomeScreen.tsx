@@ -8,10 +8,20 @@ import { ensureTaxRegionCandidate } from "@/lib/client/taxRegion";
 import {
   apiReceiptToLocal,
   fetchReceiptList,
-  pollReceiptUntilSettled,
   sumLocalTaxSaved,
+  triggerReceiptProcess,
   uploadReceipt,
+  type ApiReceipt,
 } from "@/lib/client/receiptApi";
+import {
+  getBudget,
+  isSyncStuck,
+  recordWriteFailure,
+  resetBudget,
+  withFreshBudget,
+} from "@/lib/client/receiptSyncBudget";
+import { ProcessingQueue } from "@/lib/client/processingQueue";
+import { ProcessingReceiptWatcher } from "@/lib/client/processingReceiptWatcher";
 import { utcNow } from "@/lib/time/utc";
 import {
   deleteReceipt as deleteStoredReceipt,
@@ -34,11 +44,21 @@ function mergeReceipts(local: StoredReceipt[], remote: Receipt[]): Receipt[] {
   const byId = new Map<string, Receipt>();
   for (const r of remote) byId.set(r.id, r);
   for (const r of local) {
-    if (r.pendingUpload || !byId.has(r.id)) byId.set(r.id, r);
+    if (r.pendingUpload) byId.set(r.id, r);
   }
   return [...byId.values()].sort(
     (a, b) => b.timestamp.getTime() - a.timestamp.getTime(),
   );
+}
+
+function deferAfterPaint(fn: () => void) {
+  requestAnimationFrame(() => {
+    requestAnimationFrame(fn);
+  });
+}
+
+function stuckIdsFromReceipts(receipts: StoredReceipt[]): Set<string> {
+  return new Set(receipts.filter(isSyncStuck).map((r) => r.id));
 }
 
 export function HomeScreen() {
@@ -51,8 +71,31 @@ export function HomeScreen() {
   const [industry, setIndustry] = useState<Industry | null>(null);
   const [resnapId, setResnapId] = useState<string | null>(null);
   const [selectedReceipt, setSelectedReceipt] = useState<Receipt | null>(null);
-  const pollingRef = useRef<Set<string>>(new Set());
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const [appHidden, setAppHidden] = useState(false);
+  const [listSyncing, setListSyncing] = useState(false);
+  const [syncStuckIds, setSyncStuckIds] = useState<Set<string>>(() => new Set());
+  const watcherRef = useRef<ProcessingReceiptWatcher | null>(null);
+  const queueRef = useRef<ProcessingQueue | null>(null);
+  const flushPendingUploadsRef = useRef<() => Promise<void>>(async () => {});
+  const uploadPendingInnerRef = useRef<
+    (receipt: StoredReceipt) => Promise<void>
+  >(async () => {});
+  const receiptsRef = useRef<Receipt[]>([]);
+  const cameraOpenRef = useRef(false);
+  const pendingMergeRef = useRef<{
+    receipts: Receipt[];
+    taxSavedEstimate?: number;
+  } | null>(null);
   const snapButtonRef = useRef<SnapButtonHandle>(null);
+
+  useEffect(() => {
+    receiptsRef.current = receipts;
+  }, [receipts]);
+
+  useEffect(() => {
+    cameraOpenRef.current = cameraOpen;
+  }, [cameraOpen]);
 
   const refreshTaxSaved = useCallback((next: Receipt[], apiEstimate?: number) => {
     if (apiEstimate != null && navigator.onLine) {
@@ -62,61 +105,84 @@ export function HomeScreen() {
     }
   }, []);
 
-  const syncFromServer = useCallback(async (local: StoredReceipt[]) => {
-    if (!navigator.onLine) {
-      setReceipts(local);
-      refreshTaxSaved(local);
-      return;
-    }
-    try {
-      const { receipts: remote, taxSavedEstimate } = await fetchReceiptList();
-      const merged = mergeReceipts(local, remote.map(apiReceiptToLocal));
+  const applyMergeNow = useCallback(
+    (merged: Receipt[], taxSavedEstimate?: number) => {
       setReceipts(merged);
       refreshTaxSaved(merged, taxSavedEstimate);
-    } catch {
-      setReceipts(local);
-      refreshTaxSaved(local);
-    }
-  }, [refreshTaxSaved]);
+    },
+    [refreshTaxSaved],
+  );
+
+  const applyMergeOrDefer = useCallback(
+    (merged: Receipt[], taxSavedEstimate?: number) => {
+      if (cameraOpenRef.current) {
+        pendingMergeRef.current = { receipts: merged, taxSavedEstimate };
+        return;
+      }
+      applyMergeNow(merged, taxSavedEstimate);
+    },
+    [applyMergeNow],
+  );
 
   useEffect(() => {
-    let cancelled = false;
+    if (cameraOpen || !pendingMergeRef.current) return;
+    const pending = pendingMergeRef.current;
+    pendingMergeRef.current = null;
+    applyMergeNow(pending.receipts, pending.taxSavedEstimate);
+  }, [cameraOpen, applyMergeNow]);
 
-    void (async () => {
-      try {
-        ensureTaxRegionCandidate();
-        if (navigator.onLine) {
-          await ensureGhostSession();
-        }
-        const stored = await loadReceipts();
-        if (cancelled) return;
-        await syncFromServer(stored);
-      } catch {
-        const stored = await loadReceipts().catch(() => []);
-        if (!cancelled) {
-          setReceipts(stored);
-          refreshTaxSaved(stored);
-        }
-      } finally {
-        if (!cancelled) setHydrated(true);
+  const syncFromServer = useCallback(
+    async (
+      local: StoredReceipt[],
+      applyMode: "immediate" | "defer" = "defer",
+    ): Promise<Receipt[]> => {
+      if (!navigator.onLine) {
+        applyMergeNow(local);
+        return local;
       }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [refreshTaxSaved, syncFromServer]);
+      try {
+        const { receipts: remote, taxSavedEstimate } = await fetchReceiptList();
+        const remoteIds = new Set(remote.map((r) => r.id));
+        for (const r of local) {
+          if (!r.pendingUpload && !remoteIds.has(r.id)) {
+            await deleteStoredReceipt(r.id).catch(() => {});
+          }
+        }
+        const merged = mergeReceipts(local, remote.map(apiReceiptToLocal));
+        if (applyMode === "immediate") {
+          pendingMergeRef.current = null;
+          applyMergeNow(merged, taxSavedEstimate);
+        } else {
+          applyMergeOrDefer(merged, taxSavedEstimate);
+        }
+        return merged;
+      } catch {
+        applyMergeNow(local);
+        return local;
+      }
+    },
+    [applyMergeNow, applyMergeOrDefer],
+  );
 
   const applyReceiptUpdate = useCallback(
     async (updated: StoredReceipt, apiEstimate?: number) => {
+      let merged = updated;
       setReceipts((prev) => {
-        const next = prev.map((r) => (r.id === updated.id ? updated : r));
+        const existing = prev.find((r) => r.id === updated.id) as
+          | StoredReceipt
+          | undefined;
+        merged = {
+          ...updated,
+          writeBudgetRemaining:
+            updated.writeBudgetRemaining ?? existing?.writeBudgetRemaining,
+        };
+        const next = prev.map((r) => (r.id === merged.id ? merged : r));
         refreshTaxSaved(next, apiEstimate);
         return next;
       });
-      await saveReceipt(updated);
+      await saveReceipt(merged);
 
-      if (updated.status === "done" && updated.taxAmount != null) {
+      if (merged.status === "done" && merged.taxAmount != null) {
         setTaxAnimating(true);
         setTimeout(() => setTaxAnimating(false), 600);
       }
@@ -124,68 +190,258 @@ export function HomeScreen() {
     [refreshTaxSaved],
   );
 
-  const pollReceipt = useCallback(
-    async (id: string) => {
-      if (pollingRef.current.has(id)) return;
-      pollingRef.current.add(id);
-      try {
-        const result = await pollReceiptUntilSettled(id);
-        const updated: StoredReceipt = {
-          ...apiReceiptToLocal(result),
-          pendingUpload: false,
-        };
-        const list = await fetchReceiptList().catch(() => null);
-        await applyReceiptUpdate(updated, list?.taxSavedEstimate);
-      } catch {
-        // keep processing state; user can resnap
-      } finally {
-        pollingRef.current.delete(id);
-      }
+  const applyFromApi = useCallback(
+    async (api: ApiReceipt, apiEstimate?: number) => {
+      const updated: StoredReceipt = {
+        ...apiReceiptToLocal(api),
+        pendingUpload: false,
+      };
+      await applyReceiptUpdate(updated, apiEstimate);
     },
     [applyReceiptUpdate],
   );
 
-  const uploadPending = useCallback(
-    async (receipt: StoredReceipt) => {
-      const photo = await loadPhoto(receipt.id);
-      if (!photo) return;
+  const enqueueReceipt = useCallback((id: string) => {
+    setSyncStuckIds((prev) => {
+      if (!prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+    queueRef.current?.enqueue(id);
+  }, []);
 
+  const uploadPendingInner = async (receipt: StoredReceipt) => {
+    if (isSyncStuck(receipt)) return;
+
+    const photo = await loadPhoto(receipt.id);
+    if (!photo) return;
+
+    try {
       const uploaded = await uploadReceipt(photo, receipt.timestamp);
       await deleteStoredReceipt(receipt.id);
       await savePhoto(uploaded.id, photo);
       const updated: StoredReceipt = {
         ...apiReceiptToLocal(uploaded),
         pendingUpload: false,
+        writeBudgetRemaining: getBudget(receipt),
       };
-      setReceipts((prev) => [
-        updated,
-        ...prev.filter((r) => r.id !== receipt.id),
-      ]);
+      setReceipts((prev) => {
+        const next = [updated, ...prev.filter((r) => r.id !== receipt.id)];
+        refreshTaxSaved(next);
+        return next;
+      });
       await saveReceipt(updated);
-      const list = await fetchReceiptList().catch(() => null);
-      refreshTaxSaved(
-        [updated, ...(await loadReceipts()).filter((r) => r.id !== receipt.id && r.id !== uploaded.id)],
-        list?.taxSavedEstimate,
-      );
 
       if (updated.status === "processing") {
-        void pollReceipt(updated.id);
+        queueRef.current?.enqueue(updated.id);
       }
-    },
-    [pollReceipt, refreshTaxSaved],
-  );
+    } catch {
+      const failed = recordWriteFailure(receipt);
+      await saveReceipt(failed);
+      setReceipts((prev) => prev.map((r) => (r.id === failed.id ? failed : r)));
+      if (isSyncStuck(failed)) {
+        setSyncStuckIds((prev) => new Set(prev).add(failed.id));
+      }
+      throw failed;
+    }
+  };
+
+  uploadPendingInnerRef.current = uploadPendingInner;
 
   const flushPendingUploads = useCallback(async () => {
     const stored = await loadReceipts();
-    const pending = stored.filter((r) => r.pendingUpload);
+    const pending = stored.filter(
+      (r) => r.pendingUpload && !isSyncStuck(r),
+    );
     for (const receipt of pending) {
       try {
-        await uploadPending(receipt);
+        await uploadPendingInnerRef.current(receipt);
       } catch {
-        // remain queued
+        // budget updated in uploadPendingInner
       }
     }
-  }, [uploadPending]);
+  }, []);
+
+  flushPendingUploadsRef.current = flushPendingUploads;
+
+  const runDeferredStartup = useCallback(
+    (cancelled: () => boolean) => {
+      if (!navigator.onLine) return;
+      deferAfterPaint(() => {
+        void (async () => {
+          if (cancelled()) return;
+          try {
+            await ensureGhostSession();
+          } catch {
+            return;
+          }
+          if (cancelled()) return;
+          await flushPendingUploadsRef.current();
+          if (cancelled()) return;
+          const storedAfter = await loadReceipts();
+          const mergedAfter = await syncFromServer(storedAfter, "defer");
+          if (cancelled()) return;
+          const stuck = stuckIdsFromReceipts(
+            mergedAfter.filter((r): r is StoredReceipt => true),
+          );
+          setSyncStuckIds((prev) => new Set([...prev, ...stuck]));
+          queueRef.current?.bootstrapFromList(
+            mergedAfter.filter((r) => !stuck.has(r.id)),
+          );
+        })();
+      });
+    },
+    [syncFromServer],
+  );
+
+  useEffect(() => {
+    const applyWriteFailure = (id: string) => {
+      const row = receiptsRef.current.find((r) => r.id === id) as
+        | StoredReceipt
+        | undefined;
+      if (!row) return;
+      const failed = recordWriteFailure(row);
+      receiptsRef.current = receiptsRef.current.map((r) =>
+        r.id === id ? failed : r,
+      );
+      setReceipts([...receiptsRef.current]);
+      void saveReceipt(failed);
+      if (isSyncStuck(failed)) {
+        setSyncStuckIds((prev) => new Set(prev).add(id));
+      }
+    };
+
+    const queue = new ProcessingQueue({
+      onActivate: (id) => watcherRef.current?.watch(id),
+      onBootstrapStale: (ids) => {
+        setSyncStuckIds((prev) => {
+          const next = new Set(prev);
+          for (const id of ids) next.add(id);
+          return next;
+        });
+      },
+    });
+    queueRef.current = queue;
+
+    const watcher = new ProcessingReceiptWatcher({
+      onReceiptUpdate: (api) => {
+        void applyFromApi(api);
+        queue.onSettled(api.id);
+      },
+      onReceiptStuck: (id) => {
+        setSyncStuckIds((prev) => new Set(prev).add(id));
+        queue.onSettled(id);
+      },
+      onTaxSaved: (estimate) => {
+        setReceipts((prev) => {
+          refreshTaxSaved(prev, estimate);
+          return prev;
+        });
+      },
+      getWriteBudget: (id) => {
+        const r = receiptsRef.current.find((x) => x.id === id) as
+          | StoredReceipt
+          | undefined;
+        return r ? getBudget(r) : 0;
+      },
+      onWriteFailure: applyWriteFailure,
+    });
+    watcherRef.current = watcher;
+
+    return () => {
+      queue.clear();
+      watcher.dispose();
+      queueRef.current = null;
+      watcherRef.current = null;
+    };
+  }, [applyFromApi, refreshTaxSaved]);
+
+  const handleRetrySync = useCallback(
+    (id: string) => {
+      void (async () => {
+        const stored = await loadReceipts();
+        const row = stored.find((r) => r.id === id);
+        if (!row) return;
+
+        const refreshed = resetBudget(row);
+        await saveReceipt(refreshed);
+        setSyncStuckIds((prev) => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+        setReceipts((prev) => prev.map((r) => (r.id === id ? refreshed : r)));
+
+        if (refreshed.pendingUpload) {
+          try {
+            await uploadPendingInnerRef.current(refreshed);
+          } catch {
+            // budget updated in uploadPendingInner
+          }
+          return;
+        }
+
+        const result = await triggerReceiptProcess(id);
+        if (result.ok === false && result.reason === "failed") {
+          const failed = recordWriteFailure(refreshed);
+          await saveReceipt(failed);
+          setReceipts((prev) => prev.map((r) => (r.id === id ? failed : r)));
+          if (isSyncStuck(failed)) {
+            setSyncStuckIds((prev) => new Set(prev).add(id));
+          }
+          return;
+        }
+        enqueueReceipt(id);
+        watcherRef.current?.tickOnce();
+      })();
+    },
+    [enqueueReceipt],
+  );
+
+  const handleManualListSync = useCallback(async () => {
+    if (!navigator.onLine || listSyncing) return;
+    setListSyncing(true);
+    try {
+      const stored = await loadReceipts();
+      await syncFromServer(stored, "immediate");
+    } finally {
+      setListSyncing(false);
+    }
+  }, [listSyncing, syncFromServer]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        ensureTaxRegionCandidate();
+        const stored = await loadReceipts();
+        if (cancelled) return;
+
+        setSyncStuckIds(stuckIdsFromReceipts(stored));
+        setReceipts(stored);
+        refreshTaxSaved(stored);
+        setHydrated(true);
+
+        if (navigator.onLine) {
+          runDeferredStartup(() => cancelled);
+        }
+      } catch {
+        const stored = await loadReceipts().catch(() => []);
+        if (!cancelled) {
+          setReceipts(stored);
+          setSyncStuckIds(stuckIdsFromReceipts(stored));
+          refreshTaxSaved(stored);
+          setHydrated(true);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [refreshTaxSaved, runDeferredStartup, syncFromServer]);
 
   useEffect(() => {
     const handleOnline = () => {
@@ -195,15 +451,41 @@ export function HomeScreen() {
         } catch {
           return;
         }
-        await flushPendingUploads();
-        const stored = await loadReceipts();
-        await syncFromServer(stored);
+        runDeferredStartup(() => false);
       })();
     };
 
     window.addEventListener("online", handleOnline);
     return () => window.removeEventListener("online", handleOnline);
-  }, [flushPendingUploads, syncFromServer]);
+  }, [runDeferredStartup]);
+
+  useEffect(() => {
+    if (!navigator.onLine) return;
+
+    const retryPending = () => {
+      if (!navigator.onLine || document.visibilityState === "hidden") return;
+      void flushPendingUploadsRef.current();
+    };
+
+    const intervalId = window.setInterval(retryPending, 60_000);
+    return () => window.clearInterval(intervalId);
+  }, []);
+
+  useEffect(() => {
+    const onVisibility = () => setAppHidden(document.hidden);
+    document.addEventListener("visibilitychange", onVisibility);
+    onVisibility();
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, []);
+
+  useEffect(() => {
+    const shouldPause =
+      cameraOpen ||
+      selectedReceipt != null ||
+      view === "settings" ||
+      appHidden;
+    watcherRef.current?.setPaused(shouldPause);
+  }, [cameraOpen, selectedReceipt, view, appHidden]);
 
   const handleCapture = useCallback(
     async (file: File) => {
@@ -213,17 +495,25 @@ export function HomeScreen() {
       if (replaceId) {
         setReceipts((prev) => prev.filter((r) => r.id !== replaceId));
         await deleteStoredReceipt(replaceId);
+        watcherRef.current?.unwatch(replaceId);
+        queueRef.current?.onSettled(replaceId);
+        setSyncStuckIds((prev) => {
+          if (!prev.has(replaceId)) return prev;
+          const next = new Set(prev);
+          next.delete(replaceId);
+          return next;
+        });
       }
 
       const id = crypto.randomUUID();
       const snapAt = utcNow();
-      const processingReceipt: StoredReceipt = {
+      const processingReceipt: StoredReceipt = withFreshBudget({
         id,
         status: "processing",
         merchant: "Scanning",
         timestamp: snapAt,
         pendingUpload: !navigator.onLine,
-      };
+      });
 
       setReceipts((prev) => [processingReceipt, ...prev]);
       await savePhoto(id, file);
@@ -240,34 +530,35 @@ export function HomeScreen() {
         const updated: StoredReceipt = {
           ...apiReceiptToLocal(uploaded),
           pendingUpload: false,
+          writeBudgetRemaining: getBudget(processingReceipt),
         };
-        setReceipts((prev) => [
-          updated,
-          ...prev.filter((r) => r.id !== id),
-        ]);
+        setReceipts((prev) => {
+          const next = [updated, ...prev.filter((r) => r.id !== id)];
+          refreshTaxSaved(next);
+          return next;
+        });
         await saveReceipt(updated);
 
         if (updated.status === "done" && updated.taxAmount != null) {
           setTaxAnimating(true);
           setTimeout(() => setTaxAnimating(false), 600);
         }
-        const list = await fetchReceiptList().catch(() => null);
-        refreshTaxSaved(
-          [
-            updated,
-            ...(await loadReceipts()).filter((r) => r.id !== id && r.id !== serverId),
-          ],
-          list?.taxSavedEstimate,
-        );
 
         if (updated.status === "processing") {
-          void pollReceipt(updated.id);
+          enqueueReceipt(updated.id);
         }
       } catch {
-        await saveReceipt({ ...processingReceipt, pendingUpload: true });
+        const failed = recordWriteFailure(processingReceipt);
+        await saveReceipt({ ...failed, pendingUpload: true });
+        setReceipts((prev) =>
+          prev.map((r) => (r.id === id ? { ...failed, pendingUpload: true } : r)),
+        );
+        if (isSyncStuck(failed)) {
+          setSyncStuckIds((prev) => new Set(prev).add(id));
+        }
       }
     },
-    [resnapId, applyReceiptUpdate, pollReceipt],
+    [resnapId, enqueueReceipt, refreshTaxSaved],
   );
 
   const handleResnap = useCallback((id: string) => {
@@ -293,6 +584,9 @@ export function HomeScreen() {
         onLocalDataCleared={() => {
           setReceipts([]);
           setTaxSaved(null);
+          setSyncStuckIds(new Set());
+          queueRef.current?.clear();
+          watcherRef.current?.reset();
           setView("home");
         }}
         googleUser={auth.googleUser}
@@ -314,30 +608,40 @@ export function HomeScreen() {
         receiptCount={receipts.length}
         animating={taxAnimating}
         onSettingsClick={() => setView("settings")}
+        onSyncClick={handleManualListSync}
+        syncing={listSyncing}
+        syncDisabled={!navigator.onLine}
       />
 
-      <div className="flex max-h-[42vh] shrink-0 flex-col items-center justify-center overflow-hidden px-6 py-4 landscape:max-h-[45vh] min-[568px]:max-h-[38vh]">
+      <div className="shrink-0 px-4 py-2">
         <SnapButton
           ref={snapButtonRef}
           onCapture={handleCapture}
           resnapId={resnapId}
+          onCameraOpenChange={setCameraOpen}
         />
-
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col">
         <ReceiptList
           receipts={receipts}
+          syncStuckIds={syncStuckIds}
           onSelect={(receipt) => setSelectedReceipt(receipt)}
           onResnap={handleResnap}
+          onRetrySync={handleRetrySync}
+          onSyncClick={handleManualListSync}
+          syncing={listSyncing}
+          syncDisabled={!navigator.onLine}
         />
       </div>
 
       {selectedReceipt && (
         <ReceiptDetailSheet
           receipt={selectedReceipt}
+          syncStuck={syncStuckIds.has(selectedReceipt.id)}
           onClose={() => setSelectedReceipt(null)}
           onResnap={handleResnap}
+          onRetrySync={handleRetrySync}
           onReceiptUpdate={(updated) => {
             setReceipts((prev) =>
               prev.map((r) => (r.id === updated.id ? { ...r, ...updated } : r)),
@@ -345,6 +649,16 @@ export function HomeScreen() {
             setSelectedReceipt((prev) =>
               prev?.id === updated.id ? { ...prev, ...updated } : prev,
             );
+            if (updated.status !== "processing") {
+              watcherRef.current?.unwatch(updated.id);
+              queueRef.current?.onSettled(updated.id);
+              setSyncStuckIds((prev) => {
+                if (!prev.has(updated.id)) return prev;
+                const next = new Set(prev);
+                next.delete(updated.id);
+                return next;
+              });
+            }
           }}
         />
       )}

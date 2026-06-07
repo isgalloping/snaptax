@@ -1,7 +1,10 @@
 "use client";
 
 import { formatCurrency } from "@/lib/format";
-import { SettingsIcon } from "@/components/icons/SettingsIcon";
+import { homeVisual } from "@/lib/ui/homeVisual";
+import { ReceiptIcon } from "@/components/icons/ReceiptIcon";
+import { SlidersIcon } from "@/components/icons/SlidersIcon";
+import { RefreshIcon } from "@/components/icons/RefreshIcon";
 
 interface TaxHeaderProps {
   taxSaved: number | null;
@@ -9,7 +12,13 @@ interface TaxHeaderProps {
   receiptCount: number;
   animating: boolean;
   onSettingsClick: () => void;
+  onSyncClick?: () => void;
+  syncing?: boolean;
+  syncDisabled?: boolean;
 }
+
+const actionBtn =
+  "flex h-11 w-11 items-center justify-center rounded-xl border border-zinc-700 bg-black/40 transition-transform active:scale-95 disabled:opacity-40";
 
 export function TaxHeader({
   taxSaved,
@@ -17,35 +26,62 @@ export function TaxHeader({
   receiptCount,
   animating,
   onSettingsClick,
+  onSyncClick,
+  syncing = false,
+  syncDisabled = false,
 }: TaxHeaderProps) {
-  return (
-    <header className="border-b-4 border-yellow-500 bg-zinc-900 px-6 pb-6 pt-4">
-      <div className="mb-4">
-        <button
-          type="button"
-          onClick={onSettingsClick}
-          className="flex h-14 w-14 min-h-14 min-w-14 items-center justify-center rounded-xl border-2 border-zinc-600 bg-zinc-800 transition-transform active:scale-95"
-          aria-label="Settings"
-        >
-          <SettingsIcon className="h-6 w-6 text-white" />
-        </button>
-      </div>
+  const receiptLabel =
+    receiptCount === 1 ? "1 receipt" : `${receiptCount} receipts`;
 
-      <div className="text-center">
-        <p className="text-xs font-bold uppercase tracking-widest text-zinc-400">
-          Estimated Tax Saved
-        </p>
-        <p
-          className={`mt-2 text-5xl font-extrabold tracking-tight text-yellow-400 ${
-            animating ? "animate-tax-bounce text-green-400" : ""
-          }`}
-        >
-          {taxSaved === null ? "$- - -" : formatCurrency(taxSaved)}
-        </p>
-        <p className="mt-3 text-sm font-bold text-zinc-400">
-          Tracking {formatCurrency(totalExpenses)} across {receiptCount}{" "}
-          expense receipt{receiptCount === 1 ? "" : "s"}
-        </p>
+  return (
+    <header className="relative min-h-[120px] max-h-[22vh] shrink-0 overflow-hidden">
+      <div
+        className="absolute inset-0"
+        style={{ background: homeVisual.heroGradient }}
+        aria-hidden
+      />
+      <div className="relative z-10 flex items-center justify-between px-4 py-3">
+        <div className="min-w-0 flex-1 pr-3">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-300">
+            Estimated Tax Saved
+          </p>
+          <p
+            className={`text-4xl font-black tracking-tight text-yellow-400 ${
+              animating ? "animate-tax-bounce text-green-400" : ""
+            }`}
+          >
+            {taxSaved === null ? "$- - -" : formatCurrency(taxSaved)}
+          </p>
+          <p className="mt-0.5 flex items-center gap-1 truncate text-[11px] font-bold text-zinc-400">
+            <ReceiptIcon className="h-3 w-3 shrink-0" />
+            <span>
+              {receiptLabel} • {formatCurrency(totalExpenses)} tracked
+            </span>
+          </p>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          {onSyncClick && (
+            <button
+              type="button"
+              onClick={onSyncClick}
+              disabled={syncDisabled || syncing}
+              className={actionBtn}
+              aria-label="Sync receipts"
+            >
+              <RefreshIcon
+                className={`h-5 w-5 text-white ${syncing ? "animate-spin" : ""}`}
+              />
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onSettingsClick}
+            className={actionBtn}
+            aria-label="Settings"
+          >
+            <SlidersIcon className="h-5 w-5 text-white" />
+          </button>
+        </div>
       </div>
     </header>
   );

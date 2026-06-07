@@ -13,6 +13,13 @@ import {
   uploadReceipt,
   type ApiReceipt,
 } from "@/lib/client/receiptApi";
+import { pollTaxRecalc } from "@/lib/client/authApi";
+import {
+  persistMergedReceipts,
+  remoteReceiptsToLocal,
+  top100ByUpdatedAt,
+  unionMergeLWW,
+} from "@/lib/client/receiptSync";
 import {
   getBudget,
   isSyncStuck,
@@ -39,17 +46,6 @@ import { SettingsScreen } from "@/components/settings/SettingsScreen";
 import { ReceiptDetailSheet } from "@/components/receipts/ReceiptDetailSheet";
 
 type View = "home" | "settings";
-
-function mergeReceipts(local: StoredReceipt[], remote: Receipt[]): Receipt[] {
-  const byId = new Map<string, Receipt>();
-  for (const r of remote) byId.set(r.id, r);
-  for (const r of local) {
-    if (r.pendingUpload) byId.set(r.id, r);
-  }
-  return [...byId.values()].sort(
-    (a, b) => b.timestamp.getTime() - a.timestamp.getTime(),
-  );
-}
 
 function deferAfterPaint(fn: () => void) {
   requestAnimationFrame(() => {
@@ -142,23 +138,22 @@ export function HomeScreen() {
       }
       try {
         const { receipts: remote, taxSavedEstimate } = await fetchReceiptList();
-        const remoteIds = new Set(remote.map((r) => r.id));
-        for (const r of local) {
-          if (!r.pendingUpload && !remoteIds.has(r.id)) {
-            await deleteStoredReceipt(r.id).catch(() => {});
-          }
-        }
-        const merged = mergeReceipts(local, remote.map(apiReceiptToLocal));
+        const fullMerged = unionMergeLWW(
+          local,
+          remoteReceiptsToLocal(remote),
+        );
+        await persistMergedReceipts(fullMerged, local);
+        const visible = top100ByUpdatedAt(fullMerged);
         if (applyMode === "immediate") {
           pendingMergeRef.current = null;
-          applyMergeNow(merged, taxSavedEstimate);
+          applyMergeNow(visible, taxSavedEstimate);
         } else {
-          applyMergeOrDefer(merged, taxSavedEstimate);
+          applyMergeOrDefer(visible, taxSavedEstimate);
         }
-        return merged;
+        return visible;
       } catch {
-        applyMergeNow(local);
-        return local;
+        applyMergeNow(top100ByUpdatedAt(local));
+        return top100ByUpdatedAt(local);
       }
     },
     [applyMergeNow, applyMergeOrDefer],
@@ -177,8 +172,8 @@ export function HomeScreen() {
             updated.writeBudgetRemaining ?? existing?.writeBudgetRemaining,
         };
         const next = prev.map((r) => (r.id === merged.id ? merged : r));
-        refreshTaxSaved(next, apiEstimate);
-        return next;
+        refreshTaxSaved(top100ByUpdatedAt(next as StoredReceipt[]), apiEstimate);
+        return top100ByUpdatedAt(next as StoredReceipt[]);
       });
       await saveReceipt(merged);
 
@@ -228,8 +223,8 @@ export function HomeScreen() {
       };
       setReceipts((prev) => {
         const next = [updated, ...prev.filter((r) => r.id !== receipt.id)];
-        refreshTaxSaved(next);
-        return next;
+        refreshTaxSaved(top100ByUpdatedAt(next));
+        return top100ByUpdatedAt(next);
       });
       await saveReceipt(updated);
 
@@ -410,6 +405,32 @@ export function HomeScreen() {
     }
   }, [listSyncing, syncFromServer]);
 
+  const handlePostLoginSync = useCallback(
+    async (taxRecalcQueued: number) => {
+      if (!navigator.onLine) return;
+      try {
+        await ensureGhostSession();
+      } catch {
+        return;
+      }
+      await flushPendingUploadsRef.current();
+      const stored = await loadReceipts();
+      const merged = await syncFromServer(stored, "immediate");
+      const stuck = stuckIdsFromReceipts(merged as StoredReceipt[]);
+      setSyncStuckIds((prev) => new Set([...prev, ...stuck]));
+      queueRef.current?.bootstrapFromList(
+        merged.filter((r) => !stuck.has(r.id)),
+      );
+      if (taxRecalcQueued > 0) {
+        await pollTaxRecalc(taxRecalcQueued, async () => {
+          const latest = await loadReceipts();
+          await syncFromServer(latest, "immediate");
+        });
+      }
+    },
+    [syncFromServer],
+  );
+
   useEffect(() => {
     let cancelled = false;
 
@@ -419,9 +440,10 @@ export function HomeScreen() {
         const stored = await loadReceipts();
         if (cancelled) return;
 
+        const visible = top100ByUpdatedAt(stored);
         setSyncStuckIds(stuckIdsFromReceipts(stored));
-        setReceipts(stored);
-        refreshTaxSaved(stored);
+        setReceipts(visible);
+        refreshTaxSaved(visible);
         setHydrated(true);
 
         if (navigator.onLine) {
@@ -430,9 +452,10 @@ export function HomeScreen() {
       } catch {
         const stored = await loadReceipts().catch(() => []);
         if (!cancelled) {
-          setReceipts(stored);
+          const visible = top100ByUpdatedAt(stored);
+          setReceipts(visible);
           setSyncStuckIds(stuckIdsFromReceipts(stored));
-          refreshTaxSaved(stored);
+          refreshTaxSaved(visible);
           setHydrated(true);
         }
       }
@@ -512,10 +535,11 @@ export function HomeScreen() {
         status: "processing",
         merchant: "Scanning",
         timestamp: snapAt,
+        updatedAt: snapAt,
         pendingUpload: !navigator.onLine,
       });
 
-      setReceipts((prev) => [processingReceipt, ...prev]);
+      setReceipts((prev) => top100ByUpdatedAt([processingReceipt, ...prev]));
       await savePhoto(id, file);
       await saveReceipt(processingReceipt);
 
@@ -534,8 +558,8 @@ export function HomeScreen() {
         };
         setReceipts((prev) => {
           const next = [updated, ...prev.filter((r) => r.id !== id)];
-          refreshTaxSaved(next);
-          return next;
+          refreshTaxSaved(top100ByUpdatedAt(next));
+          return top100ByUpdatedAt(next);
         });
         await saveReceipt(updated);
 
@@ -593,6 +617,7 @@ export function HomeScreen() {
         seasonPaid={auth.seasonPaid}
         currentSeason={auth.currentSeason}
         onSignInWithGoogle={auth.signInWithGoogle}
+        onPostLoginSync={handlePostLoginSync}
         onSeasonPaid={auth.markSeasonPaid}
         refreshSeasonPaid={auth.refreshSeasonPaid}
         isSignedIn={auth.isSignedIn}

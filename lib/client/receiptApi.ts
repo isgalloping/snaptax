@@ -15,6 +15,7 @@ export type ApiReceipt = {
   dataRegion: TaxRegion;
   capturedAt: string;
   snapAt?: string | null;
+  updatedAt: string;
 };
 
 export type ReceiptListResponse = {
@@ -23,6 +24,7 @@ export type ReceiptListResponse = {
 };
 
 export function apiReceiptToLocal(r: ApiReceipt): Receipt {
+  const timestamp = parseUtcISOString(r.snapAt ?? r.capturedAt);
   return {
     id: r.id,
     status: r.status,
@@ -33,7 +35,8 @@ export function apiReceiptToLocal(r: ApiReceipt): Receipt {
     dataRegion: r.dataRegion,
     currency: r.currency ?? undefined,
     deductible: r.deductible,
-    timestamp: parseUtcISOString(r.snapAt ?? r.capturedAt),
+    timestamp,
+    updatedAt: r.updatedAt ? parseUtcISOString(r.updatedAt) : timestamp,
     pendingUpload: false,
   };
 }
@@ -48,9 +51,11 @@ export function sumLocalTaxSaved(receipts: Receipt[]): number {
 }
 
 export async function fetchReceiptList(
-  limit = 50,
+  limit = 100,
 ): Promise<ReceiptListResponse> {
-  const res = await apiFetch(`/api/receipts?limit=${limit}`);
+  const res = await apiFetch(
+    `/api/receipts?limit=${limit}&orderBy=updatedAt`,
+  );
   if (!res.ok) throw new Error("FETCH_RECEIPTS_FAILED");
   return (await res.json()) as ReceiptListResponse;
 }

@@ -11,7 +11,10 @@ export async function ensureGhostSession(): Promise<string> {
     },
   });
   if (!res.ok) throw new Error("ghost register failed");
-  const { ghostId } = (await res.json()) as { ghostId: string };
+  const { ghostId } = (await res.json()) as {
+    ghostId: string;
+    reused?: boolean;
+  };
   if (typeof localStorage !== "undefined") {
     localStorage.setItem(GHOST_UI_KEY, ghostId);
   }

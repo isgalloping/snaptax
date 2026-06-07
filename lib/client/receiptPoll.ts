@@ -11,6 +11,7 @@ export type PollReceiptResult = {
 };
 
 function fallbackProcessing(id: string): ApiReceipt {
+  const now = new Date().toISOString();
   return {
     id,
     status: "processing",
@@ -19,7 +20,8 @@ function fallbackProcessing(id: string): ApiReceipt {
     category: null,
     taxAmount: 0,
     dataRegion: "us",
-    capturedAt: new Date().toISOString(),
+    capturedAt: now,
+    updatedAt: now,
   };
 }
 

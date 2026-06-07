@@ -1,0 +1,102 @@
+import { apiReceiptToLocal } from "@/lib/client/receiptApi";
+import { saveReceipt, type StoredReceipt } from "@/lib/storage/receiptDb";
+import type { Receipt } from "@/lib/types";
+
+export const RECEIPT_SYNC_LIMIT = 100;
+
+export function receiptUpdatedAt(receipt: Pick<Receipt, "updatedAt" | "timestamp">): Date {
+  return receipt.updatedAt ?? receipt.timestamp;
+}
+
+export function top100ByUpdatedAt(receipts: StoredReceipt[]): StoredReceipt[] {
+  return [...receipts]
+    .sort(
+      (a, b) =>
+        receiptUpdatedAt(b).getTime() - receiptUpdatedAt(a).getTime(),
+    )
+    .slice(0, RECEIPT_SYNC_LIMIT);
+}
+
+function isRemoteNewer(
+  remoteUpdatedAt: Date | undefined,
+  localUpdatedAt: Date,
+): boolean {
+  if (!remoteUpdatedAt) return false;
+  return remoteUpdatedAt.getTime() > localUpdatedAt.getTime();
+}
+
+export function unionMergeLWW(
+  local: StoredReceipt[],
+  remote: Receipt[],
+): StoredReceipt[] {
+  const byId = new Map<string, StoredReceipt>();
+
+  for (const row of local) {
+    byId.set(row.id, row);
+  }
+
+  for (const remoteRow of remote) {
+    const existing = byId.get(remoteRow.id);
+    const remoteStored: StoredReceipt = {
+      ...(existing ?? {}),
+      ...remoteRow,
+      timestamp: remoteRow.timestamp,
+      updatedAt: remoteRow.updatedAt ?? remoteRow.timestamp,
+      pendingUpload: false,
+      writeBudgetRemaining: existing?.writeBudgetRemaining,
+    };
+
+    if (!existing) {
+      byId.set(remoteRow.id, remoteStored);
+      continue;
+    }
+
+    if (existing.pendingUpload) continue;
+
+    const localUpdatedAt = receiptUpdatedAt(existing);
+    const remoteUpdatedAt = remoteRow.updatedAt ?? remoteRow.timestamp;
+    if (isRemoteNewer(remoteUpdatedAt, localUpdatedAt)) {
+      byId.set(remoteRow.id, remoteStored);
+    }
+  }
+
+  return [...byId.values()];
+}
+
+export async function persistMergedReceipts(
+  merged: StoredReceipt[],
+  local: StoredReceipt[],
+): Promise<void> {
+  const localById = new Map(local.map((r) => [r.id, r]));
+  for (const row of merged) {
+    const existing = localById.get(row.id);
+    const stored: StoredReceipt = {
+      ...(existing ?? {}),
+      ...row,
+      timestamp: row.timestamp,
+      updatedAt: row.updatedAt ?? row.timestamp,
+      pendingUpload: Boolean(row.pendingUpload),
+      writeBudgetRemaining:
+        row.writeBudgetRemaining ?? existing?.writeBudgetRemaining,
+    };
+
+    const unchanged =
+      existing &&
+      existing.status === stored.status &&
+      existing.pendingUpload === stored.pendingUpload &&
+      existing.taxAmount === stored.taxAmount &&
+      existing.merchant === stored.merchant &&
+      receiptUpdatedAt(existing).getTime() ===
+        receiptUpdatedAt(stored).getTime();
+
+    if (!unchanged) {
+      await saveReceipt(stored);
+    }
+  }
+}
+
+export function remoteReceiptsToLocal(
+  remote: Parameters<typeof apiReceiptToLocal>[0][],
+): Receipt[] {
+  return remote.map(apiReceiptToLocal);
+}

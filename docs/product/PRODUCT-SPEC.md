@@ -116,7 +116,7 @@ Privacy Policy · Terms · **Data storage（美国）** · legal@snap1099.com ·
 ├── 中栏：SNAP RECEIPT
 ├── 合规脚注（Terms / Privacy / US processing）
 ├── 可选：Google 软引导横条
-└── 底栏：Recent Receipts（三态）
+└── 底栏：Recent Receipts（三态 · 全量可滚动）
 
 设置/导出 (Settings)
 ├── 账户状态区

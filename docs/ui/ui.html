@@ -10,7 +10,7 @@
         * { -webkit-tap-highlight-color: transparent; }
     </style>
 </head>
-<body class="bg-black text-white font-sans h-screen flex flex-col justify-between overflow-hidden select-none">
+<body class="bg-black text-white font-sans h-screen flex flex-col overflow-hidden select-none">
 
 <header class="p-6 bg-zinc-900 border-b-4 border-yellow-500 flex justify-between items-center">
     <div>
@@ -24,16 +24,17 @@
     </button>
 </header>
 
-<main class="flex-1 flex flex-col items-center justify-center px-6">
-    <label class="w-full max-w-sm aspect-square bg-yellow-500 rounded-3xl flex flex-col items-center justify-center text-black cursor-pointer shadow-2xl active:bg-yellow-400 active:scale-95 transition-all border-8 border-white">
+<div class="flex max-h-[42vh] shrink-0 flex-col items-center justify-center overflow-hidden px-6 py-4 min-[568px]:max-h-[38vh] landscape:max-h-[45vh]">
+<main class="flex shrink-0 flex-col items-center">
+    <label class="aspect-square w-[min(240px,70vw)] bg-yellow-500 rounded-3xl flex flex-col items-center justify-center text-black cursor-pointer shadow-2xl active:bg-yellow-400 active:scale-95 transition-all border-8 border-white">
         <input type="file" accept="image/*" capture="environment" class="hidden" onchange="alert('照片已安全暂存，正在后台分类...')">
 
-        <svg class="w-24 h-24 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-16 h-16 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"></path>
             <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z"></path>
         </svg>
 
-        <span class="text-2xl font-black uppercase tracking-wider mt-4">SNAP RECEIPT</span>
+        <span class="text-xl font-black uppercase tracking-wider mt-4">SNAP RECEIPT</span>
         <span class="text-xs font-bold opacity-80 mt-1">拍小票 (自动归类)</span>
     </label>
 
@@ -45,8 +46,10 @@
         Online processing stores data in the United States.
     </p>
 </main>
+</div>
 
-<footer class="p-6 bg-zinc-900 rounded-t-3xl border-t-2 border-zinc-850 max-h-[35vh] flex flex-col">
+<div class="flex min-h-0 flex-1 flex-col">
+<footer class="flex min-h-0 flex-1 flex-col p-6 bg-zinc-900 rounded-t-3xl border-t-2 border-zinc-850">
     <div class="flex justify-between items-center mb-4">
         <h2 class="text-sm font-bold uppercase tracking-wider text-zinc-400">Recent Receipts</h2>
         <span class="flex items-center text-xs text-green-400 font-bold bg-green-950 px-2 py-1 rounded-full">
@@ -88,6 +91,7 @@
 
     </div>
 </footer>
+</div>
 
 </body>
 </html>

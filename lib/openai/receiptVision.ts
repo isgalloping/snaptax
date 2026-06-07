@@ -1,22 +1,40 @@
 import OpenAI from "openai";
 import { EU_RECEIPT_PROMPT, US_RECEIPT_PROMPT } from "@/lib/openai/prompts";
 import { EuReceiptAiSchema, UsReceiptAiSchema } from "@/lib/openai/schemas";
+import { prepareVisionImage } from "@/lib/receipts/prepareVisionImage";
 import { computeTaxAmount } from "@/lib/tax/computeTaxAmount";
 import { computeEuVatAmount } from "@/lib/tax/computeEu";
 import { usDeductibleBase } from "@/lib/tax/computeUs";
 import { usMarginalRate } from "@/lib/tax/usCategories";
 import type { ReceiptAiFields, TaxRegion } from "@/lib/tax/types";
 
-import { getOpenAiApiKey, getOpenAiModel } from "@/lib/server/env";
+import {
+  getOpenAiApiKey,
+  getOpenAiModel,
+  getOpenAiMaxRetries,
+  getOpenAiTimeoutMs,
+} from "@/lib/server/env";
 
 function openaiClient(): OpenAI {
   const key = getOpenAiApiKey();
   if (!key) throw new Error("OPENAI_API_KEY missing");
-  return new OpenAI({ apiKey: key });
+  return new OpenAI({
+    apiKey: key,
+    timeout: getOpenAiTimeoutMs(),
+    maxRetries: getOpenAiMaxRetries(),
+  });
 }
 
 function confidenceThreshold(): number {
   return Number(process.env.RECEIPT_CONFIDENCE_THRESHOLD ?? 0.7);
+}
+
+function isOpenAiTimeout(err: unknown): boolean {
+  if (err instanceof OpenAI.APIConnectionTimeoutError) return true;
+  if (err instanceof OpenAI.APIConnectionError) {
+    return /timed?\s*out/i.test(err.message);
+  }
+  return err instanceof Error && /timed?\s*out/i.test(err.message);
 }
 
 export type VisionProcessResult = {
@@ -44,24 +62,34 @@ export async function processReceiptVision(
     ? `User industry context: ${industry}.`
     : "";
 
+  const prepared = await prepareVisionImage(imageBuffer, mime);
   const client = openaiClient();
-  const b64 = imageBuffer.toString("base64");
-  const dataUrl = `data:${mime};base64,${b64}`;
+  const b64 = prepared.buffer.toString("base64");
+  const dataUrl = `data:${prepared.mime};base64,${b64}`;
 
-  const completion = await client.chat.completions.create({
-    model,
-    response_format: { type: "json_object" },
-    messages: [
-      { role: "system", content: `${systemPrompt}\n${industryHint}` },
-      {
-        role: "user",
-        content: [
-          { type: "text", text: "Extract receipt fields from this image." },
-          { type: "image_url", image_url: { url: dataUrl } },
-        ],
-      },
-    ],
-  });
+  let completion: OpenAI.Chat.ChatCompletion;
+  try {
+    completion = await client.chat.completions.create({
+      model,
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: `${systemPrompt}\n${industryHint}` },
+        {
+          role: "user",
+          content: [
+            { type: "text", text: "Extract receipt fields from this image." },
+            {
+              type: "image_url",
+              image_url: { url: dataUrl, detail: "low" },
+            },
+          ],
+        },
+      ],
+    });
+  } catch (err) {
+    if (isOpenAiTimeout(err)) throw new Error("OPENAI_TIMEOUT");
+    throw err;
+  }
 
   const rawText = completion.choices[0]?.message?.content;
   if (!rawText) throw new Error("OPENAI_EMPTY");
@@ -94,7 +122,7 @@ export async function processReceiptVision(
       aiRaw: {
         region: "eu",
         vat_rate: f.vat_rate,
-        vat_amount: computedVat,
+        vat_amount: f.vat_amount,
         computed_vat: f.vat_amount == null && computedVat != null,
         model,
       },

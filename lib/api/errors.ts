@@ -1,34 +1,109 @@
 import { NextResponse } from "next/server";
+import { setPendingError } from "@/lib/server/log/requestLogContext";
+import type { LogMeta } from "@/lib/server/log/types";
+
+export type ResolvedApiError = {
+  code: string;
+  clientMessage: string;
+  status: number;
+};
+
+export function resolveApiError(err: unknown): ResolvedApiError {
+  const message = err instanceof Error ? err.message : "INTERNAL_ERROR";
+  switch (message) {
+    case "UNAUTHORIZED":
+    case "INVALID_GHOST_TOKEN":
+      return {
+        code: "UNAUTHORIZED",
+        clientMessage: "Authentication required",
+        status: 401,
+      };
+    case "GOOGLE_LOGIN_REQUIRED":
+      return {
+        code: "GOOGLE_LOGIN_REQUIRED",
+        clientMessage: "Sign in with Google to continue",
+        status: 401,
+      };
+    case "NOT_FOUND":
+      return {
+        code: "NOT_FOUND",
+        clientMessage: "Resource not found",
+        status: 404,
+      };
+    case "FILE_TOO_LARGE":
+      return {
+        code: "FILE_TOO_LARGE",
+        clientMessage: "File exceeds size limit",
+        status: 413,
+      };
+    case "INVALID_FILE_TYPE":
+      return {
+        code: "INVALID_FILE_TYPE",
+        clientMessage: "Only JPEG and PNG are allowed",
+        status: 415,
+      };
+    case "GHOST_RECEIPT_LIMIT":
+      return {
+        code: "GHOST_RECEIPT_LIMIT",
+        clientMessage: "Too many receipts for unbound ghost",
+        status: 429,
+      };
+    case "RATE_LIMITED":
+      return {
+        code: "RATE_LIMITED",
+        clientMessage: "Too many requests",
+        status: 429,
+      };
+    case "PAYMENT_REQUIRED":
+      return {
+        code: "PAYMENT_REQUIRED",
+        clientMessage: "Payment required",
+        status: 402,
+      };
+    case "NO_RECEIPTS":
+      return {
+        code: "NO_RECEIPTS",
+        clientMessage: "No receipts to export",
+        status: 422,
+      };
+    case "BLOB_CREDENTIALS_MISSING":
+      return {
+        code: "BLOB_CREDENTIALS_MISSING",
+        clientMessage: "Blob storage not configured",
+        status: 500,
+      };
+    case "OPENAI_EMPTY":
+    case "OPENAI_TIMEOUT":
+      return {
+        code: "OPENAI_UNAVAILABLE",
+        clientMessage: "Receipt analysis is temporarily unavailable",
+        status: 503,
+      };
+    default:
+      return {
+        code: "INTERNAL_ERROR",
+        clientMessage: "Something went wrong",
+        status: 500,
+      };
+  }
+}
+
+export function buildErrorMeta(err: unknown): LogMeta {
+  const resolved = resolveApiError(err);
+  const raw =
+    err instanceof Error ? err.message : typeof err === "string" ? err : "unknown";
+  return {
+    errorCode: resolved.code,
+    errorMessage: raw.slice(0, 120),
+  };
+}
 
 export function apiError(code: string, message: string, status: number) {
   return NextResponse.json({ error: { code, message } }, { status });
 }
 
 export function mapErrorToResponse(err: unknown) {
-  const message = err instanceof Error ? err.message : "INTERNAL_ERROR";
-  switch (message) {
-    case "UNAUTHORIZED":
-    case "INVALID_GHOST_TOKEN":
-      return apiError("UNAUTHORIZED", "Authentication required", 401);
-    case "GOOGLE_LOGIN_REQUIRED":
-      return apiError("GOOGLE_LOGIN_REQUIRED", "Sign in with Google to continue", 401);
-    case "NOT_FOUND":
-      return apiError("NOT_FOUND", "Resource not found", 404);
-    case "FILE_TOO_LARGE":
-      return apiError("FILE_TOO_LARGE", "File exceeds size limit", 413);
-    case "INVALID_FILE_TYPE":
-      return apiError("INVALID_FILE_TYPE", "Only JPEG and PNG are allowed", 415);
-    case "GHOST_RECEIPT_LIMIT":
-      return apiError("GHOST_RECEIPT_LIMIT", "Too many receipts for unbound ghost", 429);
-    case "RATE_LIMITED":
-      return apiError("RATE_LIMITED", "Too many requests", 429);
-    case "PAYMENT_REQUIRED":
-      return apiError("PAYMENT_REQUIRED", "Payment required", 402);
-    case "NO_RECEIPTS":
-      return apiError("NO_RECEIPTS", "No receipts to export", 422);
-    case "BLOB_CREDENTIALS_MISSING":
-      return apiError("BLOB_CREDENTIALS_MISSING", "Blob storage not configured", 500);
-    default:
-      return apiError("INTERNAL_ERROR", "Something went wrong", 500);
-  }
+  setPendingError(err);
+  const resolved = resolveApiError(err);
+  return apiError(resolved.code, resolved.clientMessage, resolved.status);
 }

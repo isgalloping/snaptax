@@ -78,7 +78,9 @@
 | `ghostId` | MVP 全量 UUID；可选 env 截断 | — |
 | `userId` | 内部 UUID 可全量 | — |
 
-**禁止：** 密码、Cookie 值、JWT 全文、API Key、小票 base64、完整 `ai_raw`、stack trace（生产 `meta.errorMessage` 仅短句）。
+**禁止：** 密码、Cookie 值、JWT 全文、API Key、小票 base64、完整 `ai_raw`、stack trace 写入 **logfmt 单行**（生产 `meta.errorMessage` 仅短句）。
+
+**dev / preview 补充（2026-06-07）：** 5xx 可在 **第二条** stderr 用 `console.error('[requestId=…]', err)` 输出 stack，与 logfmt 行用 `requestId` 关联。Production 禁止第二条 stack。
 
 ### 2.5 `meta` 白名单
 

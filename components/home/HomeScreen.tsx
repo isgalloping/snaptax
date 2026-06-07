@@ -23,7 +23,7 @@ import {
 } from "@/lib/storage/receiptDb";
 import { GoogleSignInSheet } from "@/components/auth/GoogleSignInSheet";
 import { TaxHeader } from "./TaxHeader";
-import { SnapButton } from "./SnapButton";
+import { SnapButton, type SnapButtonHandle } from "./SnapButton";
 import { ReceiptList } from "./ReceiptList";
 import { GoogleSoftBanner } from "./GoogleSoftBanner";
 import { SettingsScreen } from "@/components/settings/SettingsScreen";
@@ -53,6 +53,7 @@ export function HomeScreen() {
   const [showGoogleSheet, setShowGoogleSheet] = useState(false);
   const [resnapId, setResnapId] = useState<string | null>(null);
   const pollingRef = useRef<Set<string>>(new Set());
+  const snapButtonRef = useRef<SnapButtonHandle>(null);
 
   const completedCount = receipts.filter((r) => r.status === "done").length;
   const showSoftBanner =
@@ -280,6 +281,7 @@ export function HomeScreen() {
   const handleResnap = useCallback((id: string) => {
     setResnapId(id);
     window.scrollTo({ top: 0, behavior: "smooth" });
+    snapButtonRef.current?.openCamera();
   }, []);
 
   const handleSoftBannerOpen = () => {
@@ -331,7 +333,7 @@ export function HomeScreen() {
   }
 
   return (
-    <div className="flex h-full flex-col justify-between overflow-hidden bg-black font-sans text-white select-none">
+    <div className="flex h-full flex-col overflow-hidden bg-black font-sans text-white select-none">
       <TaxHeader
         taxSaved={taxSaved}
         animating={taxAnimating}
@@ -341,13 +343,21 @@ export function HomeScreen() {
         }}
       />
 
-      <SnapButton onCapture={handleCapture} resnapId={resnapId} />
+      <div className="flex max-h-[42vh] shrink-0 flex-col items-center justify-center overflow-hidden px-6 py-4 landscape:max-h-[45vh] min-[568px]:max-h-[38vh]">
+        <SnapButton
+          ref={snapButtonRef}
+          onCapture={handleCapture}
+          resnapId={resnapId}
+        />
 
-      {showSoftBanner && (
-        <GoogleSoftBanner onSignIn={handleSoftBannerOpen} />
-      )}
+        {showSoftBanner && (
+          <GoogleSoftBanner onSignIn={handleSoftBannerOpen} />
+        )}
+      </div>
 
-      <ReceiptList receipts={receipts} onResnap={handleResnap} />
+      <div className="flex min-h-0 flex-1 flex-col">
+        <ReceiptList receipts={receipts} onResnap={handleResnap} />
+      </div>
 
       {showGoogleSheet && (
         <GoogleSignInSheet

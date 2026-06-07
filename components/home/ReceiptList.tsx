@@ -26,10 +26,8 @@ export function ReceiptList({ receipts, onResnap }: ReceiptListProps) {
     };
   }, []);
 
-  const visible = receipts.slice(0, 3);
-
   return (
-    <footer className="flex max-h-[35vh] flex-col rounded-t-3xl border-t-2 border-zinc-800 bg-zinc-900 p-6">
+    <footer className="flex min-h-0 flex-1 flex-col rounded-t-3xl border-t-2 border-zinc-800 bg-zinc-900 p-6">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-sm font-bold uppercase tracking-wider text-zinc-400">
           Recent Receipts
@@ -50,13 +48,13 @@ export function ReceiptList({ receipts, onResnap }: ReceiptListProps) {
         </span>
       </div>
 
-      <div className="flex-1 space-y-3 overflow-y-auto pr-1">
-        {visible.length === 0 ? (
+      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
+        {receipts.length === 0 ? (
           <p className="py-4 text-center text-sm text-zinc-500">
             Snap your first receipt to get started
           </p>
         ) : (
-          visible.map((receipt) => (
+          receipts.map((receipt) => (
             <ReceiptCard
               key={receipt.id}
               receipt={receipt}

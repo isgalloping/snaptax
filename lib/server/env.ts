@@ -44,6 +44,18 @@ export function getOpenAiModel(): string {
   );
 }
 
+export function getOpenAiTimeoutMs(): number {
+  const raw = firstDefined(process.env.OPENAI_TIMEOUT_MS);
+  const parsed = raw ? Number(raw) : 120_000;
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 120_000;
+}
+
+export function getOpenAiMaxRetries(): number {
+  const raw = firstDefined(process.env.OPENAI_MAX_RETRIES);
+  const parsed = raw ? Number(raw) : 2;
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : 2;
+}
+
 export function getBlobReadWriteToken(): string | undefined {
   const token = firstDefined(process.env.BLOB_READ_WRITE_TOKEN);
   return token || undefined;

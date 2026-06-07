@@ -24,6 +24,7 @@ import {
 import { TaxHeader } from "./TaxHeader";
 import { SnapButton, type SnapButtonHandle } from "./SnapButton";
 import { ReceiptList } from "./ReceiptList";
+import { sumDoneExpenses } from "@/lib/receipts/receiptStats";
 import { SettingsScreen } from "@/components/settings/SettingsScreen";
 import { ReceiptDetailSheet } from "@/components/receipts/ReceiptDetailSheet";
 
@@ -309,6 +310,8 @@ export function HomeScreen() {
     <div className="flex h-full flex-col overflow-hidden bg-black font-sans text-white select-none">
       <TaxHeader
         taxSaved={taxSaved}
+        totalExpenses={sumDoneExpenses(receipts)}
+        receiptCount={receipts.length}
         animating={taxAnimating}
         onSettingsClick={() => setView("settings")}
       />
@@ -326,6 +329,7 @@ export function HomeScreen() {
         <ReceiptList
           receipts={receipts}
           onSelect={(receipt) => setSelectedReceipt(receipt)}
+          onResnap={handleResnap}
         />
       </div>
 

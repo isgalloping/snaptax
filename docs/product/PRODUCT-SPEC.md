@@ -112,10 +112,10 @@ Privacy Policy · Terms · **Data storage（美国）** · legal@snap1099.com ·
 
 ```
 主界面 (Home)
-├── 顶栏：Est. Tax Saved + 设置
-├── 中栏：SNAP RECEIPT
+├── 顶栏：Estimated Tax Saved + 汇总行 + 设置（左上）
+├── 中栏：圆形 SNAP 按钮
 ├── 合规脚注（Terms / Privacy / US processing）
-└── 底栏：Recent Receipts（三态 · 全量可滚动 · 点击 Bottom Sheet 详情）
+└── 底栏：状态筛选（All / Ready / Processing / Blurry）+ 全量可滚动列表 · 点击 Bottom Sheet 详情
 
 设置/导出 (Settings)
 ├── 账户状态区（Continue with Google · 换机备份说明）

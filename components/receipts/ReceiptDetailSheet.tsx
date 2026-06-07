@@ -2,13 +2,15 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Receipt } from "@/lib/types";
-import { formatCurrencyForRegion } from "@/lib/format";
+import { formatCurrencyForRegion, formatLocalDate } from "@/lib/format";
 import { fetchReceiptById, apiReceiptToLocal } from "@/lib/client/receiptApi";
 import {
   buildReceiptDetailHero,
+  formatPartialMerchant,
+  irsScheduleLineBadge,
   resolveReceiptImage,
 } from "@/lib/receipts/receiptDetail";
-import { formatReceiptDetailDateTime } from "@/lib/format";
+import { clientTimeZone } from "@/lib/time/timeZone";
 import { ReceiptImageFullscreen } from "@/components/receipts/ReceiptImageFullscreen";
 
 interface ReceiptDetailSheetProps {
@@ -24,6 +26,14 @@ function DetailRow({ label, value }: { label: string; value: string }) {
       <span className="text-sm font-bold text-zinc-400">{label}</span>
       <span className="text-right text-sm font-bold text-white">{value}</span>
     </div>
+  );
+}
+
+function CategoryBadge({ category }: { category: string }) {
+  return (
+    <span className="rounded bg-zinc-700 px-2 py-0.5 text-xs font-black uppercase tracking-wide text-white">
+      {category}
+    </span>
   );
 }
 
@@ -43,6 +53,8 @@ export function ReceiptDetailSheet({
   const hero = buildReceiptDetailHero(receipt);
   const region = receipt.dataRegion ?? "us";
   const currency = receipt.currency ?? (region === "eu" ? "EUR" : "USD");
+  const timeZone = clientTimeZone();
+  const dateCaptured = formatLocalDate(receipt.timestamp, timeZone, region);
 
   useEffect(() => {
     setReceipt(initialReceipt);
@@ -101,6 +113,32 @@ export function ReceiptDetailSheet({
       ? formatCurrencyForRegion(receipt.amount, currency, region)
       : "—";
 
+  const imageBlock = (blurred: boolean) =>
+    imageSrc ? (
+      <button
+        type="button"
+        onClick={() => setFullscreen(true)}
+        className="relative block w-full overflow-hidden rounded-xl border border-zinc-600 active:scale-[0.99]"
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={imageSrc}
+          alt="Receipt thumbnail"
+          className="max-h-48 w-full object-cover"
+        />
+        {blurred && (
+          <span
+            className="pointer-events-none absolute inset-0 bg-black/30 backdrop-blur-sm"
+            aria-hidden
+          />
+        )}
+      </button>
+    ) : (
+      <div className="flex min-h-32 items-center justify-center rounded-xl border border-dashed border-zinc-700 bg-zinc-950 px-4 text-center text-sm font-bold text-zinc-500">
+        {imageMissing ? "Photo not on this device" : "Loading photo…"}
+      </div>
+    );
+
   return (
     <>
       <div
@@ -145,6 +183,9 @@ export function ReceiptDetailSheet({
                   >
                     Calculating your deductions...
                   </p>
+                  <p className="mt-2 text-sm text-zinc-400">
+                    Date Captured: {dateCaptured}
+                  </p>
                 </>
               )}
 
@@ -154,17 +195,17 @@ export function ReceiptDetailSheet({
                     id="receipt-detail-title"
                     className="text-2xl font-black text-red-400"
                   >
-                    Receipt too blurry to read
+                    ⚠️ Tax AI Couldn&apos;t Read This
                   </p>
                   <p className="mt-2 text-sm text-zinc-400">
-                    Snap again in good light, hold steady
+                    The image is too blurry or shaky.
                   </p>
                   <button
                     type="button"
                     onClick={handleResnap}
                     className="mt-6 min-h-16 w-full rounded-xl bg-yellow-500 py-3 text-lg font-black uppercase text-black active:scale-95"
                   >
-                    Resnap receipt
+                    📸 Resnap This Receipt
                   </button>
                 </>
               )}
@@ -174,7 +215,7 @@ export function ReceiptDetailSheet({
                   <p
                     id="receipt-detail-title"
                     className={`text-4xl font-black tracking-tight ${
-                      hero.muted ? "text-zinc-400" : "text-yellow-400"
+                      hero.muted ? "text-zinc-400" : "text-green-400"
                     }`}
                   >
                     {hero.savedLabel}
@@ -190,43 +231,47 @@ export function ReceiptDetailSheet({
               )}
             </section>
 
-            <section className="mb-8 rounded-xl border border-zinc-800 bg-zinc-950 px-4">
-              <DetailRow
-                label="Merchant"
-                value={receipt.merchant ?? "—"}
-              />
-              <DetailRow
-                label="Date"
-                value={formatReceiptDetailDateTime(receipt.timestamp, region)}
-              />
-              <DetailRow label="Total (tax incl.)" value={totalLabel} />
-            </section>
+            {hero.kind === "blurry" && (
+              <section className="mb-8 rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-3">
+                <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-zinc-500">
+                  Partial Details
+                </h3>
+                <p className="text-sm font-bold text-zinc-300">
+                  Possible Merchant: {formatPartialMerchant(receipt.merchant)}
+                </p>
+                <p className="mt-1 text-sm font-bold text-zinc-300">
+                  Date Captured: {dateCaptured}
+                </p>
+              </section>
+            )}
 
-            <section>
-              <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-zinc-500">
-                Original receipt
-              </h3>
-              {imageSrc ? (
-                <button
-                  type="button"
-                  onClick={() => setFullscreen(true)}
-                  className="block w-full overflow-hidden rounded-xl border border-zinc-600 active:scale-[0.99]"
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={imageSrc}
-                    alt="Receipt thumbnail"
-                    className="max-h-48 w-full object-cover"
-                  />
-                </button>
-              ) : (
-                <div className="flex min-h-32 items-center justify-center rounded-xl border border-dashed border-zinc-700 bg-zinc-950 px-4 text-center text-sm font-bold text-zinc-500">
-                  {imageMissing
-                    ? "Photo not on this device"
-                    : "Loading photo…"}
+            {hero.kind === "done" && (
+              <section className="mb-8 rounded-xl border border-zinc-800 bg-zinc-950 px-4">
+                <DetailRow label="Merchant" value={receipt.merchant ?? "—"} />
+                <DetailRow label="Total Amount" value={totalLabel} />
+                <div className="flex items-start justify-between gap-4 border-b border-zinc-800 py-3">
+                  <span className="text-sm font-bold text-zinc-400">Category</span>
+                  <CategoryBadge category={receipt.category ?? "OTHER"} />
                 </div>
-              )}
-            </section>
+                <DetailRow
+                  label="IRS Line"
+                  value={irsScheduleLineBadge(receipt.category)}
+                />
+              </section>
+            )}
+
+            {(hero.kind === "done" ||
+              hero.kind === "blurry" ||
+              hero.kind === "processing") && (
+              <section>
+                <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-zinc-500">
+                  {hero.kind === "blurry"
+                    ? "Blurry Preview"
+                    : "Original Receipt Capture"}
+                </h3>
+                {imageBlock(hero.kind === "blurry")}
+              </section>
+            )}
           </div>
         </div>
       </div>

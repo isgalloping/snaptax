@@ -1,7 +1,7 @@
 import type { Receipt } from "@/lib/types";
 import { formatCurrencyForRegion } from "@/lib/format";
 import { loadPhoto } from "@/lib/storage/receiptDb";
-import { irsScheduleLabel } from "@/lib/tax/irsScheduleLabel";
+import { irsScheduleLineBadge } from "@/lib/tax/irsScheduleLabel";
 
 export type ReceiptDetailHero =
   | { kind: "processing" }
@@ -24,7 +24,7 @@ export function buildReceiptDetailHero(receipt: Receipt): ReceiptDetailHero {
   if (receipt.deductible === false || tax <= 0) {
     return {
       kind: "done",
-      savedLabel: `${formatCurrencyForRegion(0, currency, region)} Saved`,
+      savedLabel: formatCurrencyForRegion(0, currency, region),
       subtitle:
         region === "eu"
           ? "Personal expense — no VAT recovery"
@@ -36,14 +36,21 @@ export function buildReceiptDetailHero(receipt: Receipt): ReceiptDetailHero {
   const formatted = formatCurrencyForRegion(tax, currency, region);
   const subtitle =
     region === "eu"
-      ? `Input VAT · ${formatted} estimated recovery`
-      : `IRS Code: ${irsScheduleLabel(receipt.category)}`;
+      ? "✓ Added to VAT recovery"
+      : "✓ Added to Schedule C Deduction";
 
   return {
     kind: "done",
-    savedLabel: `-${formatted} Saved`,
+    savedLabel: `-${formatted}`,
     subtitle,
   };
+}
+
+export function formatPartialMerchant(merchant: string | undefined): string {
+  if (!merchant?.trim()) return "Unknown (Unclear)";
+  const trimmed = merchant.trim();
+  if (trimmed.length <= 12) return `${trimmed} (Unclear)`;
+  return `${trimmed.slice(0, 12)}... (Unclear)`;
 }
 
 export async function resolveReceiptImage(
@@ -59,3 +66,5 @@ export async function resolveReceiptImage(
   const src = URL.createObjectURL(blob);
   return { src, revoke: () => URL.revokeObjectURL(src) };
 }
+
+export { irsScheduleLineBadge };

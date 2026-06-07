@@ -2,7 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Receipt } from "@/lib/types";
-import { formatCurrencyForRegion, formatLocalDate } from "@/lib/format";
+import {
+  formatCurrencyForRegion,
+  formatLocalDate,
+  formatReceiptDetailLongDateTime,
+} from "@/lib/format";
 import { fetchReceiptById, apiReceiptToLocal } from "@/lib/client/receiptApi";
 import {
   buildReceiptDetailHero,
@@ -11,12 +15,16 @@ import {
   resolveReceiptImage,
 } from "@/lib/receipts/receiptDetail";
 import { clientTimeZone } from "@/lib/time/timeZone";
-import { ReceiptImageFullscreen } from "@/components/receipts/ReceiptImageFullscreen";
+import { ReceiptImageZoomViewer } from "@/components/receipts/ReceiptImageZoomViewer";
+import { ReceiptDetailStepper } from "@/components/receipts/ReceiptDetailStepper";
+import { ReceiptCaptureSection } from "@/components/receipts/ReceiptCaptureSection";
 
 interface ReceiptDetailSheetProps {
   receipt: Receipt;
+  syncStuck?: boolean;
   onClose: () => void;
   onResnap: (id: string) => void;
+  onRetrySync?: (id: string) => void;
   onReceiptUpdate?: (receipt: Receipt) => void;
 }
 
@@ -39,8 +47,10 @@ function CategoryBadge({ category }: { category: string }) {
 
 export function ReceiptDetailSheet({
   receipt: initialReceipt,
+  syncStuck = false,
   onClose,
   onResnap,
+  onRetrySync,
   onReceiptUpdate,
 }: ReceiptDetailSheetProps) {
   const [receipt, setReceipt] = useState(initialReceipt);
@@ -55,6 +65,11 @@ export function ReceiptDetailSheet({
   const currency = receipt.currency ?? (region === "eu" ? "EUR" : "USD");
   const timeZone = clientTimeZone();
   const dateCaptured = formatLocalDate(receipt.timestamp, timeZone, region);
+  const dateCapturedLong = formatReceiptDetailLongDateTime(
+    receipt.timestamp,
+    timeZone,
+    region,
+  );
 
   useEffect(() => {
     setReceipt(initialReceipt);
@@ -108,36 +123,28 @@ export function ReceiptDetailSheet({
     onResnap(receipt.id);
   }, [onClose, onResnap, receipt.id]);
 
+  const openZoom = useCallback(() => {
+    if (imageSrc) setFullscreen(true);
+  }, [imageSrc]);
+
   const totalLabel =
     receipt.amount != null
       ? formatCurrencyForRegion(receipt.amount, currency, region)
       : "—";
 
-  const imageBlock = (blurred: boolean) =>
-    imageSrc ? (
-      <button
-        type="button"
-        onClick={() => setFullscreen(true)}
-        className="relative block w-full overflow-hidden rounded-xl border border-zinc-600 active:scale-[0.99]"
-      >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={imageSrc}
-          alt="Receipt thumbnail"
-          className="max-h-48 w-full object-cover"
-        />
-        {blurred && (
-          <span
-            className="pointer-events-none absolute inset-0 bg-black/30 backdrop-blur-sm"
-            aria-hidden
-          />
-        )}
-      </button>
-    ) : (
-      <div className="flex min-h-32 items-center justify-center rounded-xl border border-dashed border-zinc-700 bg-zinc-950 px-4 text-center text-sm font-bold text-zinc-500">
-        {imageMissing ? "Photo not on this device" : "Loading photo…"}
-      </div>
-    );
+  const processingTitle =
+    receipt.pendingUpload && syncStuck
+      ? "Upload paused"
+      : syncStuck
+        ? "Analysis paused"
+        : "Calculating your deductions...";
+
+  const stepperPhase =
+    hero.kind === "done"
+      ? "done"
+      : hero.kind === "blurry"
+        ? "blurry"
+        : "processing";
 
   return (
     <>
@@ -170,22 +177,41 @@ export function ReceiptDetailSheet({
           </div>
 
           <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-8">
-            <section className="mb-8 text-center">
+            <section className="mb-6 text-center">
               {hero.kind === "processing" && (
                 <>
                   <div
-                    className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-yellow-500 border-t-transparent"
+                    className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl text-3xl shadow-[0_0_24px_rgba(234,179,8,0.45)]"
                     aria-hidden
-                  />
+                  >
+                    🧾
+                  </div>
                   <p
                     id="receipt-detail-title"
                     className="text-lg font-black text-yellow-400"
                   >
-                    Calculating your deductions...
+                    {processingTitle}
                   </p>
-                  <p className="mt-2 text-sm text-zinc-400">
-                    Date Captured: {dateCaptured}
-                  </p>
+                  {!syncStuck && (
+                    <p className="mt-2 text-sm text-zinc-400">
+                      This may take a few seconds.
+                    </p>
+                  )}
+                  <ReceiptDetailStepper phase={stepperPhase} />
+                  <div className="mx-auto mt-6 max-w-sm rounded-xl bg-zinc-900 px-4 py-3 text-sm font-bold text-zinc-300">
+                    📅 Date Captured: {dateCapturedLong}
+                  </div>
+                  {syncStuck && onRetrySync && (
+                    <button
+                      type="button"
+                      onClick={() => onRetrySync(receipt.id)}
+                      className="mt-6 min-h-14 w-full rounded-xl border-2 border-yellow-500 bg-zinc-900 py-3 text-base font-black uppercase text-yellow-400 active:scale-95"
+                    >
+                      {receipt.pendingUpload
+                        ? "Retry upload"
+                        : "Retry analysis"}
+                    </button>
+                  )}
                 </>
               )}
 
@@ -200,6 +226,7 @@ export function ReceiptDetailSheet({
                   <p className="mt-2 text-sm text-zinc-400">
                     The image is too blurry or shaky.
                   </p>
+                  <ReceiptDetailStepper phase={stepperPhase} />
                   <button
                     type="button"
                     onClick={handleResnap}
@@ -263,21 +290,34 @@ export function ReceiptDetailSheet({
             {(hero.kind === "done" ||
               hero.kind === "blurry" ||
               hero.kind === "processing") && (
-              <section>
-                <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-zinc-500">
-                  {hero.kind === "blurry"
-                    ? "Blurry Preview"
-                    : "Original Receipt Capture"}
-                </h3>
-                {imageBlock(hero.kind === "blurry")}
-              </section>
+              <div className="space-y-4">
+                <ReceiptCaptureSection
+                  title={
+                    hero.kind === "blurry"
+                      ? "Blurry Preview"
+                      : "Original Receipt Capture"
+                  }
+                  imageSrc={imageSrc}
+                  imageMissing={imageMissing}
+                  hint={
+                    hero.kind === "blurry" ? "Tap to enlarge" : "Tap to zoom"
+                  }
+                  onZoom={openZoom}
+                />
+                {hero.kind === "processing" && (
+                  <p className="text-center text-[10px] font-bold leading-relaxed text-zinc-500">
+                    🛡 Your data is encrypted and secure. We never store your
+                    receipt images longer than needed for analysis.
+                  </p>
+                )}
+              </div>
             )}
           </div>
         </div>
       </div>
 
       {fullscreen && imageSrc && (
-        <ReceiptImageFullscreen
+        <ReceiptImageZoomViewer
           src={imageSrc}
           onClose={() => setFullscreen(false)}
         />

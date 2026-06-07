@@ -70,26 +70,39 @@
 
 ## 6.4 处理触发
 
-**MVP 方案 A（简单）：** `POST /api/receipts` 内 await OpenAI（设置 `maxDuration=60` on Vercel Pro）
+**MVP（当前）：** `POST /api/receipts` 内 await OpenAI；Vision 失败时仍返回 **201** `{ status: "processing", processFailed: true }`（Blob + DB 已持久化）。
 
-**方案 B（推荐生产）：** upload 返回 `processing` → 异步 QStash/Inngest 调 `/api/receipts/:id/process`
+客户端通过 `POST /api/receipts/:id/process` 重试；poll 超时后自动触发一次 `/process`。
 
-MVP 可先 A，文档预留 B 接口。
+**方案 B（后续）：** upload 返回 `processing` → 异步 QStash/Inngest 调 `/process`
 
-## 6.5 客户端轮询
+## 6.5 客户端轮询与恢复
 
-```
-GET /api/receipts/:id every 2s, max 30 attempts
-```
+**策略（2026-06-07）：** 见 [background-polling-policy-design.md](../superpowers/specs/2026-06-07-background-polling-policy-design.md)
 
-离线：不调 API；`online` 后 resume。
+- **Phase 1 启动：** IndexedDB → 本地 list 即时展示（不等 network）；auth 仍等 `fetchAuthMe`；**不 poll**
+- **Phase 2 延迟：** `requestAnimationFrame` 后 ghost session + flush pending + list refresh → merge（相机开则推迟 merge）；`ProcessingQueue.bootstrap`
+- **Phase 3 后台：** 单线程 FIFO 队列，watcher 同一时刻只 watch 1 条；`GET /api/receipts` 每 3s（仅 active id 存在且未 pause）
+- **Pause：** 相机 / 详情 Sheet / Settings / `document.hidden` → 零 poll；无 processing 时停止 timer
+- **Retry：** 用户点击 → `POST /process` + `tickOnce`（可穿透 pause）
+- **Pending upload：** 在线且可见时每 60s 重试；syncStuck 时跳过；不触发 list poll
+
+### Write budget（2026-06-07）
+
+见 [receipt-sync-budget-design.md](../superpowers/specs/2026-06-07-receipt-sync-budget-design.md)
+
+- 单票 `writeBudgetRemaining` 默认 5，IndexedDB 持久化
+- 仅失败写操作扣次：`POST /receipts`、`POST /process`；`GET /api/receipts` 不计
+- 用尽 → `syncStuck` → Tap to Retry 重置为 5
+- 顶栏刷新按钮：手动 list 同步，不扣单票 budget
 
 ## 6.6 错误处理
 
 | 错误 | 行为 |
 |------|------|
-| OpenAI 429/5xx | 保持 processing，后台 retry 3 次 |
-| 最终失败 | status 保持 processing + 客户端显示重试（非 Modal） |
+| OpenAI 429/5xx/timeout（upload 内） | 201 processing；客户端 poll + `/process` 重试 |
+| OpenAI 失败（`/process`） | 200 processing + `processFailed: true` |
+| 最终仍 processing | 保持 processing；用户可手动 Retry |
 | 私人消费 | deductible=false，UI 标签 Personal (Non-Deductible) |
 
 ## 6.7 环境变量

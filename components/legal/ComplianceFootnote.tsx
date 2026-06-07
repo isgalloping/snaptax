@@ -3,11 +3,13 @@
 interface ComplianceFootnoteProps {
   onOpenTerms: () => void;
   onOpenPrivacy: () => void;
+  className?: string;
 }
 
 export function ComplianceFootnote({
   onOpenTerms,
   onOpenPrivacy,
+  className = "",
 }: ComplianceFootnoteProps) {
   const prefix = "By snapping, you agree to our ";
   const middle = " & ";
@@ -15,7 +17,9 @@ export function ComplianceFootnote({
     ". Online processing stores data in the United States.";
 
   return (
-    <p className="mt-4 max-w-sm px-2 text-center text-xs leading-relaxed text-zinc-400">
+    <p
+      className={`max-w-sm px-2 text-center text-xs leading-relaxed text-zinc-400 ${className || "mt-4"}`}
+    >
       {prefix}
       <button
         type="button"

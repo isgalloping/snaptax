@@ -131,23 +131,36 @@ export const POST = withRequestLog(
         ...blobCommandOptions(),
       });
 
-      const result = await processReceiptTax({
-        receiptId,
-        dataRegion,
-        imageBuffer: bytes,
-        mime,
-        industry,
-      });
-
-      return NextResponse.json(
-        {
-          id: receiptId,
-          status: result.status,
-          taxAmount: result.taxAmount,
+      try {
+        const result = await processReceiptTax({
+          receiptId,
           dataRegion,
-        },
-        { status: 201 },
-      );
+          imageBuffer: bytes,
+          mime,
+          industry,
+        });
+
+        return NextResponse.json(
+          {
+            id: receiptId,
+            status: result.status,
+            taxAmount: result.taxAmount,
+            dataRegion,
+          },
+          { status: 201 },
+        );
+      } catch {
+        return NextResponse.json(
+          {
+            id: receiptId,
+            status: "processing",
+            taxAmount: 0,
+            dataRegion,
+            processFailed: true,
+          },
+          { status: 201 },
+        );
+      }
     } catch (err) {
       return mapErrorToResponse(err);
     }

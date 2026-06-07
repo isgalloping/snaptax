@@ -57,31 +57,48 @@ export const POST = withRequestLog(
       }
 
       const visionStart = Date.now();
-      const result = await processReceiptTax({
-        receiptId: id,
-        dataRegion: receipt.dataRegion as "us" | "eu",
-        imageBuffer: bytes,
-        mime,
-        industry,
-      });
-
-      logEvent({
-        ...baseLogEntry("biz.openai", request, actor),
-        level: result.status === "done" ? "info" : "error",
-        success: result.status === "done",
-        durationMs: Date.now() - visionStart,
-        meta: {
+      try {
+        const result = await processReceiptTax({
           receiptId: id,
-          status: result.status,
-          dataRegion: receipt.dataRegion,
-        },
-      });
+          dataRegion: receipt.dataRegion as "us" | "eu",
+          imageBuffer: bytes,
+          mime,
+          industry,
+        });
 
-      return NextResponse.json({
-        id,
-        status: result.status,
-        taxAmount: result.taxAmount,
-      });
+        logEvent({
+          ...baseLogEntry("biz.openai", request, actor),
+          level: result.status === "done" ? "info" : "error",
+          success: result.status === "done",
+          durationMs: Date.now() - visionStart,
+          meta: {
+            receiptId: id,
+            status: result.status,
+            dataRegion: receipt.dataRegion,
+          },
+        });
+
+        return NextResponse.json({
+          id,
+          status: result.status,
+          taxAmount: result.taxAmount,
+        });
+      } catch {
+        logEvent({
+          ...baseLogEntry("biz.openai", request, actor),
+          level: "warn",
+          success: false,
+          durationMs: Date.now() - visionStart,
+          meta: { receiptId: id, status: "processing", reason: "process_failed" },
+        });
+
+        return NextResponse.json({
+          id,
+          status: "processing",
+          taxAmount: 0,
+          processFailed: true,
+        });
+      }
     } catch (err) {
       return mapErrorToResponse(err);
     }

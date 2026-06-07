@@ -47,7 +47,7 @@ async function main() {
 
     const bodyText = await page.locator("body").innerText();
     const snapVisible = bodyText.includes("SNAP RECEIPT");
-    const offlinePage = bodyText.includes("当前无网络连接");
+    const offlinePage = bodyText.includes("You're offline");
     results.push({
       check: "离线刷新后显示主界面（SNAP RECEIPT）",
       pass: snapVisible && !offlinePage,
@@ -68,7 +68,7 @@ async function main() {
       const cameraUi = await page
         .locator("body")
         .innerText()
-        .then((t) => t.includes("< BACK") || t.includes("正在打开相机"));
+        .then((t) => t.includes("< BACK") || t.includes("Opening camera"));
       results.push({
         check: "离线可打开相机界面",
         pass: cameraUi,

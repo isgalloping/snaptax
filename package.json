@@ -4,11 +4,15 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "node scripts/load-env.mjs && prisma generate && next build",
+    "build": "node scripts/load-env.mjs && node scripts/migrate-deploy.mjs && prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
     "test:unit": "node --import tsx --test lib/**/*.test.ts",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "db:migrate:deploy": "node scripts/migrate-deploy.mjs",
+    "db:migrate:deploy:production": "node scripts/migrate-deploy.mjs .env.production.local",
+    "db:migrate:dev": "node scripts/load-env.mjs && npx prisma migrate dev",
+    "db:studio": "node scripts/load-env.mjs && npx prisma studio"
   },
   "dependencies": {
     "@paddle/paddle-js": "^1.6.4",

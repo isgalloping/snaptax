@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { PwaProvider } from "@/components/pwa/PwaProvider";
+import { USER_COPY } from "@/lib/copy/userFacing";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -14,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 const APP_NAME = "Snap1099";
-const APP_DESCRIPTION = "拍小票自动归类，1099 合同工极简记账助手";
+const APP_DESCRIPTION = USER_COPY.app.description;
 
 export const metadata: Metadata = {
   applicationName: APP_NAME,
@@ -53,7 +54,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="zh-CN"
+      lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="flex h-full min-h-full flex-col">

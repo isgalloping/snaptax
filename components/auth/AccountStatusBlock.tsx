@@ -36,6 +36,9 @@ export function AccountStatusBlock({
           <p className="mt-2 text-sm font-bold text-yellow-400">
             Not signed in · Data lost if you change phones
           </p>
+          <p className="mt-2 text-sm leading-relaxed text-zinc-400">
+            Sign in with Google to back up receipts before switching phones.
+          </p>
           <button
             type="button"
             onClick={onSignIn}

@@ -3,9 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   type GoogleUser,
-  dismissSoftBannerForever,
   isSeasonPaid,
-  isSoftBannerDismissed,
   loadGoogleUser,
   saveGoogleUser,
   setSeasonPaid,
@@ -21,7 +19,6 @@ const CURRENT_SEASON = "2026";
 
 export function useAuthSession() {
   const [googleUser, setGoogleUser] = useState<GoogleUser | null>(null);
-  const [softBannerDismissed, setSoftBannerDismissed] = useState(false);
   const [seasonPaid, setSeasonPaidState] = useState(false);
   const [hydrated, setHydrated] = useState(false);
 
@@ -29,7 +26,6 @@ export function useAuthSession() {
     let cancelled = false;
 
     void (async () => {
-      setSoftBannerDismissed(isSoftBannerDismissed());
       const localUser = loadGoogleUser();
       if (localUser) setGoogleUser(localUser);
 
@@ -81,11 +77,6 @@ export function useAuthSession() {
     setGoogleUser(null);
   }, []);
 
-  const dismissSoftBanner = useCallback(() => {
-    dismissSoftBannerForever();
-    setSoftBannerDismissed(true);
-  }, []);
-
   const markSeasonPaid = useCallback(() => {
     setSeasonPaid(CURRENT_SEASON, true);
     setSeasonPaidState(true);
@@ -102,12 +93,10 @@ export function useAuthSession() {
     hydrated,
     googleUser,
     isSignedIn: googleUser !== null,
-    softBannerDismissed,
     seasonPaid,
     currentSeason: CURRENT_SEASON,
     signInWithGoogle,
     signOut,
-    dismissSoftBanner,
     markSeasonPaid,
     refreshSeasonPaid,
   };

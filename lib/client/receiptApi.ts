@@ -10,6 +10,7 @@ export type ApiReceipt = {
   merchant: string | null;
   category: string | null;
   deductible?: boolean;
+  currency?: string | null;
   taxAmount: number;
   dataRegion: TaxRegion;
   capturedAt: string;
@@ -30,7 +31,9 @@ export function apiReceiptToLocal(r: ApiReceipt): Receipt {
     category: r.category ?? undefined,
     taxAmount: r.taxAmount,
     dataRegion: r.dataRegion,
-    timestamp: parseUtcISOString(r.capturedAt),
+    currency: r.currency ?? undefined,
+    deductible: r.deductible,
+    timestamp: parseUtcISOString(r.snapAt ?? r.capturedAt),
     pendingUpload: false,
   };
 }

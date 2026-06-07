@@ -14,7 +14,7 @@
 
 | 列 | 说明 |
 |----|------|
-| Date | captured_at |
+| Date | `snap_at` or `captured_at` in user's timezone (`X-Time-Zone`); US `MM/DD/YYYY`, EU `DD/MM/YYYY` |
 | Merchant | merchant |
 | Amount | amount USD |
 | Category | category |
@@ -29,7 +29,7 @@
 | Total Expenses | sum |
 | Est. Deductible | sum deductible |
 | Industry | user.industry |
-| Exported At | timestamp |
+| Exported At | local timestamp (`X-Time-Zone`); US 12h, EU 24h |
 
 > MVP 满足 CPA / TurboTax 手动导入；列顺序对标 IRS Schedule C 常见字段（非官方 XML）。
 

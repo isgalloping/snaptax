@@ -6,10 +6,10 @@ import { ReceiptCard } from "./ReceiptCard";
 
 interface ReceiptListProps {
   receipts: Receipt[];
-  onResnap: (id: string) => void;
+  onSelect: (receipt: Receipt) => void;
 }
 
-export function ReceiptList({ receipts, onResnap }: ReceiptListProps) {
+export function ReceiptList({ receipts, onSelect }: ReceiptListProps) {
   const [online, setOnline] = useState(true);
 
   useEffect(() => {
@@ -44,7 +44,7 @@ export function ReceiptList({ receipts, onResnap }: ReceiptListProps) {
               online ? "animate-pulse bg-green-400" : "bg-yellow-400"
             }`}
           />
-          {online ? "Ready / Online" : "Offline · Queued"}
+          {online ? "Ready / Online" : "Ready / Offline"}
         </span>
       </div>
 
@@ -58,7 +58,7 @@ export function ReceiptList({ receipts, onResnap }: ReceiptListProps) {
             <ReceiptCard
               key={receipt.id}
               receipt={receipt}
-              onResnap={onResnap}
+              onSelect={onSelect}
             />
           ))
         )}

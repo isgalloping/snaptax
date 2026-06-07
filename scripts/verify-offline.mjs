@@ -57,8 +57,8 @@ async function main() {
       pass: !offlinePage,
     });
     results.push({
-      check: "离线状态指示器显示 Offline · Queued",
-      pass: bodyText.includes("Offline · Queued"),
+      check: "离线状态指示器显示 Ready / Offline",
+      pass: bodyText.includes("Ready / Offline"),
     });
 
     if (snapVisible) {

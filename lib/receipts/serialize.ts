@@ -8,6 +8,7 @@ export function serializeReceipt(r: SnaptaxReceipt) {
     merchant: r.merchantName,
     category: r.category,
     deductible: r.deductible,
+    currency: r.currency,
     taxAmount: Number(r.taxAmount),
     dataRegion: r.dataRegion,
     capturedAt: r.capturedAt.toISOString(),

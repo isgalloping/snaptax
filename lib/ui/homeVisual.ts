@@ -20,6 +20,13 @@ export const homeVisual = {
     height: "h-[140px]",
     maxHeight: "max-h-[18vh]",
   },
+  snapCamera: {
+    shutterOuter: "border-[6px] border-zinc-900",
+    shutterRing: "ring-2 ring-green-500/90 ring-offset-2 ring-offset-black",
+    badgeGlow:
+      "shadow-[0_0_20px_rgba(34,197,94,0.55)] border border-green-500/40",
+    gallerySelected: "ring-2 ring-white ring-offset-1 ring-offset-black/80",
+  },
   /** +15% over baseline px-3 py-1.5 text-xs gap-2 — outdoor touch target */
   filterTab: {
     padding: "px-[0.8625rem] py-[0.43125rem]",

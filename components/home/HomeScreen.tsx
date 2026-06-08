@@ -510,6 +510,56 @@ export function HomeScreen() {
     watcherRef.current?.setPaused(shouldPause);
   }, [cameraOpen, selectedReceipt, view, appHidden]);
 
+  const refreshListFromLocal = useCallback(async () => {
+    const stored = await loadReceipts();
+    const visible = top100ByUpdatedAt(stored);
+    setReceipts(visible);
+    refreshTaxSaved(visible);
+    setSyncStuckIds(stuckIdsFromReceipts(stored));
+    return stored;
+  }, [refreshTaxSaved]);
+
+  const handleBatchShot = useCallback(async (file: File): Promise<string> => {
+    const id = crypto.randomUUID();
+    const snapAt = utcNow();
+    const processingReceipt: StoredReceipt = withFreshBudget({
+      id,
+      status: "processing",
+      merchant: "Scanning",
+      timestamp: snapAt,
+      updatedAt: snapAt,
+      pendingUpload: true,
+    });
+    await savePhoto(id, file);
+    await saveReceipt(processingReceipt);
+    return id;
+  }, []);
+
+  const handleBatchClose = useCallback(async () => {
+    await refreshListFromLocal();
+  }, [refreshListFromLocal]);
+
+  const handleBatchDone = useCallback(async () => {
+    await refreshListFromLocal();
+    if (navigator.onLine) {
+      try {
+        await ensureGhostSession();
+        await flushPendingUploadsRef.current();
+      } catch {
+        // Local pending rows remain until next flush
+      }
+    }
+    const stored = await loadReceipts();
+    const visible = top100ByUpdatedAt(stored);
+    setReceipts(visible);
+    refreshTaxSaved(visible);
+    const stuck = stuckIdsFromReceipts(stored);
+    setSyncStuckIds(stuck);
+    queueRef.current?.bootstrapFromList(
+      visible.filter((r) => r.status === "processing" && !stuck.has(r.id)),
+    );
+  }, [refreshListFromLocal, refreshTaxSaved]);
+
   const handleCapture = useCallback(
     async (file: File) => {
       const replaceId = resnapId;
@@ -642,8 +692,15 @@ export function HomeScreen() {
         <SnapButton
           ref={snapButtonRef}
           onCapture={handleCapture}
+          onBatchShot={handleBatchShot}
+          onBatchDone={handleBatchDone}
+          onBatchClose={handleBatchClose}
           resnapId={resnapId}
           onCameraOpenChange={setCameraOpen}
+          onSyncClick={handleManualListSync}
+          onSettingsClick={() => setView("settings")}
+          syncing={listSyncing}
+          syncDisabled={!navigator.onLine}
         />
       </div>
 

@@ -3,16 +3,16 @@
 import { useEffect, useState } from "react";
 
 const SHUTTER_COOLDOWN_MS = 1000;
-const RING_SIZE = 72;
-const STROKE = 4;
-const RADIUS = (RING_SIZE - STROKE) / 2;
-const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
+
+const COMPACT_RING = 52;
+const FULL_RING = 72;
 
 interface CameraShutterControlProps {
   ready: boolean;
   capturing: boolean;
   onClick: () => void;
   showLabel?: boolean;
+  compact?: boolean;
 }
 
 export function CameraShutterControl({
@@ -20,7 +20,15 @@ export function CameraShutterControl({
   capturing,
   onClick,
   showLabel = true,
+  compact = false,
 }: CameraShutterControlProps) {
+  const ringSize = compact ? COMPACT_RING : FULL_RING;
+  const stroke = compact ? 3 : 4;
+  const radius = (ringSize - stroke) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const innerSize = compact ? "h-10 w-10" : "h-14 w-14";
+  const buttonSize = compact ? "h-[3.25rem] w-[3.25rem]" : "h-[4.5rem] w-[4.5rem]";
+
   const [arcProgress, setArcProgress] = useState(1);
 
   useEffect(() => {
@@ -46,7 +54,7 @@ export function CameraShutterControl({
   }, [capturing]);
 
   const showArc = capturing && arcProgress > 0;
-  const dashOffset = CIRCUMFERENCE * (1 - arcProgress);
+  const dashOffset = circumference * (1 - arcProgress);
 
   return (
     <div className="flex shrink-0 flex-col items-center gap-1">
@@ -56,46 +64,48 @@ export function CameraShutterControl({
         disabled={!ready || capturing}
         aria-label="Take photo"
         aria-busy={capturing}
-        className="relative flex h-[4.5rem] w-[4.5rem] items-center justify-center transition-transform active:scale-95 disabled:opacity-50"
+        className={`relative flex ${buttonSize} items-center justify-center transition-transform active:scale-95 disabled:opacity-50`}
       >
         <svg
           className="absolute inset-0 h-full w-full -rotate-90"
-          viewBox={`0 0 ${RING_SIZE} ${RING_SIZE}`}
+          viewBox={`0 0 ${ringSize} ${ringSize}`}
           aria-hidden
         >
           <circle
-            cx={RING_SIZE / 2}
-            cy={RING_SIZE / 2}
-            r={RADIUS}
+            cx={ringSize / 2}
+            cy={ringSize / 2}
+            r={radius}
             fill="none"
             stroke="rgb(24 24 27)"
-            strokeWidth={STROKE}
+            strokeWidth={stroke}
           />
           {showArc && (
             <circle
-              cx={RING_SIZE / 2}
-              cy={RING_SIZE / 2}
-              r={RADIUS}
+              cx={ringSize / 2}
+              cy={ringSize / 2}
+              r={radius}
               fill="none"
               stroke="rgb(34 197 94)"
-              strokeWidth={STROKE}
+              strokeWidth={stroke}
               strokeLinecap="round"
-              strokeDasharray={CIRCUMFERENCE}
+              strokeDasharray={circumference}
               strokeDashoffset={dashOffset}
             />
           )}
           {!showArc && ready && (
             <circle
-              cx={RING_SIZE / 2}
-              cy={RING_SIZE / 2}
-              r={RADIUS}
+              cx={ringSize / 2}
+              cy={ringSize / 2}
+              r={radius}
               fill="none"
               stroke="rgb(34 197 94 / 0.85)"
-              strokeWidth={STROKE}
+              strokeWidth={stroke}
             />
           )}
         </svg>
-        <span className="relative z-[1] h-14 w-14 rounded-full bg-white shadow-inner" />
+        <span
+          className={`relative z-[1] ${innerSize} rounded-full bg-white shadow-inner`}
+        />
       </button>
       {showLabel && (
         <span className="text-[9px] font-bold uppercase tracking-wide text-white">

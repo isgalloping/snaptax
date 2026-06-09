@@ -1,5 +1,6 @@
 "use client";
 
+import { FooterActionTile } from "@/components/camera/FooterActionTile";
 import { homeVisual } from "@/lib/ui/homeVisual";
 
 interface ReviewDoneButtonProps {
@@ -9,12 +10,11 @@ interface ReviewDoneButtonProps {
 
 export function ReviewDoneButton({ disabled = false, onClick }: ReviewDoneButtonProps) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
+    <FooterActionTile
       disabled={disabled}
-      aria-label="Done and review"
-      className={`flex min-h-14 min-w-[4.25rem] shrink-0 flex-col items-center justify-center rounded-xl px-1 ${homeVisual.snapCamera.reviewDoneFill} transition-transform active:scale-95 disabled:opacity-40`}
+      onClick={onClick}
+      ariaLabel="Done and review"
+      className={`gap-0.5 px-0.5 ${homeVisual.snapCamera.reviewDoneFill}`}
     >
       <span className="text-lg font-black text-green-400" aria-hidden>
         ✓
@@ -23,6 +23,6 @@ export function ReviewDoneButton({ disabled = false, onClick }: ReviewDoneButton
         Done
         <br />&amp; Review
       </span>
-    </button>
+    </FooterActionTile>
   );
 }

@@ -21,6 +21,10 @@ export const homeVisual = {
     maxHeight: "max-h-[18vh]",
   },
   snapCamera: {
+    footerTile: "h-[5.5rem] w-[4.25rem] rounded-xl",
+    footerTileRow: "h-[5.5rem]",
+    batchTileFill:
+      "bg-zinc-900/95 border border-green-500/50 shadow-[0_0_20px_rgba(34,197,94,0.45)]",
     shutterOuter: "border-[6px] border-zinc-900",
     shutterRing: "ring-2 ring-green-500/90 ring-offset-2 ring-offset-black",
     badgeGlow:

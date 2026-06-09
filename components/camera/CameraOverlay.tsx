@@ -319,7 +319,6 @@ export function CameraOverlay({
               />
               <CameraLiveFooter
                 batchCount={batchCount}
-                latestThumbUrl={latestThumb?.url}
                 latestId={latestId}
                 ready={ready}
                 capturing={capturing}

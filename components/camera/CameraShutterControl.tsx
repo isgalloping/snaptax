@@ -1,18 +1,48 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { SHUTTER_COOLDOWN_MS } from "@/lib/camera/shutterCooldown";
 
-const SHUTTER_COOLDOWN_MS = 1000;
-const RING_SIZE = 72;
-const STROKE = 4;
-const RADIUS = (RING_SIZE - STROKE) / 2;
-const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
+const COMPACT_RING = 56;
+const FULL_RING = 72;
+const HERO_RING = 96;
+
+type ShutterSize = "compact" | "full" | "hero";
 
 interface CameraShutterControlProps {
   ready: boolean;
   capturing: boolean;
   onClick: () => void;
   showLabel?: boolean;
+  /** @deprecated use size="compact" */
+  compact?: boolean;
+  size?: ShutterSize;
+}
+
+function ringConfig(size: ShutterSize) {
+  switch (size) {
+    case "hero":
+      return {
+        ring: HERO_RING,
+        stroke: 4,
+        inner: "h-20 w-20",
+        button: "h-24 w-24",
+      };
+    case "compact":
+      return {
+        ring: COMPACT_RING,
+        stroke: 3,
+        inner: "h-11 w-11",
+        button: "h-14 w-14",
+      };
+    default:
+      return {
+        ring: FULL_RING,
+        stroke: 4,
+        inner: "h-14 w-14",
+        button: "h-[4.5rem] w-[4.5rem]",
+      };
+  }
 }
 
 export function CameraShutterControl({
@@ -20,7 +50,15 @@ export function CameraShutterControl({
   capturing,
   onClick,
   showLabel = true,
+  compact = false,
+  size,
 }: CameraShutterControlProps) {
+  const resolvedSize: ShutterSize = size ?? (compact ? "compact" : "full");
+  const { ring: ringSize, stroke, inner: innerSize, button: buttonSize } =
+    ringConfig(resolvedSize);
+  const radius = (ringSize - stroke) / 2;
+  const circumference = 2 * Math.PI * radius;
+
   const [arcProgress, setArcProgress] = useState(1);
 
   useEffect(() => {
@@ -46,7 +84,7 @@ export function CameraShutterControl({
   }, [capturing]);
 
   const showArc = capturing && arcProgress > 0;
-  const dashOffset = CIRCUMFERENCE * (1 - arcProgress);
+  const dashOffset = circumference * (1 - arcProgress);
 
   return (
     <div className="flex shrink-0 flex-col items-center gap-1">
@@ -56,46 +94,48 @@ export function CameraShutterControl({
         disabled={!ready || capturing}
         aria-label="Take photo"
         aria-busy={capturing}
-        className="relative flex h-[4.5rem] w-[4.5rem] items-center justify-center transition-transform active:scale-95 disabled:opacity-50"
+        className={`relative flex ${buttonSize} items-center justify-center transition-transform active:scale-95 disabled:opacity-50`}
       >
         <svg
           className="absolute inset-0 h-full w-full -rotate-90"
-          viewBox={`0 0 ${RING_SIZE} ${RING_SIZE}`}
+          viewBox={`0 0 ${ringSize} ${ringSize}`}
           aria-hidden
         >
           <circle
-            cx={RING_SIZE / 2}
-            cy={RING_SIZE / 2}
-            r={RADIUS}
+            cx={ringSize / 2}
+            cy={ringSize / 2}
+            r={radius}
             fill="none"
             stroke="rgb(24 24 27)"
-            strokeWidth={STROKE}
+            strokeWidth={stroke}
           />
           {showArc && (
             <circle
-              cx={RING_SIZE / 2}
-              cy={RING_SIZE / 2}
-              r={RADIUS}
+              cx={ringSize / 2}
+              cy={ringSize / 2}
+              r={radius}
               fill="none"
               stroke="rgb(34 197 94)"
-              strokeWidth={STROKE}
+              strokeWidth={stroke}
               strokeLinecap="round"
-              strokeDasharray={CIRCUMFERENCE}
+              strokeDasharray={circumference}
               strokeDashoffset={dashOffset}
             />
           )}
           {!showArc && ready && (
             <circle
-              cx={RING_SIZE / 2}
-              cy={RING_SIZE / 2}
-              r={RADIUS}
+              cx={ringSize / 2}
+              cy={ringSize / 2}
+              r={radius}
               fill="none"
               stroke="rgb(34 197 94 / 0.85)"
-              strokeWidth={STROKE}
+              strokeWidth={stroke}
             />
           )}
         </svg>
-        <span className="relative z-[1] h-14 w-14 rounded-full bg-white shadow-inner" />
+        <span
+          className={`relative z-[1] ${innerSize} rounded-full bg-white shadow-inner`}
+        />
       </button>
       {showLabel && (
         <span className="text-[9px] font-bold uppercase tracking-wide text-white">

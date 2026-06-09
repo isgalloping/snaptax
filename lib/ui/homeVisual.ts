@@ -21,6 +21,16 @@ export const homeVisual = {
     maxHeight: "max-h-[18vh]",
   },
   snapCamera: {
+    footerDock:
+      "rounded-2xl border border-zinc-800/80 bg-zinc-950/95",
+    footerColTile: "h-full min-h-[6.5rem] w-full rounded-xl",
+    footerRowMin: "min-h-[6.5rem]",
+    footerGridCols: "grid-cols-[20fr_35fr_25fr_20fr]",
+    /** @deprecated fixed tile — use footerColTile in live dock */
+    footerTile: "h-16 w-16 rounded-xl",
+    footerTileRow: "h-16",
+    batchTileOutline:
+      "bg-black/40 border border-green-500/60",
     shutterOuter: "border-[6px] border-zinc-900",
     shutterRing: "ring-2 ring-green-500/90 ring-offset-2 ring-offset-black",
     badgeGlow:
@@ -47,13 +57,15 @@ export const homeVisual = {
     accept:
       "rounded-full bg-green-600 shadow-[0_0_16px_rgba(34,197,94,0.45)] border border-green-500/60",
   },
-  /** +15% over baseline px-3 py-1.5 text-xs gap-2 — outdoor touch target */
+  /** Outdoor touch — min 56px height for filter tabs */
   filterTab: {
-    padding: "px-[0.8625rem] py-[0.43125rem]",
-    fontSize: "text-[0.8625rem]",
-    gap: "gap-[0.575rem]",
-    iconGap: "mr-[0.2875rem]",
-    countGap: "ml-[0.2875rem]",
+    minHeight: "min-h-14",
+    padding: "px-4 py-3",
+    fontSize: "text-sm",
+    gap: "gap-3",
+    iconGap: "mr-1.5",
+    countGap: "ml-1.5",
+    barPadding: "py-1.5",
   },
 } as const;
 

@@ -1,29 +1,35 @@
 "use client";
 
+import { FooterActionTile } from "@/components/camera/FooterActionTile";
 import { homeVisual } from "@/lib/ui/homeVisual";
 
 interface FlashDoneButtonProps {
   disabled?: boolean;
   onClick: () => void;
+  fill?: boolean;
 }
 
-export function FlashDoneButton({ disabled = false, onClick }: FlashDoneButtonProps) {
+export function FlashDoneButton({
+  disabled = false,
+  onClick,
+  fill = true,
+}: FlashDoneButtonProps) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
+    <FooterActionTile
+      fill={fill}
       disabled={disabled}
-      aria-label="Flash done"
-      className={`flex min-h-14 min-w-[4.25rem] shrink-0 flex-col items-center justify-center rounded-xl px-1 ${homeVisual.snapCamera.flashDoneFill} transition-transform active:scale-95 disabled:opacity-40`}
+      onClick={onClick}
+      ariaLabel="Flash done"
+      className={`gap-0.5 px-0.5 ${homeVisual.snapCamera.flashDoneFill}`}
     >
-      <span className="text-lg font-black text-black" aria-hidden>
+      <span className="text-xl font-black text-black" aria-hidden>
         ⚡
       </span>
-      <span className="text-[8px] font-black uppercase leading-tight text-black">
+      <span className="text-[7px] font-black uppercase leading-tight text-black">
         Flash
         <br />
         Done
       </span>
-    </button>
+    </FooterActionTile>
   );
 }

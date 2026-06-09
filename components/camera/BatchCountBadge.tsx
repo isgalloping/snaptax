@@ -1,59 +1,46 @@
 "use client";
 
+import { FooterActionTile } from "@/components/camera/FooterActionTile";
+import { StackCardsIcon } from "@/components/icons/StackCardsIcon";
 import { homeVisual } from "@/lib/ui/homeVisual";
 
 interface BatchCountBadgeProps {
   count: number;
-  latestThumbUrl?: string;
   latestId?: string;
   onPress?: (id: string) => void;
 }
 
 export function BatchCountBadge({
   count,
-  latestThumbUrl,
   latestId,
   onPress,
 }: BatchCountBadgeProps) {
   if (count <= 0) {
-    return <div className="h-16 w-16 shrink-0" aria-hidden />;
+    return (
+      <FooterActionTile
+        fill
+        placeholder
+        className={homeVisual.snapCamera.batchTileOutline}
+      >
+        &nbsp;
+      </FooterActionTile>
+    );
   }
 
-  const badge = (
-    <div
-      className={`relative h-16 w-16 overflow-hidden rounded-xl bg-zinc-900/90 ${homeVisual.snapCamera.badgeGlow}`}
+  return (
+    <FooterActionTile
+      fill
+      className={`relative justify-between py-1 ${homeVisual.snapCamera.batchTileOutline}`}
+      onClick={latestId && onPress ? () => onPress(latestId) : undefined}
+      ariaLabel="Review latest batch"
     >
-      {latestThumbUrl && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={latestThumbUrl}
-          alt=""
-          className="h-full w-full object-cover opacity-80"
-        />
-      )}
-      <span className="absolute inset-0 flex items-center justify-center bg-black/45 text-2xl font-black text-white">
+      <StackCardsIcon className="absolute left-1 top-1 h-5 w-5 text-green-400" />
+      <span className="flex flex-1 items-center justify-center text-2xl font-black leading-none text-white">
         {count}
       </span>
-    </div>
-  );
-
-  return (
-    <div className="flex flex-col items-center gap-1">
-      {latestId && onPress ? (
-        <button
-          type="button"
-          onClick={() => onPress(latestId)}
-          className="transition-transform active:scale-95"
-          aria-label="Review latest receipt photo"
-        >
-          {badge}
-        </button>
-      ) : (
-        badge
-      )}
-      <span className="text-[10px] font-bold uppercase tracking-wide text-green-400">
+      <span className="pb-0.5 text-[7px] font-bold uppercase leading-none text-green-400">
         Batch {count}
       </span>
-    </div>
+    </FooterActionTile>
   );
 }

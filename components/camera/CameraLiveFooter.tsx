@@ -3,11 +3,12 @@
 import { BatchCountBadge } from "@/components/camera/BatchCountBadge";
 import { CameraShutterControl } from "@/components/camera/CameraShutterControl";
 import { FlashDoneButton } from "@/components/camera/FlashDoneButton";
+import { FooterActionTile } from "@/components/camera/FooterActionTile";
 import { ReviewDoneButton } from "@/components/camera/ReviewDoneButton";
+import { homeVisual } from "@/lib/ui/homeVisual";
 
 interface CameraLiveFooterProps {
   batchCount: number;
-  latestThumbUrl?: string;
   latestId?: string;
   ready: boolean;
   capturing: boolean;
@@ -20,7 +21,6 @@ interface CameraLiveFooterProps {
 
 export function CameraLiveFooter({
   batchCount,
-  latestThumbUrl,
   latestId,
   ready,
   capturing,
@@ -31,38 +31,65 @@ export function CameraLiveFooter({
   onFinishCapture,
 }: CameraLiveFooterProps) {
   const doneDisabled = batchCount === 0;
+  const rowMin = homeVisual.snapCamera.footerRowMin;
+  const gridCols = homeVisual.snapCamera.footerGridCols;
 
   return (
-    <div className="flex items-end justify-between gap-1 px-3 pb-3 pt-2">
-      <BatchCountBadge
-        count={batchCount}
-        latestThumbUrl={latestThumbUrl}
-        latestId={latestId}
-        onPress={
-          batchCount > 0 && onBatchPreviewEnter ? onBatchPreviewEnter : undefined
-        }
-      />
-
-      <CameraShutterControl
-        ready={ready}
-        capturing={capturing}
-        onClick={onShutter}
-      />
-
-      {showDualDone ? (
-        <>
-          <FlashDoneButton
-            disabled={doneDisabled}
-            onClick={() => onFlashDone?.()}
+    <div className={`mx-3 mb-2 ${homeVisual.snapCamera.footerDock}`}>
+      <div className={`grid ${gridCols} gap-1.5 px-2.5 py-2 ${rowMin}`}>
+        <div className={rowMin}>
+          <BatchCountBadge
+            count={batchCount}
+            latestId={latestId}
+            onPress={
+              batchCount > 0 && onBatchPreviewEnter
+                ? onBatchPreviewEnter
+                : undefined
+            }
           />
-          <ReviewDoneButton
-            disabled={doneDisabled}
-            onClick={() => onFinishCapture?.()}
+        </div>
+
+        <div
+          className={`flex flex-col items-center justify-center gap-1 ${rowMin}`}
+        >
+          <CameraShutterControl
+            ready={ready}
+            capturing={capturing}
+            onClick={onShutter}
+            showLabel={false}
+            size="hero"
           />
-        </>
-      ) : (
-        <div className="h-14 w-[8.75rem] shrink-0" aria-hidden />
-      )}
+          <span className="text-[9px] font-bold uppercase tracking-wide text-white">
+            Take Photo
+          </span>
+        </div>
+
+        <div className={rowMin}>
+          {showDualDone ? (
+            <FlashDoneButton
+              disabled={doneDisabled}
+              onClick={() => onFlashDone?.()}
+            />
+          ) : (
+            <FooterActionTile fill placeholder>
+              &nbsp;
+            </FooterActionTile>
+          )}
+        </div>
+
+        <div className={rowMin}>
+          {showDualDone ? (
+            <ReviewDoneButton
+              disabled={doneDisabled}
+              onClick={() => onFinishCapture?.()}
+            />
+          ) : (
+            <FooterActionTile fill placeholder>
+              &nbsp;
+            </FooterActionTile>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

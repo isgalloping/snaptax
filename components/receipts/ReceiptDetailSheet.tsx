@@ -18,12 +18,15 @@ import { clientTimeZone } from "@/lib/time/timeZone";
 import { ReceiptImageZoomViewer } from "@/components/receipts/ReceiptImageZoomViewer";
 import { ReceiptDetailStepper } from "@/components/receipts/ReceiptDetailStepper";
 import { ReceiptCaptureSection } from "@/components/receipts/ReceiptCaptureSection";
+import { ReceiptCaptureActions } from "@/components/receipts/ReceiptCaptureActions";
+import { ReceiptDeleteConfirmSheet } from "@/components/receipts/ReceiptDeleteConfirmSheet";
 
 interface ReceiptDetailSheetProps {
   receipt: Receipt;
   syncStuck?: boolean;
   onClose: () => void;
   onResnap: (id: string) => void;
+  onDeleteReceipt: (id: string) => Promise<void>;
   onRetrySync?: (id: string) => void;
   onReceiptUpdate?: (receipt: Receipt) => void;
 }
@@ -50,6 +53,7 @@ export function ReceiptDetailSheet({
   syncStuck = false,
   onClose,
   onResnap,
+  onDeleteReceipt,
   onRetrySync,
   onReceiptUpdate,
 }: ReceiptDetailSheetProps) {
@@ -57,6 +61,8 @@ export function ReceiptDetailSheet({
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [imageMissing, setImageMissing] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const dragStartY = useRef<number | null>(null);
   const revokeRef = useRef<(() => void) | undefined>(undefined);
 
@@ -122,6 +128,27 @@ export function ReceiptDetailSheet({
     onClose();
     onResnap(receipt.id);
   }, [onClose, onResnap, receipt.id]);
+
+  const runDelete = useCallback(async () => {
+    setDeleteBusy(true);
+    try {
+      await onDeleteReceipt(receipt.id);
+      onClose();
+    } finally {
+      setDeleteBusy(false);
+      setShowDeleteConfirm(false);
+    }
+  }, [onClose, onDeleteReceipt, receipt.id]);
+
+  const handleDeleteClick = useCallback(() => {
+    if (hero.kind === "done") {
+      setShowDeleteConfirm(true);
+      return;
+    }
+    void runDelete();
+  }, [hero.kind, runDelete]);
+
+  const showResnap = hero.kind === "processing" || hero.kind === "blurry";
 
   const openZoom = useCallback(() => {
     if (imageSrc) setFullscreen(true);
@@ -227,13 +254,6 @@ export function ReceiptDetailSheet({
                     The image is too blurry or shaky.
                   </p>
                   <ReceiptDetailStepper phase={stepperPhase} />
-                  <button
-                    type="button"
-                    onClick={handleResnap}
-                    className="mt-6 min-h-16 w-full rounded-xl bg-yellow-500 py-3 text-lg font-black uppercase text-black active:scale-95"
-                  >
-                    📸 Resnap This Receipt
-                  </button>
                 </>
               )}
 
@@ -303,6 +323,16 @@ export function ReceiptDetailSheet({
                     hero.kind === "blurry" ? "Tap to enlarge" : "Tap to zoom"
                   }
                   onZoom={openZoom}
+                  actions={
+                    imageSrc ? (
+                      <ReceiptCaptureActions
+                        showResnap={showResnap}
+                        busy={deleteBusy}
+                        onDelete={handleDeleteClick}
+                        onResnap={showResnap ? handleResnap : undefined}
+                      />
+                    ) : undefined
+                  }
                 />
                 {hero.kind === "processing" && (
                   <p className="text-center text-[10px] font-bold leading-relaxed text-zinc-500">
@@ -322,6 +352,13 @@ export function ReceiptDetailSheet({
           onClose={() => setFullscreen(false)}
         />
       )}
+
+      <ReceiptDeleteConfirmSheet
+        open={showDeleteConfirm}
+        busy={deleteBusy}
+        onCancel={() => setShowDeleteConfirm(false)}
+        onConfirm={() => void runDelete()}
+      />
     </>
   );
 }

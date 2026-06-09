@@ -1,0 +1,75 @@
+"use client";
+
+import type { ReactNode } from "react";
+import { homeVisual } from "@/lib/ui/homeVisual";
+
+interface ReceiptCaptureActionsProps {
+  showResnap?: boolean;
+  busy?: boolean;
+  onDelete: () => void;
+  onResnap?: () => void;
+}
+
+export function ReceiptCaptureActions({
+  showResnap = true,
+  busy = false,
+  onDelete,
+  onResnap,
+}: ReceiptCaptureActionsProps) {
+  const { size, delete: deleteCls, resnap } = homeVisual.reviewControl;
+
+  const btn = (
+    label: string,
+    ariaLabel: string,
+    className: string,
+    icon: ReactNode,
+    onClick: () => void,
+  ) => (
+    <div className="flex flex-col items-center gap-1">
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onClick();
+        }}
+        disabled={busy}
+        aria-label={ariaLabel}
+        className={`flex ${size} items-center justify-center transition-transform active:scale-95 disabled:opacity-40 ${className}`}
+      >
+        {icon}
+      </button>
+      <span className="text-[10px] font-bold uppercase tracking-wide text-white drop-shadow-md">
+        {label}
+      </span>
+    </div>
+  );
+
+  return (
+    <div
+      className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center gap-8 bg-black/25"
+    >
+      <div className="pointer-events-auto flex items-center justify-center gap-8">
+        {btn(
+          "Delete",
+          "Delete receipt",
+          deleteCls,
+          <span className="text-xl text-white" aria-hidden>
+            🗑
+          </span>,
+          onDelete,
+        )}
+        {showResnap &&
+          onResnap &&
+          btn(
+            "Resnap",
+            "Resnap receipt",
+            resnap,
+            <span className="text-2xl font-black text-white" aria-hidden>
+              ✕
+            </span>,
+            onResnap,
+          )}
+      </div>
+    </div>
+  );
+}

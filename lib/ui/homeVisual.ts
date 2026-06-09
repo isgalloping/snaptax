@@ -26,6 +26,26 @@ export const homeVisual = {
     badgeGlow:
       "shadow-[0_0_20px_rgba(34,197,94,0.55)] border border-green-500/40",
     gallerySelected: "ring-2 ring-white ring-offset-1 ring-offset-black/80",
+    galleryLatest: "ring-2 ring-yellow-500 ring-offset-1 ring-offset-black/80",
+    flashDoneFill:
+      "bg-yellow-500 shadow-[0_0_16px_rgba(234,179,8,0.45)]",
+    reviewDoneFill:
+      "bg-green-950 border border-green-600/60 shadow-[0_0_12px_rgba(34,197,94,0.35)]",
+    /** @deprecated use flashDoneFill */
+    flashDone:
+      "border-2 border-yellow-500/80 shadow-[0_0_16px_rgba(234,179,8,0.45)] bg-zinc-900/90",
+    /** @deprecated use reviewDoneFill */
+    reviewDone:
+      "border border-green-500/50 shadow-[0_0_16px_rgba(34,197,94,0.35)] bg-zinc-900/90",
+  },
+  reviewControl: {
+    size: "h-14 w-14",
+    delete:
+      "rounded-full bg-red-600 shadow-[0_0_12px_rgba(220,38,38,0.45)] border border-red-500/60",
+    resnap:
+      "rounded-full bg-red-600 shadow-[0_0_12px_rgba(220,38,38,0.45)] border border-red-500/60",
+    accept:
+      "rounded-full bg-green-600 shadow-[0_0_16px_rgba(34,197,94,0.45)] border border-green-500/60",
   },
   /** +15% over baseline px-3 py-1.5 text-xs gap-2 — outdoor touch target */
   filterTab: {

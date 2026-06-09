@@ -10,11 +10,20 @@ import {
 import { CameraIcon } from "@/components/icons/CameraIcon";
 import { ChevronRightIcon } from "@/components/icons/ChevronRightIcon";
 import { homeVisual } from "@/lib/ui/homeVisual";
-import { CameraOverlay } from "@/components/camera/CameraOverlay";
+import {
+  CameraOverlay,
+  type CameraPhase,
+} from "@/components/camera/CameraOverlay";
 import { ComplianceFootnote } from "@/components/legal/ComplianceFootnote";
 import { LegalSheet } from "@/components/legal/LegalSheet";
 import {
+  isReviewComplete,
+  nextUnreviewedId,
+  unreviewedIds,
+} from "@/lib/camera/batchReviewQueue";
+import {
   createBatchThumb,
+  revokeBatchThumb,
   revokeBatchThumbs,
   type BatchThumb,
 } from "@/lib/camera/batchSession";
@@ -26,6 +35,7 @@ interface SnapButtonProps {
   onBatchShot: (file: File) => Promise<string>;
   onBatchDone: (sessionIds: string[]) => Promise<void>;
   onBatchClose: (sessionIds: string[]) => Promise<void>;
+  onReviewDelete: (id: string) => Promise<void>;
   resnapId?: string | null;
   onCameraOpenChange?: (open: boolean) => void;
   onSyncClick?: () => void;
@@ -45,6 +55,7 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
       onBatchShot,
       onBatchDone,
       onBatchClose,
+      onReviewDelete,
       resnapId,
       onCameraOpenChange,
       onSyncClick,
@@ -57,10 +68,14 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
     const inputRef = useRef<HTMLInputElement>(null);
     const streamPromiseRef = useRef<Promise<MediaStream> | null>(null);
     const sessionIdsRef = useRef<string[]>([]);
+    const resnapSlotIndexRef = useRef<number | null>(null);
     const [cameraOpen, setCameraOpen] = useState(false);
     const [legalDoc, setLegalDoc] = useState<LegalDoc | null>(null);
     const [sessionThumbs, setSessionThumbs] = useState<BatchThumb[]>([]);
     const [selectedId, setSelectedId] = useState<string | undefined>();
+    const [phase, setPhase] = useState<CameraPhase>("live");
+    const [reviewId, setReviewId] = useState<string | undefined>();
+    const [acceptedIds, setAcceptedIds] = useState<Set<string>>(() => new Set());
 
     const isBatchMode = !resnapId;
 
@@ -70,7 +85,11 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
         return [];
       });
       sessionIdsRef.current = [];
+      resnapSlotIndexRef.current = null;
       setSelectedId(undefined);
+      setPhase("live");
+      setReviewId(undefined);
+      setAcceptedIds(new Set());
     }, []);
 
     const setCamera = useCallback(
@@ -99,14 +118,69 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
       e.target.value = "";
     };
 
+    const removeFromSession = useCallback((id: string) => {
+      setSessionThumbs((prev) => {
+        const thumb = prev.find((t) => t.id === id);
+        if (thumb) revokeBatchThumb(thumb);
+        return prev.filter((t) => t.id !== id);
+      });
+      sessionIdsRef.current = sessionIdsRef.current.filter((sid) => sid !== id);
+      const remaining = sessionIdsRef.current;
+      setSelectedId(remaining[remaining.length - 1]);
+    }, []);
+
+    const finishSession = useCallback(async () => {
+      const ids = [...sessionIdsRef.current];
+      resetSession();
+      streamPromiseRef.current = null;
+      setCamera(false);
+      await onBatchDone(ids);
+    }, [onBatchDone, resetSession, setCamera]);
+
+    const advanceAfterReviewAction = useCallback(
+      async (removedId: string, nextAccepted: Set<string>) => {
+        setAcceptedIds(nextAccepted);
+        if (isReviewComplete(sessionIdsRef.current, nextAccepted)) {
+          await finishSession();
+          return;
+        }
+        const nextId = nextUnreviewedId(
+          sessionIdsRef.current,
+          nextAccepted,
+          removedId,
+        );
+        setReviewId(nextId);
+        setSelectedId(nextId);
+      },
+      [finishSession],
+    );
+
     const handleBatchShot = async (file: File) => {
       const id = await onBatchShot(file);
+      const slot = resnapSlotIndexRef.current;
+
+      if (slot !== null) {
+        sessionIdsRef.current = [
+          ...sessionIdsRef.current.slice(0, slot),
+          id,
+          ...sessionIdsRef.current.slice(slot),
+        ];
+        resnapSlotIndexRef.current = null;
+        const thumb = createBatchThumb(id, file);
+        setSessionThumbs((prev) => [
+          ...prev.slice(0, slot),
+          thumb,
+          ...prev.slice(slot),
+        ]);
+        setPhase("postReview");
+        setReviewId(id);
+        setSelectedId(id);
+        return;
+      }
+
       sessionIdsRef.current = [...sessionIdsRef.current, id];
       const thumb = createBatchThumb(id, file);
-      setSessionThumbs((prev) => {
-        const next = [...prev, thumb];
-        return next;
-      });
+      setSessionThumbs((prev) => [...prev, thumb]);
       setSelectedId(id);
     };
 
@@ -115,12 +189,80 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
       onCapture(file);
     };
 
-    const handleDone = async () => {
-      const ids = [...sessionIdsRef.current];
-      resetSession();
-      streamPromiseRef.current = null;
-      setCamera(false);
-      await onBatchDone(ids);
+    const handleFlashDone = async () => {
+      if (sessionIdsRef.current.length === 0) return;
+      await finishSession();
+    };
+
+    const handleBatchPreviewEnter = (_id: string) => {
+      const id =
+        selectedId ?? sessionIdsRef.current[sessionIdsRef.current.length - 1];
+      if (!id) return;
+      setPhase("batchPreview");
+      setReviewId(id);
+      setSelectedId(id);
+    };
+
+    const handleBatchPreviewBack = () => {
+      setPhase("live");
+      setReviewId(undefined);
+    };
+
+    const handlePreviewSelect = (id: string) => {
+      setReviewId(id);
+      setSelectedId(id);
+    };
+
+    const handleFinishCapture = async () => {
+      if (sessionIdsRef.current.length === 0) return;
+
+      if (isReviewComplete(sessionIdsRef.current, acceptedIds)) {
+        await finishSession();
+        return;
+      }
+
+      const first = unreviewedIds(sessionIdsRef.current, acceptedIds)[0];
+      if (!first) return;
+
+      setPhase("postReview");
+      setReviewId(first);
+      setSelectedId(first);
+    };
+
+    const handleReviewDelete = async (id: string) => {
+      await onReviewDelete(id);
+      removeFromSession(id);
+      const nextAccepted = new Set(acceptedIds);
+      nextAccepted.delete(id);
+      await advanceAfterReviewAction(id, nextAccepted);
+    };
+
+    const handleReviewResnap = async (id: string) => {
+      const slot = sessionIdsRef.current.indexOf(id);
+      await onReviewDelete(id);
+      removeFromSession(id);
+      const nextAccepted = new Set(acceptedIds);
+      nextAccepted.delete(id);
+      setAcceptedIds(nextAccepted);
+      resnapSlotIndexRef.current =
+        slot >= 0 ? slot : sessionIdsRef.current.length;
+      setPhase("liveResnap");
+      setReviewId(undefined);
+    };
+
+    const handleReviewAccept = async () => {
+      if (!reviewId) return;
+      const nextAccepted = new Set(acceptedIds).add(reviewId);
+      await advanceAfterReviewAction(reviewId, nextAccepted);
+    };
+
+    const handleLiveGallerySelect = (id: string) => {
+      setSelectedId(id);
+    };
+
+    const handlePostReviewBack = () => {
+      setPhase("live");
+      setReviewId(undefined);
     };
 
     const handleClose = async () => {
@@ -182,9 +324,33 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
             initialStreamPromise={streamPromiseRef.current}
             sessionThumbs={sessionThumbs}
             selectedId={selectedId}
-            onSelectThumb={setSelectedId}
+            acceptedIds={acceptedIds}
+            phase={isBatchMode ? phase : "live"}
+            reviewId={reviewId}
+            onSelectThumb={
+              isBatchMode
+                ? phase === "postReview" || phase === "batchPreview"
+                  ? handlePreviewSelect
+                  : handleLiveGallerySelect
+                : undefined
+            }
+            onReviewDelete={isBatchMode ? handleReviewDelete : undefined}
+            onReviewResnap={isBatchMode ? handleReviewResnap : undefined}
+            onReviewAccept={
+              isBatchMode ? () => void handleReviewAccept() : undefined
+            }
+            onFinishCapture={
+              isBatchMode ? () => void handleFinishCapture() : undefined
+            }
+            onFlashDone={isBatchMode ? () => void handleFlashDone() : undefined}
+            onBatchPreviewEnter={
+              isBatchMode ? handleBatchPreviewEnter : undefined
+            }
+            onBatchPreviewBack={
+              isBatchMode ? handleBatchPreviewBack : undefined
+            }
+            onPostReviewBack={isBatchMode ? handlePostReviewBack : undefined}
             onShot={isBatchMode ? handleBatchShot : handleSingleShot}
-            onDone={isBatchMode ? handleDone : undefined}
             onClose={
               isBatchMode
                 ? handleClose

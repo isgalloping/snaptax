@@ -7,6 +7,7 @@ import { ensureGhostSession } from "@/lib/client/ghostClient";
 import { ensureTaxRegionCandidate } from "@/lib/client/taxRegion";
 import {
   apiReceiptToLocal,
+  deleteReceiptRemote,
   fetchReceiptList,
   sumLocalTaxSaved,
   triggerReceiptProcess,
@@ -560,6 +561,47 @@ export function HomeScreen() {
     );
   }, [refreshListFromLocal, refreshTaxSaved]);
 
+  const handleReviewDelete = useCallback(async (id: string) => {
+    await deleteStoredReceipt(id);
+    watcherRef.current?.unwatch(id);
+    queueRef.current?.onSettled(id);
+    setSyncStuckIds((prev) => {
+      if (!prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+  }, []);
+
+  const handleDeleteReceipt = useCallback(
+    async (id: string) => {
+      setReceipts((prev) => prev.filter((r) => r.id !== id));
+      setSelectedReceipt((prev) => (prev?.id === id ? null : prev));
+      watcherRef.current?.unwatch(id);
+      queueRef.current?.onSettled(id);
+      setSyncStuckIds((prev) => {
+        if (!prev.has(id)) return prev;
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+      await deleteStoredReceipt(id);
+      if (navigator.onLine) {
+        try {
+          await ensureGhostSession();
+          await deleteReceiptRemote(id);
+        } catch {
+          // Local row already removed; remote may reconcile on next sync
+        }
+      }
+      const stored = await loadReceipts();
+      const visible = top100ByUpdatedAt(stored);
+      setReceipts(visible);
+      refreshTaxSaved(visible);
+    },
+    [refreshTaxSaved],
+  );
+
   const handleCapture = useCallback(
     async (file: File) => {
       const replaceId = resnapId;
@@ -695,6 +737,7 @@ export function HomeScreen() {
           onBatchShot={handleBatchShot}
           onBatchDone={handleBatchDone}
           onBatchClose={handleBatchClose}
+          onReviewDelete={handleReviewDelete}
           resnapId={resnapId}
           onCameraOpenChange={setCameraOpen}
           onSyncClick={handleManualListSync}
@@ -723,6 +766,7 @@ export function HomeScreen() {
           syncStuck={syncStuckIds.has(selectedReceipt.id)}
           onClose={() => setSelectedReceipt(null)}
           onResnap={handleResnap}
+          onDeleteReceipt={handleDeleteReceipt}
           onRetrySync={handleRetrySync}
           onReceiptUpdate={(updated) => {
             setReceipts((prev) =>

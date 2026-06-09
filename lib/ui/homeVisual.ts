@@ -57,15 +57,13 @@ export const homeVisual = {
     accept:
       "rounded-full bg-green-600 shadow-[0_0_16px_rgba(34,197,94,0.45)] border border-green-500/60",
   },
-  /** Outdoor touch — min 56px height for filter tabs */
+  /** +15% over baseline px-3 py-1.5 text-xs gap-2 — outdoor touch target */
   filterTab: {
-    minHeight: "min-h-14",
-    padding: "px-4 py-3",
-    fontSize: "text-sm",
-    gap: "gap-3",
-    iconGap: "mr-1.5",
-    countGap: "ml-1.5",
-    barPadding: "py-1.5",
+    padding: "px-[0.8625rem] py-[0.43125rem]",
+    fontSize: "text-[0.8625rem]",
+    gap: "gap-[0.575rem]",
+    iconGap: "mr-[0.2875rem]",
+    countGap: "ml-[0.2875rem]",
   },
 } as const;
 

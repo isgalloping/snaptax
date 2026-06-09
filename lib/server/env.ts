@@ -8,15 +8,6 @@ function firstDefined(...values: (string | undefined)[]): string {
 }
 
 export function getDatabaseUrl(): string {
-  if (process.env.NODE_ENV === "development") {
-    // Local dev: prefer direct 5432 — pooler 6543 often cold-starts / flakes
-    return firstDefined(
-      process.env.DATABASE_URL,
-      process.env.POSTGRES_URL_NON_POOLING,
-      process.env.POSTGRES_PRISMA_URL,
-      process.env.POSTGRES_URL,
-    );
-  }
   return firstDefined(
     process.env.DATABASE_URL,
     process.env.POSTGRES_PRISMA_URL,

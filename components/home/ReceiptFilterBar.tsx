@@ -24,10 +24,9 @@ const FILTERS: {
   { id: "blurry", label: "BLURRY", icon: "❌", countKey: "blurry" },
 ];
 
-const { minHeight, padding, fontSize, gap, iconGap, countGap, barPadding } =
-  homeVisual.filterTab;
+const { padding, fontSize, gap, iconGap, countGap } = homeVisual.filterTab;
 
-const pillBase = `inline-flex shrink-0 items-center rounded-full font-bold transition-colors ${minHeight} ${padding} ${fontSize}`;
+const pillBase = `shrink-0 rounded-full font-bold transition-colors ${padding} ${fontSize}`;
 
 export function ReceiptFilterBar({
   counts,
@@ -36,7 +35,7 @@ export function ReceiptFilterBar({
   onChange,
 }: ReceiptFilterBarProps) {
   return (
-    <div className={`mb-2 flex overflow-x-auto ${barPadding} pr-1 ${gap}`}>
+    <div className={`mb-2 flex overflow-x-auto pb-1 pr-1 ${gap}`}>
       {FILTERS.map(({ id, label, icon, countKey }) => {
         const isActive = active === id;
         return (

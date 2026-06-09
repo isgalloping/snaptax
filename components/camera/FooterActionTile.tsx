@@ -9,6 +9,8 @@ interface FooterActionTileProps {
   disabled?: boolean;
   onClick?: () => void;
   ariaLabel?: string;
+  /** Fill parent grid cell (live dock columns) */
+  fill?: boolean;
   /** Invisible spacer — same size, no interaction */
   placeholder?: boolean;
 }
@@ -19,9 +21,13 @@ export function FooterActionTile({
   disabled = false,
   onClick,
   ariaLabel,
+  fill = false,
   placeholder = false,
 }: FooterActionTileProps) {
-  const tileClass = `${homeVisual.snapCamera.footerTile} flex shrink-0 flex-col items-center justify-center transition-transform active:scale-95 disabled:opacity-40 ${className}`;
+  const sizeClass = fill
+    ? homeVisual.snapCamera.footerColTile
+    : homeVisual.snapCamera.footerTile;
+  const tileClass = `${sizeClass} flex shrink-0 flex-col items-center justify-center transition-transform active:scale-95 disabled:opacity-40 ${className}`;
 
   if (placeholder) {
     return (

@@ -1,18 +1,48 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { SHUTTER_COOLDOWN_MS } from "@/lib/camera/shutterCooldown";
 
-const SHUTTER_COOLDOWN_MS = 1000;
-
-const COMPACT_RING = 52;
+const COMPACT_RING = 56;
 const FULL_RING = 72;
+const HERO_RING = 96;
+
+type ShutterSize = "compact" | "full" | "hero";
 
 interface CameraShutterControlProps {
   ready: boolean;
   capturing: boolean;
   onClick: () => void;
   showLabel?: boolean;
+  /** @deprecated use size="compact" */
   compact?: boolean;
+  size?: ShutterSize;
+}
+
+function ringConfig(size: ShutterSize) {
+  switch (size) {
+    case "hero":
+      return {
+        ring: HERO_RING,
+        stroke: 4,
+        inner: "h-20 w-20",
+        button: "h-24 w-24",
+      };
+    case "compact":
+      return {
+        ring: COMPACT_RING,
+        stroke: 3,
+        inner: "h-11 w-11",
+        button: "h-14 w-14",
+      };
+    default:
+      return {
+        ring: FULL_RING,
+        stroke: 4,
+        inner: "h-14 w-14",
+        button: "h-[4.5rem] w-[4.5rem]",
+      };
+  }
 }
 
 export function CameraShutterControl({
@@ -21,13 +51,13 @@ export function CameraShutterControl({
   onClick,
   showLabel = true,
   compact = false,
+  size,
 }: CameraShutterControlProps) {
-  const ringSize = compact ? COMPACT_RING : FULL_RING;
-  const stroke = compact ? 3 : 4;
+  const resolvedSize: ShutterSize = size ?? (compact ? "compact" : "full");
+  const { ring: ringSize, stroke, inner: innerSize, button: buttonSize } =
+    ringConfig(resolvedSize);
   const radius = (ringSize - stroke) / 2;
   const circumference = 2 * Math.PI * radius;
-  const innerSize = compact ? "h-10 w-10" : "h-14 w-14";
-  const buttonSize = compact ? "h-[3.25rem] w-[3.25rem]" : "h-[4.5rem] w-[4.5rem]";
 
   const [arcProgress, setArcProgress] = useState(1);
 

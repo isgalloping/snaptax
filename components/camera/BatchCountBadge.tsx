@@ -16,28 +16,31 @@ export function BatchCountBadge({
   onPress,
 }: BatchCountBadgeProps) {
   if (count <= 0) {
-    return <FooterActionTile placeholder aria-hidden>&nbsp;</FooterActionTile>;
+    return (
+      <FooterActionTile
+        fill
+        placeholder
+        className={homeVisual.snapCamera.batchTileOutline}
+      >
+        &nbsp;
+      </FooterActionTile>
+    );
   }
 
-  const tile = (
+  return (
     <FooterActionTile
-      className={`gap-0.5 px-1 ${homeVisual.snapCamera.batchTileFill}`}
-      onClick={
-        latestId && onPress ? () => onPress(latestId) : undefined
-      }
+      fill
+      className={`relative justify-between py-1 ${homeVisual.snapCamera.batchTileOutline}`}
+      onClick={latestId && onPress ? () => onPress(latestId) : undefined}
       ariaLabel="Review latest batch"
     >
-      <div className="flex w-full flex-1 items-center justify-center gap-1">
-        <StackCardsIcon className="h-7 w-7 shrink-0 text-green-400" />
-        <span className="text-2xl font-black leading-none text-white">
-          {count}
-        </span>
-      </div>
-      <span className="text-[8px] font-bold uppercase leading-tight text-green-400">
+      <StackCardsIcon className="absolute left-1 top-1 h-5 w-5 text-green-400" />
+      <span className="flex flex-1 items-center justify-center text-2xl font-black leading-none text-white">
+        {count}
+      </span>
+      <span className="pb-0.5 text-[7px] font-bold uppercase leading-none text-green-400">
         Batch {count}
       </span>
     </FooterActionTile>
   );
-
-  return tile;
 }

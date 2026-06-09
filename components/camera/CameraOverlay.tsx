@@ -18,8 +18,7 @@ import {
   openCameraStream,
   stopCameraStream,
 } from "@/lib/camera/capturePhoto";
-
-const SHUTTER_COOLDOWN_MS = 1000;
+import { SHUTTER_COOLDOWN_MS } from "@/lib/camera/shutterCooldown";
 
 export type CameraOverlayMode = "batch" | "single";
 export type CameraPhase = "live" | "batchPreview" | "postReview" | "liveResnap";

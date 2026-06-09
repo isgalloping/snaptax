@@ -1,12 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { BatchCountBadge } from "@/components/camera/BatchCountBadge";
 import { BatchGalleryStrip } from "@/components/camera/BatchGalleryStrip";
+import { CameraLiveFooter } from "@/components/camera/CameraLiveFooter";
+import { CameraShutterControl } from "@/components/camera/CameraShutterControl";
+import { ReceiptReviewControls } from "@/components/camera/ReceiptReviewControls";
+import { ReceiptReviewViewport } from "@/components/camera/ReceiptReviewViewport";
 import { RefreshIcon } from "@/components/icons/RefreshIcon";
 import { SlidersIcon } from "@/components/icons/SlidersIcon";
 import { ComplianceFootnote } from "@/components/legal/ComplianceFootnote";
-import { homeVisual } from "@/lib/ui/homeVisual";
 import type { BatchThumb } from "@/lib/camera/batchSession";
 import { USER_COPY } from "@/lib/copy/userFacing";
 import {
@@ -20,15 +22,26 @@ import {
 const SHUTTER_COOLDOWN_MS = 1000;
 
 export type CameraOverlayMode = "batch" | "single";
+export type CameraPhase = "live" | "batchPreview" | "postReview" | "liveResnap";
 
 interface CameraOverlayProps {
   mode: CameraOverlayMode;
   initialStreamPromise: Promise<MediaStream>;
   sessionThumbs: BatchThumb[];
   selectedId?: string;
+  acceptedIds?: ReadonlySet<string>;
+  phase?: CameraPhase;
+  reviewId?: string;
   onSelectThumb?: (id: string) => void;
+  onReviewDelete?: (id: string) => void | Promise<void>;
+  onReviewResnap?: (id: string) => void | Promise<void>;
+  onReviewAccept?: () => void;
+  onFinishCapture?: () => void;
+  onFlashDone?: () => void;
+  onBatchPreviewEnter?: (id: string) => void;
+  onBatchPreviewBack?: () => void;
+  onPostReviewBack?: () => void;
   onShot: (file: File) => void | Promise<void>;
-  onDone?: () => void | Promise<void>;
   onClose: () => void;
   onFallback: () => void;
   onSyncClick?: () => void;
@@ -44,9 +57,19 @@ export function CameraOverlay({
   initialStreamPromise,
   sessionThumbs,
   selectedId,
+  acceptedIds,
+  phase = "live",
+  reviewId,
   onSelectThumb,
+  onReviewDelete,
+  onReviewResnap,
+  onReviewAccept,
+  onFinishCapture,
+  onFlashDone,
+  onBatchPreviewEnter,
+  onBatchPreviewBack,
+  onPostReviewBack,
   onShot,
-  onDone,
   onClose,
   onFallback,
   onSyncClick,
@@ -60,7 +83,19 @@ export function CameraOverlay({
   const streamRef = useRef<MediaStream | null>(null);
   const [ready, setReady] = useState(false);
   const [capturing, setCapturing] = useState(false);
+  const [reviewBusy, setReviewBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const isPostReview = mode === "batch" && phase === "postReview";
+  const isBatchPreview = mode === "batch" && phase === "batchPreview";
+  const isLiveResnap = mode === "batch" && phase === "liveResnap";
+  const isLiveBatch = mode === "batch" && phase === "live";
+  const showLiveControls = isLiveBatch || isLiveResnap;
+  const hideVideo = isPostReview || isBatchPreview;
+
+  const gallerySelectedId =
+    isPostReview || isBatchPreview ? reviewId : selectedId;
+  const reviewThumb = sessionThumbs.find((t) => t.id === reviewId);
 
   const stopStream = useCallback(() => {
     stopCameraStream(streamRef.current);
@@ -102,7 +137,7 @@ export function CameraOverlay({
 
   const handleShutter = async () => {
     const video = videoRef.current;
-    if (!video || !ready || capturing) return;
+    if (!video || !ready || capturing || hideVideo) return;
 
     setCapturing(true);
     try {
@@ -123,20 +158,40 @@ export function CameraOverlay({
     }
   };
 
-  const handleDone = () => {
-    stopStream();
-    void onDone?.();
-  };
-
   const handleClose = () => {
     stopStream();
     onClose();
   };
 
+  const handleBack = () => {
+    if (isBatchPreview) {
+      onBatchPreviewBack?.();
+      return;
+    }
+    if (isPostReview) {
+      onPostReviewBack?.();
+      return;
+    }
+    handleClose();
+  };
+
+  const runReviewAction = async (
+    action: ((id: string) => void | Promise<void>) | undefined,
+  ) => {
+    if (!reviewId || !action || reviewBusy) return;
+    setReviewBusy(true);
+    try {
+      await action(reviewId);
+    } finally {
+      setReviewBusy(false);
+    }
+  };
+
   const actionBtn =
     "flex h-11 w-11 items-center justify-center rounded-xl border border-zinc-700 bg-black/50 backdrop-blur-sm transition-transform active:scale-95 disabled:opacity-40";
 
-  const latestThumbUrl = sessionThumbs[sessionThumbs.length - 1]?.url;
+  const latestThumb = sessionThumbs[sessionThumbs.length - 1];
+  const latestId = latestThumb?.id;
   const batchCount = sessionThumbs.length;
 
   return (
@@ -144,7 +199,7 @@ export function CameraOverlay({
       <header className="absolute left-0 right-0 top-0 z-10 flex items-center justify-between p-4">
         <button
           type="button"
-          onClick={handleClose}
+          onClick={handleBack}
           className="flex min-h-14 min-w-14 items-center justify-center rounded-xl border-2 border-zinc-600 bg-black/60 px-3 text-xs font-black uppercase tracking-wider text-white backdrop-blur-sm transition-transform active:scale-95"
         >
           &lt; BACK
@@ -184,10 +239,14 @@ export function CameraOverlay({
           autoPlay
           muted
           playsInline
-          className={`h-full w-full object-cover ${error ? "hidden" : ""}`}
+          className={`h-full w-full object-cover ${error ? "hidden" : ""} ${hideVideo ? "invisible" : ""}`}
         />
 
-        {!ready && !error && (
+        {(isPostReview || isBatchPreview) && reviewThumb && (
+          <ReceiptReviewViewport imageUrl={reviewThumb.url} />
+        )}
+
+        {!ready && !error && !hideVideo && (
           <div className="absolute inset-0 flex items-center justify-center bg-black">
             <p className="text-lg font-bold text-yellow-400">
               {USER_COPY.camera.opening}
@@ -221,53 +280,69 @@ export function CameraOverlay({
 
       {!error && (
         <footer className="relative z-10 shrink-0 bg-gradient-to-t from-black via-black/95 to-transparent pb-6 pt-4">
-          {mode === "batch" && (
+          {isBatchPreview && (
             <BatchGalleryStrip
               thumbs={sessionThumbs}
-              selectedId={selectedId}
+              selectedId={gallerySelectedId}
+              latestId={latestId}
+              acceptedIds={acceptedIds}
               onSelect={onSelectThumb}
             />
           )}
 
-          <div className="flex items-end justify-between gap-3 px-6 pb-3 pt-2">
-            {mode === "batch" ? (
-              <BatchCountBadge
-                count={batchCount}
-                latestThumbUrl={latestThumbUrl}
+          {isPostReview && (
+            <>
+              <ReceiptReviewControls
+                busy={reviewBusy}
+                onDelete={() => void runReviewAction(onReviewDelete)}
+                onResnap={() => void runReviewAction(onReviewResnap)}
+                onAccept={() => onReviewAccept?.()}
               />
-            ) : (
-              <div className="h-16 w-16 shrink-0" aria-hidden />
-            )}
+              <BatchGalleryStrip
+                thumbs={sessionThumbs}
+                selectedId={gallerySelectedId}
+                latestId={latestId}
+                acceptedIds={acceptedIds}
+                onSelect={onSelectThumb}
+              />
+            </>
+          )}
 
-            <button
-              type="button"
-              onClick={() => void handleShutter()}
-              disabled={!ready || capturing}
-              aria-label="Take photo"
-              className={`flex h-[4.5rem] w-[4.5rem] shrink-0 items-center justify-center rounded-full bg-zinc-950 ${homeVisual.snapCamera.shutterOuter} ${homeVisual.snapCamera.shutterRing} transition-transform active:scale-95 disabled:opacity-50`}
-            >
-              <span className="h-14 w-14 rounded-full border-4 border-zinc-800 bg-zinc-950" />
-            </button>
+          {showLiveControls && (
+            <>
+              <BatchGalleryStrip
+                thumbs={sessionThumbs}
+                selectedId={gallerySelectedId}
+                latestId={latestId}
+                acceptedIds={acceptedIds}
+                onSelect={onSelectThumb}
+              />
+              <CameraLiveFooter
+                batchCount={batchCount}
+                latestThumbUrl={latestThumb?.url}
+                latestId={latestId}
+                ready={ready}
+                capturing={capturing}
+                showDualDone={isLiveBatch}
+                onBatchPreviewEnter={onBatchPreviewEnter}
+                onShutter={() => void handleShutter()}
+                onFlashDone={onFlashDone}
+                onFinishCapture={onFinishCapture}
+              />
+            </>
+          )}
 
-            {mode === "batch" ? (
-              <button
-                type="button"
-                onClick={handleDone}
-                disabled={batchCount === 0}
-                className="flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-xl border border-green-500/50 bg-zinc-900/90 shadow-[0_0_16px_rgba(34,197,94,0.35)] transition-transform active:scale-95 disabled:opacity-40"
-                aria-label="Done"
-              >
-                <span className="text-2xl font-black text-green-400">✓</span>
-                <span className="text-[10px] font-bold uppercase text-white">
-                  Done
-                </span>
-              </button>
-            ) : (
-              <div className="h-16 w-16 shrink-0" aria-hidden />
-            )}
-          </div>
+          {mode === "single" && (
+            <div className="flex items-end justify-center gap-3 px-6 pb-3 pt-2">
+              <CameraShutterControl
+                ready={ready}
+                capturing={capturing}
+                onClick={() => void handleShutter()}
+              />
+            </div>
+          )}
 
-          {mode === "batch" && onOpenTerms && onOpenPrivacy && (
+          {showLiveControls && onOpenTerms && onOpenPrivacy && (
             <ComplianceFootnote
               className="px-4 text-[10px] leading-tight"
               onOpenTerms={onOpenTerms}

@@ -124,6 +124,21 @@ Privacy Policy · Terms · **Data storage（美国）** · legal@snap1099.com ·
 └── Export IRS Tax Pack
 ```
 
+### 3.1 连拍相机与 Post-Review
+
+> 设计：[2026-06-08-batch-snap-camera-design.md](../superpowers/specs/2026-06-08-batch-snap-camera-design.md) · [2026-06-09-post-batch-review-flow-design.md](../superpowers/specs/2026-06-09-post-batch-review-flow-design.md) · [2026-06-10-camera-live-footer-ui-design.md](../superpowers/specs/2026-06-10-camera-live-footer-ui-design.md)
+
+| 模式 | 行为 |
+|------|------|
+| **Live 连拍** | 快门不断流；每张即时写 IndexedDB |
+| **Live Footer UI** | 白快门 + 1s 绿弧 cooldown · 黄 **⚡ FLASH DONE** · 深绿 **DONE & REVIEW** · Gallery 最新张黄框 |
+| **⚡ FLASH DONE** | 跳过 review → 立即 flush + 回主屏（快车道） |
+| **DONE & REVIEW** | 进入 postReview 严审 → 审完 flush |
+| **BATCH 气泡** | batchPreview 轻量查看 → BACK 继续拍 |
+| **postReview** | DELETE / RESNAP / Accept（严审沙盒） |
+| **列表 Resnap** | 独立 single 模式（非 batch postReview） |
+| **详情 DELETE/RESNAP** | 预览区 overlay；processing/blurry 即时删 + RESNAP；done 仅 DELETE + Sheet 确认 |
+
 ---
 
 ## 4. 身份与登录门控

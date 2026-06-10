@@ -1,28 +1,65 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useCallback, useEffect, useState } from "react";
-import type { LandingVariant } from "@/lib/landing/landingVariant";
-import { persistLandingVariantCookie } from "@/lib/landing/persistLandingVariantCookie";
-import { HomeScreen } from "@/components/home/HomeScreen";
+import {
+  getHomeChunkPromise,
+  homeChunkReady as isHomeChunkReady,
+} from "@/lib/landing/homeChunk";
+import type { LandingExitMode } from "@/lib/landing/landingTiming";
 import { LandingGate } from "@/components/landing/LandingGate";
 
-interface StartupShellProps {
-  landingVariant: LandingVariant;
-}
+const HomeScreen = dynamic(
+  () =>
+    getHomeChunkPromise().then((mod) => ({
+      default: mod.HomeScreen,
+    })),
+  { ssr: false },
+);
 
-export function StartupShell({ landingVariant }: StartupShellProps) {
-  const [landingDone, setLandingDone] = useState(false);
-  const handleLandingDismiss = useCallback(() => setLandingDone(true), []);
+const OfflineHomeShell = dynamic(
+  () =>
+    import("@/components/home/OfflineHomeShell").then((mod) => ({
+      default: mod.OfflineHomeShell,
+    })),
+  { ssr: false },
+);
+
+type ShellPhase = "landing" | "full-home" | "offline-pack";
+
+export function StartupShell() {
+  const [phase, setPhase] = useState<ShellPhase>("landing");
+  const [homeChunkReady, setHomeChunkReady] = useState(isHomeChunkReady);
 
   useEffect(() => {
-    persistLandingVariantCookie(landingVariant);
-  }, [landingVariant]);
+    performance.mark("startup:shell");
+    getHomeChunkPromise()
+      .then(() => setHomeChunkReady(true))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (phase !== "offline-pack" || !homeChunkReady) return;
+    setPhase("full-home");
+  }, [phase, homeChunkReady]);
+
+  const handleLandingExit = useCallback((mode: LandingExitMode) => {
+    setPhase(mode === "full-home" ? "full-home" : "offline-pack");
+  }, []);
 
   return (
-    <div className="relative flex h-full min-h-0 flex-1 flex-col">
-      <HomeScreen />
-      {!landingDone && (
-        <LandingGate variant={landingVariant} onDismiss={handleLandingDismiss} />
+    <div
+      className={`relative z-50 flex h-full min-h-0 flex-1 flex-col ${
+        phase === "landing" ? "pointer-events-none" : ""
+      }`}
+    >
+      {phase === "full-home" && <HomeScreen />}
+      {phase === "offline-pack" && <OfflineHomeShell />}
+      {phase === "landing" && (
+        <LandingGate
+          homeChunkReady={homeChunkReady}
+          onExit={handleLandingExit}
+        />
       )}
     </div>
   );

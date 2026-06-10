@@ -15,6 +15,7 @@ interface TaxHeaderProps {
   onSyncClick?: () => void;
   syncing?: boolean;
   syncDisabled?: boolean;
+  showSettings?: boolean;
 }
 
 const actionBtn =
@@ -29,6 +30,7 @@ export function TaxHeader({
   onSyncClick,
   syncing = false,
   syncDisabled = false,
+  showSettings = true,
 }: TaxHeaderProps) {
   const receiptLabel =
     receiptCount === 1 ? "1 receipt" : `${receiptCount} receipts`;
@@ -83,14 +85,16 @@ export function TaxHeader({
               />
             </button>
           )}
-          <button
-            type="button"
-            onClick={onSettingsClick}
-            className={actionBtn}
-            aria-label="Settings"
-          >
-            <SlidersIcon className="h-5 w-5 text-white" />
-          </button>
+          {showSettings && (
+            <button
+              type="button"
+              onClick={onSettingsClick}
+              className={actionBtn}
+              aria-label="Settings"
+            >
+              <SlidersIcon className="h-5 w-5 text-white" />
+            </button>
+          )}
         </div>
       </div>
     </header>

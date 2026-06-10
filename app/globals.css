@@ -23,6 +23,19 @@ body {
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
 
+#landing-ssr-layer {
+  pointer-events: auto;
+}
+
+html.landing-exiting #landing-ssr-layer {
+  animation: landing-overlay-exit 200ms ease-out forwards;
+  pointer-events: none;
+}
+
+html.landing-done #landing-ssr-layer {
+  display: none;
+}
+
 @keyframes tax-bounce {
   0%,
   100% {

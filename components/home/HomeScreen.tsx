@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Industry, Receipt } from "@/lib/types";
 import { useAuthSession } from "@/lib/client/useAuthSession";
+import { useIsOnline } from "@/lib/client/useIsOnline";
 import { ensureGhostSession } from "@/lib/client/ghostClient";
 import { ensureTaxRegionCandidate } from "@/lib/client/taxRegion";
 import {
@@ -60,9 +61,9 @@ function stuckIdsFromReceipts(receipts: StoredReceipt[]): Set<string> {
 
 export function HomeScreen() {
   const auth = useAuthSession();
+  const isOnline = useIsOnline();
   const [view, setView] = useState<View>("home");
   const [receipts, setReceipts] = useState<Receipt[]>([]);
-  const [hydrated, setHydrated] = useState(false);
   const [taxSaved, setTaxSaved] = useState<number | null>(null);
   const [taxAnimating, setTaxAnimating] = useState(false);
   const [industry, setIndustry] = useState<Industry | null>(null);
@@ -445,7 +446,6 @@ export function HomeScreen() {
         setSyncStuckIds(stuckIdsFromReceipts(stored));
         setReceipts(visible);
         refreshTaxSaved(visible);
-        setHydrated(true);
 
         if (navigator.onLine) {
           runDeferredStartup(() => cancelled);
@@ -457,7 +457,6 @@ export function HomeScreen() {
           setReceipts(visible);
           setSyncStuckIds(stuckIdsFromReceipts(stored));
           refreshTaxSaved(visible);
-          setHydrated(true);
         }
       }
     })();
@@ -683,14 +682,6 @@ export function HomeScreen() {
     snapButtonRef.current?.openCamera();
   }, []);
 
-  if (!hydrated || !auth.hydrated) {
-    return (
-      <div className="flex h-full items-center justify-center bg-black text-yellow-400">
-        <p className="text-lg font-bold">Loading…</p>
-      </div>
-    );
-  }
-
   if (view === "settings") {
     return (
       <SettingsScreen
@@ -727,7 +718,7 @@ export function HomeScreen() {
         onSettingsClick={() => setView("settings")}
         onSyncClick={handleManualListSync}
         syncing={listSyncing}
-        syncDisabled={!navigator.onLine}
+        syncDisabled={!isOnline}
       />
 
       <div className="shrink-0 px-4 py-2">
@@ -743,7 +734,7 @@ export function HomeScreen() {
           onSyncClick={handleManualListSync}
           onSettingsClick={() => setView("settings")}
           syncing={listSyncing}
-          syncDisabled={!navigator.onLine}
+          syncDisabled={!isOnline}
         />
       </div>
 
@@ -756,7 +747,7 @@ export function HomeScreen() {
           onRetrySync={handleRetrySync}
           onSyncClick={handleManualListSync}
           syncing={listSyncing}
-          syncDisabled={!navigator.onLine}
+          syncDisabled={!isOnline}
         />
       </div>
 

@@ -42,6 +42,7 @@ export function LandingGate({ homeChunkReady, onExit }: LandingGateProps) {
     clearTimers();
     document.documentElement.classList.remove("landing-exiting");
     document.documentElement.classList.add("landing-done");
+    window.dispatchEvent(new Event("snap1099:landing-done"));
     setPhase("done");
     onExit(exitModeRef.current);
   }, [clearTimers, onExit]);

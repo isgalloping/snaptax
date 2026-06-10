@@ -1,0 +1,32 @@
+import { describe, it } from "node:test";
+import assert from "node:assert/strict";
+import {
+  INSTALL_DISMISS_DAYS,
+  isDismissedWithinWindow,
+} from "./deferredInstall";
+
+describe("isDismissedWithinWindow", () => {
+  it("returns false when no dismiss timestamp", () => {
+    assert.equal(isDismissedWithinWindow(null, Date.now()), false);
+  });
+
+  it("returns true inside 7-day window", () => {
+    const now = Date.parse("2026-06-10T12:00:00.000Z");
+    const dismissedAt = new Date(
+      now - (INSTALL_DISMISS_DAYS - 1) * 86_400_000,
+    ).toISOString();
+    assert.equal(isDismissedWithinWindow(dismissedAt, now), true);
+  });
+
+  it("returns false after 7-day window", () => {
+    const now = Date.parse("2026-06-10T12:00:00.000Z");
+    const dismissedAt = new Date(
+      now - (INSTALL_DISMISS_DAYS + 1) * 86_400_000,
+    ).toISOString();
+    assert.equal(isDismissedWithinWindow(dismissedAt, now), false);
+  });
+
+  it("returns false for invalid timestamp", () => {
+    assert.equal(isDismissedWithinWindow("not-a-date", Date.now()), false);
+  });
+});

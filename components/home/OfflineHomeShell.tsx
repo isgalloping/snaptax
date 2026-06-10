@@ -2,15 +2,19 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { Receipt } from "@/lib/types";
-import { sumLocalTaxSaved } from "@/lib/client/receiptApi";
-import { top100ByUpdatedAt } from "@/lib/client/receiptSync";
+import {
+  STARTUP_UNFILED_LIMIT,
+  UI_RECEIPT_LIMIT,
+} from "@/lib/client/receiptSync";
 import { withFreshBudget, isSyncStuck } from "@/lib/client/receiptSyncBudget";
 import { ensureTaxRegionCandidate } from "@/lib/client/taxRegion";
 import { utcNow } from "@/lib/time/utc";
 import {
-  loadReceipts,
+  loadRecentUnfiledReceipts,
+  loadTopByUpdatedAt,
   savePhoto,
   saveReceipt,
+  sumUnfiledLocalTaxSavedIndexed,
   type StoredReceipt,
 } from "@/lib/storage/receiptDb";
 import { sumDoneExpenses } from "@/lib/receipts/receiptStats";
@@ -18,6 +22,12 @@ import { TaxHeader } from "./TaxHeader";
 import { SnapButton } from "./SnapButton";
 import { ReceiptList } from "./ReceiptList";
 import { logStartupMarks } from "@/lib/landing/startupMetrics";
+
+function deferAfterPaint(fn: () => void) {
+  requestAnimationFrame(() => {
+    requestAnimationFrame(fn);
+  });
+}
 
 function stuckIdsFromReceipts(receipts: StoredReceipt[]): Set<string> {
   return new Set(receipts.filter(isSyncStuck).map((r) => r.id));
@@ -32,14 +42,29 @@ export function OfflineHomeShell() {
     performance.mark("startup:offline-home");
     logStartupMarks();
 
+    let cancelled = false;
+
     void (async () => {
       ensureTaxRegionCandidate();
-      const stored = await loadReceipts();
-      const visible = top100ByUpdatedAt(stored);
-      setSyncStuckIds(stuckIdsFromReceipts(stored));
-      setReceipts(visible);
-      setTaxSaved(sumLocalTaxSaved(visible));
+      const hot = await loadRecentUnfiledReceipts(STARTUP_UNFILED_LIMIT);
+      if (cancelled) return;
+
+      setSyncStuckIds(stuckIdsFromReceipts(hot));
+      setReceipts(hot);
+      setTaxSaved(await sumUnfiledLocalTaxSavedIndexed());
+
+      deferAfterPaint(async () => {
+        if (cancelled) return;
+        const visible = await loadTopByUpdatedAt(UI_RECEIPT_LIMIT);
+        if (cancelled) return;
+        setReceipts(visible);
+        setSyncStuckIds(stuckIdsFromReceipts(visible));
+      });
     })();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const handleCapture = useCallback(async (file: File) => {
@@ -57,11 +82,10 @@ export function OfflineHomeShell() {
     await savePhoto(id, file);
     await saveReceipt(processingReceipt);
 
-    setReceipts((prev) => {
-      const next = top100ByUpdatedAt([processingReceipt, ...prev]);
-      setTaxSaved(sumLocalTaxSaved(next));
-      return next;
-    });
+    const visible = await loadTopByUpdatedAt(UI_RECEIPT_LIMIT);
+    setReceipts(visible);
+    setSyncStuckIds(stuckIdsFromReceipts(visible));
+    setTaxSaved(await sumUnfiledLocalTaxSavedIndexed());
   }, []);
 
   const noopAsync = useCallback(async () => {}, []);

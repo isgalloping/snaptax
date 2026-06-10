@@ -13,6 +13,7 @@ import { prisma } from "@/lib/prisma";
 import { processReceiptTax } from "@/lib/receipts/processReceiptTax";
 import { receiptWhereForActor } from "@/lib/receipts/ownership";
 import { serializeReceipt } from "@/lib/receipts/serialize";
+import { unfiledReceiptWhere } from "@/lib/receipts/filedStatus";
 import {
   assertValidReceiptImage,
   mimeForKind,
@@ -43,7 +44,7 @@ export const GET = withRequestLog(
         take: limit,
       });
       const agg = await prisma.snaptaxReceipt.aggregate({
-        where: { ...where, status: "done" },
+        where: { ...where, status: "done", ...unfiledReceiptWhere() },
         _sum: { taxAmount: true },
       });
       return NextResponse.json({

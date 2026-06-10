@@ -26,6 +26,10 @@ export interface Receipt {
   timestamp: Date;
   /** Last mutation instant; sort/sync window key. Falls back to timestamp when omitted. */
   updatedAt?: Date;
+  /** Tax season when receipt was filed via export; paired with taxSeasonDate. */
+  taxSeason?: string;
+  /** UTC instant when marked filed; both taxSeason and taxSeasonDate set = filed. */
+  taxSeasonDate?: Date;
   subtitle?: string;
   pendingUpload?: boolean;
 }

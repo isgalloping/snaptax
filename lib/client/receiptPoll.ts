@@ -22,6 +22,8 @@ function fallbackProcessing(id: string): ApiReceipt {
     dataRegion: "us",
     capturedAt: now,
     updatedAt: now,
+    taxSeason: null,
+    taxSeasonDate: null,
   };
 }
 

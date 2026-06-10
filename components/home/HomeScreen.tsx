@@ -10,7 +10,6 @@ import {
   apiReceiptToLocal,
   deleteReceiptRemote,
   fetchReceiptList,
-  sumLocalTaxSaved,
   triggerReceiptProcess,
   uploadReceipt,
   type ApiReceipt,
@@ -19,7 +18,9 @@ import { pollTaxRecalc } from "@/lib/client/authApi";
 import {
   persistMergedReceipts,
   remoteReceiptsToLocal,
+  STARTUP_UNFILED_LIMIT,
   top100ByUpdatedAt,
+  UI_RECEIPT_LIMIT,
   unionMergeLWW,
 } from "@/lib/client/receiptSync";
 import {
@@ -34,10 +35,13 @@ import { ProcessingReceiptWatcher } from "@/lib/client/processingReceiptWatcher"
 import { utcNow } from "@/lib/time/utc";
 import {
   deleteReceipt as deleteStoredReceipt,
+  loadAllReceipts,
   loadPhoto,
-  loadReceipts,
+  loadRecentUnfiledReceipts,
+  loadTopByUpdatedAt,
   savePhoto,
   saveReceipt,
+  sumUnfiledLocalTaxSavedIndexed,
   type StoredReceipt,
 } from "@/lib/storage/receiptDb";
 import { TaxHeader } from "./TaxHeader";
@@ -99,9 +103,9 @@ export function HomeScreen() {
   const refreshTaxSaved = useCallback((next: Receipt[], apiEstimate?: number) => {
     if (apiEstimate != null && navigator.onLine) {
       setTaxSaved(apiEstimate);
-    } else {
-      setTaxSaved(sumLocalTaxSaved(next));
+      return;
     }
+    void sumUnfiledLocalTaxSavedIndexed().then(setTaxSaved);
   }, []);
 
   const applyMergeNow = useCallback(
@@ -146,7 +150,7 @@ export function HomeScreen() {
           remoteReceiptsToLocal(remote),
         );
         await persistMergedReceipts(fullMerged, local);
-        const visible = top100ByUpdatedAt(fullMerged);
+        const visible = await loadTopByUpdatedAt(UI_RECEIPT_LIMIT);
         if (applyMode === "immediate") {
           pendingMergeRef.current = null;
           applyMergeNow(visible, taxSavedEstimate);
@@ -155,8 +159,11 @@ export function HomeScreen() {
         }
         return visible;
       } catch {
-        applyMergeNow(top100ByUpdatedAt(local));
-        return top100ByUpdatedAt(local);
+        const visible = await loadTopByUpdatedAt(UI_RECEIPT_LIMIT).catch(() =>
+          top100ByUpdatedAt(local),
+        );
+        applyMergeNow(visible);
+        return visible;
       }
     },
     [applyMergeNow, applyMergeOrDefer],
@@ -248,7 +255,7 @@ export function HomeScreen() {
   uploadPendingInnerRef.current = uploadPendingInner;
 
   const flushPendingUploads = useCallback(async () => {
-    const stored = await loadReceipts();
+    const stored = await loadAllReceipts();
     const pending = stored.filter(
       (r) => r.pendingUpload && !isSyncStuck(r),
     );
@@ -277,7 +284,7 @@ export function HomeScreen() {
           if (cancelled()) return;
           await flushPendingUploadsRef.current();
           if (cancelled()) return;
-          const storedAfter = await loadReceipts();
+          const storedAfter = await loadAllReceipts();
           const mergedAfter = await syncFromServer(storedAfter, "defer");
           if (cancelled()) return;
           const stuck = stuckIdsFromReceipts(
@@ -358,7 +365,7 @@ export function HomeScreen() {
   const handleRetrySync = useCallback(
     (id: string) => {
       void (async () => {
-        const stored = await loadReceipts();
+        const stored = await loadAllReceipts();
         const row = stored.find((r) => r.id === id);
         if (!row) return;
 
@@ -401,7 +408,7 @@ export function HomeScreen() {
     if (!navigator.onLine || listSyncing) return;
     setListSyncing(true);
     try {
-      const stored = await loadReceipts();
+      const stored = await loadAllReceipts();
       await syncFromServer(stored, "immediate");
     } finally {
       setListSyncing(false);
@@ -417,7 +424,7 @@ export function HomeScreen() {
         return;
       }
       await flushPendingUploadsRef.current();
-      const stored = await loadReceipts();
+      const stored = await loadAllReceipts();
       const merged = await syncFromServer(stored, "immediate");
       const stuck = stuckIdsFromReceipts(merged as StoredReceipt[]);
       setSyncStuckIds((prev) => new Set([...prev, ...stuck]));
@@ -426,7 +433,7 @@ export function HomeScreen() {
       );
       if (taxRecalcQueued > 0) {
         await pollTaxRecalc(taxRecalcQueued, async () => {
-          const latest = await loadReceipts();
+          const latest = await loadAllReceipts();
           await syncFromServer(latest, "immediate");
         });
       }
@@ -443,24 +450,30 @@ export function HomeScreen() {
     void (async () => {
       try {
         ensureTaxRegionCandidate();
-        const stored = await loadReceipts();
+        const hot = await loadRecentUnfiledReceipts(STARTUP_UNFILED_LIMIT);
         if (cancelled) return;
 
-        const visible = top100ByUpdatedAt(stored);
-        setSyncStuckIds(stuckIdsFromReceipts(stored));
-        setReceipts(visible);
-        refreshTaxSaved(visible);
+        setReceipts(hot);
+        setSyncStuckIds(stuckIdsFromReceipts(hot));
+        setTaxSaved(await sumUnfiledLocalTaxSavedIndexed());
+
+        deferAfterPaint(async () => {
+          if (cancelled) return;
+          const visible = await loadTopByUpdatedAt(UI_RECEIPT_LIMIT);
+          if (cancelled) return;
+          setReceipts(visible);
+          setSyncStuckIds(stuckIdsFromReceipts(visible));
+        });
 
         if (navigator.onLine) {
           runDeferredStartup(() => cancelled);
         }
       } catch {
-        const stored = await loadReceipts().catch(() => []);
+        const visible = await loadTopByUpdatedAt(UI_RECEIPT_LIMIT).catch(() => []);
         if (!cancelled) {
-          const visible = top100ByUpdatedAt(stored);
           setReceipts(visible);
-          setSyncStuckIds(stuckIdsFromReceipts(stored));
-          refreshTaxSaved(visible);
+          setSyncStuckIds(stuckIdsFromReceipts(visible));
+          setTaxSaved(await sumUnfiledLocalTaxSavedIndexed().catch(() => 0));
         }
       }
     })();
@@ -468,7 +481,7 @@ export function HomeScreen() {
     return () => {
       cancelled = true;
     };
-  }, [refreshTaxSaved, runDeferredStartup, syncFromServer]);
+  }, [runDeferredStartup]);
 
   useEffect(() => {
     const handleOnline = () => {
@@ -515,12 +528,11 @@ export function HomeScreen() {
   }, [cameraOpen, selectedReceipt, view, appHidden]);
 
   const refreshListFromLocal = useCallback(async () => {
-    const stored = await loadReceipts();
-    const visible = top100ByUpdatedAt(stored);
+    const visible = await loadTopByUpdatedAt(UI_RECEIPT_LIMIT);
     setReceipts(visible);
     refreshTaxSaved(visible);
-    setSyncStuckIds(stuckIdsFromReceipts(stored));
-    return stored;
+    setSyncStuckIds(stuckIdsFromReceipts(visible));
+    return visible;
   }, [refreshTaxSaved]);
 
   const handleBatchShot = useCallback(async (file: File): Promise<string> => {
@@ -553,11 +565,10 @@ export function HomeScreen() {
         // Local pending rows remain until next flush
       }
     }
-    const stored = await loadReceipts();
-    const visible = top100ByUpdatedAt(stored);
+    const visible = await loadTopByUpdatedAt(UI_RECEIPT_LIMIT);
     setReceipts(visible);
     refreshTaxSaved(visible);
-    const stuck = stuckIdsFromReceipts(stored);
+    const stuck = stuckIdsFromReceipts(visible);
     setSyncStuckIds(stuck);
     queueRef.current?.bootstrapFromList(
       visible.filter((r) => r.status === "processing" && !stuck.has(r.id)),
@@ -597,8 +608,7 @@ export function HomeScreen() {
           // Local row already removed; remote may reconcile on next sync
         }
       }
-      const stored = await loadReceipts();
-      const visible = top100ByUpdatedAt(stored);
+      const visible = await loadTopByUpdatedAt(UI_RECEIPT_LIMIT);
       setReceipts(visible);
       refreshTaxSaved(visible);
     },

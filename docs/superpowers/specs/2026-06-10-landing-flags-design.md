@@ -1,5 +1,7 @@
 # Landing A/B + Vercel Flags — Design
 
+> **Superseded** by [`2026-06-10-unified-data-stream-splash-design.md`](./2026-06-10-unified-data-stream-splash-design.md) (2026-06-10). A/B, Flags, and variant cookie are removed.
+
 **Date:** 2026-06-10  
 **Status:** Approved (implemented)  
 **Scope:** Two landing variants (`data_stream`, `simple_using`) on every cold start (max 2.5s); auth decoupled from startup gate.

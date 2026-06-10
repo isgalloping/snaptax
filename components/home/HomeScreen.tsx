@@ -46,6 +46,7 @@ import { ReceiptList } from "./ReceiptList";
 import { sumDoneExpenses } from "@/lib/receipts/receiptStats";
 import { SettingsScreen } from "@/components/settings/SettingsScreen";
 import { ReceiptDetailSheet } from "@/components/receipts/ReceiptDetailSheet";
+import { logStartupMarks } from "@/lib/landing/startupMetrics";
 
 type View = "home" | "settings";
 
@@ -434,6 +435,9 @@ export function HomeScreen() {
   );
 
   useEffect(() => {
+    performance.mark("startup:home-ready");
+    logStartupMarks();
+
     let cancelled = false;
 
     void (async () => {

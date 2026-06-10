@@ -2,7 +2,9 @@ import { apiReceiptToLocal } from "@/lib/client/receiptApi";
 import { saveReceipt, type StoredReceipt } from "@/lib/storage/receiptDb";
 import type { Receipt } from "@/lib/types";
 
-export const RECEIPT_SYNC_LIMIT = 100;
+export const STARTUP_UNFILED_LIMIT = 30;
+export const UI_RECEIPT_LIMIT = 100;
+export const RECEIPT_SYNC_LIMIT = UI_RECEIPT_LIMIT;
 
 export function receiptUpdatedAt(receipt: Pick<Receipt, "updatedAt" | "timestamp">): Date {
   return receipt.updatedAt ?? receipt.timestamp;
@@ -42,6 +44,8 @@ export function unionMergeLWW(
       ...remoteRow,
       timestamp: remoteRow.timestamp,
       updatedAt: remoteRow.updatedAt ?? remoteRow.timestamp,
+      taxSeason: remoteRow.taxSeason ?? existing?.taxSeason,
+      taxSeasonDate: remoteRow.taxSeasonDate ?? existing?.taxSeasonDate,
       pendingUpload: false,
       writeBudgetRemaining: existing?.writeBudgetRemaining,
     };
@@ -86,6 +90,8 @@ export async function persistMergedReceipts(
       existing.pendingUpload === stored.pendingUpload &&
       existing.taxAmount === stored.taxAmount &&
       existing.merchant === stored.merchant &&
+      existing.taxSeason === stored.taxSeason &&
+      existing.taxSeasonDate?.getTime() === stored.taxSeasonDate?.getTime() &&
       receiptUpdatedAt(existing).getTime() ===
         receiptUpdatedAt(stored).getTime();
 

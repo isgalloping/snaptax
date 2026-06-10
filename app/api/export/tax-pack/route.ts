@@ -5,6 +5,7 @@ import { getActor } from "@/lib/auth/getActor";
 import { prisma } from "@/lib/prisma";
 import { currentTaxSeason } from "@/lib/tax/season";
 import type { TaxRegion } from "@/lib/tax/types";
+import { unfiledReceiptWhere } from "@/lib/receipts/filedStatus";
 import { withRequestLog } from "@/lib/server/log/withRequestLog";
 import { formatLocalDate, formatLocalDateTime } from "@/lib/format";
 import { parseRequestTimeZone } from "@/lib/time/timeZone";
@@ -31,7 +32,11 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
         select: { industry: true, dataRegion: true },
       }),
       prisma.snaptaxReceipt.findMany({
-        where: { userId: actor.userId, status: "done" },
+        where: {
+          userId: actor.userId,
+          status: "done",
+          ...unfiledReceiptWhere(),
+        },
         orderBy: { capturedAt: "asc" },
       }),
     ]);
@@ -90,6 +95,11 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
 
     const buffer = await workbook.xlsx.writeBuffer();
     const filename = `Snap1099-${season}-Tax-Pack.xlsx`;
+
+    await prisma.snaptaxReceipt.updateMany({
+      where: { id: { in: receipts.map((r) => r.id) } },
+      data: { taxSeason: season, taxSeasonDate: exportedAt },
+    });
 
     return new NextResponse(buffer, {
       status: 200,

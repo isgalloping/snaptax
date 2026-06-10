@@ -1,3 +1,4 @@
+import { isReceiptFiled } from "@/lib/receipts/filedStatus";
 import type { Receipt } from "@/lib/types";
 import type { TaxRegion } from "@/lib/tax/types";
 import { parseUtcISOString, toUtcISOString } from "@/lib/time/utc";
@@ -16,6 +17,8 @@ export type ApiReceipt = {
   capturedAt: string;
   snapAt?: string | null;
   updatedAt: string;
+  taxSeason: string | null;
+  taxSeasonDate: string | null;
 };
 
 export type ReceiptListResponse = {
@@ -37,17 +40,25 @@ export function apiReceiptToLocal(r: ApiReceipt): Receipt {
     deductible: r.deductible,
     timestamp,
     updatedAt: r.updatedAt ? parseUtcISOString(r.updatedAt) : timestamp,
+    taxSeason: r.taxSeason ?? undefined,
+    taxSeasonDate: r.taxSeasonDate
+      ? parseUtcISOString(r.taxSeasonDate)
+      : undefined,
     pendingUpload: false,
   };
 }
 
-export function sumLocalTaxSaved(receipts: Receipt[]): number {
+export function sumUnfiledLocalTaxSaved(receipts: Receipt[]): number {
   return receipts.reduce((sum, r) => {
-    if (r.status === "done" && r.taxAmount != null) {
-      return sum + r.taxAmount;
+    if (r.status !== "done" || r.taxAmount == null || isReceiptFiled(r)) {
+      return sum;
     }
-    return sum;
+    return sum + r.taxAmount;
   }, 0);
+}
+
+export function sumLocalTaxSaved(receipts: Receipt[]): number {
+  return sumUnfiledLocalTaxSaved(receipts);
 }
 
 export async function fetchReceiptList(

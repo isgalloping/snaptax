@@ -65,6 +65,8 @@ CREATE TABLE snaptax_receipts (
   captured_at   TIMESTAMPTZ(3) NOT NULL,
   snap_at       TIMESTAMPTZ(3),
   processed_at  TIMESTAMPTZ(3),
+  tax_season    VARCHAR(255),
+  tax_season_date TIMESTAMPTZ(3),
   created_at    TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at    TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -84,6 +86,15 @@ CREATE INDEX snaptax_receipts_user_snap_idx
 CREATE INDEX snaptax_receipts_processing_idx
   ON snaptax_receipts (status)
   WHERE status = 'processing';
+
+CREATE INDEX snaptax_receipts_user_unfiled_updated_idx
+  ON snaptax_receipts (user_id, updated_at DESC)
+  WHERE (tax_season IS NULL OR tax_season = '' OR tax_season_date IS NULL);
+
+CREATE INDEX snaptax_receipts_ghost_unfiled_updated_idx
+  ON snaptax_receipts (ghost_id, updated_at DESC)
+  WHERE (tax_season IS NULL OR tax_season = '' OR tax_season_date IS NULL)
+    AND ghost_id IS NOT NULL;
 
 -- ---------------------------------------------------------------------------
 -- snaptax_season_entitlements
@@ -163,6 +174,8 @@ COMMENT ON COLUMN snaptax_receipts.ai_raw IS 'OpenAI Vision 原始 JSON 响应';
 COMMENT ON COLUMN snaptax_receipts.captured_at IS '上传/入库时间（TIMESTAMPTZ UTC）';
 COMMENT ON COLUMN snaptax_receipts.snap_at IS '拍照时间，可与 captured_at 不同（离线延迟上传）；TIMESTAMPTZ UTC';
 COMMENT ON COLUMN snaptax_receipts.processed_at IS 'AI 处理完成时间；status=processing 时为 NULL；TIMESTAMPTZ UTC';
+COMMENT ON COLUMN snaptax_receipts.tax_season IS '已报税季标识（如 2026）；与 tax_season_date 同时有值表示已报税';
+COMMENT ON COLUMN snaptax_receipts.tax_season_date IS '标记已报税时间（TIMESTAMPTZ UTC）；与 tax_season 同时有值表示已报税';
 COMMENT ON COLUMN snaptax_receipts.created_at IS '服务端记录创建时间（TIMESTAMPTZ UTC）';
 COMMENT ON COLUMN snaptax_receipts.updated_at IS '服务端记录最后更新时间（TIMESTAMPTZ UTC）';
 

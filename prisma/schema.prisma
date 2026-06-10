@@ -66,6 +66,8 @@ model SnaptaxReceipt {
   capturedAt   DateTime  @map("captured_at") @db.Timestamptz(3)
   snapAt       DateTime? @map("snap_at") @db.Timestamptz(3)
   processedAt  DateTime? @map("processed_at") @db.Timestamptz(3)
+  taxSeason    String?   @map("tax_season") @db.VarChar(255)
+  taxSeasonDate DateTime? @map("tax_season_date") @db.Timestamptz(3)
   createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
 

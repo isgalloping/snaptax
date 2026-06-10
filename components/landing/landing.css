@@ -1,0 +1,234 @@
+@keyframes landing-camera-glow {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 8px rgba(234, 179, 8, 0.35));
+    transform: scale(1);
+  }
+  50% {
+    filter: drop-shadow(0 0 18px rgba(234, 179, 8, 0.55));
+    transform: scale(1.02);
+  }
+}
+
+@keyframes landing-line-in-out {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  15% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  85% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+/* --- data_stream v2 master timeline (2.4s) --- */
+
+.data-stream-landing {
+  --ds-duration: 2.4s;
+}
+
+.data-stream-grid-bg {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.data-stream-hero {
+  animation: data-stream-fade-in 0.4s ease-out forwards;
+}
+
+.data-stream-progress-fill {
+  width: 0;
+  background: repeating-linear-gradient(
+    -45deg,
+    #eab308,
+    #eab308 6px,
+    #a16207 6px,
+    #a16207 12px
+  );
+  animation: data-stream-progress-width var(--ds-duration) ease-out forwards;
+  animation-delay: 0.3s;
+}
+
+.data-stream-pct-start {
+  animation: data-stream-pct-start var(--ds-duration) forwards;
+}
+
+.data-stream-pct-end {
+  opacity: 0;
+  animation: data-stream-pct-end var(--ds-duration) forwards;
+}
+
+.data-stream-checklist-row {
+  opacity: 0;
+  transform: translateY(4px);
+  animation: data-stream-row-in 0.35s ease-out forwards;
+}
+
+.data-stream-log-scroll {
+  animation: data-stream-log-scroll var(--ds-duration) ease-out forwards;
+  animation-delay: 1s;
+}
+
+.data-stream-footer {
+  opacity: 0;
+  animation: data-stream-fade-in 0.35s ease-out forwards;
+  animation-delay: 2s;
+  animation-fill-mode: forwards;
+}
+
+@keyframes data-stream-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes data-stream-progress-width {
+  from {
+    width: 0;
+  }
+  to {
+    width: 92%;
+  }
+}
+
+@keyframes data-stream-pct-start {
+  0%,
+  72% {
+    opacity: 1;
+  }
+  78%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes data-stream-pct-end {
+  0%,
+  72% {
+    opacity: 0;
+  }
+  78%,
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes data-stream-row-in {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes data-stream-log-scroll {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(calc(-100% + 5.5rem));
+  }
+}
+
+@keyframes simple-using-line-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes simple-using-cta-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes landing-overlay-exit {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+.landing-camera-glow {
+  animation: landing-camera-glow 2s ease-in-out infinite;
+  transform: perspective(400px) rotateX(8deg) rotateY(-6deg);
+}
+
+.simple-using-line {
+  opacity: 0;
+  animation: simple-using-line-in 0.35s ease-out forwards;
+}
+
+.simple-using-cta {
+  opacity: 0;
+  animation: simple-using-cta-in 0.35s ease-out 600ms forwards;
+}
+
+.landing-overlay-exit {
+  animation: landing-overlay-exit 200ms ease-out forwards;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-camera-glow,
+  .simple-using-line,
+  .simple-using-cta,
+  .data-stream-hero,
+  .data-stream-progress-fill,
+  .data-stream-pct-start,
+  .data-stream-pct-end,
+  .data-stream-checklist-row,
+  .data-stream-log-scroll,
+  .data-stream-footer {
+    animation: none;
+    opacity: 1;
+    transform: none;
+    filter: none;
+    width: auto;
+  }
+
+  .data-stream-progress-fill {
+    width: 92%;
+  }
+
+  .data-stream-pct-start {
+    display: none;
+  }
+
+  .data-stream-log-line:not(:last-child) {
+    display: none;
+  }
+
+  .landing-overlay-exit {
+    animation: none;
+    opacity: 0;
+  }
+}

@@ -17,6 +17,10 @@ type SerializedReceipt = Omit<StoredReceipt, "timestamp" | "updatedAt"> & {
   updatedAt?: string;
 };
 
+export async function warmReceiptDb(): Promise<IDBDatabase> {
+  return openDb();
+}
+
 function openDb(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);

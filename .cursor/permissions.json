@@ -1,0 +1,42 @@
+{
+  "terminalAllowlist": [
+    "git status",
+    "git diff",
+    "git log",
+    "git branch",
+    "git show",
+    "git rev-parse",
+    "git add",
+    "git commit",
+    "git checkout",
+    "git switch",
+    "git stash",
+    "npm run dev",
+    "npm run build",
+    "npm run start",
+    "npm run lint",
+    "npm run test:unit",
+    "npm run db:migrate:dev",
+    "npm run db:studio",
+    "node scripts/",
+    "node --import tsx --test",
+    "npx prisma generate",
+    "npx prisma migrate",
+    "npx eslint",
+    "gh pr",
+    "gh status"
+  ],
+  "autoRun": {
+    "allow_instructions": [
+      "Read-only git inspection in this repo (status, diff, log, branch).",
+      "Local dev: npm run dev, npm run build, npm run test:unit, npm run lint.",
+      "Unit tests via node --import tsx --test under lib/.",
+      "Prisma generate and local migrate dev for schema work."
+    ],
+    "block_instructions": [
+      "git push --force, git reset --hard, git clean -fd.",
+      "npm run db:migrate:deploy:production or production database changes.",
+      "Reading or committing .env, .env.local, or credential files."
+    ]
+  }
+}

@@ -32,11 +32,14 @@ Desktop Chrome uses same path as Desktop Edge (`chromium-desktop`).
 
 ## Installed detection
 
-```typescript
-isInstalled =
-  matchMedia('(display-mode: standalone)').matches
-  || (iOS && navigator.standalone === true)
-```
+See **`2026-06-10-pwa-cross-context-installed-design.md`** for full rules.
+
+Summary:
+
+- Standalone / iOS A2HS → installed
+- Chromium tab → `getInstalledRelatedApps()` + manifest `related_applications`
+- Safari → sticky `localStorage` after standalone launch or Chromium `appinstalled`
+- Cross-engine (Chrome ↔ Safari ↔ Edge) → not detectable; install UI may remain
 
 ## Eligibility
 

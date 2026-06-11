@@ -120,18 +120,20 @@ function useInstallUiState(): PwaInstallContextValue {
   const acknowledgeManualSheet = useCallback(() => {
     setManualSheetOpen(false);
     dismissInstallBar();
-    void sync();
+    requestAnimationFrame(() => {
+      void sync();
+    });
   }, [sync]);
 
   const install = useCallback(async () => {
-    if (await isPwaInstalledOnDevice()) {
-      setMode("none");
-      return;
-    }
-
     const platform = getInstallPlatform();
     if (!supportsNativeInstallPrompt(platform)) {
       setManualSheetOpen(true);
+      return;
+    }
+
+    if (await isPwaInstalledOnDevice()) {
+      setMode("none");
       return;
     }
 

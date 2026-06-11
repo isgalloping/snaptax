@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { USER_COPY } from "@/lib/copy/userFacing";
 import {
   getInstallPlatform,
@@ -23,16 +24,37 @@ function stepsForPlatform(): readonly string[] {
 }
 
 export function InstallManualSheet({ open, onClose }: InstallManualSheetProps) {
+  useEffect(() => {
+    if (!open) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [open, onClose]);
+
   if (!open) return null;
 
   const steps = stepsForPlatform();
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-end bg-black/70">
+    <div
+      className="fixed inset-0 z-[100] flex items-end"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="install-manual-title"
+    >
+      <button
+        type="button"
+        aria-label="Dismiss install instructions"
+        className="absolute inset-0 bg-black/70"
+        onClick={onClose}
+      />
       <div
-        className="flex w-full flex-col rounded-t-3xl border-t-4 border-yellow-500 bg-zinc-900 p-4 pb-8"
-        role="dialog"
-        aria-labelledby="install-manual-title"
+        className="relative z-10 flex w-full flex-col rounded-t-3xl border-t-4 border-yellow-500 bg-zinc-900 p-4 pb-8"
+        onPointerDown={(event) => event.stopPropagation()}
       >
         <h2
           id="install-manual-title"
@@ -51,7 +73,8 @@ export function InstallManualSheet({ open, onClose }: InstallManualSheetProps) {
         <button
           type="button"
           onClick={onClose}
-          className="mt-6 min-h-16 w-full rounded-xl bg-yellow-500 text-sm font-black text-black active:scale-95"
+          onPointerUp={onClose}
+          className="mt-6 min-h-16 w-full cursor-pointer rounded-xl bg-yellow-500 text-sm font-black text-black active:scale-95"
         >
           {USER_COPY.pwa.manualGotIt}
         </button>

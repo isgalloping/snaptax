@@ -40,7 +40,9 @@ export function InstallManualSheet({ open, onClose }: InstallManualSheetProps) {
         >
           {USER_COPY.pwa.manualSheetTitle}
         </h2>
-        <p className="mt-2 text-sm text-zinc-400">{USER_COPY.pwa.subtitle}</p>
+        <p className="mt-2 text-sm text-zinc-400">
+          {USER_COPY.pwa.manualSheetLead}
+        </p>
         <ol className="mt-4 list-decimal space-y-3 pl-5 text-sm font-bold text-zinc-200">
           {steps.map((step) => (
             <li key={step}>{step}</li>

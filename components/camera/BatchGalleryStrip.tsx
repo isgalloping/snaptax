@@ -2,6 +2,7 @@
 
 import { homeVisual } from "@/lib/ui/homeVisual";
 import type { BatchThumb } from "@/lib/camera/batchSession";
+import { useTranslations } from "next-intl";
 
 interface BatchGalleryStripProps {
   thumbs: BatchThumb[];
@@ -18,6 +19,7 @@ export function BatchGalleryStrip({
   acceptedIds,
   onSelect,
 }: BatchGalleryStripProps) {
+  const t = useTranslations("Camera");
   if (thumbs.length === 0) return null;
 
   return (
@@ -42,7 +44,7 @@ export function BatchGalleryStrip({
               className={`relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-zinc-900 ${ringClass}`}
               aria-label={
                 isLatest
-                  ? "Latest receipt photo"
+                  ? t("latestPhoto")
                   : selected
                     ? "Selected receipt photo"
                     : accepted

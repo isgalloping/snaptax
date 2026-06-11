@@ -6,6 +6,7 @@ import { FlashDoneButton } from "@/components/camera/FlashDoneButton";
 import { FooterActionTile } from "@/components/camera/FooterActionTile";
 import { ReviewDoneButton } from "@/components/camera/ReviewDoneButton";
 import { homeVisual } from "@/lib/ui/homeVisual";
+import { useTranslations } from "next-intl";
 
 interface CameraLiveFooterProps {
   batchCount: number;
@@ -30,6 +31,7 @@ export function CameraLiveFooter({
   onFlashDone,
   onFinishCapture,
 }: CameraLiveFooterProps) {
+  const t = useTranslations("Camera");
   const doneDisabled = batchCount === 0;
   const rowMin = homeVisual.snapCamera.footerRowMin;
   const gridCols = homeVisual.snapCamera.footerGridCols;
@@ -60,7 +62,7 @@ export function CameraLiveFooter({
             size="hero"
           />
           <span className="text-[9px] font-bold uppercase tracking-wide text-white">
-            Take Photo
+            {t("takePhoto")}
           </span>
         </div>
 

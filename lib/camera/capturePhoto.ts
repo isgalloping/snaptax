@@ -1,5 +1,3 @@
-import { USER_COPY } from "@/lib/copy/userFacing";
-
 export function isCameraSupported(): boolean {
   return !!(
     typeof navigator !== "undefined" &&
@@ -88,20 +86,22 @@ export function captureVideoFrame(video: HTMLVideoElement): Promise<File> {
   });
 }
 
-export function getCameraErrorMessage(error: unknown): string {
+export type CameraErrorMessages = {
+  notAllowed: string;
+  notFound: string;
+  notReadable: string;
+  default: string;
+};
+
+export function getCameraErrorMessage(
+  error: unknown,
+  messages: CameraErrorMessages,
+): string {
   if (error instanceof DOMException) {
-    if (error.name === "NotAllowedError") {
-      return USER_COPY.camera.errors.notAllowed;
-    }
-    if (error.name === "NotFoundError") {
-      return USER_COPY.camera.errors.notFound;
-    }
-    if (error.name === "NotReadableError") {
-      return USER_COPY.camera.errors.notReadable;
-    }
-    if (error.name === "AbortError") {
-      return USER_COPY.camera.errors.abort;
-    }
+    if (error.name === "NotAllowedError") return messages.notAllowed;
+    if (error.name === "NotFoundError") return messages.notFound;
+    if (error.name === "NotReadableError") return messages.notReadable;
+    if (error.name === "AbortError") return messages.default;
   }
-  return USER_COPY.camera.errors.default;
+  return messages.default;
 }

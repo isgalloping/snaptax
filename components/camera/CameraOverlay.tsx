@@ -10,7 +10,6 @@ import { RefreshIcon } from "@/components/icons/RefreshIcon";
 import { SlidersIcon } from "@/components/icons/SlidersIcon";
 import { ComplianceFootnote } from "@/components/legal/ComplianceFootnote";
 import type { BatchThumb } from "@/lib/camera/batchSession";
-import { USER_COPY } from "@/lib/copy/userFacing";
 import {
   attachStreamToVideo,
   captureVideoFrame,
@@ -18,6 +17,7 @@ import {
   openCameraStream,
   stopCameraStream,
 } from "@/lib/camera/capturePhoto";
+import { useTranslations } from "next-intl";
 import { SHUTTER_COOLDOWN_MS } from "@/lib/camera/shutterCooldown";
 
 export type CameraOverlayMode = "batch" | "single";
@@ -78,6 +78,9 @@ export function CameraOverlay({
   onOpenTerms,
   onOpenPrivacy,
 }: CameraOverlayProps) {
+  const t = useTranslations("Camera");
+  const tHome = useTranslations("Home");
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [ready, setReady] = useState(false);
@@ -115,7 +118,7 @@ export function CameraOverlay({
         const video = videoRef.current;
         if (!video) {
           stopCameraStream(stream);
-          setError(USER_COPY.camera.openFailed);
+          setError(t("openFailed"));
           return;
         }
 
@@ -123,10 +126,15 @@ export function CameraOverlay({
         setReady(true);
       } catch (err) {
         stopStream();
-        setError(getCameraErrorMessage(err));
+        setError(getCameraErrorMessage(err, {
+          notAllowed: t("errorNotAllowed"),
+          notFound: t("errorNotFound"),
+          notReadable: t("errorNotReadable"),
+          default: t("errorDefault"),
+        }));
       }
     },
-    [stopStream],
+    [stopStream, t],
   );
 
   useEffect(() => {
@@ -152,7 +160,7 @@ export function CameraOverlay({
       await onShot(file);
       window.setTimeout(() => setCapturing(false), SHUTTER_COOLDOWN_MS);
     } catch {
-      setError(USER_COPY.camera.captureFailed);
+      setError(t("captureFailed"));
       setCapturing(false);
     }
   };
@@ -201,7 +209,7 @@ export function CameraOverlay({
           onClick={handleBack}
           className="flex min-h-14 min-w-14 items-center justify-center rounded-xl border-2 border-zinc-600 bg-black/60 px-3 text-xs font-black uppercase tracking-wider text-white backdrop-blur-sm transition-transform active:scale-95"
         >
-          &lt; BACK
+          {t("back")}
         </button>
         {mode === "batch" && (
           <div className="flex items-center gap-2">
@@ -211,7 +219,7 @@ export function CameraOverlay({
                 onClick={onSyncClick}
                 disabled={syncDisabled || syncing}
                 className={actionBtn}
-                aria-label="Sync receipts"
+                aria-label={tHome("syncReceipts")}
               >
                 <RefreshIcon
                   className={`h-5 w-5 text-white ${syncing ? "animate-spin" : ""}`}
@@ -223,7 +231,7 @@ export function CameraOverlay({
                 type="button"
                 onClick={onSettingsClick}
                 className={actionBtn}
-                aria-label="Settings"
+                aria-label={tHome("settings")}
               >
                 <SlidersIcon className="h-5 w-5 text-white" />
               </button>
@@ -248,7 +256,7 @@ export function CameraOverlay({
         {!ready && !error && !hideVideo && (
           <div className="absolute inset-0 flex items-center justify-center bg-black">
             <p className="text-lg font-bold text-yellow-400">
-              {USER_COPY.camera.opening}
+              {t("opening")}
             </p>
           </div>
         )}
@@ -261,7 +269,7 @@ export function CameraOverlay({
               onClick={() => void startStream()}
               className="min-h-16 rounded-xl bg-yellow-500 px-8 py-4 text-lg font-black text-black active:scale-95"
             >
-              {USER_COPY.camera.retry}
+              {t("retry")}
             </button>
             <button
               type="button"
@@ -271,7 +279,7 @@ export function CameraOverlay({
               }}
               className="min-h-16 text-sm font-bold text-zinc-400 active:scale-95"
             >
-              {USER_COPY.camera.chooseGallery}
+              {t("chooseGallery")}
             </button>
           </div>
         )}

@@ -3,6 +3,7 @@
 import { FooterActionTile } from "@/components/camera/FooterActionTile";
 import { StackCardsIcon } from "@/components/icons/StackCardsIcon";
 import { homeVisual } from "@/lib/ui/homeVisual";
+import { useTranslations } from "next-intl";
 
 interface BatchCountBadgeProps {
   count: number;
@@ -15,6 +16,7 @@ export function BatchCountBadge({
   latestId,
   onPress,
 }: BatchCountBadgeProps) {
+  const t = useTranslations("Camera");
   if (count <= 0) {
     return (
       <FooterActionTile
@@ -39,7 +41,7 @@ export function BatchCountBadge({
         {count}
       </span>
       <span className="pb-0.5 text-[7px] font-bold uppercase leading-none text-green-400">
-        Batch {count}
+        {t("batchCount", { count })}
       </span>
     </FooterActionTile>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { useTranslations } from "next-intl";
 import { homeVisual } from "@/lib/ui/homeVisual";
 
 interface ReceiptReviewControlsProps {
@@ -16,6 +17,8 @@ export function ReceiptReviewControls({
   onAccept,
   busy = false,
 }: ReceiptReviewControlsProps) {
+  const tCommon = useTranslations("Common");
+  const tDetail = useTranslations("ReceiptDetail");
   const { size, delete: deleteCls, resnap, accept } = homeVisual.reviewControl;
 
   const action = (
@@ -44,7 +47,7 @@ export function ReceiptReviewControls({
   return (
     <div className="flex items-end justify-between gap-2 px-6 pb-3 pt-2">
       {action(
-        "Delete",
+        tCommon("delete"),
         "Delete receipt from batch",
         deleteCls,
         <span className="text-xl text-white" aria-hidden>
@@ -53,7 +56,7 @@ export function ReceiptReviewControls({
         onDelete,
       )}
       {action(
-        "Resnap",
+        tDetail("resnap"),
         "Resnap receipt",
         resnap,
         <span className="text-2xl font-black text-white" aria-hidden>
@@ -62,7 +65,7 @@ export function ReceiptReviewControls({
         onResnap,
       )}
       {action(
-        "Done",
+        tCommon("done"),
         "Accept receipt",
         accept,
         <span className="text-2xl font-black text-white" aria-hidden>

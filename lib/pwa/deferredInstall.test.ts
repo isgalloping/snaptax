@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   INSTALL_DISMISS_DAYS,
   isDismissedWithinWindow,
+  resolveInstallUiMode,
 } from "./deferredInstall";
 
 describe("isDismissedWithinWindow", () => {
@@ -28,5 +29,20 @@ describe("isDismissedWithinWindow", () => {
 
   it("returns false for invalid timestamp", () => {
     assert.equal(isDismissedWithinWindow("not-a-date", Date.now()), false);
+  });
+});
+
+describe("resolveInstallUiMode", () => {
+  it("returns none when not eligible", () => {
+    assert.equal(resolveInstallUiMode(false, false), "none");
+    assert.equal(resolveInstallUiMode(false, true), "none");
+  });
+
+  it("returns bar for eligible first-time path", () => {
+    assert.equal(resolveInstallUiMode(true, false), "bar");
+  });
+
+  it("returns header-button after Not now", () => {
+    assert.equal(resolveInstallUiMode(true, true), "header-button");
   });
 });

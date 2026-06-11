@@ -4,7 +4,7 @@ import { USER_COPY } from "@/lib/copy/userFacing";
 import { usePwaInstall } from "./pwaInstallContext";
 
 export function InstallPrompt() {
-  const { mode, install, dismissBar } = usePwaInstall();
+  const { mode, canPrompt, install, dismissBar } = usePwaInstall();
 
   if (mode !== "bar") return null;
 
@@ -18,7 +18,7 @@ export function InstallPrompt() {
           onClick={() => void install()}
           className="min-h-16 flex-1 rounded-xl bg-yellow-500 py-3 text-sm font-black text-black active:scale-95"
         >
-          {USER_COPY.pwa.install}
+          {canPrompt ? USER_COPY.pwa.install : USER_COPY.pwa.howToInstall}
         </button>
         <button
           type="button"

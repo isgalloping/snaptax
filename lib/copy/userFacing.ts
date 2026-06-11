@@ -7,9 +7,12 @@ export const USER_COPY = {
     subtitle:
       "Open like a native app — snap receipts one-handed on the job site",
     install: "Install",
+    howToInstall: "How to add",
     dismiss: "Not now",
     manualHint: "Tap ⋮ in Chrome, then Install app",
     manualSheetTitle: "Install Snap1099",
+    manualSheetLead:
+      "Your browser can't install automatically — follow these steps:",
     manualGotIt: "Got it",
     manualSteps: {
       chromiumAndroid: [

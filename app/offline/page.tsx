@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useUserCopy } from "@/components/i18n/I18nProvider";
 
 export default function OfflinePage() {
@@ -14,12 +15,12 @@ export default function OfflinePage() {
         {copy.offline.title}
       </p>
       <p className="mt-2 text-sm text-zinc-500">{copy.offline.body}</p>
-      <a
+      <Link
         href="/"
         className="mt-10 flex min-h-16 items-center rounded-xl bg-yellow-500 px-8 text-lg font-black text-black active:scale-95"
       >
         {copy.offline.backHome}
-      </a>
+      </Link>
     </div>
   );
 }

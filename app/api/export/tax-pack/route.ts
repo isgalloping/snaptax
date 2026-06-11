@@ -4,14 +4,16 @@ import { apiError, mapErrorToResponse } from "@/lib/api/errors";
 import { getActor } from "@/lib/auth/getActor";
 import { prisma } from "@/lib/prisma";
 import { currentTaxSeason } from "@/lib/tax/season";
+import { irsScheduleLabel } from "@/lib/tax/irsScheduleLabel";
 import type { TaxRegion } from "@/lib/tax/types";
-import { unfiledReceiptWhere } from "@/lib/receipts/filedStatus";
 import { withRequestLog } from "@/lib/server/log/withRequestLog";
+import { logEvent } from "@/lib/server/log/logEvent";
 import { formatLocalDate, formatLocalDateTime } from "@/lib/format";
 import { parseRequestTimeZone } from "@/lib/time/timeZone";
 import { utcNow } from "@/lib/time/utc";
 
 export const POST = withRequestLog("api.entitlement", async (request, _context) => {
+  const exportStart = Date.now();
   try {
     const actor = await getActor(request);
     if (actor.kind !== "user") throw new Error("UNAUTHORIZED");
@@ -35,7 +37,6 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
         where: {
           userId: actor.userId,
           status: "done",
-          ...unfiledReceiptWhere(),
         },
         orderBy: { capturedAt: "asc" },
       }),
@@ -59,6 +60,7 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
       { header: "Category", key: "category", width: 18 },
       { header: "Deductible", key: "deductible", width: 12 },
       { header: "Tax Saved", key: "taxAmount", width: 12 },
+      { header: "IRS Schedule", key: "irsSchedule", width: 40 },
       { header: "Notes", key: "notes", width: 20 },
     ];
 
@@ -80,6 +82,7 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
         category: r.category ?? "",
         deductible: r.deductible ? "Yes" : "No",
         taxAmount,
+        irsSchedule: irsScheduleLabel(r.category ?? undefined),
         notes: "",
       });
     }
@@ -99,6 +102,16 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
     await prisma.snaptaxReceipt.updateMany({
       where: { id: { in: receipts.map((r) => r.id) } },
       data: { taxSeason: season, taxSeasonDate: exportedAt },
+    });
+
+    logEvent({
+      ts: exportedAt.toISOString(),
+      level: "info",
+      module: "biz.export",
+      success: true,
+      durationMs: Date.now() - exportStart,
+      userId: actor.userId,
+      meta: { taxSeason: season },
     });
 
     return new NextResponse(buffer, {

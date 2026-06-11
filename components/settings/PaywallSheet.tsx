@@ -20,6 +20,10 @@ export function PaywallSheet({
   const [paying, setPaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const paddleRef = useRef<Paddle | null>(null);
+  const onPaidRef = useRef(onPaid);
+  useEffect(() => {
+    onPaidRef.current = onPaid;
+  });
 
   useEffect(() => {
     const token = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN;
@@ -30,13 +34,13 @@ export function PaywallSheet({
       token,
       eventCallback: (event) => {
         if (event.name === "checkout.completed") {
-          void onPaid();
+          void onPaidRef.current();
         }
       },
     }).then((instance) => {
       paddleRef.current = instance ?? null;
     });
-  }, [onPaid]);
+  }, []);
 
   const handlePay = async () => {
     setPaying(true);
@@ -60,9 +64,9 @@ export function PaywallSheet({
         return;
       }
 
-      // Sandbox fallback when Paddle.js unavailable
+      console.warn("[PaywallSheet] Sandbox fallback: Paddle.js unavailable. Export may 402 without real entitlement.");
       await new Promise((r) => setTimeout(r, 600));
-      await onPaid();
+      await onPaidRef.current();
     } catch {
       setError("Payment failed. Please try again.");
     } finally {

@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   type GoogleUser,
-  isSeasonPaid,
   loadGoogleUser,
   saveGoogleUser,
   setSeasonPaid,
@@ -41,7 +40,10 @@ export function useAuthSession() {
             setGoogleUser(user);
             saveGoogleUser(user);
             const paid = await fetchSeasonPaid(CURRENT_SEASON);
-            if (!cancelled) setSeasonPaidState(paid);
+            if (!cancelled) {
+              setSeasonPaidState(paid);
+              if (!paid) setSeasonPaid(CURRENT_SEASON, false);
+            }
           } else {
             setGoogleUser(null);
             saveGoogleUser(null);
@@ -52,7 +54,6 @@ export function useAuthSession() {
       }
 
       if (!cancelled) {
-        setSeasonPaidState((prev) => prev || isSeasonPaid(CURRENT_SEASON));
         setHydrated(true);
       }
     })();

@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale } from "next-intl/server";
 import { PwaProvider } from "@/components/pwa/PwaProvider";
-import { USER_COPY } from "@/lib/copy/userFacing";
+import { LocaleInitializer } from "@/components/i18n/LocaleInitializer";
 import { INLINE_INSTALL_CAPTURE_SCRIPT } from "@/lib/pwa/installCaptureScript";
 import "./globals.css";
 
@@ -16,7 +18,8 @@ const geistMono = Geist_Mono({
 });
 
 const APP_NAME = "Snap1099";
-const APP_DESCRIPTION = USER_COPY.app.description;
+const APP_DESCRIPTION =
+  "Snap receipts, auto-categorize. Simple 1099 bookkeeping.";
 
 export const metadata: Metadata = {
   applicationName: APP_NAME,
@@ -48,21 +51,25 @@ export const viewport: Viewport = {
   themeColor: "#000000",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
   return (
     <html
-      lang="en"
+      lang={locale}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="flex h-full min-h-full flex-col">
         <script
           dangerouslySetInnerHTML={{ __html: INLINE_INSTALL_CAPTURE_SCRIPT }}
         />
-        <PwaProvider>{children}</PwaProvider>
+        <NextIntlClientProvider>
+          <LocaleInitializer />
+          <PwaProvider>{children}</PwaProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

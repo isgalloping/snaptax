@@ -8,9 +8,11 @@ import { exportTaxPack, fetchSeasonPaid } from "@/lib/client/authApi";
 import { apiFetch } from "@/lib/client/ghostClient";
 import { AccountStatusBlock } from "@/components/auth/AccountStatusBlock";
 import { GoogleSignInSheet, type GoogleSignInMode } from "@/components/auth/GoogleSignInSheet";
+import { useI18n } from "@/components/i18n/I18nProvider";
 import { SyncInstructionsSheet } from "@/components/auth/SyncInstructionsSheet";
 import { PrivacyDataSection } from "@/components/settings/PrivacyDataSection";
 import { PaywallSheet } from "@/components/settings/PaywallSheet";
+import { SUPPORTED_LOCALES, type Locale } from "@/lib/i18n";
 
 interface SettingsScreenProps {
   industry: Industry | null;
@@ -41,6 +43,7 @@ export function SettingsScreen({
   onSeasonPaid,
   refreshSeasonPaid,
 }: SettingsScreenProps) {
+  const { locale, setLocale, copy } = useI18n();
   const [googleSheet, setGoogleSheet] = useState<GoogleSignInMode | null>(null);
   const [showPaywall, setShowPaywall] = useState(false);
   const [showSyncHelp, setShowSyncHelp] = useState(false);
@@ -140,6 +143,11 @@ export function SettingsScreen({
     }
   };
 
+  const languageLabels: Record<Locale, string> = {
+    "en-US": copy.settings.language.english,
+    "zh-CN": copy.settings.language.chinese,
+  };
+
   return (
     <div className="flex h-full flex-col bg-black text-white">
       <header className="flex items-center border-b-4 border-yellow-500 bg-zinc-900 p-4">
@@ -148,10 +156,10 @@ export function SettingsScreen({
           onClick={onBack}
           className="flex min-h-16 min-w-16 items-center justify-center rounded-xl border-2 border-zinc-600 bg-zinc-800 px-4 text-sm font-black uppercase tracking-wider transition-transform active:scale-95"
         >
-          &lt; BACK
+          {copy.settings.back}
         </button>
         <h1 className="ml-4 text-lg font-black uppercase tracking-wider">
-          Settings
+          {copy.settings.title}
         </h1>
       </header>
 
@@ -165,6 +173,28 @@ export function SettingsScreen({
             setGoogleSheet("soft");
           }}
         />
+
+        <section className="mb-8">
+          <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-zinc-400">
+            {copy.settings.language.title}
+          </h2>
+          <div className="grid grid-cols-2 gap-3">
+            {SUPPORTED_LOCALES.map((item) => (
+              <button
+                key={item}
+                type="button"
+                onClick={() => setLocale(item)}
+                className={`min-h-16 rounded-xl border-2 p-4 text-left text-sm font-bold transition-transform active:scale-95 ${
+                  locale === item
+                    ? "border-yellow-500 bg-yellow-950 text-yellow-400"
+                    : "border-zinc-600 bg-zinc-800 text-white"
+                }`}
+              >
+                {languageLabels[item]}
+              </button>
+            ))}
+          </div>
+        </section>
 
         <section className="mb-8">
           <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-zinc-400">

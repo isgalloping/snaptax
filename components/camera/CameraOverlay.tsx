@@ -8,9 +8,9 @@ import { ReceiptReviewControls } from "@/components/camera/ReceiptReviewControls
 import { ReceiptReviewViewport } from "@/components/camera/ReceiptReviewViewport";
 import { RefreshIcon } from "@/components/icons/RefreshIcon";
 import { SlidersIcon } from "@/components/icons/SlidersIcon";
+import { useUserCopy } from "@/components/i18n/I18nProvider";
 import { ComplianceFootnote } from "@/components/legal/ComplianceFootnote";
 import type { BatchThumb } from "@/lib/camera/batchSession";
-import { USER_COPY } from "@/lib/copy/userFacing";
 import {
   attachStreamToVideo,
   captureVideoFrame,
@@ -78,6 +78,7 @@ export function CameraOverlay({
   onOpenTerms,
   onOpenPrivacy,
 }: CameraOverlayProps) {
+  const copy = useUserCopy();
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [ready, setReady] = useState(false);
@@ -115,7 +116,7 @@ export function CameraOverlay({
         const video = videoRef.current;
         if (!video) {
           stopCameraStream(stream);
-          setError(USER_COPY.camera.openFailed);
+          setError(copy.camera.openFailed);
           return;
         }
 
@@ -123,10 +124,10 @@ export function CameraOverlay({
         setReady(true);
       } catch (err) {
         stopStream();
-        setError(getCameraErrorMessage(err));
+        setError(getCameraErrorMessage(err, copy.camera.errors));
       }
     },
-    [stopStream],
+    [copy.camera.errors, copy.camera.openFailed, stopStream],
   );
 
   useEffect(() => {
@@ -152,7 +153,7 @@ export function CameraOverlay({
       await onShot(file);
       window.setTimeout(() => setCapturing(false), SHUTTER_COOLDOWN_MS);
     } catch {
-      setError(USER_COPY.camera.captureFailed);
+      setError(copy.camera.captureFailed);
       setCapturing(false);
     }
   };
@@ -248,7 +249,7 @@ export function CameraOverlay({
         {!ready && !error && !hideVideo && (
           <div className="absolute inset-0 flex items-center justify-center bg-black">
             <p className="text-lg font-bold text-yellow-400">
-              {USER_COPY.camera.opening}
+              {copy.camera.opening}
             </p>
           </div>
         )}
@@ -261,7 +262,7 @@ export function CameraOverlay({
               onClick={() => void startStream()}
               className="min-h-16 rounded-xl bg-yellow-500 px-8 py-4 text-lg font-black text-black active:scale-95"
             >
-              {USER_COPY.camera.retry}
+              {copy.camera.retry}
             </button>
             <button
               type="button"
@@ -271,7 +272,7 @@ export function CameraOverlay({
               }}
               className="min-h-16 text-sm font-bold text-zinc-400 active:scale-95"
             >
-              {USER_COPY.camera.chooseGallery}
+              {copy.camera.chooseGallery}
             </button>
           </div>
         )}

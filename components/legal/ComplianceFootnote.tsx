@@ -1,5 +1,7 @@
 "use client";
 
+import { useUserCopy } from "@/components/i18n/I18nProvider";
+
 interface ComplianceFootnoteProps {
   onOpenTerms: () => void;
   onOpenPrivacy: () => void;
@@ -11,32 +13,29 @@ export function ComplianceFootnote({
   onOpenPrivacy,
   className = "",
 }: ComplianceFootnoteProps) {
-  const prefix = "By snapping, you agree to our ";
-  const middle = " & ";
-  const suffix =
-    ". Online processing stores data in the United States.";
+  const copy = useUserCopy().legal.compliance;
 
   return (
     <p
       className={`max-w-sm px-2 text-center text-xs leading-relaxed text-zinc-400 ${className || "mt-4"}`}
     >
-      {prefix}
+      {copy.prefix}
       <button
         type="button"
         onClick={onOpenTerms}
         className="min-h-11 underline decoration-yellow-400 decoration-2 underline-offset-2 text-yellow-400"
       >
-        Terms
+        {copy.terms}
       </button>
-      {middle}
+      {copy.middle}
       <button
         type="button"
         onClick={onOpenPrivacy}
         className="min-h-11 underline decoration-yellow-400 decoration-2 underline-offset-2 text-yellow-400"
       >
-        Privacy Policy
+        {copy.privacy}
       </button>
-      {suffix}
+      {copy.suffix}
     </p>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { initializePaddle, Paddle } from "@paddle/paddle-js";
 import { apiFetch } from "@/lib/client/ghostClient";
 
@@ -17,6 +18,8 @@ export function PaywallSheet({
   onClose,
   onPaid,
 }: PaywallSheetProps) {
+  const t = useTranslations("Paywall");
+
   const [paying, setPaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const paddleRef = useRef<Paddle | null>(null);
@@ -64,7 +67,7 @@ export function PaywallSheet({
       await new Promise((r) => setTimeout(r, 600));
       await onPaid();
     } catch {
-      setError("Payment failed. Please try again.");
+      setError(t("paymentFailed"));
     } finally {
       setPaying(false);
     }
@@ -73,17 +76,15 @@ export function PaywallSheet({
   return (
     <div className="fixed inset-0 z-50 flex items-end bg-black/70">
       <div className="w-full rounded-t-3xl border-t-4 border-yellow-500 bg-zinc-900 p-6 pb-10">
-        <p className="text-4xl font-black text-white">$49.00</p>
+        <p className="text-4xl font-black text-white">{t("price")}</p>
         <p className="mt-1 text-sm text-zinc-400">
-          One-Time for {seasonLabel} Tax Season
+          {t("oneTimeForSeason", { season: seasonLabel })}
         </p>
         <p className="mt-4 text-base leading-relaxed text-zinc-300">
-          Export an IRS-ready Excel file — send to your CPA or import into
-          TurboTax. Saves hours of manual entry.
+          {t("body")}
         </p>
         <p className="mt-4 text-sm font-bold text-yellow-400">
-          Sign in with Google before switching phones, or local data will be
-          lost.
+          {t("deviceWarning")}
         </p>
         <button
           type="button"
@@ -91,7 +92,7 @@ export function PaywallSheet({
           onClick={() => void handlePay()}
           className="mt-6 w-full min-h-16 rounded-xl bg-white py-4 text-lg font-black text-black transition-transform active:scale-95 disabled:opacity-60"
         >
-          {paying ? "Opening Paddle…" : "Pay $49 with Paddle"}
+          {paying ? t("openingPaddle") : t("payWithPaddle")}
         </button>
         {error && (
           <p className="mt-3 text-center text-sm font-bold text-red-500" role="alert">
@@ -103,7 +104,7 @@ export function PaywallSheet({
           onClick={onClose}
           className="mt-3 w-full min-h-16 py-3 text-sm font-bold text-zinc-400 transition-transform active:scale-95"
         >
-          &lt; BACK
+          {t("back")}
         </button>
       </div>
     </div>

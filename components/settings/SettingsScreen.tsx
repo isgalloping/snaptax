@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import type { Industry } from "@/lib/types";
 import { INDUSTRIES } from "@/lib/types";
 import type { GoogleUser } from "@/lib/client/authStorage";
@@ -41,6 +42,9 @@ export function SettingsScreen({
   onSeasonPaid,
   refreshSeasonPaid,
 }: SettingsScreenProps) {
+  const t = useTranslations("Settings");
+  const tIndustry = useTranslations("Industries");
+
   const [googleSheet, setGoogleSheet] = useState<GoogleSignInMode | null>(null);
   const [showPaywall, setShowPaywall] = useState(false);
   const [showSyncHelp, setShowSyncHelp] = useState(false);
@@ -57,8 +61,8 @@ export function SettingsScreen({
       await navigator
         .share({
           files: [file],
-          title: `Snap1099 Tax Pack ${currentSeason}`,
-          text: "Your IRS-ready expense export",
+          title: t("shareTitle", { season: currentSeason }),
+          text: t("shareText"),
         })
         .catch(() => {});
     } else {
@@ -78,7 +82,7 @@ export function SettingsScreen({
         try {
           await shareExportFile();
         } catch {
-          setErrorMessage("Export failed. Please try again.");
+          setErrorMessage(t("exportFailed"));
         }
       } else {
         setShowPaywall(true);
@@ -124,7 +128,7 @@ export function SettingsScreen({
       if (err instanceof Error && err.message === "PAYMENT_REQUIRED") {
         setShowPaywall(true);
       } else {
-        setErrorMessage("Export failed. Please try again.");
+        setErrorMessage(t("exportFailed"));
       }
     }
   };
@@ -148,10 +152,10 @@ export function SettingsScreen({
           onClick={onBack}
           className="flex min-h-16 min-w-16 items-center justify-center rounded-xl border-2 border-zinc-600 bg-zinc-800 px-4 text-sm font-black uppercase tracking-wider transition-transform active:scale-95"
         >
-          &lt; BACK
+          {t("back")}
         </button>
         <h1 className="ml-4 text-lg font-black uppercase tracking-wider">
-          Settings
+          {t("title")}
         </h1>
       </header>
 
@@ -168,7 +172,7 @@ export function SettingsScreen({
 
         <section className="mb-8">
           <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-zinc-400">
-            Your Industry
+            {t("yourIndustry")}
           </h2>
           <div className="grid grid-cols-2 gap-3">
             {INDUSTRIES.map((item) => (
@@ -182,7 +186,7 @@ export function SettingsScreen({
                     : "border-zinc-600 bg-zinc-800 text-white"
                 }`}
               >
-                {item.label}
+                {tIndustry(item.id)}
               </button>
             ))}
           </div>
@@ -190,14 +194,14 @@ export function SettingsScreen({
 
         <section className="mb-8">
           <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-zinc-400">
-            Multi-Device
+            {t("multiDevice")}
           </h2>
           <button
             type="button"
             onClick={handleViewAllDevices}
             className="w-full min-h-16 rounded-xl border-2 border-zinc-600 bg-zinc-800 p-4 text-left text-sm font-bold text-white transition-transform active:scale-95"
           >
-            View on All Devices
+            {t("viewOnAllDevices")}
           </button>
         </section>
 
@@ -208,14 +212,14 @@ export function SettingsScreen({
 
         <section>
           <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-zinc-400">
-            Tax Season Export
+            {t("taxSeasonExport")}
           </h2>
           <button
             type="button"
             onClick={seasonPaid ? () => void handleExportAgain() : handleExport}
             className="w-full min-h-16 rounded-xl border-4 border-white bg-yellow-500 py-4 text-lg font-black uppercase tracking-wider text-black transition-transform active:scale-95"
           >
-            {seasonPaid ? "Export Again" : "Export IRS Tax Pack"}
+            {seasonPaid ? t("exportAgain") : t("exportTaxPack")}
           </button>
         </section>
 
@@ -253,7 +257,7 @@ export function SettingsScreen({
             try {
               await shareExportFile();
             } catch {
-              setErrorMessage("Export failed after payment. Try Export Again.");
+              setErrorMessage(t("exportFailedAfterPayment"));
             }
           }}
         />

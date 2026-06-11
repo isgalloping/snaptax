@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import type { LegalDoc } from "@/lib/legal/content";
-import { LEGAL_CONTACT_EMAIL, formatDataStorageLabel } from "@/lib/legal/content";
+import { LEGAL_CONTACT_EMAIL } from "@/lib/legal/content";
 import { LegalSheet } from "@/components/legal/LegalSheet";
 import { clearLocalAppData } from "@/lib/storage/clearLocalData";
 import { deleteAccountApi } from "@/lib/client/authApi";
@@ -49,12 +50,13 @@ export function PrivacyDataSection({
   isSignedIn = false,
   onLocalDataCleared,
 }: PrivacyDataSectionProps) {
+  const t = useTranslations("Privacy");
+  const tCommon = useTranslations("Common");
+
   const [legalDoc, setLegalDoc] = useState<LegalDoc | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const storageLabel = formatDataStorageLabel();
 
   const handleDelete = async () => {
     setDeleting(true);
@@ -70,7 +72,7 @@ export function PrivacyDataSection({
       setShowDeleteConfirm(false);
       onLocalDataCleared?.();
     } catch {
-      setError("Delete failed. Please try again.");
+      setError(t("deleteFailed"));
     } finally {
       setDeleting(false);
     }
@@ -80,31 +82,31 @@ export function PrivacyDataSection({
     <>
       <section className="mb-8">
         <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-zinc-400">
-          Privacy & Data
+          {t("title")}
         </h2>
         <div className="space-y-3">
           <SettingsRow
-            label="Privacy Policy"
+            label={t("privacyPolicy")}
             onClick={() => setLegalDoc("privacy")}
           />
           <SettingsRow
-            label="Terms of Service"
+            label={t("termsOfService")}
             onClick={() => setLegalDoc("terms")}
           />
           <div className="rounded-xl border-2 border-zinc-600 bg-zinc-800 p-4">
             <p className="text-xs font-bold uppercase tracking-wider text-zinc-400">
-              Data storage
+              {t("dataStorage")}
             </p>
             <p className="mt-2 text-sm font-bold text-yellow-400">
-              {storageLabel}
+              {t("dataStorageLabel")}
             </p>
           </div>
           <SettingsRow
-            label={`Contact: ${LEGAL_CONTACT_EMAIL}`}
+            label={t("contact")}
             href={`mailto:${LEGAL_CONTACT_EMAIL}`}
           />
           <SettingsRow
-            label="Delete Account"
+            label={t("deleteAccount")}
             destructive
             onClick={() => setShowDeleteConfirm(true)}
           />
@@ -122,7 +124,7 @@ export function PrivacyDataSection({
         <div className="fixed inset-0 z-50 flex items-end bg-black/70">
           <div className="w-full rounded-t-3xl border-t-4 border-red-600 bg-zinc-900 p-6 pb-10">
             <p className="text-lg font-black uppercase tracking-wider text-white">
-              Delete Account
+              {t("deleteAccount")}
             </p>
             <p className="mt-4 text-sm leading-relaxed text-zinc-300">
               {isSignedIn
@@ -135,14 +137,14 @@ export function PrivacyDataSection({
               onClick={() => void handleDelete()}
               className="mt-6 w-full min-h-16 rounded-xl border-2 border-red-600 bg-red-950 py-4 text-lg font-black uppercase tracking-wider text-red-400 transition-transform active:scale-95 disabled:opacity-60"
             >
-              {deleting ? "Deleting..." : "Delete permanently"}
+              {deleting ? t("deleting") : t("deleteConfirm")}
             </button>
             <button
               type="button"
               onClick={() => setShowDeleteConfirm(false)}
               className="mt-3 w-full min-h-16 py-3 text-sm font-bold text-zinc-400 transition-transform active:scale-95"
             >
-              Cancel
+              {tCommon("cancel")}
             </button>
           </div>
         </div>

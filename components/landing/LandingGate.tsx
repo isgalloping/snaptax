@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { warmReceiptDb } from "@/lib/storage/receiptDb";
 import {
   LANDING_FADE_MS,
@@ -9,7 +10,6 @@ import {
   resolveExit,
   type LandingExitMode,
 } from "@/lib/landing/landingTiming";
-import { DATA_STREAM_CHECKLIST_TITLE } from "./dataStreamCopy";
 
 type Phase = "visible" | "exiting" | "done";
 
@@ -19,6 +19,7 @@ interface LandingGateProps {
 }
 
 export function LandingGate({ homeChunkReady, onExit }: LandingGateProps) {
+  const t = useTranslations("Landing");
   const [phase, setPhase] = useState<Phase>("visible");
   const pollTimerRef = useRef<number | null>(null);
   const doneTimerRef = useRef<number | null>(null);
@@ -92,7 +93,7 @@ export function LandingGate({ homeChunkReady, onExit }: LandingGateProps) {
       className="sr-only"
       role="status"
       aria-live="polite"
-      aria-label={DATA_STREAM_CHECKLIST_TITLE}
+      aria-label={t("loadingToolkit")}
     />
   );
 }

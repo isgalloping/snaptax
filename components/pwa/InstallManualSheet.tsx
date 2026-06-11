@@ -1,6 +1,6 @@
 "use client";
 
-import { USER_COPY } from "@/lib/copy/userFacing";
+import { useTranslations } from "next-intl";
 import {
   getInstallPlatform,
   manualCopyKeyForPlatform,
@@ -12,20 +12,38 @@ interface InstallManualSheetProps {
   onClose: () => void;
 }
 
-function stepsForPlatform(): readonly string[] {
-  const key: ManualInstallCopyKey | null = manualCopyKeyForPlatform(
-    getInstallPlatform(),
-  );
-  if (!key) {
-    return USER_COPY.pwa.manualSteps.chromiumAndroid;
-  }
-  return USER_COPY.pwa.manualSteps[key];
-}
+const STEP_KEYS: Record<ManualInstallCopyKey, readonly string[]> = {
+  chromiumAndroid: [
+    "manualStepChromiumAndroid1",
+    "manualStepChromiumAndroid2",
+    "manualStepChromiumAndroid3",
+  ],
+  chromiumDesktop: [
+    "manualStepChromiumDesktop1",
+    "manualStepChromiumDesktop2",
+    "manualStepChromiumDesktop3",
+  ],
+  iosSafari: [
+    "manualStepIosSafari1",
+    "manualStepIosSafari2",
+    "manualStepIosSafari3",
+  ],
+  macosSafari: [
+    "manualStepMacosSafari1",
+    "manualStepMacosSafari2",
+    "manualStepMacosSafari3",
+  ],
+};
 
 export function InstallManualSheet({ open, onClose }: InstallManualSheetProps) {
+  const t = useTranslations("Pwa");
+
   if (!open) return null;
 
-  const steps = stepsForPlatform();
+  const copyKey: ManualInstallCopyKey | null = manualCopyKeyForPlatform(
+    getInstallPlatform(),
+  );
+  const keys = STEP_KEYS[copyKey ?? "chromiumAndroid"];
 
   return (
     <div className="fixed inset-0 z-[60] flex items-end bg-black/70">
@@ -38,12 +56,12 @@ export function InstallManualSheet({ open, onClose }: InstallManualSheetProps) {
           id="install-manual-title"
           className="text-lg font-black uppercase tracking-wider text-white"
         >
-          {USER_COPY.pwa.manualSheetTitle}
+          {t("manualSheetTitle")}
         </h2>
-        <p className="mt-2 text-sm text-zinc-400">{USER_COPY.pwa.subtitle}</p>
+        <p className="mt-2 text-sm text-zinc-400">{t("subtitle")}</p>
         <ol className="mt-4 list-decimal space-y-3 pl-5 text-sm font-bold text-zinc-200">
-          {steps.map((step) => (
-            <li key={step}>{step}</li>
+          {keys.map((key) => (
+            <li key={key}>{t(key)}</li>
           ))}
         </ol>
         <button
@@ -51,7 +69,7 @@ export function InstallManualSheet({ open, onClose }: InstallManualSheetProps) {
           onClick={onClose}
           className="mt-6 min-h-16 w-full rounded-xl bg-yellow-500 text-sm font-black text-black active:scale-95"
         >
-          {USER_COPY.pwa.manualGotIt}
+          {t("manualGotIt")}
         </button>
       </div>
     </div>

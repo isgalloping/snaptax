@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 interface ComplianceFootnoteProps {
   onOpenTerms: () => void;
   onOpenPrivacy: () => void;
@@ -11,32 +13,29 @@ export function ComplianceFootnote({
   onOpenPrivacy,
   className = "",
 }: ComplianceFootnoteProps) {
-  const prefix = "By snapping, you agree to our ";
-  const middle = " & ";
-  const suffix =
-    ". Online processing stores data in the United States.";
+  const t = useTranslations("Legal");
 
   return (
     <p
       className={`max-w-sm px-2 text-center text-xs leading-relaxed text-zinc-400 ${className || "mt-4"}`}
     >
-      {prefix}
+      {"By snapping, you agree to our "}
       <button
         type="button"
         onClick={onOpenTerms}
         className="min-h-11 underline decoration-yellow-400 decoration-2 underline-offset-2 text-yellow-400"
       >
-        Terms
+        {t("terms")}
       </button>
-      {middle}
+      {" & "}
       <button
         type="button"
         onClick={onOpenPrivacy}
         className="min-h-11 underline decoration-yellow-400 decoration-2 underline-offset-2 text-yellow-400"
       >
-        Privacy Policy
+        {t("privacyPolicyLink")}
       </button>
-      {suffix}
+      {". Online processing stores data in the United States."}
     </p>
   );
 }

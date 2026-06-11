@@ -1,18 +1,42 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import type { LegalDoc } from "@/lib/legal/content";
-import { getLegalSections, getLegalTitle } from "@/lib/legal/content";
 
 interface LegalSheetProps {
   doc: LegalDoc | null;
   onClose: () => void;
 }
 
+interface SectionDef {
+  titleKey: string;
+  bodyKeys: string[];
+}
+
+const PRIVACY_SECTION_DEFS: SectionDef[] = [
+  { titleKey: "privacyByDesignTitle", bodyKeys: ["privacyByDesignBody1", "privacyByDesignBody2", "privacyByDesignBody3"] },
+  { titleKey: "dataStorageTitle", bodyKeys: ["dataStorageBody1", "dataStorageBody2", "dataStorageBody3"] },
+  { titleKey: "googleSignInTitle", bodyKeys: ["googleSignInBody"] },
+  { titleKey: "subProcessorsTitle", bodyKeys: ["subProcessorsBody"] },
+  { titleKey: "noSaleTitle", bodyKeys: ["noSaleBody"] },
+  { titleKey: "yourRightsTitle", bodyKeys: ["yourRightsBody1", "yourRightsBody2"] },
+];
+
+const TERMS_SECTION_DEFS: SectionDef[] = [
+  { titleKey: "termsServiceTitle", bodyKeys: ["termsServiceBody"] },
+  { titleKey: "termsAccountsTitle", bodyKeys: ["termsAccountsBody1", "termsAccountsBody2"] },
+  { titleKey: "termsPaymentsTitle", bodyKeys: ["termsPaymentsBody"] },
+  { titleKey: "termsPrivacyTitle", bodyKeys: ["termsPrivacyBody"] },
+  { titleKey: "termsDisclaimerTitle", bodyKeys: ["termsDisclaimerBody1", "termsDisclaimerBody2"] },
+];
+
 export function LegalSheet({ doc, onClose }: LegalSheetProps) {
+  const t = useTranslations("Legal");
+
   if (!doc) return null;
 
-  const sections = getLegalSections(doc);
-  const title = getLegalTitle(doc);
+  const sectionDefs = doc === "privacy" ? PRIVACY_SECTION_DEFS : TERMS_SECTION_DEFS;
+  const title = doc === "privacy" ? t("privacyPolicy") : t("termsOfService");
 
   return (
     <div className="fixed inset-0 z-50 flex items-end bg-black/70">
@@ -33,24 +57,24 @@ export function LegalSheet({ doc, onClose }: LegalSheetProps) {
             onClick={onClose}
             className="min-h-12 min-w-12 rounded-xl border-2 border-zinc-600 bg-zinc-800 px-4 text-sm font-black uppercase tracking-wider transition-transform active:scale-95"
           >
-            Close
+            {t("close")}
           </button>
         </div>
         <div className="overflow-y-auto p-6 pb-10">
           <p className="mb-6 text-xs text-zinc-400">
-            Last Updated: June 2026 · GDPR & CPRA
+            {t("lastUpdated")}
           </p>
-          {sections.map((section) => (
-            <section key={section.title} className="mb-6">
+          {sectionDefs.map((section) => (
+            <section key={section.titleKey} className="mb-6">
               <h3 className="mb-2 text-sm font-bold uppercase tracking-wider text-yellow-400">
-                {section.title}
+                {t(section.titleKey)}
               </h3>
-              {section.body.map((paragraph) => (
+              {section.bodyKeys.map((bodyKey) => (
                 <p
-                  key={paragraph.slice(0, 40)}
+                  key={bodyKey}
                   className="mb-3 text-sm leading-relaxed text-zinc-300"
                 >
-                  {paragraph}
+                  {t(bodyKey)}
                 </p>
               ))}
             </section>
@@ -59,7 +83,7 @@ export function LegalSheet({ doc, onClose }: LegalSheetProps) {
             href={doc === "privacy" ? "/privacy" : "/terms"}
             className="inline-block min-h-12 text-sm font-bold text-yellow-400 underline"
           >
-            Open full {title} page
+            {t("openFullPage", { title })}
           </a>
         </div>
       </div>

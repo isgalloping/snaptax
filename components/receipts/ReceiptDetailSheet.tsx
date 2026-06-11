@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import type { Receipt } from "@/lib/types";
 import {
   formatCurrencyForRegion,
@@ -57,6 +58,10 @@ export function ReceiptDetailSheet({
   onRetrySync,
   onReceiptUpdate,
 }: ReceiptDetailSheetProps) {
+  const t = useTranslations("ReceiptDetail");
+  const tCard = useTranslations("ReceiptCard");
+  const tCommon = useTranslations("Common");
+
   const [receipt, setReceipt] = useState(initialReceipt);
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [imageMissing, setImageMissing] = useState(false);
@@ -161,10 +166,10 @@ export function ReceiptDetailSheet({
 
   const processingTitle =
     receipt.pendingUpload && syncStuck
-      ? "Upload paused"
+      ? tCard("uploadPaused")
       : syncStuck
-        ? "Analysis paused"
-        : "Calculating your deductions...";
+        ? tCard("analysisPaused")
+        : t("calculatingDeductions");
 
   const stepperPhase =
     hero.kind === "done"
@@ -197,7 +202,7 @@ export function ReceiptDetailSheet({
               type="button"
               onClick={onClose}
               className="flex min-h-16 min-w-16 items-center justify-center rounded-xl border-2 border-zinc-600 bg-zinc-900 text-xl font-black text-white active:scale-95"
-              aria-label="Close"
+              aria-label={tCommon("close")}
             >
               ×
             </button>
@@ -226,7 +231,7 @@ export function ReceiptDetailSheet({
                   )}
                   <ReceiptDetailStepper phase={stepperPhase} />
                   <div className="mx-auto mt-6 max-w-sm rounded-xl bg-zinc-900 px-4 py-3 text-sm font-bold text-zinc-300">
-                    📅 Date Captured: {dateCapturedLong}
+                    📅 {t("date")}: {dateCapturedLong}
                   </div>
                   {syncStuck && onRetrySync && (
                     <button
@@ -248,10 +253,10 @@ export function ReceiptDetailSheet({
                     id="receipt-detail-title"
                     className="text-2xl font-black text-red-400"
                   >
-                    ⚠️ Tax AI Couldn&apos;t Read This
+                    ⚠️ {t("taxAiCouldntRead")}
                   </p>
                   <p className="mt-2 text-sm text-zinc-400">
-                    The image is too blurry or shaky.
+                    {t("blurryBody")}
                   </p>
                   <ReceiptDetailStepper phase={stepperPhase} />
                 </>
@@ -284,24 +289,24 @@ export function ReceiptDetailSheet({
                   Partial Details
                 </h3>
                 <p className="text-sm font-bold text-zinc-300">
-                  Possible Merchant: {formatPartialMerchant(receipt.merchant)}
+                  {t("merchant")}: {formatPartialMerchant(receipt.merchant)}
                 </p>
                 <p className="mt-1 text-sm font-bold text-zinc-300">
-                  Date Captured: {dateCaptured}
+                  {t("date")}: {dateCaptured}
                 </p>
               </section>
             )}
 
             {hero.kind === "done" && (
               <section className="mb-8 rounded-xl border border-zinc-800 bg-zinc-950 px-4">
-                <DetailRow label="Merchant" value={receipt.merchant ?? "—"} />
-                <DetailRow label="Total Amount" value={totalLabel} />
+                <DetailRow label={t("merchant")} value={receipt.merchant ?? "—"} />
+                <DetailRow label={t("amount")} value={totalLabel} />
                 <div className="flex items-start justify-between gap-4 border-b border-zinc-800 py-3">
-                  <span className="text-sm font-bold text-zinc-400">Category</span>
+                  <span className="text-sm font-bold text-zinc-400">{t("category")}</span>
                   <CategoryBadge category={receipt.category ?? "OTHER"} />
                 </div>
                 <DetailRow
-                  label="IRS Line"
+                  label={t("irsLine")}
                   value={irsScheduleLineBadge(receipt.category)}
                 />
               </section>
@@ -314,8 +319,8 @@ export function ReceiptDetailSheet({
                 <ReceiptCaptureSection
                   title={
                     hero.kind === "blurry"
-                      ? "Blurry Preview"
-                      : "Original Receipt Capture"
+                      ? t("blurryTitle")
+                      : t("receiptPreview")
                   }
                   imageSrc={imageSrc}
                   imageMissing={imageMissing}
@@ -336,8 +341,7 @@ export function ReceiptDetailSheet({
                 />
                 {hero.kind === "processing" && (
                   <p className="text-center text-[10px] font-bold leading-relaxed text-zinc-500">
-                    🛡 Your data is encrypted and secure. We never store your
-                    receipt images longer than needed for analysis.
+                    🛡 {t("securityNote")}
                   </p>
                 )}
               </div>

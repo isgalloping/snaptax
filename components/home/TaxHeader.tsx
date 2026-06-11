@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { formatCurrency } from "@/lib/format";
 import { homeVisual } from "@/lib/ui/homeVisual";
 import { ReceiptIcon } from "@/components/icons/ReceiptIcon";
@@ -34,11 +35,9 @@ export function TaxHeader({
   syncDisabled = false,
   showSettings = true,
 }: TaxHeaderProps) {
+  const t = useTranslations("Home");
   const pwaInstall = usePwaInstallOptional();
   const showInstallButton = pwaInstall?.mode === "header-button";
-
-  const receiptLabel =
-    receiptCount === 1 ? "1 receipt" : `${receiptCount} receipts`;
 
   return (
     <header className="relative min-h-[132px] max-h-[24vh] shrink-0 overflow-hidden">
@@ -60,19 +59,19 @@ export function TaxHeader({
       <div className="relative z-10 flex items-center justify-between px-4 py-3">
         <div className="min-w-0 flex-1 pr-3">
           <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-200">
-            Estimated Tax Saved
+            {t("estimatedTaxSaved")}
           </p>
           <p
             className={`text-4xl font-black tracking-tight text-yellow-400 ${
               animating ? "animate-tax-bounce text-green-400" : ""
             }`}
           >
-            {taxSaved === null ? "$- - -" : formatCurrency(taxSaved)}
+            {taxSaved === null ? t("nullTax") : formatCurrency(taxSaved)}
           </p>
           <p className="mt-0.5 flex items-center gap-1 truncate text-[11px] font-bold text-zinc-300">
             <ReceiptIcon className="h-3 w-3 shrink-0" />
             <span>
-              {receiptLabel} • {formatCurrency(totalExpenses)} tracked
+              {t("receiptsTracked", { count: receiptCount })} • {formatCurrency(totalExpenses)}
             </span>
           </p>
         </div>
@@ -82,7 +81,7 @@ export function TaxHeader({
               type="button"
               onClick={() => void pwaInstall.install()}
               className={`${actionBtn} border-yellow-500/60`}
-              aria-label="Install app"
+              aria-label={t("installApp")}
             >
               <DownloadIcon className="h-5 w-5 text-yellow-400" />
             </button>
@@ -93,7 +92,7 @@ export function TaxHeader({
               onClick={onSyncClick}
               disabled={syncDisabled || syncing}
               className={actionBtn}
-              aria-label="Sync receipts"
+              aria-label={t("syncReceipts")}
             >
               <RefreshIcon
                 className={`h-5 w-5 text-white ${syncing ? "animate-spin" : ""}`}
@@ -105,7 +104,7 @@ export function TaxHeader({
               type="button"
               onClick={onSettingsClick}
               className={actionBtn}
-              aria-label="Settings"
+              aria-label={t("settings")}
             >
               <SlidersIcon className="h-5 w-5 text-white" />
             </button>

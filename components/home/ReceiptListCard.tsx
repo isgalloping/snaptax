@@ -1,6 +1,7 @@
 "use client";
 
 import type { ComponentProps } from "react";
+import { useTranslations } from "next-intl";
 import type { Receipt } from "@/lib/types";
 import {
   formatCurrencyForRegion,
@@ -69,6 +70,7 @@ export function ReceiptListCard({
   onResnap,
   onRetrySync,
 }: ReceiptListCardProps) {
+  const t = useTranslations("ReceiptCard");
   const region = receipt.dataRegion ?? "us";
   const currency = receipt.currency ?? (region === "eu" ? "EUR" : "USD");
   const timeZone = clientTimeZone();
@@ -79,10 +81,10 @@ export function ReceiptListCard({
     const { state, pill } = resolveVisualState(receipt, syncStuck);
     const title = syncStuck
       ? pending
-        ? "UPLOAD PAUSED"
-        : "ANALYSIS PAUSED"
-      : "UPLOADING...";
-    const contextLabel = syncStuck ? "Tap to retry" : "Processing";
+        ? t("uploadPaused")
+        : t("analysisPaused")
+      : t("uploading");
+    const contextLabel = syncStuck ? t("tapToRetry") : t("processing");
 
     return (
       <CardShell
@@ -126,10 +128,10 @@ export function ReceiptListCard({
         <CircularStatusIcon state="blurry" />
         <div className="min-w-0 flex-1">
           <p className="text-sm font-extrabold uppercase text-red-500">
-            Receipt Blurry
+            {t("receiptBlurry")}
           </p>
           <p className="mt-0.5 truncate text-xs text-zinc-400">
-            {listSubtitle(receipt, "Need Action")}
+            {listSubtitle(receipt, t("needAction"))}
           </p>
         </div>
         <button
@@ -140,7 +142,7 @@ export function ReceiptListCard({
           }}
           className="shrink-0 rounded-md bg-red-600 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-white active:scale-95"
         >
-          Resnap
+          {t("resnap")}
         </button>
       </div>
     );
@@ -152,7 +154,7 @@ export function ReceiptListCard({
     ? `-${formatCurrencyForRegion(tax, currency, region)}`
     : formatCurrencyForRegion(0, currency, region);
   const lineBadge = irsScheduleLineBadge(receipt.category);
-  const categoryLabel = receipt.category ?? "OTHER";
+  const categoryLabel = receipt.category ?? t("other");
   const categoryEmoji = getReceiptListIcon(receipt).emoji;
 
   return (
@@ -160,7 +162,7 @@ export function ReceiptListCard({
       <CircularStatusIcon state="done" emoji={categoryEmoji} />
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-extrabold uppercase text-white">
-          {receipt.merchant ?? "Unknown merchant"}
+          {receipt.merchant ?? t("unknownMerchant")}
         </p>
         <div className="mt-0.5 flex items-center justify-between gap-2">
           <p className="truncate text-xs text-zinc-400">

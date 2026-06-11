@@ -1,14 +1,9 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { homeVisual } from "@/lib/ui/homeVisual";
 
 type PillVariant = "analyzing" | "uploading" | "paused" | "done" | "none";
-
-const LABEL: Record<Exclude<PillVariant, "none" | "done">, string> = {
-  analyzing: "ANALYZING",
-  uploading: "UPLOADING",
-  paused: "PAUSED",
-};
 
 const COLOR: Record<Exclude<PillVariant, "none">, string> = {
   analyzing: homeVisual.status.analyzing,
@@ -24,18 +19,19 @@ export function StatusPill({
   variant: PillVariant;
   doneLabel?: string;
 }) {
+  const t = useTranslations("ReceiptStatus");
   if (variant === "none") return null;
   if (variant === "done" && doneLabel) {
     return (
       <span className={`text-sm font-extrabold ${COLOR.done}`}>{doneLabel}</span>
     );
   }
-  const key = variant as keyof typeof LABEL;
+  const key = variant as keyof typeof COLOR;
   return (
     <span
       className={`text-[10px] font-bold uppercase tracking-wider ${COLOR[key]}`}
     >
-      {LABEL[key]}
+      {t(variant as "analyzing" | "uploading" | "paused")}
     </span>
   );
 }

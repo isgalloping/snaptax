@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import type { Receipt } from "@/lib/types";
 import { countByStatus } from "@/lib/receipts/receiptStats";
 import { RefreshIcon } from "@/components/icons/RefreshIcon";
@@ -40,6 +41,7 @@ export function ReceiptList({
   syncing = false,
   syncDisabled = false,
 }: ReceiptListProps) {
+  const t = useTranslations("Home");
   const [filter, setFilter] = useState<ReceiptFilter>("all");
   const counts = useMemo(() => countByStatus(receipts), [receipts]);
   const visible = useMemo(
@@ -58,7 +60,7 @@ export function ReceiptList({
 
       <div className="mb-2 flex items-center justify-between gap-2">
         <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-500">
-          All Local Receipts
+          {t("allLocalReceipts")}
         </h2>
         {onSyncClick && (
           <button
@@ -67,7 +69,7 @@ export function ReceiptList({
             disabled={syncDisabled || syncing}
             className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-blue-400 disabled:opacity-40"
           >
-            Pull to refresh
+            {t("pullToRefresh")}
             <RefreshIcon
               className={`h-3.5 w-3.5 ${syncing ? "animate-spin" : ""}`}
             />
@@ -79,8 +81,8 @@ export function ReceiptList({
         {visible.length === 0 ? (
           <p className="py-4 text-center text-sm text-zinc-500">
             {receipts.length === 0
-              ? "Snap your first receipt to get started"
-              : "No receipts in this filter"}
+              ? t("snapFirstReceipt")
+              : t("noReceiptsInFilter")}
           </p>
         ) : (
           visible.map((receipt) => (

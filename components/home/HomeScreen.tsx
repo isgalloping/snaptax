@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import type { Industry, Receipt } from "@/lib/types";
 import { useAuthSession } from "@/lib/client/useAuthSession";
 import { useIsOnline } from "@/lib/client/useIsOnline";
@@ -65,6 +66,7 @@ function stuckIdsFromReceipts(receipts: StoredReceipt[]): Set<string> {
 }
 
 export function HomeScreen() {
+  const t = useTranslations("Home");
   const auth = useAuthSession();
   const isOnline = useIsOnline();
   const [view, setView] = useState<View>("home");
@@ -541,7 +543,7 @@ export function HomeScreen() {
     const processingReceipt: StoredReceipt = withFreshBudget({
       id,
       status: "processing",
-      merchant: "Scanning",
+      merchant: t("scanning"),
       timestamp: snapAt,
       updatedAt: snapAt,
       pendingUpload: true,
@@ -549,7 +551,7 @@ export function HomeScreen() {
     await savePhoto(id, file);
     await saveReceipt(processingReceipt);
     return id;
-  }, []);
+  }, [t]);
 
   const handleBatchClose = useCallback(async () => {
     await refreshListFromLocal();
@@ -638,7 +640,7 @@ export function HomeScreen() {
       const processingReceipt: StoredReceipt = withFreshBudget({
         id,
         status: "processing",
-        merchant: "Scanning",
+        merchant: t("scanning"),
         timestamp: snapAt,
         updatedAt: snapAt,
         pendingUpload: !navigator.onLine,
@@ -687,7 +689,7 @@ export function HomeScreen() {
         }
       }
     },
-    [resnapId, enqueueReceipt, refreshTaxSaved],
+    [resnapId, enqueueReceipt, refreshTaxSaved, t],
   );
 
   const handleResnap = useCallback((id: string) => {

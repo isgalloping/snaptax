@@ -7,6 +7,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useTranslations } from "next-intl";
 import { CameraIcon } from "@/components/icons/CameraIcon";
 import { ChevronRightIcon } from "@/components/icons/ChevronRightIcon";
 import { homeVisual } from "@/lib/ui/homeVisual";
@@ -65,6 +66,7 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
     },
     ref,
   ) {
+    const t = useTranslations("Home");
     const inputRef = useRef<HTMLInputElement>(null);
     const streamPromiseRef = useRef<Promise<MediaStream> | null>(null);
     const sessionIdsRef = useRef<string[]>([]);
@@ -290,12 +292,12 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
             <CameraIcon className="h-10 w-10 shrink-0 stroke-[2.5]" />
             <div className="min-w-0 flex-1 px-3 text-left">
               <span className="block text-lg font-black uppercase tracking-wider">
-                Snap Receipt
+                {t("snapReceipt")}
               </span>
               <span className="mt-0.5 block text-xs font-bold opacity-80">
                 {resnapId
-                  ? "Resnap this receipt"
-                  : "Take a photo of your receipt"}
+                  ? t("resnapReceipt")
+                  : t("takePhoto")}
               </span>
             </div>
             <ChevronRightIcon className="h-6 w-6 shrink-0" />

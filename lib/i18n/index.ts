@@ -282,17 +282,27 @@ function localeFromLanguageTag(tag: string): Locale | null {
   return null;
 }
 
-export function pickLocale(input: string | readonly string[] | null | undefined): Locale {
-  const candidates = Array.isArray(input)
-    ? input.map((value, index) => ({ tag: value, q: 1, index }))
-    : (input ?? "")
-        .split(",")
-        .map((part, index) => {
-          const [tag = "", ...params] = part.trim().split(";");
-          const qParam = params.find((param) => param.trim().startsWith("q="));
-          const q = qParam ? Number(qParam.trim().slice(2)) : 1;
-          return { tag, q: Number.isFinite(q) ? q : 0, index };
-        });
+type LocaleCandidate = {
+  tag: string;
+  q: number;
+  index: number;
+};
+
+export function pickLocale(
+  input: string | readonly string[] | null | undefined,
+): Locale {
+  let candidates: LocaleCandidate[];
+
+  if (typeof input === "string" || !input) {
+    candidates = (input ?? "").split(",").map((part, index) => {
+      const [tag = "", ...params] = part.trim().split(";");
+      const qParam = params.find((param) => param.trim().startsWith("q="));
+      const q = qParam ? Number(qParam.trim().slice(2)) : 1;
+      return { tag, q: Number.isFinite(q) ? q : 0, index };
+    });
+  } else {
+    candidates = input.map((value, index) => ({ tag: value, q: 1, index }));
+  }
 
   for (const candidate of candidates
     .filter((item) => item.tag && item.q > 0)

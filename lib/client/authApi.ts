@@ -85,9 +85,23 @@ export async function exportTaxPack(season: string): Promise<File> {
     headers: { "X-Time-Zone": clientTimeZone() },
   });
   if (res.status === 402) throw new Error("PAYMENT_REQUIRED");
+  if (res.status === 422) throw new Error("NO_RECEIPTS");
   if (!res.ok) throw new Error("EXPORT_FAILED");
   const blob = await res.blob();
   return new File([blob], `Snap1099-${season}-Tax-Pack.xlsx`, { type: blob.type });
+}
+
+export async function pollEntitlementReady(
+  season: string,
+  maxMs = 15000,
+): Promise<boolean> {
+  const start = Date.now();
+  while (Date.now() - start < maxMs) {
+    const paid = await fetchSeasonPaid(season);
+    if (paid) return true;
+    await new Promise((r) => setTimeout(r, 2000));
+  }
+  return false;
 }
 
 export async function deleteAccountApi(isSignedIn: boolean): Promise<void> {

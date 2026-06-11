@@ -1,10 +1,33 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import type { LegalDoc } from "@/lib/legal/content";
-import { getLegalSections, getLegalTitle } from "@/lib/legal/content";
 
-export function LegalPageContent({ doc }: { doc: LegalDoc }) {
-  const sections = getLegalSections(doc);
-  const title = getLegalTitle(doc);
+interface LegalSection {
+  titleKey: string;
+  bodyKeys: string[];
+}
+
+const PRIVACY_SECTIONS: LegalSection[] = [
+  { titleKey: "privacyByDesignTitle", bodyKeys: ["privacyByDesignBody1", "privacyByDesignBody2", "privacyByDesignBody3"] },
+  { titleKey: "dataStorageTitle", bodyKeys: ["dataStorageBody1", "dataStorageBody2", "dataStorageBody3"] },
+  { titleKey: "googleSignInTitle", bodyKeys: ["googleSignInBody"] },
+  { titleKey: "subProcessorsTitle", bodyKeys: ["subProcessorsBody"] },
+  { titleKey: "noSaleTitle", bodyKeys: ["noSaleBody"] },
+  { titleKey: "yourRightsTitle", bodyKeys: ["yourRightsBody1", "yourRightsBody2"] },
+];
+
+const TERMS_SECTIONS: LegalSection[] = [
+  { titleKey: "termsServiceTitle", bodyKeys: ["termsServiceBody"] },
+  { titleKey: "termsAccountsTitle", bodyKeys: ["termsAccountsBody1", "termsAccountsBody2"] },
+  { titleKey: "termsPaymentsTitle", bodyKeys: ["termsPaymentsBody"] },
+  { titleKey: "termsPrivacyTitle", bodyKeys: ["termsPrivacyBody"] },
+  { titleKey: "termsDisclaimerTitle", bodyKeys: ["termsDisclaimerBody1", "termsDisclaimerBody2"] },
+];
+
+export async function LegalPageContent({ doc }: { doc: LegalDoc }) {
+  const t = await getTranslations("Legal");
+  const sections = doc === "privacy" ? PRIVACY_SECTIONS : TERMS_SECTIONS;
+  const title = doc === "privacy" ? t("privacyPolicy") : t("termsOfService");
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -17,21 +40,21 @@ export function LegalPageContent({ doc }: { doc: LegalDoc }) {
         </Link>
         <h1 className="text-2xl font-black uppercase tracking-wider">{title}</h1>
         <p className="mt-2 text-xs text-zinc-400">
-          Last Updated: June 2026 · GDPR & CPRA
+          {t("lastUpdated")}
         </p>
       </header>
       <main className="mx-auto max-w-2xl p-6 pb-16">
         {sections.map((section) => (
-          <section key={section.title} className="mb-8">
+          <section key={section.titleKey} className="mb-8">
             <h2 className="mb-3 text-sm font-bold uppercase tracking-wider text-yellow-400">
-              {section.title}
+              {t(section.titleKey)}
             </h2>
-            {section.body.map((paragraph) => (
+            {section.bodyKeys.map((bodyKey) => (
               <p
-                key={paragraph.slice(0, 40)}
+                key={bodyKey}
                 className="mb-3 text-sm leading-relaxed text-zinc-300"
               >
-                {paragraph}
+                {t(bodyKey)}
               </p>
             ))}
           </section>

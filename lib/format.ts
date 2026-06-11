@@ -35,16 +35,22 @@ function isSameLocalCalendarDay(a: Date, b: Date): boolean {
 }
 
 /** Recent list: local calendar day + clock (Today / Yesterday / short date). */
-export function formatReceiptTime(date: Date, region: TaxRegion = "us"): string {
+export function formatReceiptTime(
+  date: Date,
+  region: TaxRegion = "us",
+  translations?: { today: string; yesterday: string },
+): string {
   const now = new Date();
   const locale = localeForRegion(region);
   const time = formatClockTime(date, region);
 
-  if (isSameLocalCalendarDay(date, now)) return `Today, ${time}`;
+  if (isSameLocalCalendarDay(date, now))
+    return `${translations?.today ?? "Today"}, ${time}`;
 
   const yesterday = new Date(now);
   yesterday.setDate(yesterday.getDate() - 1);
-  if (isSameLocalCalendarDay(date, yesterday)) return `Yesterday, ${time}`;
+  if (isSameLocalCalendarDay(date, yesterday))
+    return `${translations?.yesterday ?? "Yesterday"}, ${time}`;
 
   const sameYear = date.getFullYear() === now.getFullYear();
   return date.toLocaleDateString(locale, {
@@ -69,26 +75,21 @@ export function formatReceiptDetailDateTime(
   }).format(date);
 }
 
-/** Receipt detail hero: long date + time (`June 7, 2026 at 2:43 PM`). */
+/** Receipt detail hero: long date + time (`June 7, 2026, 2:43 PM`). */
 export function formatReceiptDetailLongDateTime(
   date: Date,
   timeZone = "UTC",
   region: TaxRegion = "us",
 ): string {
-  const locale = localeForRegion(region);
-  const datePart = new Intl.DateTimeFormat(locale, {
+  return new Intl.DateTimeFormat(localeForRegion(region), {
     timeZone,
     month: "long",
     day: "numeric",
     year: "numeric",
-  }).format(date);
-  const timePart = new Intl.DateTimeFormat(locale, {
-    timeZone,
     hour: "numeric",
     minute: "2-digit",
     hour12: region === "us",
   }).format(date);
-  return `${datePart} at ${timePart}`;
 }
 
 /** Excel export date column in the user's IANA timezone. */

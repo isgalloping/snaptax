@@ -1,4 +1,11 @@
-import type { DataStreamIconName } from "./dataStreamCopy";
+export type DataStreamIconName =
+  | "database"
+  | "gauge"
+  | "briefcase"
+  | "camera"
+  | "shield"
+  | "offline"
+  | "workers";
 
 const iconClass = "h-4 w-4 shrink-0 text-yellow-500";
 

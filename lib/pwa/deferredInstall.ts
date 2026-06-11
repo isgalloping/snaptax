@@ -1,13 +1,30 @@
 export const INSTALL_DISMISS_KEY = "snap1099_pwa_install_dismissed_at";
-export const INSTALL_DISMISS_DAYS = 7;
+export const INSTALL_VISIT_KEY = "snap1099_pwa_has_visited";
 export const LANDING_DONE_EVENT = "snap1099:landing-done";
 
+import {
+  getInstallPlatform,
+  isInstallPlatformEligible,
+  type InstallPlatform,
+} from "@/lib/pwa/installPlatform";
+
+export type InstallUiMode = "none" | "bar" | "header-button";
+
 const MS_PER_DAY = 86_400_000;
+
+/** @deprecated Permanent header mode — kept for tests referencing TTL helper */
+export const INSTALL_DISMISS_DAYS = 7;
 
 export interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 }
+
+type SnapInstallWindow = Window & {
+  __snap1099DeferredInstall?: BeforeInstallPromptEvent | null;
+  __snap1099InstallListeners?: Array<() => void>;
+  __snap1099InstallCaptureReady?: boolean;
+};
 
 let deferredPrompt: BeforeInstallPromptEvent | null = null;
 const listeners = new Set<() => void>();
@@ -38,10 +55,33 @@ export function readInstallDismissedAt(): string | null {
 }
 
 export function isInstallDismissed(nowMs = Date.now()): boolean {
-  return isDismissedWithinWindow(readInstallDismissedAt(), nowMs);
+  return hasDismissedInstallBar();
 }
 
-export function dismissInstallPrompt(now = new Date()): void {
+export function hasDismissedInstallBar(): boolean {
+  return readInstallDismissedAt() != null;
+}
+
+export function hasPwaVisited(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return localStorage.getItem(INSTALL_VISIT_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function markPwaVisited(): void {
+  if (typeof window === "undefined") return;
+  if (hasPwaVisited()) return;
+  try {
+    localStorage.setItem(INSTALL_VISIT_KEY, "1");
+  } catch {
+    // ignore
+  }
+}
+
+export function dismissInstallBar(now = new Date()): void {
   if (typeof window === "undefined") return;
   try {
     localStorage.setItem(INSTALL_DISMISS_KEY, now.toISOString());
@@ -50,9 +90,33 @@ export function dismissInstallPrompt(now = new Date()): void {
   }
 }
 
+/** @deprecated Use dismissInstallBar */
+export function dismissInstallPrompt(now = new Date()): void {
+  dismissInstallBar(now);
+}
+
 export function isStandaloneDisplayMode(): boolean {
   if (typeof window === "undefined") return false;
-  return window.matchMedia("(display-mode: standalone)").matches;
+  if (window.matchMedia("(display-mode: standalone)").matches) return true;
+  const nav = navigator as Navigator & { standalone?: boolean };
+  return nav.standalone === true;
+}
+
+/** @deprecated Use isStandaloneDisplayMode */
+export function isAndroidInstallableBrowser(
+  userAgent: string,
+  standalone: boolean,
+): boolean {
+  if (standalone) return false;
+  return (
+    /Android/i.test(userAgent) &&
+    (/Chrome/i.test(userAgent) || /EdgA/i.test(userAgent))
+  );
+}
+
+export function getCurrentInstallPlatform(): InstallPlatform {
+  if (typeof navigator === "undefined") return "none";
+  return getInstallPlatform();
 }
 
 export function isLandingDone(): boolean {
@@ -60,28 +124,63 @@ export function isLandingDone(): boolean {
   return document.documentElement.classList.contains("landing-done");
 }
 
+function syncDeferredFromWindow(): void {
+  if (typeof window === "undefined") return;
+  const snap = window as SnapInstallWindow;
+  if (snap.__snap1099DeferredInstall) {
+    deferredPrompt = snap.__snap1099DeferredInstall;
+  } else if (snap.__snap1099DeferredInstall === null) {
+    deferredPrompt = null;
+  }
+}
+
 export function initDeferredInstallCapture(): void {
   if (typeof window === "undefined") return;
+
+  const snap = window as SnapInstallWindow;
+
+  syncDeferredFromWindow();
+
+  snap.__snap1099InstallListeners = snap.__snap1099InstallListeners ?? [];
+  snap.__snap1099InstallListeners.push(() => {
+    syncDeferredFromWindow();
+    notifyListeners();
+  });
+
+  if (snap.__snap1099InstallCaptureReady) return;
 
   window.addEventListener("beforeinstallprompt", (event) => {
     event.preventDefault();
     deferredPrompt = event as BeforeInstallPromptEvent;
+    snap.__snap1099DeferredInstall = deferredPrompt;
     notifyListeners();
   });
 
   window.addEventListener("appinstalled", () => {
     deferredPrompt = null;
+    snap.__snap1099DeferredInstall = null;
+    void import("./installedDetect").then(({ markPwaInstalledLocally }) => {
+      markPwaInstalledLocally();
+    });
     notifyListeners();
   });
 }
 
 export function getDeferredInstallPrompt(): BeforeInstallPromptEvent | null {
+  syncDeferredFromWindow();
   return deferredPrompt;
 }
 
 export function clearDeferredInstallPrompt(): void {
   deferredPrompt = null;
+  if (typeof window !== "undefined") {
+    (window as SnapInstallWindow).__snap1099DeferredInstall = null;
+  }
   notifyListeners();
+}
+
+export function canNativeInstallPrompt(): boolean {
+  return getDeferredInstallPrompt() != null;
 }
 
 export function subscribeInstallPrompt(listener: () => void): () => void {
@@ -121,12 +220,33 @@ export function subscribeLandingDone(listener: () => void): () => void {
   };
 }
 
-export function shouldShowInstallPrompt(nowMs = Date.now()): boolean {
+export function isInstallEligible(): boolean {
   if (typeof window === "undefined") return false;
   if (isStandaloneDisplayMode()) return false;
-  if (isInstallDismissed(nowMs)) return false;
   if (!isLandingDone()) return false;
-  return getDeferredInstallPrompt() != null;
+  return isInstallPlatformEligible(getCurrentInstallPlatform());
+}
+
+export function resolveInstallUiMode(
+  eligible: boolean,
+  dismissedBar: boolean,
+): InstallUiMode {
+  if (!eligible) return "none";
+  if (dismissedBar) return "header-button";
+  return "bar";
+}
+
+export function getInstallUiMode(): InstallUiMode {
+  return resolveInstallUiMode(isInstallEligible(), hasDismissedInstallBar());
+}
+
+export function shouldShowInstallBar(): boolean {
+  return getInstallUiMode() === "bar";
+}
+
+/** @deprecated Use getInstallUiMode */
+export function shouldShowInstallPrompt(): boolean {
+  return shouldShowInstallBar();
 }
 
 initDeferredInstallCapture();

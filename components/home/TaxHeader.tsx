@@ -5,6 +5,8 @@ import { homeVisual } from "@/lib/ui/homeVisual";
 import { ReceiptIcon } from "@/components/icons/ReceiptIcon";
 import { SlidersIcon } from "@/components/icons/SlidersIcon";
 import { RefreshIcon } from "@/components/icons/RefreshIcon";
+import { DownloadIcon } from "@/components/icons/DownloadIcon";
+import { usePwaInstallOptional } from "@/components/pwa/pwaInstallContext";
 
 interface TaxHeaderProps {
   taxSaved: number | null;
@@ -32,6 +34,9 @@ export function TaxHeader({
   syncDisabled = false,
   showSettings = true,
 }: TaxHeaderProps) {
+  const pwaInstall = usePwaInstallOptional();
+  const showInstallButton = pwaInstall?.mode === "header-button";
+
   const receiptLabel =
     receiptCount === 1 ? "1 receipt" : `${receiptCount} receipts`;
 
@@ -72,6 +77,16 @@ export function TaxHeader({
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
+          {showInstallButton && pwaInstall && (
+            <button
+              type="button"
+              onClick={() => void pwaInstall.install()}
+              className={`${actionBtn} border-yellow-500/60`}
+              aria-label="Install app"
+            >
+              <DownloadIcon className="h-5 w-5 text-yellow-400" />
+            </button>
+          )}
           {onSyncClick && (
             <button
               type="button"

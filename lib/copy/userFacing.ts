@@ -8,6 +8,31 @@ export const USER_COPY = {
       "Open like a native app — snap receipts one-handed on the job site",
     install: "Install",
     dismiss: "Not now",
+    manualHint: "Tap ⋮ in Chrome, then Install app",
+    manualSheetTitle: "Install Snap1099",
+    manualGotIt: "Got it",
+    manualSteps: {
+      chromiumAndroid: [
+        "Tap the ⋮ menu (top-right of Chrome).",
+        'Tap "Install app" or "Add to Home screen".',
+        "Confirm — Snap1099 opens from your home screen like a native app.",
+      ],
+      chromiumDesktop: [
+        "Tap the ⋮ menu (top-right of Chrome or Edge).",
+        'Tap "Apps" → "Install Snap1099" (or "Install this site").',
+        "Confirm — Snap1099 opens in its own window.",
+      ],
+      iosSafari: [
+        "Tap the Share button (square with arrow) at the bottom of Safari.",
+        'Scroll and tap "Add to Home Screen".',
+        'Tap "Add" — open Snap1099 from your home screen.',
+      ],
+      macosSafari: [
+        "Tap the Share button in Safari's toolbar.",
+        'Choose "Add to Dock".',
+        "Snap1099 appears in your Dock like a native app.",
+      ],
+    },
   },
   camera: {
     opening: "Opening camera…",

@@ -53,3 +53,34 @@ Next.js 16 · React 19 · Tailwind 4 · Serwist PWA · Vercel (PostgreSQL, Blob,
 - UI: `components/home/`, `components/settings/`, `components/camera/`
 - Storage: `lib/storage/receiptDb.ts`
 - PWA: `app/sw.ts`, `components/pwa/`
+
+## Cursor Cloud specific instructions
+
+Single Next.js app (no monorepo). Package manager is **npm** (`package-lock.json`). Dependencies are refreshed by the startup update script (`npm install`, which runs `prisma generate` via `postinstall`).
+
+### Local PostgreSQL (required, not auto-started)
+- The app needs Postgres; there is no Docker/compose in the repo. A local cluster (`postgres`/`postgresql-contrib`) is provisioned in the VM with db `snaptax`, role `snaptax`, password `snaptax`.
+- The cluster does **not** auto-start on boot. Start it before running the app or DB commands: `sudo pg_ctlcluster 16 main start` (verify with `sudo pg_lsclusters`).
+
+### Env file (required, gitignored)
+- `.env.local` holds local secrets and is intentionally **not committed**. If missing, recreate it with at least:
+  - `DATABASE_URL` and `POSTGRES_URL_NON_POOLING` → `postgresql://snaptax:snaptax@localhost:5432/snaptax?schema=public`
+  - `GHOST_HMAC_SECRET` and `AUTH_SECRET` → any string ≥32 chars (required to sign Ghost/session cookies; write APIs 500 without them)
+- Env name aliasing lives in `lib/server/env.ts` + `scripts/load-env.mjs`.
+
+### Migrations
+- Apply with `npm run db:migrate:deploy` (loads `.env.local`, uses a direct connection). Run after Postgres is up. `npm run db:migrate:dev` is for authoring new migrations.
+
+### Run / lint / test
+- Dev server: `npm run dev` → `http://localhost:3000`. Do not use `npm run build` for dev (it also runs migrate-deploy).
+- Lint: `npm run lint`. Note: the repo currently has pre-existing lint errors (mostly React `set-state-in-effect`); a non-zero exit is not caused by env setup.
+- Unit tests: `npm run test:unit` (node test runner + tsx).
+
+### External services not configured locally
+- `OPENAI_API_KEY`, `BLOB_READ_WRITE_TOKEN`, Google OAuth, and Paddle are not set in this env. Consequences:
+  - Receipt **server upload** (`POST /api/receipts`) fails with `BLOB_CREDENTIALS_MISSING` (500); no AI extraction / tax amount.
+  - Google login, entitlements, Paddle paywall, and Excel export require their secrets.
+- Offline-first core still works without them: launching as a Ghost, capturing a receipt, and local persistence (IndexedDB) all function. Ghost register / receipt list / delete-account APIs work with just Postgres + the HMAC secret.
+
+### Capturing a receipt in a headless/desktop browser
+- There is no camera device, so tapping **SNAP RECEIPT** shows a "No camera found" overlay — use the **"Choose from gallery"** fallback to pick an image file instead.

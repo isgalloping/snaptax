@@ -1,3 +1,5 @@
+import type { Industry } from "@/lib/types";
+
 export const DEFAULT_LOCALE = "en-US";
 export const SUPPORTED_LOCALES = ["en-US", "zh-CN"] as const;
 
@@ -57,6 +59,33 @@ export type UserCopy = {
       resnapSubtitle: string;
       subtitle: string;
     };
+    receiptList: {
+      filters: {
+        all: string;
+        done: string;
+        processing: string;
+        blurry: string;
+        stuckAria: string;
+      };
+      title: string;
+      refresh: string;
+      emptyFirst: string;
+      emptyFilter: string;
+      uploadPaused: string;
+      analysisPaused: string;
+      uploading: string;
+      tapToRetry: string;
+      processing: string;
+      receiptBlurry: string;
+      needAction: string;
+      resnap: string;
+      unknownMerchant: string;
+      status: {
+        analyzing: string;
+        uploading: string;
+        paused: string;
+      };
+    };
   };
   legal: {
     compliance: {
@@ -70,10 +99,51 @@ export type UserCopy = {
   settings: {
     back: string;
     title: string;
+    account: {
+      title: string;
+      signedInPrefix: string;
+      cloudBackupOn: string;
+      taxSeasonPaid: string;
+      notSignedIn: string;
+      backupHint: string;
+      googleCta: string;
+    };
     language: {
       title: string;
       english: string;
       chinese: string;
+    };
+    industry: {
+      title: string;
+      labels: Record<Industry, string>;
+    };
+    multiDevice: {
+      title: string;
+      button: string;
+    };
+    privacyData: {
+      title: string;
+      privacy: string;
+      terms: string;
+      dataStorage: string;
+      dataStorageValue: string;
+      contactPrefix: string;
+      deleteAccount: string;
+      deleteFailed: string;
+      deleteTitle: string;
+      deleteSignedInWarning: string;
+      deleteGhostWarning: string;
+      deleting: string;
+      deletePermanently: string;
+      cancel: string;
+    };
+    export: {
+      title: string;
+      button: string;
+      buttonPaid: string;
+      shareText: string;
+      failed: string;
+      failedAfterPayment: string;
     };
   };
 };
@@ -151,6 +221,33 @@ const USER_COPY_BY_LOCALE: Record<Locale, UserCopy> = {
         resnapSubtitle: "Resnap this receipt",
         subtitle: "Take a photo of your receipt",
       },
+      receiptList: {
+        filters: {
+          all: "ALL",
+          done: "READY",
+          processing: "PROCESSING",
+          blurry: "BLURRY",
+          stuckAria: "Stuck receipts",
+        },
+        title: "All Local Receipts",
+        refresh: "Pull to refresh",
+        emptyFirst: "Snap your first receipt to get started",
+        emptyFilter: "No receipts in this filter",
+        uploadPaused: "UPLOAD PAUSED",
+        analysisPaused: "ANALYSIS PAUSED",
+        uploading: "UPLOADING...",
+        tapToRetry: "Tap to retry",
+        processing: "Processing",
+        receiptBlurry: "Receipt Blurry",
+        needAction: "Need Action",
+        resnap: "Resnap",
+        unknownMerchant: "Unknown merchant",
+        status: {
+          analyzing: "ANALYZING",
+          uploading: "UPLOADING",
+          paused: "PAUSED",
+        },
+      },
     },
     legal: {
       compliance: {
@@ -164,10 +261,62 @@ const USER_COPY_BY_LOCALE: Record<Locale, UserCopy> = {
     settings: {
       back: "< BACK",
       title: "Settings",
+      account: {
+        title: "Account",
+        signedInPrefix: "Signed in",
+        cloudBackupOn: "Cloud backup on",
+        taxSeasonPaid: "Tax Season · Paid ✓",
+        notSignedIn: "Not signed in · Data lost if you change phones",
+        backupHint:
+          "Sign in with Google to back up receipts before switching phones.",
+        googleCta: "Continue with Google",
+      },
       language: {
         title: "Language",
         english: "English",
         chinese: "简体中文",
+      },
+      industry: {
+        title: "Your Industry",
+        labels: {
+          truck_driver: "Truck Driver",
+          plumber: "Plumber",
+          electrician: "Electrician",
+          construction: "Construction",
+          delivery: "Delivery",
+          general: "General 1099",
+        },
+      },
+      multiDevice: {
+        title: "Multi-Device",
+        button: "View on All Devices",
+      },
+      privacyData: {
+        title: "Privacy & Data",
+        privacy: "Privacy Policy",
+        terms: "Terms of Service",
+        dataStorage: "Data storage",
+        dataStorageValue:
+          "Processed and stored in the United States. See Privacy Policy for international transfers.",
+        contactPrefix: "Contact",
+        deleteAccount: "Delete Account",
+        deleteFailed: "Delete failed. Please try again.",
+        deleteTitle: "Delete Account",
+        deleteSignedInWarning:
+          "This is irreversible. All cloud receipts and account data will be permanently deleted.",
+        deleteGhostWarning:
+          "Clears all receipts on this device and cloud Ghost data. Cannot be undone.",
+        deleting: "Deleting...",
+        deletePermanently: "Delete permanently",
+        cancel: "Cancel",
+      },
+      export: {
+        title: "Tax Season Export",
+        button: "Export IRS Tax Pack",
+        buttonPaid: "Export Again",
+        shareText: "Your IRS-ready expense export",
+        failed: "Export failed. Please try again.",
+        failedAfterPayment: "Export failed after payment. Try Export Again.",
       },
     },
   },
@@ -241,6 +390,33 @@ const USER_COPY_BY_LOCALE: Record<Locale, UserCopy> = {
         resnapSubtitle: "重新拍这张小票",
         subtitle: "拍照后自动归类",
       },
+      receiptList: {
+        filters: {
+          all: "全部",
+          done: "已完成",
+          processing: "处理中",
+          blurry: "模糊",
+          stuckAria: "卡住的小票",
+        },
+        title: "本地小票",
+        refresh: "下拉刷新",
+        emptyFirst: "拍第一张小票开始",
+        emptyFilter: "此筛选下没有小票",
+        uploadPaused: "上传已暂停",
+        analysisPaused: "分析已暂停",
+        uploading: "上传中...",
+        tapToRetry: "点击重试",
+        processing: "处理中",
+        receiptBlurry: "小票模糊",
+        needAction: "需要处理",
+        resnap: "重拍",
+        unknownMerchant: "未知商户",
+        status: {
+          analyzing: "分析中",
+          uploading: "上传中",
+          paused: "已暂停",
+        },
+      },
     },
     legal: {
       compliance: {
@@ -254,10 +430,59 @@ const USER_COPY_BY_LOCALE: Record<Locale, UserCopy> = {
     settings: {
       back: "< 返回",
       title: "设置",
+      account: {
+        title: "账户",
+        signedInPrefix: "已登录",
+        cloudBackupOn: "云端备份已开启",
+        taxSeasonPaid: "报税季 · 已付费 ✓",
+        notSignedIn: "未登录 · 换手机数据会丢失",
+        backupHint: "换手机前请用 Google 登录备份小票。",
+        googleCta: "使用 Google 继续",
+      },
       language: {
         title: "语言",
         english: "English",
         chinese: "简体中文",
+      },
+      industry: {
+        title: "你的行业",
+        labels: {
+          truck_driver: "卡车司机",
+          plumber: "水管工",
+          electrician: "电工",
+          construction: "建筑工",
+          delivery: "外卖/配送",
+          general: "通用 1099",
+        },
+      },
+      multiDevice: {
+        title: "多设备",
+        button: "在所有设备查看",
+      },
+      privacyData: {
+        title: "隐私与数据",
+        privacy: "隐私政策",
+        terms: "服务条款",
+        dataStorage: "数据存储",
+        dataStorageValue: "数据会在美国处理和存储。国际传输详情见隐私政策。",
+        contactPrefix: "联系",
+        deleteAccount: "删除账户",
+        deleteFailed: "删除失败，请重试。",
+        deleteTitle: "删除账户",
+        deleteSignedInWarning: "此操作不可撤销。所有云端小票和账户数据会永久删除。",
+        deleteGhostWarning:
+          "会清除本设备所有小票和云端 Ghost 数据，无法撤销。",
+        deleting: "正在删除...",
+        deletePermanently: "永久删除",
+        cancel: "取消",
+      },
+      export: {
+        title: "报税季导出",
+        button: "导出 IRS 报税包",
+        buttonPaid: "再次导出",
+        shareText: "你的 IRS 报税开销导出文件",
+        failed: "导出失败，请重试。",
+        failedAfterPayment: "付款后导出失败，请点再次导出。",
       },
     },
   },

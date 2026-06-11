@@ -34,7 +34,12 @@ test("getUserCopy returns localized core UI copy", () => {
   assert.equal(english.home.snapButton.title, "Snap Receipt");
   assert.equal(chinese.home.snapButton.title, "拍小票");
   assert.equal(chinese.home.taxHeader.title, "预估省税");
+  assert.equal(chinese.home.receiptList.filters.processing, "处理中");
   assert.equal(chinese.legal.compliance.terms, "条款");
   assert.equal(chinese.pwa.install, "安装");
+  assert.equal(chinese.settings.account.title, "账户");
+  assert.equal(chinese.settings.industry.labels.plumber, "水管工");
+  assert.equal(chinese.settings.multiDevice.button, "在所有设备查看");
+  assert.equal(chinese.settings.export.title, "报税季导出");
 });
 

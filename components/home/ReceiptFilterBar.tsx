@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReceiptStatusCounts } from "@/lib/receipts/receiptStats";
+import { useUserCopy } from "@/components/i18n/I18nProvider";
 import { homeVisual } from "@/lib/ui/homeVisual";
 
 export type ReceiptFilter = "all" | "done" | "processing" | "blurry" | "stuck";
@@ -14,14 +15,13 @@ interface ReceiptFilterBarProps {
 
 const FILTERS: {
   id: Exclude<ReceiptFilter, "stuck">;
-  label: string;
   icon: string;
   countKey: keyof ReceiptStatusCounts;
 }[] = [
-  { id: "all", label: "ALL", icon: "🧾", countKey: "all" },
-  { id: "done", label: "READY", icon: "✓", countKey: "done" },
-  { id: "processing", label: "PROCESSING", icon: "⚙️", countKey: "processing" },
-  { id: "blurry", label: "BLURRY", icon: "❌", countKey: "blurry" },
+  { id: "all", icon: "🧾", countKey: "all" },
+  { id: "done", icon: "✓", countKey: "done" },
+  { id: "processing", icon: "⚙️", countKey: "processing" },
+  { id: "blurry", icon: "❌", countKey: "blurry" },
 ];
 
 const { padding, fontSize, gap, iconGap, countGap } = homeVisual.filterTab;
@@ -34,9 +34,11 @@ export function ReceiptFilterBar({
   stuckCount,
   onChange,
 }: ReceiptFilterBarProps) {
+  const copy = useUserCopy().home.receiptList;
+
   return (
     <div className={`mb-2 flex overflow-x-auto pb-1 pr-1 ${gap}`}>
-      {FILTERS.map(({ id, label, icon, countKey }) => {
+      {FILTERS.map(({ id, icon, countKey }) => {
         const isActive = active === id;
         return (
           <button
@@ -50,7 +52,7 @@ export function ReceiptFilterBar({
             }`}
           >
             <span className={iconGap}>{icon}</span>
-            {label} ({counts[countKey]})
+            {copy.filters[id]} ({counts[countKey]})
           </button>
         );
       })}
@@ -62,7 +64,7 @@ export function ReceiptFilterBar({
             ? "bg-yellow-500/20 text-yellow-400 ring-2 ring-yellow-500"
             : "border border-zinc-700 bg-zinc-800/80 text-zinc-300"
         }`}
-        aria-label={`Stuck receipts${stuckCount > 0 ? ` (${stuckCount})` : ""}`}
+        aria-label={`${copy.filters.stuckAria}${stuckCount > 0 ? ` (${stuckCount})` : ""}`}
       >
         ⚠️
         {stuckCount > 0 && (

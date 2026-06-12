@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import type { LegalDoc } from "@/lib/legal/content";
-import { LEGAL_CONTACT_EMAIL, formatDataStorageLabel } from "@/lib/legal/content";
+import { LEGAL_CONTACT_EMAIL } from "@/lib/legal/content";
+import { useUserCopy } from "@/components/i18n/I18nProvider";
 import { LegalSheet } from "@/components/legal/LegalSheet";
 import { clearLocalAppData } from "@/lib/storage/clearLocalData";
 import { deleteAccountApi } from "@/lib/client/authApi";
@@ -49,12 +50,11 @@ export function PrivacyDataSection({
   isSignedIn = false,
   onLocalDataCleared,
 }: PrivacyDataSectionProps) {
+  const copy = useUserCopy().settings.privacyData;
   const [legalDoc, setLegalDoc] = useState<LegalDoc | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const storageLabel = formatDataStorageLabel();
 
   const handleDelete = async () => {
     setDeleting(true);
@@ -70,7 +70,7 @@ export function PrivacyDataSection({
       setShowDeleteConfirm(false);
       onLocalDataCleared?.();
     } catch {
-      setError("Delete failed. Please try again.");
+      setError(copy.deleteFailed);
     } finally {
       setDeleting(false);
     }
@@ -80,31 +80,31 @@ export function PrivacyDataSection({
     <>
       <section className="mb-8">
         <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-zinc-400">
-          Privacy & Data
+          {copy.title}
         </h2>
         <div className="space-y-3">
           <SettingsRow
-            label="Privacy Policy"
+            label={copy.privacy}
             onClick={() => setLegalDoc("privacy")}
           />
           <SettingsRow
-            label="Terms of Service"
+            label={copy.terms}
             onClick={() => setLegalDoc("terms")}
           />
           <div className="rounded-xl border-2 border-zinc-600 bg-zinc-800 p-4">
             <p className="text-xs font-bold uppercase tracking-wider text-zinc-400">
-              Data storage
+              {copy.dataStorage}
             </p>
             <p className="mt-2 text-sm font-bold text-yellow-400">
-              {storageLabel}
+              {copy.dataStorageValue}
             </p>
           </div>
           <SettingsRow
-            label={`Contact: ${LEGAL_CONTACT_EMAIL}`}
+            label={`${copy.contactPrefix}: ${LEGAL_CONTACT_EMAIL}`}
             href={`mailto:${LEGAL_CONTACT_EMAIL}`}
           />
           <SettingsRow
-            label="Delete Account"
+            label={copy.deleteAccount}
             destructive
             onClick={() => setShowDeleteConfirm(true)}
           />
@@ -122,12 +122,12 @@ export function PrivacyDataSection({
         <div className="fixed inset-0 z-50 flex items-end bg-black/70">
           <div className="w-full rounded-t-3xl border-t-4 border-red-600 bg-zinc-900 p-6 pb-10">
             <p className="text-lg font-black uppercase tracking-wider text-white">
-              Delete Account
+              {copy.deleteTitle}
             </p>
             <p className="mt-4 text-sm leading-relaxed text-zinc-300">
               {isSignedIn
-                ? "This is irreversible. All cloud receipts and account data will be permanently deleted."
-                : "Clears all receipts on this device and cloud Ghost data. Cannot be undone."}
+                ? copy.deleteSignedInWarning
+                : copy.deleteGhostWarning}
             </p>
             <button
               type="button"
@@ -135,14 +135,14 @@ export function PrivacyDataSection({
               onClick={() => void handleDelete()}
               className="mt-6 w-full min-h-16 rounded-xl border-2 border-red-600 bg-red-950 py-4 text-lg font-black uppercase tracking-wider text-red-400 transition-transform active:scale-95 disabled:opacity-60"
             >
-              {deleting ? "Deleting..." : "Delete permanently"}
+              {deleting ? copy.deleting : copy.deletePermanently}
             </button>
             <button
               type="button"
               onClick={() => setShowDeleteConfirm(false)}
               className="mt-3 w-full min-h-16 py-3 text-sm font-bold text-zinc-400 transition-transform active:scale-95"
             >
-              Cancel
+              {copy.cancel}
             </button>
           </div>
         </div>

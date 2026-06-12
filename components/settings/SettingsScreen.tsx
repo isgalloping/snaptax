@@ -12,9 +12,11 @@ import {
 import { apiFetch } from "@/lib/client/ghostClient";
 import { AccountStatusBlock } from "@/components/auth/AccountStatusBlock";
 import { GoogleSignInSheet, type GoogleSignInMode } from "@/components/auth/GoogleSignInSheet";
+import { useI18n } from "@/components/i18n/I18nProvider";
 import { SyncInstructionsSheet } from "@/components/auth/SyncInstructionsSheet";
 import { PrivacyDataSection } from "@/components/settings/PrivacyDataSection";
 import { PaywallSheet } from "@/components/settings/PaywallSheet";
+import { SUPPORTED_LOCALES, type Locale } from "@/lib/i18n";
 
 interface SettingsScreenProps {
   industry: Industry | null;
@@ -45,6 +47,7 @@ export function SettingsScreen({
   onSeasonPaid,
   refreshSeasonPaid,
 }: SettingsScreenProps) {
+  const { locale, setLocale, copy } = useI18n();
   const [googleSheet, setGoogleSheet] = useState<GoogleSignInMode | null>(null);
   const [showPaywall, setShowPaywall] = useState(false);
   const [showSyncHelp, setShowSyncHelp] = useState(false);
@@ -72,7 +75,7 @@ export function SettingsScreen({
         await navigator.share({
           files: [file],
           title: `Snap1099 Tax Pack ${currentSeason}`,
-          text: "Your IRS-ready expense export",
+          text: copy.settings.export.shareText,
         });
       } catch (e) {
         if (e instanceof DOMException && e.name === "AbortError") return;
@@ -86,7 +89,7 @@ export function SettingsScreen({
   const safeExport = async () => {
     clearError();
     if (!navigator.onLine) {
-      setErrorMessage("You're offline. Connect to export.");
+      setErrorMessage(copy.settings.export.offline);
       return;
     }
     setExporting(true);
@@ -100,13 +103,11 @@ export function SettingsScreen({
           return;
         }
         if (err.message === "NO_RECEIPTS") {
-          setErrorMessage(
-            "No completed receipts to export. Snap some receipts first!",
-          );
+          setErrorMessage(copy.settings.export.noReceipts);
           return;
         }
       }
-      setErrorMessage("Export failed. Please try again.");
+      setErrorMessage(copy.settings.export.failed);
     } finally {
       setExporting(false);
     }
@@ -168,6 +169,11 @@ export function SettingsScreen({
     }
   };
 
+  const languageLabels: Record<Locale, string> = {
+    "en-US": copy.settings.language.english,
+    "zh-CN": copy.settings.language.chinese,
+  };
+
   return (
     <div className="flex h-full flex-col bg-black text-white">
       <header className="flex items-center border-b-4 border-yellow-500 bg-zinc-900 p-4">
@@ -176,10 +182,10 @@ export function SettingsScreen({
           onClick={onBack}
           className="flex min-h-16 min-w-16 items-center justify-center rounded-xl border-2 border-zinc-600 bg-zinc-800 px-4 text-sm font-black uppercase tracking-wider transition-transform active:scale-95"
         >
-          &lt; BACK
+          {copy.settings.back}
         </button>
         <h1 className="ml-4 text-lg font-black uppercase tracking-wider">
-          Settings
+          {copy.settings.title}
         </h1>
       </header>
 
@@ -196,7 +202,29 @@ export function SettingsScreen({
 
         <section className="mb-8">
           <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-zinc-400">
-            Your Industry
+            {copy.settings.language.title}
+          </h2>
+          <div className="grid grid-cols-2 gap-3">
+            {SUPPORTED_LOCALES.map((item) => (
+              <button
+                key={item}
+                type="button"
+                onClick={() => setLocale(item)}
+                className={`min-h-16 rounded-xl border-2 p-4 text-left text-sm font-bold transition-transform active:scale-95 ${
+                  locale === item
+                    ? "border-yellow-500 bg-yellow-950 text-yellow-400"
+                    : "border-zinc-600 bg-zinc-800 text-white"
+                }`}
+              >
+                {languageLabels[item]}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className="mb-8">
+          <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-zinc-400">
+            {copy.settings.industry.title}
           </h2>
           <div className="grid grid-cols-2 gap-3">
             {INDUSTRIES.map((item) => (
@@ -210,7 +238,7 @@ export function SettingsScreen({
                     : "border-zinc-600 bg-zinc-800 text-white"
                 }`}
               >
-                {item.label}
+                {copy.settings.industry.labels[item.id]}
               </button>
             ))}
           </div>
@@ -218,14 +246,14 @@ export function SettingsScreen({
 
         <section className="mb-8">
           <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-zinc-400">
-            Multi-Device
+            {copy.settings.multiDevice.title}
           </h2>
           <button
             type="button"
             onClick={handleViewAllDevices}
             className="w-full min-h-16 rounded-xl border-2 border-zinc-600 bg-zinc-800 p-4 text-left text-sm font-bold text-white transition-transform active:scale-95"
           >
-            View on All Devices
+            {copy.settings.multiDevice.button}
           </button>
         </section>
 
@@ -236,7 +264,7 @@ export function SettingsScreen({
 
         <section>
           <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-zinc-400">
-            Tax Season Export
+            {copy.settings.export.title}
           </h2>
           <button
             type="button"
@@ -245,10 +273,10 @@ export function SettingsScreen({
             className="w-full min-h-16 rounded-xl border-4 border-white bg-yellow-500 py-4 text-lg font-black uppercase tracking-wider text-black transition-transform active:scale-95 disabled:opacity-60"
           >
             {exporting
-              ? "Exporting…"
+              ? copy.settings.export.exporting
               : seasonPaid
-                ? "Export Again"
-                : "Export IRS Tax Pack"}
+                ? copy.settings.export.buttonPaid
+                : copy.settings.export.button}
           </button>
         </section>
 
@@ -287,15 +315,13 @@ export function SettingsScreen({
             try {
               const ready = await pollEntitlementReady(currentSeason);
               if (!ready) {
-                setErrorMessage(
-                  "Payment confirmed. Tap Export Again to download.",
-                );
+                setErrorMessage(copy.settings.export.paymentConfirmed);
                 return;
               }
               await shareExportFile();
               refreshSeasonPaid?.();
             } catch {
-              setErrorMessage("Export failed after payment. Try Export Again.");
+              setErrorMessage(copy.settings.export.failedAfterPayment);
             } finally {
               setExporting(false);
             }

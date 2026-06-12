@@ -14,6 +14,7 @@ import {
   CameraOverlay,
   type CameraPhase,
 } from "@/components/camera/CameraOverlay";
+import { useUserCopy } from "@/components/i18n/I18nProvider";
 import { ComplianceFootnote } from "@/components/legal/ComplianceFootnote";
 import { LegalSheet } from "@/components/legal/LegalSheet";
 import {
@@ -65,6 +66,7 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
     },
     ref,
   ) {
+    const copy = useUserCopy();
     const inputRef = useRef<HTMLInputElement>(null);
     const streamPromiseRef = useRef<Promise<MediaStream> | null>(null);
     const sessionIdsRef = useRef<string[]>([]);
@@ -290,12 +292,12 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
             <CameraIcon className="h-10 w-10 shrink-0 stroke-[2.5]" />
             <div className="min-w-0 flex-1 px-3 text-left">
               <span className="block text-lg font-black uppercase tracking-wider">
-                Snap Receipt
+                {copy.home.snapButton.title}
               </span>
               <span className="mt-0.5 block text-xs font-bold opacity-80">
                 {resnapId
-                  ? "Resnap this receipt"
-                  : "Take a photo of your receipt"}
+                  ? copy.home.snapButton.resnapSubtitle
+                  : copy.home.snapButton.subtitle}
               </span>
             </div>
             <ChevronRightIcon className="h-6 w-6 shrink-0" />

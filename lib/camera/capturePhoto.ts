@@ -1,4 +1,5 @@
 import { USER_COPY } from "@/lib/copy/userFacing";
+import type { UserCopy } from "@/lib/i18n";
 
 export function isCameraSupported(): boolean {
   return !!(
@@ -88,20 +89,23 @@ export function captureVideoFrame(video: HTMLVideoElement): Promise<File> {
   });
 }
 
-export function getCameraErrorMessage(error: unknown): string {
+export function getCameraErrorMessage(
+  error: unknown,
+  messages: UserCopy["camera"]["errors"] = USER_COPY.camera.errors,
+): string {
   if (error instanceof DOMException) {
     if (error.name === "NotAllowedError") {
-      return USER_COPY.camera.errors.notAllowed;
+      return messages.notAllowed;
     }
     if (error.name === "NotFoundError") {
-      return USER_COPY.camera.errors.notFound;
+      return messages.notFound;
     }
     if (error.name === "NotReadableError") {
-      return USER_COPY.camera.errors.notReadable;
+      return messages.notReadable;
     }
     if (error.name === "AbortError") {
-      return USER_COPY.camera.errors.abort;
+      return messages.abort;
     }
   }
-  return USER_COPY.camera.errors.default;
+  return messages.default;
 }

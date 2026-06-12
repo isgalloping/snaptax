@@ -4,18 +4,12 @@ import { useState } from "react";
 import type { Industry } from "@/lib/types";
 import { INDUSTRIES } from "@/lib/types";
 import type { GoogleUser } from "@/lib/client/authStorage";
-import {
-  exportTaxPack,
-  fetchSeasonPaid,
-  pollEntitlementReady,
-} from "@/lib/client/authApi";
 import { apiFetch } from "@/lib/client/ghostClient";
 import { AccountStatusBlock } from "@/components/auth/AccountStatusBlock";
 import { GoogleSignInSheet, type GoogleSignInMode } from "@/components/auth/GoogleSignInSheet";
 import { useI18n } from "@/components/i18n/I18nProvider";
 import { SyncInstructionsSheet } from "@/components/auth/SyncInstructionsSheet";
 import { PrivacyDataSection } from "@/components/settings/PrivacyDataSection";
-import { PaywallSheet } from "@/components/settings/PaywallSheet";
 import { SUPPORTED_LOCALES, type Locale } from "@/lib/i18n";
 
 interface SettingsScreenProps {
@@ -29,8 +23,9 @@ interface SettingsScreenProps {
   isSignedIn: boolean;
   onSignInWithGoogle: () => Promise<{ user: GoogleUser; taxRecalcQueued: number }>;
   onPostLoginSync?: (taxRecalcQueued: number) => Promise<void>;
-  onSeasonPaid: () => void;
-  refreshSeasonPaid?: () => Promise<void>;
+  onRequestExport: () => void;
+  exportBusy?: boolean;
+  exportError?: string | null;
 }
 
 export function SettingsScreen({
@@ -44,102 +39,33 @@ export function SettingsScreen({
   isSignedIn,
   onSignInWithGoogle,
   onPostLoginSync,
-  onSeasonPaid,
-  refreshSeasonPaid,
+  onRequestExport,
+  exportBusy = false,
+  exportError = null,
 }: SettingsScreenProps) {
   const { locale, setLocale, copy } = useI18n();
   const [googleSheet, setGoogleSheet] = useState<GoogleSignInMode | null>(null);
-  const [showPaywall, setShowPaywall] = useState(false);
   const [showSyncHelp, setShowSyncHelp] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [exporting, setExporting] = useState(false);
-  const [pendingAfterSignIn, setPendingAfterSignIn] = useState<
-    "export" | "sync" | null
-  >(null);
+  const [pendingAfterSignIn, setPendingAfterSignIn] = useState<"sync" | null>(null);
 
   const clearError = () => setErrorMessage(null);
-
-  const downloadFile = (file: File) => {
-    const url = URL.createObjectURL(file);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = file.name;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const shareExportFile = async () => {
-    const file = await exportTaxPack(currentSeason);
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          files: [file],
-          title: `Snap1099 Tax Pack ${currentSeason}`,
-          text: copy.settings.export.shareText,
-        });
-      } catch (e) {
-        if (e instanceof DOMException && e.name === "AbortError") return;
-        downloadFile(file);
-      }
-    } else {
-      downloadFile(file);
-    }
-  };
-
-  const safeExport = async () => {
-    clearError();
-    if (!navigator.onLine) {
-      setErrorMessage(copy.settings.export.offline);
-      return;
-    }
-    setExporting(true);
-    try {
-      await shareExportFile();
-      refreshSeasonPaid?.();
-    } catch (err) {
-      if (err instanceof Error) {
-        if (err.message === "PAYMENT_REQUIRED") {
-          setShowPaywall(true);
-          return;
-        }
-        if (err.message === "NO_RECEIPTS") {
-          setErrorMessage(copy.settings.export.noReceipts);
-          return;
-        }
-      }
-      setErrorMessage(copy.settings.export.failed);
-    } finally {
-      setExporting(false);
-    }
-  };
-
-  const runAfterGoogleSignIn = async (action: "export" | "sync") => {
-    if (action === "export") {
-      const paid = await fetchSeasonPaid(currentSeason).catch(() => seasonPaid);
-      if (paid) {
-        await safeExport();
-      } else {
-        setShowPaywall(true);
-      }
-    } else {
-      setShowSyncHelp(true);
-    }
-  };
+  const displayError = errorMessage ?? exportError;
 
   const handleGoogleSuccess = async () => {
     const { taxRecalcQueued } = await onSignInWithGoogle();
     await onPostLoginSync?.(taxRecalcQueued);
     setGoogleSheet(null);
-    if (pendingAfterSignIn) {
-      await runAfterGoogleSignIn(pendingAfterSignIn);
+    if (pendingAfterSignIn === "sync") {
+      setShowSyncHelp(true);
       setPendingAfterSignIn(null);
     }
   };
 
-  const requireGoogle = (mode: GoogleSignInMode, after: "export" | "sync") => {
+  const requireGoogle = (mode: GoogleSignInMode, after: "sync") => {
     clearError();
     if (googleUser) {
-      void runAfterGoogleSignIn(after);
+      setShowSyncHelp(true);
       return;
     }
     setPendingAfterSignIn(after);
@@ -148,14 +74,6 @@ export function SettingsScreen({
 
   const handleViewAllDevices = () => {
     requireGoogle("hard-sync", "sync");
-  };
-
-  const handleExport = () => {
-    requireGoogle("hard-export", "export");
-  };
-
-  const handleExportAgain = () => {
-    void safeExport();
   };
 
   const handleIndustryChange = async (value: Industry) => {
@@ -268,11 +186,11 @@ export function SettingsScreen({
           </h2>
           <button
             type="button"
-            disabled={exporting}
-            onClick={seasonPaid ? handleExportAgain : handleExport}
+            disabled={exportBusy}
+            onClick={onRequestExport}
             className="w-full min-h-16 rounded-xl border-4 border-white bg-yellow-500 py-4 text-lg font-black uppercase tracking-wider text-black transition-transform active:scale-95 disabled:opacity-60"
           >
-            {exporting
+            {exportBusy
               ? copy.settings.export.exporting
               : seasonPaid
                 ? copy.settings.export.buttonPaid
@@ -280,9 +198,9 @@ export function SettingsScreen({
           </button>
         </section>
 
-        {errorMessage && (
+        {displayError && (
           <p className="mt-4 text-center text-sm font-bold text-red-500" role="alert">
-            {errorMessage}
+            {displayError}
           </p>
         )}
       </div>
@@ -299,32 +217,6 @@ export function SettingsScreen({
             setErrorMessage(msg);
             setGoogleSheet(null);
             setPendingAfterSignIn(null);
-          }}
-        />
-      )}
-
-      {showPaywall && googleUser && (
-        <PaywallSheet
-          seasonLabel={currentSeason}
-          userId={googleUser.email}
-          onClose={() => setShowPaywall(false)}
-          onPaid={async () => {
-            onSeasonPaid();
-            setShowPaywall(false);
-            setExporting(true);
-            try {
-              const ready = await pollEntitlementReady(currentSeason);
-              if (!ready) {
-                setErrorMessage(copy.settings.export.paymentConfirmed);
-                return;
-              }
-              await shareExportFile();
-              refreshSeasonPaid?.();
-            } catch {
-              setErrorMessage(copy.settings.export.failedAfterPayment);
-            } finally {
-              setExporting(false);
-            }
           }}
         />
       )}

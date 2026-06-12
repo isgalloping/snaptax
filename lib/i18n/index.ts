@@ -46,6 +46,27 @@ export type UserCopy = {
     body: string;
     backHome: string;
   };
+  onboarding: {
+    landing: {
+      headline: string;
+      tagline: string;
+      step1: string;
+      step2: string;
+      step3: string;
+      cta: string;
+      ctaAria: string;
+      ariaStatus: string;
+    };
+    snapCoach: string;
+    dismissCoach: string;
+    firstReceipt: {
+      processing: string;
+      done: string;
+      blurry: string;
+    };
+    googleNudge: string;
+    googleNudgeDismiss: string;
+  };
   home: {
     taxHeader: {
       title: string;
@@ -152,6 +173,30 @@ export type UserCopy = {
       paymentConfirmed: string;
     };
   };
+  exportEngine: {
+    title: string;
+    close: string;
+    stepLabel: string;
+    step1Heading: string;
+    step2Heading: string;
+    step3Heading: string;
+    yearCard: string;
+    yearRange: string;
+    deductionsLabel: string;
+    receiptsLabel: string;
+    noReceiptsYear: string;
+    continue: string;
+    back: string;
+    generate: string;
+    generating: string;
+    ready: string;
+    share: string;
+    yearSummary: string;
+    formatCsvTitle: string;
+    formatCsvHint: string;
+    formatCpaTitle: string;
+    formatCpaHint: string;
+  };
 };
 
 const USER_COPY_BY_LOCALE: Record<Locale, UserCopy> = {
@@ -214,6 +259,27 @@ const USER_COPY_BY_LOCALE: Record<Locale, UserCopy> = {
       title: "You're offline",
       body: "You can still snap receipts. They'll upload when you're back online.",
       backHome: "Back to home",
+    },
+    onboarding: {
+      landing: {
+        headline: "SNAP1099",
+        tagline: "Receipts → tax savings. Built for the job site.",
+        step1: "Snap a photo — we sort work expenses.",
+        step2: "Works offline. Syncs when you're online.",
+        step3: "Private & secure. Terms · Privacy.",
+        cta: "Start Snapping →",
+        ctaAria: "Start snapping receipts",
+        ariaStatus: "Loading Snap1099",
+      },
+      snapCoach: "Tap SNAP RECEIPT — photo any work receipt.",
+      dismissCoach: "Dismiss hint",
+      firstReceipt: {
+        processing: "Reading your receipt… Snap more anytime.",
+        done: "Added! Est. Tax Saved updates at the top.",
+        blurry: "Too blurry — tap the row to resnap.",
+      },
+      googleNudge: "New phone? Sign in with Google to save your receipts.",
+      googleNudgeDismiss: "Not now",
     },
     home: {
       taxHeader: {
@@ -333,6 +399,32 @@ const USER_COPY_BY_LOCALE: Record<Locale, UserCopy> = {
         paymentConfirmed: "Payment confirmed. Tap Export Again to download.",
       },
     },
+    exportEngine: {
+      title: "Export Tax Pack",
+      close: "Close",
+      stepLabel: "Step {step} of {total}",
+      step1Heading: "Select tax year",
+      step2Heading: "Choose export format",
+      step3Heading: "Your tax pack",
+      yearCard: "{year} Tax Year",
+      yearRange: "Jan 1 – Dec 31, {year}",
+      deductionsLabel: "Est. Tax Deductions: {amount}",
+      receiptsLabel: "{count} Receipts Captured",
+      noReceiptsYear: "No receipts for this year",
+      continue: "Continue →",
+      back: "← Back",
+      generate: "Generate →",
+      generating: "Building your pack…",
+      ready: "Ready to share",
+      share: "Share Tax Pack →",
+      yearSummary: "{year} · {amount} · {count} receipts",
+      formatCsvTitle: "CSV for TurboTax / Tax Software",
+      formatCsvHint:
+        "Optimized matrix format for instant tax software uploading.",
+      formatCpaTitle: "CPA Audit Pack (ZIP + Receipt Images)",
+      formatCpaHint:
+        "IRS-compliant audit trail with your original receipt photos.",
+    },
   },
   "zh-CN": {
     app: {
@@ -390,6 +482,27 @@ const USER_COPY_BY_LOCALE: Record<Locale, UserCopy> = {
       title: "当前离线",
       body: "你仍然可以拍小票。恢复网络后会自动上传。",
       backHome: "返回首页",
+    },
+    onboarding: {
+      landing: {
+        headline: "SNAP1099",
+        tagline: "拍小票 · 自动归类 · 为工地设计",
+        step1: "拍一张照，我们帮你整理工作开销。",
+        step2: "离线也能拍，有网自动同步。",
+        step3: "数据私密安全。详见条款与隐私政策。",
+        cta: "开始拍小票 →",
+        ctaAria: "开始拍小票",
+        ariaStatus: "正在加载 Snap1099",
+      },
+      snapCoach: "点 SNAP RECEIPT — 拍任意工作小票。",
+      dismissCoach: "关闭提示",
+      firstReceipt: {
+        processing: "正在读取小票… 你可以继续拍。",
+        done: "已添加！顶部预估省税会自动更新。",
+        blurry: "太模糊了 — 点这一行重新拍。",
+      },
+      googleNudge: "换手机？用 Google 登录保存小票。",
+      googleNudgeDismiss: "稍后再说",
     },
     home: {
       taxHeader: {
@@ -504,6 +617,30 @@ const USER_COPY_BY_LOCALE: Record<Locale, UserCopy> = {
         failedAfterPayment: "付款后导出失败，请点再次导出。",
         paymentConfirmed: "付款已确认，请点击再次导出下载。",
       },
+    },
+    exportEngine: {
+      title: "导出报税包",
+      close: "关闭",
+      stepLabel: "第 {step} 步，共 {total} 步",
+      step1Heading: "选择税年",
+      step2Heading: "选择导出格式",
+      step3Heading: "你的报税包",
+      yearCard: "{year} 税年",
+      yearRange: "{year} 年 1 月 1 日 – 12 月 31 日",
+      deductionsLabel: "预估可抵扣：{amount}",
+      receiptsLabel: "已收录 {count} 张小票",
+      noReceiptsYear: "该税年暂无小票",
+      continue: "继续 →",
+      back: "← 返回",
+      generate: "生成 →",
+      generating: "正在生成报税包…",
+      ready: "可以分享了",
+      share: "分享报税包 →",
+      yearSummary: "{year} · {amount} · {count} 张小票",
+      formatCsvTitle: "CSV（TurboTax / 报税软件）",
+      formatCsvHint: "针对主流报税软件优化的矩阵格式，可快速导入。",
+      formatCpaTitle: "CPA 审计包（ZIP + 小票照片）",
+      formatCpaHint: "符合 IRS 审计要求的凭证链，含原始小票图片。",
     },
   },
 };

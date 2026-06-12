@@ -17,9 +17,11 @@
   "dependencies": {
     "@paddle/paddle-js": "^1.6.4",
     "@prisma/client": "^6.19.3",
+    "@types/archiver": "^8.0.0",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.38.0",
     "@vercel/blob": "^2.4.0",
+    "archiver": "^8.0.0",
     "exceljs": "^4.4.0",
     "flags": "^4.1.0",
     "google-auth-library": "^10.7.0",

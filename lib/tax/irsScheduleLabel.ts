@@ -15,6 +15,16 @@ export function irsScheduleLabel(category: string | undefined): string {
   return IRS_LABELS[key] ?? IRS_LABELS.OTHER;
 }
 
+/** Short label for CSV export, e.g. `Line 9`, `Line 22`. */
+export function irsScheduleLineShort(category: string | undefined): string {
+  if (!category) return "Line 27a";
+  const key = category.toUpperCase().trim();
+  if (key === "PERSONAL") return "N/A";
+  const label = IRS_LABELS[key] ?? IRS_LABELS.OTHER;
+  const match = label.match(/Line (\d+[a-z]?)/i);
+  return match ? `Line ${match[1]}` : "Line 27a";
+}
+
 /** Short badge for list cards, e.g. `Line 9`, `Line 22`, `N/A`. */
 export function irsScheduleLineBadge(category: string | undefined): string {
   if (!category) return "Line 27a";

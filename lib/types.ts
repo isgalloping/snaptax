@@ -20,7 +20,9 @@ export interface Receipt {
   dataRegion?: TaxRegion;
   currency?: string;
   deductible?: boolean;
-  /** Reserved for future Blob signed URL; MVP uses IndexedDB photo. */
+  /** Server has the image blob; local copy removed after upload. */
+  hasRemoteImage?: boolean;
+  /** @deprecated Prefer hasRemoteImage + signed URL API. */
   imageUrl?: string | null;
   /** Event instant; persist/API as UTC ISO 8601 (`…Z`). */
   timestamp: Date;

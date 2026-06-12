@@ -1,5 +1,9 @@
 import { apiReceiptToLocal } from "@/lib/client/receiptApi";
-import { saveReceipt, type StoredReceipt } from "@/lib/storage/receiptDb";
+import {
+  reconcileServerPrimaryPhotos,
+  saveReceipt,
+  type StoredReceipt,
+} from "@/lib/storage/receiptDb";
 import type { Receipt } from "@/lib/types";
 
 export const STARTUP_UNFILED_LIMIT = 30;
@@ -46,6 +50,7 @@ export function unionMergeLWW(
       updatedAt: remoteRow.updatedAt ?? remoteRow.timestamp,
       taxSeason: remoteRow.taxSeason ?? existing?.taxSeason,
       taxSeasonDate: remoteRow.taxSeasonDate ?? existing?.taxSeasonDate,
+      hasRemoteImage: remoteRow.hasRemoteImage ?? existing?.hasRemoteImage,
       pendingUpload: false,
       writeBudgetRemaining: existing?.writeBudgetRemaining,
     };
@@ -92,6 +97,7 @@ export async function persistMergedReceipts(
       existing.merchant === stored.merchant &&
       existing.taxSeason === stored.taxSeason &&
       existing.taxSeasonDate?.getTime() === stored.taxSeasonDate?.getTime() &&
+      existing.hasRemoteImage === stored.hasRemoteImage &&
       receiptUpdatedAt(existing).getTime() ===
         receiptUpdatedAt(stored).getTime();
 
@@ -99,6 +105,7 @@ export async function persistMergedReceipts(
       await saveReceipt(stored);
     }
   }
+  await reconcileServerPrimaryPhotos(merged);
 }
 
 export function remoteReceiptsToLocal(

@@ -60,6 +60,7 @@ export function ReceiptDetailSheet({
   const [receipt, setReceipt] = useState(initialReceipt);
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [imageMissing, setImageMissing] = useState(false);
+  const [imageOffline, setImageOffline] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -94,15 +95,23 @@ export function ReceiptDetailSheet({
 
   useEffect(() => {
     let cancelled = false;
-    void resolveReceiptImage(receipt).then(({ src, revoke }) => {
+    void resolveReceiptImage(receipt).then((resolved) => {
       if (cancelled) {
-        revoke?.();
+        if (resolved.kind === "local") resolved.revoke?.();
         return;
       }
       revokeRef.current?.();
-      revokeRef.current = revoke;
-      setImageSrc(src);
-      setImageMissing(!src);
+      revokeRef.current =
+        resolved.kind === "local" ? resolved.revoke : undefined;
+      if (resolved.kind === "local" || resolved.kind === "remote") {
+        setImageSrc(resolved.src);
+        setImageMissing(false);
+        setImageOffline(false);
+        return;
+      }
+      setImageSrc(null);
+      setImageOffline(resolved.kind === "offline-placeholder");
+      setImageMissing(resolved.kind === "missing");
     });
     return () => {
       cancelled = true;
@@ -319,6 +328,7 @@ export function ReceiptDetailSheet({
                   }
                   imageSrc={imageSrc}
                   imageMissing={imageMissing}
+                  imageOffline={imageOffline}
                   hint={
                     hero.kind === "blurry" ? "Tap to enlarge" : "Tap to zoom"
                   }
@@ -336,8 +346,8 @@ export function ReceiptDetailSheet({
                 />
                 {hero.kind === "processing" && (
                   <p className="text-center text-[10px] font-bold leading-relaxed text-zinc-500">
-                    🛡 Your data is encrypted and secure. We never store your
-                    receipt images longer than needed for analysis.
+                    🛡 Photos are encrypted on this device until uploaded. After
+                    upload, your receipt is stored securely on our servers.
                   </p>
                 )}
               </div>

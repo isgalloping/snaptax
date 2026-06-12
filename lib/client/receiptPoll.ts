@@ -24,6 +24,7 @@ function fallbackProcessing(id: string): ApiReceipt {
     updatedAt: now,
     taxSeason: null,
     taxSeasonDate: null,
+    hasImage: false,
   };
 }
 

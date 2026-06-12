@@ -16,6 +16,7 @@ export function serializeReceipt(r: SnaptaxReceipt) {
     updatedAt: r.updatedAt.toISOString(),
     taxSeason: r.taxSeason,
     taxSeasonDate: r.taxSeasonDate?.toISOString() ?? null,
+    hasImage: Boolean(r.imageUrl?.trim()),
   };
 }
 

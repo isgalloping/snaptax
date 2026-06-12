@@ -13,7 +13,8 @@ We minimize data collection to what is needed to categorize business receipts an
 
 When you first use the App, we assign a random **Ghost ID** on your device.
 
-- **Offline:** Receipt photos and extracted data are kept **on your device** (browser storage) until you are back online.
+- **Offline:** Receipt photos and extracted data are kept **on your device** in encrypted browser storage until you are back online.
+- **After upload:** Receipt images are stored on our **United States** servers (see §4); local copies are removed from your device.
 - **Online:** When you have a network connection, we send receipt images to our **United States** servers and to **OpenAI** (via our API) so we can read and categorize your receipt. Results are shown in the App and associated with your Ghost ID.
 - We do **not** collect your name or email until you choose **Google Sign-In**.
 

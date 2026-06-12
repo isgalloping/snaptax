@@ -1,11 +1,18 @@
 import type { Receipt, ReceiptStatus } from "@/lib/types";
 import { filedFlag } from "@/lib/receipts/filedStatus";
 import { parseUtcISOString, toUtcISOString } from "@/lib/time/utc";
+import { CRYPTO_META_STORE } from "@/lib/storage/crypto/keyManager";
+import { migrateLegacyPlainPhotos } from "@/lib/storage/crypto/photoMigration";
+import {
+  deleteEncryptedPhoto,
+  loadEncryptedPhoto,
+  PHOTOS_STORE,
+  saveEncryptedPhoto,
+} from "@/lib/storage/crypto/photoStore";
 
 const DB_NAME = "snap1099";
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 const RECEIPTS_STORE = "receipts";
-const PHOTOS_STORE = "photos";
 
 export interface StoredReceipt extends Receipt {
   timestamp: Date;
@@ -23,6 +30,7 @@ type SerializedReceipt = Omit<
   updatedAtMs: number;
   createdAtMs: number;
   isFiled: 0 | 1;
+  hasRemoteImage: boolean;
 };
 
 function receiptUpdatedAt(receipt: Pick<Receipt, "updatedAt" | "timestamp">): Date {
@@ -38,6 +46,7 @@ function enrichRow(receipt: StoredReceipt): SerializedReceipt {
   const { taxSeasonDate, updatedAt: _u, ...rest } = receipt;
   return {
     ...rest,
+    hasRemoteImage: Boolean(receipt.hasRemoteImage),
     timestamp: toUtcISOString(receipt.timestamp),
     updatedAt: toUtcISOString(updatedAt),
     taxSeasonDate: taxSeasonDate ? toUtcISOString(taxSeasonDate) : undefined,
@@ -57,6 +66,7 @@ function deserializeReceipt(raw: SerializedReceipt): StoredReceipt {
   const timestamp = parseUtcISOString(rest.timestamp);
   return {
     ...rest,
+    hasRemoteImage: Boolean(rest.hasRemoteImage),
     timestamp,
     updatedAt: rest.updatedAt ? parseUtcISOString(rest.updatedAt) : timestamp,
     taxSeasonDate: rest.taxSeasonDate
@@ -79,6 +89,7 @@ function legacyDeserialize(raw: Record<string, unknown>): StoredReceipt {
     currency: raw.currency as string | undefined,
     deductible: raw.deductible as boolean | undefined,
     imageUrl: raw.imageUrl as string | null | undefined,
+    hasRemoteImage: Boolean(raw.hasRemoteImage),
     subtitle: raw.subtitle as string | undefined,
     timestamp,
     updatedAt: updatedAtRaw,
@@ -150,6 +161,14 @@ function readIndexAll<T>(
   });
 }
 
+function migrateReceiptRowV3(raw: Record<string, unknown>): SerializedReceipt {
+  const legacy = legacyDeserialize(raw);
+  if (legacy.hasRemoteImage == null) {
+    legacy.hasRemoteImage = false;
+  }
+  return enrichRow(legacy);
+}
+
 function openDb(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
@@ -161,6 +180,10 @@ function openDb(): Promise<IDBDatabase> {
       const db = request.result;
       const tx = request.transaction!;
       let receiptStore: IDBObjectStore;
+
+      if (!db.objectStoreNames.contains(CRYPTO_META_STORE)) {
+        db.createObjectStore(CRYPTO_META_STORE, { keyPath: "id" });
+      }
 
       if (!db.objectStoreNames.contains(RECEIPTS_STORE)) {
         receiptStore = db.createObjectStore(RECEIPTS_STORE, { keyPath: "id" });
@@ -179,6 +202,17 @@ function openDb(): Promise<IDBDatabase> {
             cursor.continue();
           };
         }
+        if (event.oldVersion < 3) {
+          const migrateV3 = receiptStore.openCursor();
+          migrateV3.onerror = () => reject(migrateV3.error);
+          migrateV3.onsuccess = () => {
+            const cursor = migrateV3.result;
+            if (!cursor) return;
+            const row = migrateReceiptRowV3(cursor.value as Record<string, unknown>);
+            cursor.update(row);
+            cursor.continue();
+          };
+        }
       }
 
       if (!db.objectStoreNames.contains(PHOTOS_STORE)) {
@@ -188,8 +222,22 @@ function openDb(): Promise<IDBDatabase> {
   });
 }
 
+let migrationPromise: Promise<void> | null = null;
+
+async function ensurePhotoCipherReady(db: IDBDatabase): Promise<void> {
+  if (!migrationPromise) {
+    migrationPromise = migrateLegacyPlainPhotos(db).catch((err) => {
+      migrationPromise = null;
+      throw err;
+    });
+  }
+  await migrationPromise;
+}
+
 export async function warmReceiptDb(): Promise<IDBDatabase> {
-  return openDb();
+  const db = await openDb();
+  await ensurePhotoCipherReady(db);
+  return db;
 }
 
 export async function loadRecentUnfiledReceipts(
@@ -320,27 +368,33 @@ export async function deleteReceipt(id: string): Promise<void> {
   });
 }
 
+export async function deletePhoto(id: string): Promise<void> {
+  const db = await openDb();
+  await deleteEncryptedPhoto(db, id);
+}
+
+/** Remove redundant local photos when server already holds the image. */
+export async function reconcileServerPrimaryPhotos(
+  receipts: Pick<Receipt, "id" | "hasRemoteImage">[],
+): Promise<void> {
+  const db = await openDb();
+  await Promise.all(
+    receipts
+      .filter((r) => r.hasRemoteImage)
+      .map((r) => deleteEncryptedPhoto(db, r.id)),
+  );
+}
+
 export async function savePhoto(id: string, file: File | Blob): Promise<void> {
   const db = await openDb();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(PHOTOS_STORE, "readwrite");
-    const request = tx.objectStore(PHOTOS_STORE).put({ id, blob: file });
-    request.onerror = () => reject(request.error);
-    request.onsuccess = () => resolve();
-  });
+  await ensurePhotoCipherReady(db);
+  await saveEncryptedPhoto(db, id, file);
 }
 
 export async function loadPhoto(id: string): Promise<Blob | null> {
   const db = await openDb();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(PHOTOS_STORE, "readonly");
-    const request = tx.objectStore(PHOTOS_STORE).get(id);
-    request.onerror = () => reject(request.error);
-    request.onsuccess = () => {
-      const row = request.result as { id: string; blob: Blob } | undefined;
-      resolve(row?.blob ?? null);
-    };
-  });
+  await ensurePhotoCipherReady(db);
+  return loadEncryptedPhoto(db, id);
 }
 
 export async function hasStoredData(): Promise<boolean> {
@@ -356,9 +410,16 @@ export async function hasStoredData(): Promise<boolean> {
 export async function clearAllLocalData(): Promise<void> {
   const db = await openDb();
   return new Promise((resolve, reject) => {
-    const tx = db.transaction([RECEIPTS_STORE, PHOTOS_STORE], "readwrite");
+    const stores = [RECEIPTS_STORE, PHOTOS_STORE];
+    if (db.objectStoreNames.contains(CRYPTO_META_STORE)) {
+      stores.push(CRYPTO_META_STORE);
+    }
+    const tx = db.transaction(stores, "readwrite");
     tx.objectStore(RECEIPTS_STORE).clear();
     tx.objectStore(PHOTOS_STORE).clear();
+    if (db.objectStoreNames.contains(CRYPTO_META_STORE)) {
+      tx.objectStore(CRYPTO_META_STORE).clear();
+    }
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
   });

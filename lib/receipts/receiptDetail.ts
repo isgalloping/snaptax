@@ -1,5 +1,6 @@
 import type { Receipt } from "@/lib/types";
 import { formatCurrencyForRegion } from "@/lib/format";
+import { fetchReceiptImageUrl } from "@/lib/client/receiptApi";
 import { loadPhoto } from "@/lib/storage/receiptDb";
 import { irsScheduleLineBadge } from "@/lib/tax/irsScheduleLabel";
 
@@ -12,6 +13,12 @@ export type ReceiptDetailHero =
       subtitle: string;
       muted?: boolean;
     };
+
+export type ResolvedReceiptImage =
+  | { kind: "local"; src: string; revoke?: () => void }
+  | { kind: "remote"; src: string; expiresAt: string }
+  | { kind: "offline-placeholder" }
+  | { kind: "missing" };
 
 export function buildReceiptDetailHero(receipt: Receipt): ReceiptDetailHero {
   if (receipt.status === "processing") return { kind: "processing" };
@@ -55,16 +62,24 @@ export function formatPartialMerchant(merchant: string | undefined): string {
 
 export async function resolveReceiptImage(
   receipt: Receipt,
-): Promise<{ src: string | null; revoke?: () => void }> {
-  if (receipt.imageUrl) {
-    return { src: receipt.imageUrl };
+): Promise<ResolvedReceiptImage> {
+  if (receipt.hasRemoteImage) {
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      return { kind: "offline-placeholder" };
+    }
+    try {
+      const { url, expiresAt } = await fetchReceiptImageUrl(receipt.id);
+      return { kind: "remote", src: url, expiresAt };
+    } catch {
+      return { kind: "missing" };
+    }
   }
 
   const blob = await loadPhoto(receipt.id);
-  if (!blob) return { src: null };
+  if (!blob) return { kind: "missing" };
 
   const src = URL.createObjectURL(blob);
-  return { src, revoke: () => URL.revokeObjectURL(src) };
+  return { kind: "local", src, revoke: () => URL.revokeObjectURL(src) };
 }
 
 export { irsScheduleLineBadge };

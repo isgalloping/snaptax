@@ -6,6 +6,7 @@ interface ReceiptCaptureSectionProps {
   title?: string;
   imageSrc: string | null;
   imageMissing: boolean;
+  imageOffline?: boolean;
   hint?: string;
   onZoom: () => void;
   actions?: ReactNode;
@@ -15,6 +16,7 @@ export function ReceiptCaptureSection({
   title = "Original Receipt Capture",
   imageSrc,
   imageMissing,
+  imageOffline = false,
   hint = "Tap to zoom",
   onZoom,
   actions,
@@ -45,7 +47,11 @@ export function ReceiptCaptureSection({
         </div>
       ) : (
         <div className="flex min-h-32 items-center justify-center rounded-xl border border-dashed border-zinc-700 bg-zinc-950 px-4 text-center text-sm font-bold text-zinc-500">
-          {imageMissing ? "Photo not on this device" : "Loading photo…"}
+          {imageOffline
+            ? "Photo available when you're back online"
+            : imageMissing
+              ? "Photo not on this device"
+              : "Loading photo…"}
         </div>
       )}
     </section>

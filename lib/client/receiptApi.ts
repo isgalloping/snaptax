@@ -19,6 +19,7 @@ export type ApiReceipt = {
   updatedAt: string;
   taxSeason: string | null;
   taxSeasonDate: string | null;
+  hasImage: boolean;
 };
 
 export type ReceiptListResponse = {
@@ -44,8 +45,22 @@ export function apiReceiptToLocal(r: ApiReceipt): Receipt {
     taxSeasonDate: r.taxSeasonDate
       ? parseUtcISOString(r.taxSeasonDate)
       : undefined,
+    hasRemoteImage: r.hasImage,
     pendingUpload: false,
   };
+}
+
+export type ReceiptImageUrlResponse = {
+  url: string;
+  expiresAt: string;
+};
+
+export async function fetchReceiptImageUrl(
+  id: string,
+): Promise<ReceiptImageUrlResponse> {
+  const res = await apiFetch(`/api/receipts/${id}/image`);
+  if (!res.ok) throw new Error("FETCH_RECEIPT_IMAGE_FAILED");
+  return (await res.json()) as ReceiptImageUrlResponse;
 }
 
 export function sumUnfiledLocalTaxSaved(receipts: Receipt[]): number {

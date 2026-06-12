@@ -91,6 +91,16 @@ export function formatReceiptDetailLongDateTime(
   return `${datePart} at ${timePart}`;
 }
 
+/** ISO 8601 calendar date (YYYY-MM-DD) in the user's IANA timezone. */
+export function formatIsoDate(date: Date, timeZone = "UTC"): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date);
+}
+
 /** Excel export date column in the user's IANA timezone. */
 export function formatLocalDate(
   date: Date,

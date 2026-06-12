@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Receipt } from "@/lib/types";
 import { useI18n } from "@/components/i18n/I18nProvider";
 import {
@@ -14,6 +14,7 @@ import { clientTimeZone } from "@/lib/time/timeZone";
 import {
   exportTaxPack,
   type ExportFormat,
+  type ExportTaxPackMeta,
 } from "@/lib/client/authApi";
 import { shareTaxPackFile } from "@/lib/export/shareTaxPack";
 
@@ -23,12 +24,17 @@ interface ExportEngineSheetProps {
   receipts: Receipt[];
   onClose: () => void;
   onExported?: () => void;
+  onPaymentRequired?: () => void;
 }
+
+const PROGRESS_TICK_MS = 16;
+const PROGRESS_RAMP_MS = 300;
 
 export function ExportEngineSheet({
   receipts,
   onClose,
   onExported,
+  onPaymentRequired,
 }: ExportEngineSheetProps) {
   const { copy } = useI18n();
   const t = copy.exportEngine;
@@ -48,34 +54,95 @@ export function ExportEngineSheet({
   );
   const [format, setFormat] = useState<ExportFormat>("csv");
   const [generating, setGenerating] = useState(false);
+  const [progress, setProgress] = useState(0);
   const [readyFile, setReadyFile] = useState<File | null>(null);
+  const [exportMeta, setExportMeta] = useState<ExportTaxPackMeta | null>(null);
+  const [sharing, setSharing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const autoSharedRef = useRef(false);
+  const progressTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const yearReceipts = receiptsInTaxYear(receipts, taxYear, timeZone);
   const yearDeductions = taxYearDeductions(receipts, taxYear, timeZone);
   const canContinueStep1 = yearReceipts.length > 0;
 
+  const clearProgressTimer = () => {
+    if (progressTimerRef.current) {
+      clearInterval(progressTimerRef.current);
+      progressTimerRef.current = null;
+    }
+  };
+
+  const startProgressRamp = () => {
+    clearProgressTimer();
+    setProgress(0);
+    const startedAt = Date.now();
+    progressTimerRef.current = setInterval(() => {
+      const elapsed = Date.now() - startedAt;
+      const pct = Math.min(90, (elapsed / PROGRESS_RAMP_MS) * 90);
+      setProgress(pct);
+      if (elapsed >= PROGRESS_RAMP_MS) clearProgressTimer();
+    }, PROGRESS_TICK_MS);
+  };
+
+  const finishProgress = () => {
+    clearProgressTimer();
+    setProgress(100);
+    if ("vibrate" in navigator) navigator.vibrate(50);
+  };
+
+  useEffect(() => () => clearProgressTimer(), []);
+
+  const handleShare = async (file: File) => {
+    setSharing(true);
+    try {
+      await shareTaxPackFile(
+        file,
+        `Snap1099 ${taxYear}`,
+        copy.settings.export.shareText,
+      );
+    } finally {
+      setSharing(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!readyFile || autoSharedRef.current) return;
+    autoSharedRef.current = true;
+    void handleShare(readyFile);
+  }, [readyFile]);
+
   const handleGenerate = async () => {
     setErrorMessage(null);
+    autoSharedRef.current = false;
     if (!navigator.onLine) {
       setErrorMessage(copy.settings.export.offline);
       return;
     }
     setGenerating(true);
+    setReadyFile(null);
+    setExportMeta(null);
     setStep(3);
+    startProgressRamp();
     try {
-      const file = await exportTaxPack({
+      const result = await exportTaxPack({
         taxYear: String(taxYear),
         format,
       });
-      setReadyFile(file);
+      finishProgress();
+      setReadyFile(result.file);
+      setExportMeta(result.meta);
       onExported?.();
     } catch (err) {
+      clearProgressTimer();
+      setProgress(0);
       if (err instanceof Error) {
         if (err.message === "NO_RECEIPTS") {
           setErrorMessage(copy.settings.export.noReceipts);
         } else if (err.message === "PAYMENT_REQUIRED") {
-          setErrorMessage(copy.settings.export.failed);
+          onClose();
+          onPaymentRequired?.();
+          return;
         } else {
           setErrorMessage(copy.settings.export.failed);
         }
@@ -88,17 +155,20 @@ export function ExportEngineSheet({
     }
   };
 
-  const handleShare = async () => {
-    if (!readyFile) return;
-    await shareTaxPackFile(
-      readyFile,
-      `Snap1099 ${taxYear}`,
-      copy.settings.export.shareText,
-    );
-  };
-
   const selectedFormatLabel =
     format === "csv" ? t.formatCsvTitle : t.formatCpaTitle;
+
+  const imageWarning =
+    exportMeta?.imagesMissing != null && exportMeta.imagesMissing > 0
+      ? t.imagesMissing.replace("{missing}", String(exportMeta.imagesMissing))
+      : null;
+
+  const imageSummary =
+    exportMeta?.imagesEligible != null && exportMeta.imagesIncluded != null
+      ? t.imagesComplete
+          .replace("{included}", String(exportMeta.imagesIncluded))
+          .replace("{eligible}", String(exportMeta.imagesEligible))
+      : null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end bg-black/70">
@@ -244,6 +314,14 @@ export function ExportEngineSheet({
         {step === 3 && (
           <>
             <p className="mb-4 text-sm font-bold text-zinc-300">{t.step3Heading}</p>
+            {(generating || readyFile) && (
+              <div className="mb-4 h-2 overflow-hidden rounded-full bg-zinc-800">
+                <div
+                  className="h-full rounded-full bg-yellow-500 transition-[width] duration-75 ease-out"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+            )}
             {generating ? (
               <div className="py-10 text-center">
                 <p className="text-sm font-bold text-yellow-400">{t.generating}</p>
@@ -256,10 +334,22 @@ export function ExportEngineSheet({
               <div className="py-6 text-center">
                 <p className="text-sm font-bold text-green-400">{t.ready}</p>
                 <p className="mt-2 truncate text-xs text-zinc-400">{readyFile.name}</p>
+                {imageSummary && (
+                  <p className="mt-2 text-xs text-zinc-400">{imageSummary}</p>
+                )}
+                {imageWarning && (
+                  <p className="mt-1 text-xs font-bold text-amber-400" role="status">
+                    {imageWarning}
+                  </p>
+                )}
+                <p className="mt-2 text-xs text-zinc-500">
+                  {sharing ? t.sharing : t.sharingHint}
+                </p>
                 <button
                   type="button"
-                  onClick={() => void handleShare()}
-                  className="mt-6 w-full min-h-16 rounded-xl border-4 border-white bg-yellow-500 py-4 text-lg font-black uppercase tracking-wider text-black transition-transform active:scale-95"
+                  disabled={sharing}
+                  onClick={() => void handleShare(readyFile)}
+                  className="mt-6 w-full min-h-16 rounded-xl border-4 border-white bg-yellow-500 py-4 text-lg font-black uppercase tracking-wider text-black transition-transform active:scale-95 disabled:opacity-60"
                 >
                   {t.share}
                 </button>

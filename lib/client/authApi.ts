@@ -86,6 +86,32 @@ export type ExportTaxPackParams = {
   format?: ExportFormat;
 };
 
+export type ExportTaxPackMeta = {
+  receiptCount: number;
+  imagesIncluded?: number;
+  imagesEligible?: number;
+  imagesMissing?: number;
+};
+
+export type ExportTaxPackResult = {
+  file: File;
+  meta: ExportTaxPackMeta;
+};
+
+function parseExportMeta(res: Response): ExportTaxPackMeta {
+  const receiptCount = Number(res.headers.get("X-Export-Receipt-Count") ?? "0");
+  const imagesIncluded = res.headers.get("X-Export-Images-Included");
+  const imagesEligible = res.headers.get("X-Export-Images-Eligible");
+  const imagesMissing = res.headers.get("X-Export-Images-Missing");
+  const meta: ExportTaxPackMeta = { receiptCount };
+  if (imagesIncluded != null) {
+    meta.imagesIncluded = Number(imagesIncluded);
+    meta.imagesEligible = Number(imagesEligible ?? "0");
+    meta.imagesMissing = Number(imagesMissing ?? "0");
+  }
+  return meta;
+}
+
 function parseExportFilename(
   disposition: string | null,
   taxYear: string,
@@ -100,7 +126,9 @@ function parseExportFilename(
   return `Snap1099-${taxYear}-Tax-Pack.xlsx`;
 }
 
-export async function exportTaxPack(params: ExportTaxPackParams): Promise<File> {
+export async function exportTaxPack(
+  params: ExportTaxPackParams,
+): Promise<ExportTaxPackResult> {
   const format = params.format ?? "csv";
   const res = await apiFetch("/api/export/tax-pack", {
     method: "POST",
@@ -119,7 +147,10 @@ export async function exportTaxPack(params: ExportTaxPackParams): Promise<File> 
     params.taxYear,
     format,
   );
-  return new File([blob], filename, { type: blob.type });
+  return {
+    file: new File([blob], filename, { type: blob.type }),
+    meta: parseExportMeta(res),
+  };
 }
 
 export async function pollEntitlementReady(

@@ -123,6 +123,9 @@ export function useTaxExportGate({
           onExported={() => {
             refreshSeasonPaid?.();
           }}
+          onPaymentRequired={() => {
+            setShowPaywall(true);
+          }}
         />
       )}
     </>

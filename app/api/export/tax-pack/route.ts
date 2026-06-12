@@ -18,8 +18,10 @@ import {
 import {
   buildExpensesCsv,
   buildSummaryText,
+  buildTurboTaxCsv,
 } from "@/lib/tax/exportCsv";
 import { buildCpaPackZip } from "@/lib/export/buildCpaPack";
+import { enrichExportRowsWithImageUrls } from "@/lib/export/receiptImageUrl";
 import { logEvent } from "@/lib/server/log/logEvent";
 
 const exportBodySchema = z.object({
@@ -75,29 +77,43 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
     const rows = receipts.map((r) =>
       buildExportExpenseRow(r, timeZone, region),
     );
-    const summaryLines = summarizeByIrsLine(rows);
-    const totalExpenses = rows.reduce((sum, r) => sum + r.amount, 0);
-    const totalDeductible = rows.reduce(
+    const enrichedRows = await enrichExportRowsWithImageUrls(rows);
+    const summaryLines = summarizeByIrsLine(enrichedRows);
+    const totalExpenses = enrichedRows.reduce((sum, r) => sum + r.amount, 0);
+    const totalDeductible = enrichedRows.reduce(
       (sum, r) => sum + (r.deductible ? r.deductibleAmount : 0),
       0,
     );
-    const totalTaxSaved = rows.reduce((sum, r) => sum + r.taxSaved, 0);
+    const totalTaxSaved = enrichedRows.reduce((sum, r) => sum + r.taxSaved, 0);
 
     let buffer: Buffer | ArrayBuffer;
     let contentType: string;
     let filename: string;
+    const responseHeaders: Record<string, string> = {
+      "X-Export-Receipt-Count": String(enrichedRows.length),
+    };
 
     if (body.format === "csv") {
-      const csv = buildExpensesCsv(rows);
+      const csv = buildTurboTaxCsv(enrichedRows);
       buffer = Buffer.from(csv, "utf-8");
       contentType = "text/csv; charset=utf-8";
       filename = `Snap1099-${taxYear}-TurboTax-Expenses.csv`;
     } else if (body.format === "cpa_pack") {
-      const csv = buildExpensesCsv(rows);
-      const summaryText = buildSummaryText(taxYear, rows, summaryLines);
-      buffer = await buildCpaPackZip(csv, summaryText, rows);
+      const csv = buildExpensesCsv(enrichedRows);
+      const summaryText = buildSummaryText(taxYear, enrichedRows, summaryLines);
+      const pack = await buildCpaPackZip(csv, summaryText, enrichedRows);
+      buffer = pack.buffer;
       contentType = "application/zip";
       filename = `Snap1099-${taxYear}-CPA-Audit-Pack.zip`;
+      responseHeaders["X-Export-Images-Included"] = String(
+        pack.imageStats.imagesIncluded,
+      );
+      responseHeaders["X-Export-Images-Eligible"] = String(
+        pack.imageStats.imagesEligible,
+      );
+      responseHeaders["X-Export-Images-Missing"] = String(
+        pack.imageStats.imagesEligible - pack.imageStats.imagesIncluded,
+      );
     } else {
       const workbook = new ExcelJS.Workbook();
       const expenses = workbook.addWorksheet("Expenses");
@@ -115,7 +131,7 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
         { header: "Receipt ID", key: "id", width: 38 },
       ];
 
-      for (const row of rows) {
+      for (const row of enrichedRows) {
         expenses.addRow({
           date: row.date,
           merchant: row.merchant,
@@ -178,6 +194,7 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
       headers: {
         "Content-Type": contentType,
         "Content-Disposition": `attachment; filename="${filename}"`,
+        ...responseHeaders,
       },
     });
   } catch (err) {

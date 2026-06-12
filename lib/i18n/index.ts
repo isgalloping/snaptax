@@ -196,6 +196,10 @@ export type UserCopy = {
     formatCsvHint: string;
     formatCpaTitle: string;
     formatCpaHint: string;
+    sharing: string;
+    imagesComplete: string;
+    imagesMissing: string;
+    sharingHint: string;
   };
 };
 
@@ -424,6 +428,10 @@ const USER_COPY_BY_LOCALE: Record<Locale, UserCopy> = {
       formatCpaTitle: "CPA Audit Pack (ZIP + Receipt Images)",
       formatCpaHint:
         "IRS-compliant audit trail with your original receipt photos.",
+      sharing: "Opening share sheet…",
+      imagesComplete: "{included} of {eligible} receipt images included",
+      imagesMissing: "{missing} receipt images could not be included",
+      sharingHint: "Tap Share again if you dismissed the sheet",
     },
   },
   "zh-CN": {
@@ -641,6 +649,10 @@ const USER_COPY_BY_LOCALE: Record<Locale, UserCopy> = {
       formatCsvHint: "针对主流报税软件优化的矩阵格式，可快速导入。",
       formatCpaTitle: "CPA 审计包（ZIP + 小票照片）",
       formatCpaHint: "符合 IRS 审计要求的凭证链，含原始小票图片。",
+      sharing: "正在打开分享面板…",
+      imagesComplete: "已包含 {included} / {eligible} 张小票照片",
+      imagesMissing: "有 {missing} 张小票照片未能包含",
+      sharingHint: "若已关闭分享面板，可再次点击分享",
     },
   },
 };

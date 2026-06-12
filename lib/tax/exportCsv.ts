@@ -1,6 +1,16 @@
 import type { ExportExpenseRow } from "@/lib/tax/exportRows";
+import { irsCategoryExportLabel } from "@/lib/tax/irsScheduleLabel";
 
-const CSV_HEADERS = [
+const TURBOTAX_HEADERS = [
+  "Date",
+  "Vendor",
+  "Amount",
+  "IRS_Category",
+  "Deductible_Amount",
+  "Receipt_Image_URL",
+] as const;
+
+const FULL_CSV_HEADERS = [
   "Date",
   "Merchant",
   "Amount",
@@ -12,6 +22,7 @@ const CSV_HEADERS = [
   "Tax Saved (Est.)",
   "Notes",
   "Receipt ID",
+  "Receipt Image URL",
 ] as const;
 
 function escapeCsvField(value: string | number): string {
@@ -22,12 +33,35 @@ function escapeCsvField(value: string | number): string {
   return str;
 }
 
-export function buildExpensesCsv(rows: ExportExpenseRow[]): string {
-  const lines = [CSV_HEADERS.join(",")];
+function csvLine(values: (string | number)[]): string {
+  return values.map(escapeCsvField).join(",");
+}
+
+/** TurboTax / tax-software import matrix (RFC 4180, UTF-8 BOM). */
+export function buildTurboTaxCsv(rows: ExportExpenseRow[]): string {
+  const lines = [TURBOTAX_HEADERS.join(",")];
   for (const row of rows) {
     lines.push(
-      [
-        row.date,
+      csvLine([
+        row.dateIso,
+        row.merchant,
+        row.amount.toFixed(2),
+        irsCategoryExportLabel(row.category),
+        row.deductibleAmount.toFixed(2),
+        row.receiptImageUrl,
+      ]),
+    );
+  }
+  return `\uFEFF${lines.join("\r\n")}`;
+}
+
+/** Full CPA detail CSV with all audit columns. */
+export function buildExpensesCsv(rows: ExportExpenseRow[]): string {
+  const lines = [FULL_CSV_HEADERS.join(",")];
+  for (const row of rows) {
+    lines.push(
+      csvLine([
+        row.dateIso,
         row.merchant,
         row.amount.toFixed(2),
         row.category,
@@ -38,9 +72,8 @@ export function buildExpensesCsv(rows: ExportExpenseRow[]): string {
         row.taxSaved.toFixed(2),
         row.notes,
         row.id,
-      ]
-        .map(escapeCsvField)
-        .join(","),
+        row.receiptImageUrl,
+      ]),
     );
   }
   return `\uFEFF${lines.join("\r\n")}`;

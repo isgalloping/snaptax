@@ -79,16 +79,47 @@ export async function pollTaxRecalc(
   }
 }
 
-export async function exportTaxPack(season: string): Promise<File> {
+export type ExportFormat = "csv" | "cpa_pack" | "xlsx";
+
+export type ExportTaxPackParams = {
+  taxYear: string;
+  format?: ExportFormat;
+};
+
+function parseExportFilename(
+  disposition: string | null,
+  taxYear: string,
+  format: ExportFormat,
+): string {
+  if (disposition) {
+    const match = disposition.match(/filename="([^"]+)"/i);
+    if (match?.[1]) return match[1];
+  }
+  if (format === "csv") return `Snap1099-${taxYear}-TurboTax-Expenses.csv`;
+  if (format === "cpa_pack") return `Snap1099-${taxYear}-CPA-Audit-Pack.zip`;
+  return `Snap1099-${taxYear}-Tax-Pack.xlsx`;
+}
+
+export async function exportTaxPack(params: ExportTaxPackParams): Promise<File> {
+  const format = params.format ?? "csv";
   const res = await apiFetch("/api/export/tax-pack", {
     method: "POST",
-    headers: { "X-Time-Zone": clientTimeZone() },
+    headers: {
+      "Content-Type": "application/json",
+      "X-Time-Zone": clientTimeZone(),
+    },
+    body: JSON.stringify({ taxYear: params.taxYear, format }),
   });
   if (res.status === 402) throw new Error("PAYMENT_REQUIRED");
   if (res.status === 422) throw new Error("NO_RECEIPTS");
   if (!res.ok) throw new Error("EXPORT_FAILED");
   const blob = await res.blob();
-  return new File([blob], `Snap1099-${season}-Tax-Pack.xlsx`, { type: blob.type });
+  const filename = parseExportFilename(
+    res.headers.get("Content-Disposition"),
+    params.taxYear,
+    format,
+  );
+  return new File([blob], filename, { type: blob.type });
 }
 
 export async function pollEntitlementReady(

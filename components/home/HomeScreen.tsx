@@ -49,6 +49,7 @@ import { SnapButton, type SnapButtonHandle } from "./SnapButton";
 import { ReceiptList } from "./ReceiptList";
 import { sumDoneExpenses } from "@/lib/receipts/receiptStats";
 import { SettingsScreen } from "@/components/settings/SettingsScreen";
+import { useTaxExportGate } from "@/components/export/useTaxExportGate";
 import { ReceiptDetailSheet } from "@/components/receipts/ReceiptDetailSheet";
 import { logStartupMarks } from "@/lib/landing/startupMetrics";
 
@@ -225,9 +226,9 @@ export function HomeScreen() {
     try {
       const uploaded = await uploadReceipt(photo, receipt.timestamp);
       await deleteStoredReceipt(receipt.id);
-      await savePhoto(uploaded.id, photo);
       const updated: StoredReceipt = {
         ...apiReceiptToLocal(uploaded),
+        hasRemoteImage: true,
         pendingUpload: false,
         writeBudgetRemaining: getBudget(receipt),
       };
@@ -440,6 +441,17 @@ export function HomeScreen() {
     },
     [syncFromServer],
   );
+
+  const taxExport = useTaxExportGate({
+    receipts,
+    googleUser: auth.googleUser,
+    seasonPaid: auth.seasonPaid,
+    currentSeason: auth.currentSeason,
+    onSignInWithGoogle: auth.signInWithGoogle,
+    onPostLoginSync: handlePostLoginSync,
+    onSeasonPaid: auth.markSeasonPaid,
+    refreshSeasonPaid: auth.refreshSeasonPaid,
+  });
 
   useEffect(() => {
     performance.mark("startup:home-ready");
@@ -654,10 +666,9 @@ export function HomeScreen() {
         await ensureGhostSession();
         const uploaded = await uploadReceipt(file, snapAt);
         await deleteStoredReceipt(id);
-        const serverId = uploaded.id;
-        await savePhoto(serverId, file);
         const updated: StoredReceipt = {
           ...apiReceiptToLocal(uploaded),
+          hasRemoteImage: true,
           pendingUpload: false,
           writeBudgetRemaining: getBudget(processingReceipt),
         };
@@ -698,6 +709,7 @@ export function HomeScreen() {
 
   if (view === "settings") {
     return (
+      <>
       <SettingsScreen
         industry={industry}
         onIndustryChange={setIndustry}
@@ -715,10 +727,13 @@ export function HomeScreen() {
         currentSeason={auth.currentSeason}
         onSignInWithGoogle={auth.signInWithGoogle}
         onPostLoginSync={handlePostLoginSync}
-        onSeasonPaid={auth.markSeasonPaid}
-        refreshSeasonPaid={auth.refreshSeasonPaid}
+        onRequestExport={taxExport.requestExport}
+        exportBusy={taxExport.paywallExporting}
+        exportError={taxExport.exportError}
         isSignedIn={auth.isSignedIn}
       />
+      {taxExport.overlays}
+    </>
     );
   }
 
@@ -730,6 +745,7 @@ export function HomeScreen() {
         receiptCount={receipts.length}
         animating={taxAnimating}
         onSettingsClick={() => setView("settings")}
+        onExportClick={taxExport.requestExport}
         onSyncClick={handleManualListSync}
         syncing={listSyncing}
         syncDisabled={!isOnline}
@@ -793,6 +809,8 @@ export function HomeScreen() {
           }}
         />
       )}
+
+      {taxExport.overlays}
     </div>
   );
 }

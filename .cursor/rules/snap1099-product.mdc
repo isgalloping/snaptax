@@ -25,7 +25,7 @@ alwaysApply: true
 
 | 类型 | 触发 | 可跳过 |
 |------|------|--------|
-| 软引导 | 第3张票 或 首次进设置 | 是（仅一次「稍后再说」） |
+| 软引导 | 第3张 done 票 → 顶栏 Nudge；或首次进设置 → soft Sheet | 是（仅一次「Not now」） |
 | 硬拦截 | Export / View on All Devices | 否 |
 
 ## 付费

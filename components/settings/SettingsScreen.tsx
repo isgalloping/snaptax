@@ -4,7 +4,11 @@ import { useState } from "react";
 import type { Industry } from "@/lib/types";
 import { INDUSTRIES } from "@/lib/types";
 import type { GoogleUser } from "@/lib/client/authStorage";
-import { exportTaxPack, fetchSeasonPaid } from "@/lib/client/authApi";
+import {
+  exportTaxPack,
+  fetchSeasonPaid,
+  pollEntitlementReady,
+} from "@/lib/client/authApi";
 import { apiFetch } from "@/lib/client/ghostClient";
 import { AccountStatusBlock } from "@/components/auth/AccountStatusBlock";
 import { GoogleSignInSheet, type GoogleSignInMode } from "@/components/auth/GoogleSignInSheet";
@@ -48,29 +52,64 @@ export function SettingsScreen({
   const [showPaywall, setShowPaywall] = useState(false);
   const [showSyncHelp, setShowSyncHelp] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
   const [pendingAfterSignIn, setPendingAfterSignIn] = useState<
     "export" | "sync" | null
   >(null);
 
   const clearError = () => setErrorMessage(null);
 
+  const downloadFile = (file: File) => {
+    const url = URL.createObjectURL(file);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = file.name;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const shareExportFile = async () => {
     const file = await exportTaxPack(currentSeason);
     if (navigator.share) {
-      await navigator
-        .share({
+      try {
+        await navigator.share({
           files: [file],
           title: `Snap1099 Tax Pack ${currentSeason}`,
           text: copy.settings.export.shareText,
-        })
-        .catch(() => {});
+        });
+      } catch (e) {
+        if (e instanceof DOMException && e.name === "AbortError") return;
+        downloadFile(file);
+      }
     } else {
-      const url = URL.createObjectURL(file);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = file.name;
-      a.click();
-      URL.revokeObjectURL(url);
+      downloadFile(file);
+    }
+  };
+
+  const safeExport = async () => {
+    clearError();
+    if (!navigator.onLine) {
+      setErrorMessage(copy.settings.export.offline);
+      return;
+    }
+    setExporting(true);
+    try {
+      await shareExportFile();
+      refreshSeasonPaid?.();
+    } catch (err) {
+      if (err instanceof Error) {
+        if (err.message === "PAYMENT_REQUIRED") {
+          setShowPaywall(true);
+          return;
+        }
+        if (err.message === "NO_RECEIPTS") {
+          setErrorMessage(copy.settings.export.noReceipts);
+          return;
+        }
+      }
+      setErrorMessage(copy.settings.export.failed);
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -78,11 +117,7 @@ export function SettingsScreen({
     if (action === "export") {
       const paid = await fetchSeasonPaid(currentSeason).catch(() => seasonPaid);
       if (paid) {
-        try {
-          await shareExportFile();
-        } catch {
-          setErrorMessage(copy.settings.export.failed);
-        }
+        await safeExport();
       } else {
         setShowPaywall(true);
       }
@@ -119,17 +154,8 @@ export function SettingsScreen({
     requireGoogle("hard-export", "export");
   };
 
-  const handleExportAgain = async () => {
-    clearError();
-    try {
-      await shareExportFile();
-    } catch (err) {
-      if (err instanceof Error && err.message === "PAYMENT_REQUIRED") {
-        setShowPaywall(true);
-      } else {
-        setErrorMessage(copy.settings.export.failed);
-      }
-    }
+  const handleExportAgain = () => {
+    void safeExport();
   };
 
   const handleIndustryChange = async (value: Industry) => {
@@ -242,12 +268,15 @@ export function SettingsScreen({
           </h2>
           <button
             type="button"
-            onClick={seasonPaid ? () => void handleExportAgain() : handleExport}
-            className="w-full min-h-16 rounded-xl border-4 border-white bg-yellow-500 py-4 text-lg font-black uppercase tracking-wider text-black transition-transform active:scale-95"
+            disabled={exporting}
+            onClick={seasonPaid ? handleExportAgain : handleExport}
+            className="w-full min-h-16 rounded-xl border-4 border-white bg-yellow-500 py-4 text-lg font-black uppercase tracking-wider text-black transition-transform active:scale-95 disabled:opacity-60"
           >
-            {seasonPaid
-              ? copy.settings.export.buttonPaid
-              : copy.settings.export.button}
+            {exporting
+              ? copy.settings.export.exporting
+              : seasonPaid
+                ? copy.settings.export.buttonPaid
+                : copy.settings.export.button}
           </button>
         </section>
 
@@ -282,10 +311,19 @@ export function SettingsScreen({
           onPaid={async () => {
             onSeasonPaid();
             setShowPaywall(false);
+            setExporting(true);
             try {
+              const ready = await pollEntitlementReady(currentSeason);
+              if (!ready) {
+                setErrorMessage(copy.settings.export.paymentConfirmed);
+                return;
+              }
               await shareExportFile();
+              refreshSeasonPaid?.();
             } catch {
               setErrorMessage(copy.settings.export.failedAfterPayment);
+            } finally {
+              setExporting(false);
             }
           }}
         />

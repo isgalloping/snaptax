@@ -4,6 +4,13 @@ import { USER_COPY } from "@/lib/copy/userFacing";
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: "/",
+    related_applications: [
+      {
+        platform: "webapp",
+        url: "/manifest.webmanifest",
+        id: "/",
+      },
+    ],
     name: "Snap1099",
     short_name: "Snap1099",
     description: USER_COPY.app.description,

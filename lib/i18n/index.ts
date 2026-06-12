@@ -13,9 +13,11 @@ export type UserCopy = {
     title: string;
     subtitle: string;
     install: string;
+    howToInstall: string;
     dismiss: string;
     manualHint: string;
     manualSheetTitle: string;
+    manualSheetLead: string;
     manualGotIt: string;
     manualSteps: {
       chromiumAndroid: string[];
@@ -141,9 +143,13 @@ export type UserCopy = {
       title: string;
       button: string;
       buttonPaid: string;
+      exporting: string;
       shareText: string;
+      offline: string;
+      noReceipts: string;
       failed: string;
       failedAfterPayment: string;
+      paymentConfirmed: string;
     };
   };
 };
@@ -158,9 +164,12 @@ const USER_COPY_BY_LOCALE: Record<Locale, UserCopy> = {
       subtitle:
         "Open like a native app — snap receipts one-handed on the job site",
       install: "Install",
+      howToInstall: "How to add",
       dismiss: "Not now",
       manualHint: "Tap ⋮ in Chrome, then Install app",
       manualSheetTitle: "Install Snap1099",
+      manualSheetLead:
+        "Your browser can't install automatically — follow these steps:",
       manualGotIt: "Got it",
       manualSteps: {
         chromiumAndroid: [
@@ -314,9 +323,14 @@ const USER_COPY_BY_LOCALE: Record<Locale, UserCopy> = {
         title: "Tax Season Export",
         button: "Export IRS Tax Pack",
         buttonPaid: "Export Again",
+        exporting: "Exporting…",
         shareText: "Your IRS-ready expense export",
+        offline: "You're offline. Connect to export.",
+        noReceipts:
+          "No completed receipts to export. Snap some receipts first!",
         failed: "Export failed. Please try again.",
         failedAfterPayment: "Export failed after payment. Try Export Again.",
+        paymentConfirmed: "Payment confirmed. Tap Export Again to download.",
       },
     },
   },
@@ -328,9 +342,11 @@ const USER_COPY_BY_LOCALE: Record<Locale, UserCopy> = {
       title: "添加 Snap1099 到主屏幕",
       subtitle: "像原生 App 一样打开，在工地上单手拍小票",
       install: "安装",
+      howToInstall: "如何添加",
       dismiss: "稍后再说",
       manualHint: "点 Chrome 的 ⋮，然后点安装应用",
       manualSheetTitle: "安装 Snap1099",
+      manualSheetLead: "你的浏览器无法自动安装，请按以下步骤操作：",
       manualGotIt: "知道了",
       manualSteps: {
         chromiumAndroid: [
@@ -480,9 +496,13 @@ const USER_COPY_BY_LOCALE: Record<Locale, UserCopy> = {
         title: "报税季导出",
         button: "导出 IRS 报税包",
         buttonPaid: "再次导出",
+        exporting: "正在导出…",
         shareText: "你的 IRS 报税开销导出文件",
+        offline: "当前离线，请联网后再导出。",
+        noReceipts: "没有可导出的已完成小票，请先拍几张小票！",
         failed: "导出失败，请重试。",
         failedAfterPayment: "付款后导出失败，请点再次导出。",
+        paymentConfirmed: "付款已确认，请点击再次导出下载。",
       },
     },
   },

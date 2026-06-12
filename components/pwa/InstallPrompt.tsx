@@ -4,7 +4,7 @@ import { useUserCopy } from "@/components/i18n/I18nProvider";
 import { usePwaInstall } from "./pwaInstallContext";
 
 export function InstallPrompt() {
-  const { mode, install, dismissBar } = usePwaInstall();
+  const { mode, canPrompt, install, dismissBar } = usePwaInstall();
   const copy = useUserCopy();
 
   if (mode !== "bar") return null;
@@ -19,7 +19,7 @@ export function InstallPrompt() {
           onClick={() => void install()}
           className="min-h-16 flex-1 rounded-xl bg-yellow-500 py-3 text-sm font-black text-black active:scale-95"
         >
-          {copy.pwa.install}
+          {canPrompt ? copy.pwa.install : copy.pwa.howToInstall}
         </button>
         <button
           type="button"

@@ -117,19 +117,23 @@ function useInstallUiState(): PwaInstallContextValue {
     };
   }, [sync]);
 
-  const closeManualSheet = useCallback(() => {
+  const acknowledgeManualSheet = useCallback(() => {
     setManualSheetOpen(false);
-  }, []);
+    dismissInstallBar();
+    requestAnimationFrame(() => {
+      void sync();
+    });
+  }, [sync]);
 
   const install = useCallback(async () => {
-    if (await isPwaInstalledOnDevice()) {
-      setMode("none");
-      return;
-    }
-
     const platform = getInstallPlatform();
     if (!supportsNativeInstallPrompt(platform)) {
       setManualSheetOpen(true);
+      return;
+    }
+
+    if (await isPwaInstalledOnDevice()) {
+      setMode("none");
       return;
     }
 
@@ -166,9 +170,9 @@ function useInstallUiState(): PwaInstallContextValue {
       manualSheetOpen,
       install,
       dismissBar,
-      closeManualSheet,
+      closeManualSheet: acknowledgeManualSheet,
     }),
-    [mode, canPrompt, manualSheetOpen, install, dismissBar, closeManualSheet],
+    [mode, canPrompt, manualSheetOpen, install, dismissBar, acknowledgeManualSheet],
   );
 }
 

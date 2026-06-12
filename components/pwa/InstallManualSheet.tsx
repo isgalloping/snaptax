@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useUserCopy } from "@/components/i18n/I18nProvider";
 import type { UserCopy } from "@/lib/i18n";
 import {
@@ -28,16 +29,37 @@ function stepsForPlatform(
 export function InstallManualSheet({ open, onClose }: InstallManualSheetProps) {
   const copy = useUserCopy();
 
+  useEffect(() => {
+    if (!open) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [open, onClose]);
+
   if (!open) return null;
 
   const steps = stepsForPlatform(copy.pwa.manualSteps);
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-end bg-black/70">
+    <div
+      className="fixed inset-0 z-[100] flex items-end"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="install-manual-title"
+    >
+      <button
+        type="button"
+        aria-label="Dismiss install instructions"
+        className="absolute inset-0 bg-black/70"
+        onClick={onClose}
+      />
       <div
-        className="flex w-full flex-col rounded-t-3xl border-t-4 border-yellow-500 bg-zinc-900 p-4 pb-8"
-        role="dialog"
-        aria-labelledby="install-manual-title"
+        className="relative z-10 flex w-full flex-col rounded-t-3xl border-t-4 border-yellow-500 bg-zinc-900 p-4 pb-8"
+        onPointerDown={(event) => event.stopPropagation()}
       >
         <h2
           id="install-manual-title"
@@ -45,7 +67,7 @@ export function InstallManualSheet({ open, onClose }: InstallManualSheetProps) {
         >
           {copy.pwa.manualSheetTitle}
         </h2>
-        <p className="mt-2 text-sm text-zinc-400">{copy.pwa.subtitle}</p>
+        <p className="mt-2 text-sm text-zinc-400">{copy.pwa.manualSheetLead}</p>
         <ol className="mt-4 list-decimal space-y-3 pl-5 text-sm font-bold text-zinc-200">
           {steps.map((step) => (
             <li key={step}>{step}</li>
@@ -54,7 +76,8 @@ export function InstallManualSheet({ open, onClose }: InstallManualSheetProps) {
         <button
           type="button"
           onClick={onClose}
-          className="mt-6 min-h-16 w-full rounded-xl bg-yellow-500 text-sm font-black text-black active:scale-95"
+          onPointerUp={onClose}
+          className="mt-6 min-h-16 w-full cursor-pointer rounded-xl bg-yellow-500 text-sm font-black text-black active:scale-95"
         >
           {copy.pwa.manualGotIt}
         </button>

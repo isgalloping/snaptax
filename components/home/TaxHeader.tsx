@@ -6,6 +6,7 @@ import { ReceiptIcon } from "@/components/icons/ReceiptIcon";
 import { SlidersIcon } from "@/components/icons/SlidersIcon";
 import { RefreshIcon } from "@/components/icons/RefreshIcon";
 import { DownloadIcon } from "@/components/icons/DownloadIcon";
+import { InstallIcon } from "@/components/icons/InstallIcon";
 import { usePwaInstallOptional } from "@/components/pwa/pwaInstallContext";
 
 interface TaxHeaderProps {
@@ -96,7 +97,7 @@ export function TaxHeader({
               className={`${actionBtn} border-yellow-500/60`}
               aria-label="Install app"
             >
-              <DownloadIcon className="h-5 w-5 text-yellow-400" />
+              <InstallIcon className="h-5 w-5 text-yellow-400" />
             </button>
           )}
           {onSyncClick && (

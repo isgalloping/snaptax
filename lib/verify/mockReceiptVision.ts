@@ -28,7 +28,7 @@ export function mockReceiptVision(dataRegion: TaxRegion): VisionProcessResult {
   const category = pickRandom(MOCK_CATEGORIES);
   const merchant = pickRandom(MOCK_MERCHANTS);
   const deductionRatio = resolveDeductionRatio(category, 1);
-  const deductible = category !== "PERSONAL";
+  const deductible = true;
 
   const fields =
     dataRegion === "eu"

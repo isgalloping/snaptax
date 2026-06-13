@@ -1,9 +1,11 @@
 # Snap1099 产品规范 · 技术文档 · 代码 一致性审计
 
 **日期：** 2026-06-06  
-**状态：** Phase 0 已完成（2026-06-06）；**2026-06-07 增补** tax + MVP master plan；Phase 1+ 待实施  
+**状态：** Phase 0 已完成（2026-06-06）；**2026-06-13 方案 A 全面对齐已完成** — 见 [`2026-06-13-product-code-alignment-design.md`](./2026-06-13-product-code-alignment-design.md)  
 **Canonical 产品文档：** `docs/product/PRODUCT-SPEC.md` v1.2  
 **审计方法：** PRODUCT-SPEC → `docs/tech/*` → ADR specs → `db/` / `prisma/` → 客户端/服务端代码
+
+> **2026-06-13 更新：** 下文 Phase 1–3 所列 P0 代码项（Ghost API、OpenAI、Google 绑定、Paddle、分区域省税、onboarding 接线）**均已落地**。本文档保留作历史审计记录；当前实现状态以 PRODUCT-SPEC §12 为准。
 
 ---
 

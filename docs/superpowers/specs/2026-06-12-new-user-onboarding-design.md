@@ -1,7 +1,7 @@
 # Snap1099 新人引导设计 — 业务分析与交互规范
 
 **日期：** 2026-06-12  
-**状态：** 待审核  
+**状态：** 已实现（2026-06-13 接线完成）  
 **读者：** 产品、设计、研发、测试、Cursor Agent  
 **Canonical 产品规范：** [`docs/product/PRODUCT-SPEC.md`](../../product/PRODUCT-SPEC.md)  
 **前置规格：**
@@ -211,9 +211,9 @@ flowchart TD
 
 ---
 
-### 4.5 P5 — Google 软引导（待对齐 PRD）
+### 4.5 P5 — Google 软引导（已实现）
 
-> **现状缺口：** [`home-remove-google-banner`](./2026-06-07-home-remove-google-banner-design.md) 移除主屏横条后，PRD §2.3 双触发器 **未完整落地**（无第 3 张票触发、无首次设置自动 Sheet）。
+> **2026-06-13：** T1 Nudge + T2 首次 Settings Sheet 已接线 — 见 [`2026-06-13-product-code-alignment-design.md`](./2026-06-13-product-code-alignment-design.md)
 
 #### 锁定决策
 

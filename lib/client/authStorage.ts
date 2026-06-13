@@ -1,9 +1,12 @@
+import type { Industry } from "@/lib/types";
+
 export interface GoogleUser {
   email: string;
   name: string;
 }
 
 const USER_KEY = "snap1099_google_user";
+const INDUSTRY_KEY = "snap1099_industry";
 const PAID_PREFIX = "snap1099_season_paid_";
 
 function readJson<T>(key: string): T | null {
@@ -41,13 +44,32 @@ export function setSeasonPaid(season: string, paid: boolean): void {
   else localStorage.removeItem(key);
 }
 
-/** MVP UI mock — replace with Google Identity Services + `/api/auth/google` */
-export async function mockGoogleSignIn(): Promise<GoogleUser> {
-  await new Promise((r) => setTimeout(r, 400));
-  const user: GoogleUser = {
-    email: "user@gmail.com",
-    name: "Demo User",
-  };
-  saveGoogleUser(user);
-  return user;
+const INDUSTRY_IDS: Industry[] = [
+  "truck_driver",
+  "plumber",
+  "electrician",
+  "construction",
+  "delivery",
+  "general",
+];
+
+export function loadIndustry(): Industry | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(INDUSTRY_KEY);
+    if (!raw) return null;
+    return INDUSTRY_IDS.includes(raw as Industry) ? (raw as Industry) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveIndustry(industry: Industry | null): void {
+  if (typeof window === "undefined") return;
+  try {
+    if (industry) localStorage.setItem(INDUSTRY_KEY, industry);
+    else localStorage.removeItem(INDUSTRY_KEY);
+  } catch {
+    // private mode / quota
+  }
 }

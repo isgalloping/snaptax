@@ -2,11 +2,12 @@
 
 ## Soft vs hard Google prompts
 
-### Soft (§2.3)
+### Soft (§2.3 / onboarding spec)
 
-- Banner: *怕数据丢失？用 Google 账号一键保存（换手机必登录）*
-- Dismiss: 「稍后再说」→ never show banner again until hard gate
-- Success: silent bind, settings shows `已登录 · email`
+- **T1 Nudge** (3rd done receipt): TaxHeader area banner → Settings + soft Sheet
+- **T2** (first Settings visit): auto soft Google Sheet (300ms delay)
+- Dismiss: **Not now** → `snap1099_google_soft_dismissed` — both triggers stop
+- Success: silent bind, settings shows logged-in email
 
 ### Hard (§2.4.2 / §2.4.3)
 

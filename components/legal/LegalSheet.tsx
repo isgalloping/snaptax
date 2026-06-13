@@ -1,7 +1,8 @@
 "use client";
 
 import type { LegalDoc } from "@/lib/legal/content";
-import { getLegalSections, getLegalTitle } from "@/lib/legal/content";
+import { getLegalBundle, getLegalSections, getLegalTitle } from "@/lib/legal/content";
+import { useI18n } from "@/components/i18n/I18nProvider";
 
 interface LegalSheetProps {
   doc: LegalDoc | null;
@@ -9,10 +10,12 @@ interface LegalSheetProps {
 }
 
 export function LegalSheet({ doc, onClose }: LegalSheetProps) {
+  const { locale } = useI18n();
   if (!doc) return null;
 
-  const sections = getLegalSections(doc);
-  const title = getLegalTitle(doc);
+  const bundle = getLegalBundle(locale);
+  const sections = getLegalSections(doc, locale);
+  const title = getLegalTitle(doc, locale);
 
   return (
     <div className="fixed inset-0 z-50 flex items-end bg-black/70">
@@ -33,13 +36,11 @@ export function LegalSheet({ doc, onClose }: LegalSheetProps) {
             onClick={onClose}
             className="min-h-12 min-w-12 rounded-xl border-2 border-zinc-600 bg-zinc-800 px-4 text-sm font-black uppercase tracking-wider transition-transform active:scale-95"
           >
-            Close
+            {bundle.close}
           </button>
         </div>
         <div className="overflow-y-auto p-6 pb-10">
-          <p className="mb-6 text-xs text-zinc-400">
-            Last Updated: June 2026 · GDPR & CPRA
-          </p>
+          <p className="mb-6 text-xs text-zinc-400">{bundle.lastUpdatedLabel}</p>
           {sections.map((section) => (
             <section key={section.title} className="mb-6">
               <h3 className="mb-2 text-sm font-bold uppercase tracking-wider text-yellow-400">
@@ -59,7 +60,7 @@ export function LegalSheet({ doc, onClose }: LegalSheetProps) {
             href={doc === "privacy" ? "/privacy" : "/terms"}
             className="inline-block min-h-12 text-sm font-bold text-yellow-400 underline"
           >
-            Open full {title} page
+            {bundle.openFullPage(title)}
           </a>
         </div>
       </div>

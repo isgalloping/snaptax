@@ -18,9 +18,11 @@ alwaysApply: false
 
 ## UI
 
-- 脚注含 **US processing** 告知
-- Settings：`Processed and stored in the United States...`
-- 同步 `lib/legal/content.ts` 与 `docs/legal/`
+- 脚注含 **US processing** 告知（随 i18n 语言：en / fr / de）
+- Settings：`Processed and stored in the United States...`（同上）
+- 法律全文：`docs/legal/` — **en** · **privacy.fr.md / terms.fr.md** · **privacy.de.md / terms.de.md**
+- App 内 Legal Sheet / `/privacy` `/terms` 随用户 locale 显示对应语言
+- 同步 `lib/legal/locales.ts` 与 `docs/legal/`
 
 ## 禁止
 

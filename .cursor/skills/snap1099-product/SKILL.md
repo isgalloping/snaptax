@@ -15,7 +15,7 @@ description: >-
 2. For backend/API work, read `docs/tech/README.md` and relevant module
 3. For database/schema changes, read `docs/tech/DB-DESIGN-SPEC.md` first
 4. For copy/interaction details, read `docs/prd/0.0.1.md` relevant section
-5. Check §11 **实现状态** — do not assume Google/Paddle/API already exist in code
+5. Check §12 **实现状态** — backend/OpenAI/Google/Paddle 已落地；改功能前仍对照 spec
 6. **MVP 落地顺序：** `docs/superpowers/plans/2026-06-07-mvp-master-implementation.md`
 7. **省税：** `docs/superpowers/specs/2026-06-07-tax-savings-regional-design.md` · rule `snap1099-tax.mdc` — no client `×0.25`
 
@@ -45,7 +45,15 @@ Export clicked + Google OK?
 ## Receipt state (client)
 
 `processing` → (online) → `done` | `blurry`  
-Offline: stay `processing` with `Uploading`; persist photo in IndexedDB.
+Offline: stay `processing` with `Uploading`; persist photo in IndexedDB.  
+Online: `POST /api/receipts` → server OpenAI Vision (never client mock).
+
+## Onboarding (wired in HomeScreen)
+
+- **T1:** 3rd `done` receipt → `GoogleBackupNudge` below TaxHeader
+- **T2:** first Settings visit → auto soft Google Sheet (300ms)
+- **Coach:** `SnapCoachBanner` (0 receipts) · `FirstReceiptCoach` (1 receipt)
+- **Dismiss:** `GOOGLE_SOFT_DISMISSED_KEY` — global once for soft triggers
 
 ## Files to touch (typical)
 
@@ -55,13 +63,8 @@ Offline: stay `processing` with `Uploading`; persist photo in IndexedDB.
 | Settings/export | `components/settings/SettingsScreen.tsx` |
 | Camera | `components/camera/`, `lib/camera/` |
 | Local queue | `lib/storage/receiptDb.ts` |
+| Onboarding | `lib/onboarding/onboardingStorage.ts`, `components/onboarding/` |
 | PWA | `app/sw.ts`, `components/pwa/` |
-
-## PRD alignment gaps (fix when implementing auth/pay)
-
-- Remove `RegisterBanner` / `RegisterSheet` (phone) → Google sheets
-- Replace mock pay with Paddle Overlay + season entitlement
-- Add §2.4.0 account status block in Settings
 
 ## Additional resources
 

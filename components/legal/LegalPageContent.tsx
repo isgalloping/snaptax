@@ -1,10 +1,29 @@
+"use client";
+
 import Link from "next/link";
 import type { LegalDoc } from "@/lib/legal/content";
-import { getLegalSections, getLegalTitle } from "@/lib/legal/content";
+import { getLegalBundle, getLegalSections, getLegalTitle } from "@/lib/legal/content";
+import { useI18n } from "@/components/i18n/I18nProvider";
+
+const LEGAL_DOC_PATH: Record<LegalDoc, Record<string, string>> = {
+  privacy: {
+    "en-US": "privacy.md",
+    "fr-FR": "privacy.fr.md",
+    "de-DE": "privacy.de.md",
+  },
+  terms: {
+    "en-US": "terms.md",
+    "fr-FR": "terms.fr.md",
+    "de-DE": "terms.de.md",
+  },
+};
 
 export function LegalPageContent({ doc }: { doc: LegalDoc }) {
-  const sections = getLegalSections(doc);
-  const title = getLegalTitle(doc);
+  const { locale } = useI18n();
+  const bundle = getLegalBundle(locale);
+  const sections = getLegalSections(doc, locale);
+  const title = getLegalTitle(doc, locale);
+  const markdownFile = LEGAL_DOC_PATH[doc][locale] ?? LEGAL_DOC_PATH[doc]["en-US"];
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -16,9 +35,7 @@ export function LegalPageContent({ doc }: { doc: LegalDoc }) {
           &lt; Back to Snap1099
         </Link>
         <h1 className="text-2xl font-black uppercase tracking-wider">{title}</h1>
-        <p className="mt-2 text-xs text-zinc-400">
-          Last Updated: June 2026 · GDPR & CPRA
-        </p>
+        <p className="mt-2 text-xs text-zinc-400">{bundle.lastUpdatedLabel}</p>
       </header>
       <main className="mx-auto max-w-2xl p-6 pb-16">
         {sections.map((section) => (
@@ -38,9 +55,7 @@ export function LegalPageContent({ doc }: { doc: LegalDoc }) {
         ))}
         <p className="text-sm text-zinc-400">
           Full text:{" "}
-          <code className="text-yellow-400">
-            docs/legal/{doc === "privacy" ? "privacy" : "terms"}.md
-          </code>
+          <code className="text-yellow-400">docs/legal/{markdownFile}</code>
         </p>
       </main>
     </div>

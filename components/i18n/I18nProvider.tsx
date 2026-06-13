@@ -12,6 +12,7 @@ import {
 import {
   DEFAULT_LOCALE,
   getUserCopy,
+  htmlLangForLocale,
   isSupportedLocale,
   pickLocale,
   type Locale,
@@ -39,13 +40,13 @@ export function I18nProvider({ children }: { children: ReactNode }) {
         ? stored
         : pickLocale(window.navigator.languages);
     setLocaleState(resolved);
-    document.documentElement.lang = resolved;
+    document.documentElement.lang = htmlLangForLocale(resolved);
     localeResolvedRef.current = true;
   }, []);
 
   useEffect(() => {
     if (!localeResolvedRef.current) return;
-    document.documentElement.lang = locale;
+    document.documentElement.lang = htmlLangForLocale(locale);
     window.localStorage.setItem(STORAGE_KEY, locale);
   }, [locale]);
 

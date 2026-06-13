@@ -64,9 +64,7 @@ export function PaywallSheet({
         return;
       }
 
-      console.warn("[PaywallSheet] Sandbox fallback: Paddle.js unavailable. Export may 402 without real entitlement.");
-      await new Promise((r) => setTimeout(r, 600));
-      await onPaidRef.current();
+      setError("Payment unavailable. Paddle is not configured.");
     } catch {
       setError("Payment failed. Please try again.");
     } finally {

@@ -24,6 +24,8 @@ interface UseTaxExportGateOptions {
   onPostLoginSync?: (taxRecalcQueued: number) => Promise<void>;
   onSeasonPaid: () => void;
   refreshSeasonPaid?: () => Promise<void>;
+  onPostExportSync?: () => Promise<void>;
+  onReceiptUpdated?: (receipt: Receipt) => void;
 }
 
 export function useTaxExportGate({
@@ -35,6 +37,8 @@ export function useTaxExportGate({
   onPostLoginSync,
   onSeasonPaid,
   refreshSeasonPaid,
+  onPostExportSync,
+  onReceiptUpdated,
 }: UseTaxExportGateOptions) {
   const { copy } = useI18n();
   const [googleSheet, setGoogleSheet] = useState<GoogleSignInMode | null>(null);
@@ -120,9 +124,14 @@ export function useTaxExportGate({
         <ExportEngineSheet
           receipts={receipts}
           onClose={() => setShowExportSheet(false)}
-          onExported={() => {
-            refreshSeasonPaid?.();
+          onExported={async () => {
+            await refreshSeasonPaid?.();
+            await onPostExportSync?.();
           }}
+          onPaymentRequired={() => {
+            setShowPaywall(true);
+          }}
+          onReceiptUpdated={onReceiptUpdated}
         />
       )}
     </>

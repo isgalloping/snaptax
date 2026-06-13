@@ -1,5 +1,5 @@
 import type { SnaptaxReceipt } from "@prisma/client";
-import { formatLocalDate } from "@/lib/format";
+import { formatIsoDate, formatLocalDate } from "@/lib/format";
 import {
   irsScheduleLabel,
   irsScheduleLineShort,
@@ -11,6 +11,7 @@ import { receiptTaxYear } from "@/lib/tax/taxYearStats";
 export type ExportExpenseRow = {
   id: string;
   date: string;
+  dateIso: string;
   merchant: string;
   amount: number;
   category: string;
@@ -21,6 +22,7 @@ export type ExportExpenseRow = {
   taxSaved: number;
   notes: string;
   imagePathname: string | null;
+  receiptImageUrl: string;
 };
 
 export function extractAiDeductionRatio(
@@ -45,14 +47,12 @@ export function buildExportExpenseRow(
   const deductibleAmount = round2(amount * ratio);
   const taxSaved = Number(receipt.taxAmount ?? 0);
   const unclassified = !receipt.category?.trim();
+  const instant = receipt.snapAt ?? receipt.capturedAt;
 
   return {
     id: receipt.id,
-    date: formatLocalDate(
-      receipt.snapAt ?? receipt.capturedAt,
-      timeZone,
-      region,
-    ),
+    date: formatLocalDate(instant, timeZone, region),
+    dateIso: formatIsoDate(instant, timeZone),
     merchant: receipt.merchantName ?? "",
     amount,
     category,
@@ -63,6 +63,7 @@ export function buildExportExpenseRow(
     taxSaved,
     notes: unclassified ? "Unclassified — review with CPA" : "",
     imagePathname: receipt.imageUrl?.trim() || null,
+    receiptImageUrl: "",
   };
 }
 

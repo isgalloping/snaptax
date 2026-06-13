@@ -37,6 +37,7 @@ describe("buildExportExpenseRow", () => {
     assert.equal(row.deductibleAmount, 50);
     assert.equal(row.irsLine, "Line 24b");
     assert.match(row.irsSchedule, /Meals/);
+    assert.equal(row.dateIso, "2025-03-01");
   });
 
   it("marks unclassified categories for CPA review", () => {

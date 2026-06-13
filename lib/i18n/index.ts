@@ -179,6 +179,7 @@ export type UserCopy = {
     stepLabel: string;
     step1Heading: string;
     step2Heading: string;
+    stepFormatHeading: string;
     step3Heading: string;
     yearCard: string;
     yearRange: string;
@@ -196,6 +197,22 @@ export type UserCopy = {
     formatCsvHint: string;
     formatCpaTitle: string;
     formatCpaHint: string;
+    sharing: string;
+    imagesComplete: string;
+    imagesMissing: string;
+    sharingHint: string;
+    reviewHint: string;
+    reviewUnknownMerchant: string;
+    reviewSaving: string;
+    reviewSaveFailed: string;
+    formatCpaPdfTitle: string;
+    formatCpaPdfHint: string;
+    turboTaxSteps: string[];
+    previewCsv: string;
+    previewCsvHint: string;
+    progressPreparing: string;
+    progressFetchingImages: string;
+    progressFinalizing: string;
   };
 };
 
@@ -404,7 +421,8 @@ const USER_COPY_BY_LOCALE: Record<Locale, UserCopy> = {
       close: "Close",
       stepLabel: "Step {step} of {total}",
       step1Heading: "Select tax year",
-      step2Heading: "Choose export format",
+      step2Heading: "Review categories",
+      stepFormatHeading: "Choose export format",
       step3Heading: "Your tax pack",
       yearCard: "{year} Tax Year",
       yearRange: "Jan 1 – Dec 31, {year}",
@@ -424,6 +442,30 @@ const USER_COPY_BY_LOCALE: Record<Locale, UserCopy> = {
       formatCpaTitle: "CPA Audit Pack (ZIP + Receipt Images)",
       formatCpaHint:
         "IRS-compliant audit trail with your original receipt photos.",
+      sharing: "Opening share sheet…",
+      imagesComplete: "{included} of {eligible} receipt images included",
+      imagesMissing: "{missing} receipt images could not be included",
+      sharingHint: "Tap Share again if you dismissed the sheet",
+      reviewHint:
+        "These receipts need a category before your CPA or tax software can use them.",
+      reviewUnknownMerchant: "Unknown merchant",
+      reviewSaving: "Saving…",
+      reviewSaveFailed: "Could not save category. Try again.",
+      formatCpaPdfTitle: "CPA Summary PDF (Links to Receipts)",
+      formatCpaPdfHint:
+        "IRS-compliant summary with clickable links to your receipt photos.",
+      turboTaxSteps: [
+        "Open TurboTax Self-Employed → Business",
+        "Choose Import / Upload expenses from CSV",
+        "Select this Snap1099 CSV file",
+        "Map columns if prompted (Date, Amount, Category)",
+      ],
+      previewCsv: "Preview CSV locally",
+      previewCsvHint:
+        "Instant offline preview without receipt image links. Full export adds signed URLs.",
+      progressPreparing: "Preparing expenses…",
+      progressFetchingImages: "Fetching receipt images…",
+      progressFinalizing: "Finalizing your pack…",
     },
   },
   "zh-CN": {
@@ -623,7 +665,8 @@ const USER_COPY_BY_LOCALE: Record<Locale, UserCopy> = {
       close: "关闭",
       stepLabel: "第 {step} 步，共 {total} 步",
       step1Heading: "选择税年",
-      step2Heading: "选择导出格式",
+      step2Heading: "检查分类",
+      stepFormatHeading: "选择导出格式",
       step3Heading: "你的报税包",
       yearCard: "{year} 税年",
       yearRange: "{year} 年 1 月 1 日 – 12 月 31 日",
@@ -641,6 +684,27 @@ const USER_COPY_BY_LOCALE: Record<Locale, UserCopy> = {
       formatCsvHint: "针对主流报税软件优化的矩阵格式，可快速导入。",
       formatCpaTitle: "CPA 审计包（ZIP + 小票照片）",
       formatCpaHint: "符合 IRS 审计要求的凭证链，含原始小票图片。",
+      sharing: "正在打开分享面板…",
+      imagesComplete: "已包含 {included} / {eligible} 张小票照片",
+      imagesMissing: "有 {missing} 张小票照片未能包含",
+      sharingHint: "若已关闭分享面板，可再次点击分享",
+      reviewHint: "以下小票需要在导出前确认分类，便于 CPA 或报税软件使用。",
+      reviewUnknownMerchant: "未知商户",
+      reviewSaving: "保存中…",
+      reviewSaveFailed: "分类保存失败，请重试。",
+      formatCpaPdfTitle: "CPA 汇总 PDF（含小票链接）",
+      formatCpaPdfHint: "符合 IRS 要求的汇总表，含可点击的小票照片链接。",
+      turboTaxSteps: [
+        "打开 TurboTax Self-Employed → Business",
+        "选择 Import / Upload expenses from CSV",
+        "选中 Snap1099 导出的 CSV 文件",
+        "若提示列映射，请对应 Date、Amount、Category",
+      ],
+      previewCsv: "本地预览 CSV",
+      previewCsvHint: "即时离线预览（不含小票图片链接）。完整导出会附加签名 URL。",
+      progressPreparing: "正在整理开支…",
+      progressFetchingImages: "正在拉取小票图片…",
+      progressFinalizing: "正在打包…",
     },
   },
 };

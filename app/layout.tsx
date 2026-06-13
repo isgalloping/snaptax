@@ -1,9 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { I18nProvider } from "@/components/i18n/I18nProvider";
+import { InstallCaptureScript } from "@/components/pwa/InstallCaptureScript";
 import { PwaProvider } from "@/components/pwa/PwaProvider";
 import { USER_COPY } from "@/lib/copy/userFacing";
-import { DEFAULT_LOCALE } from "@/lib/i18n";
-import { INLINE_INSTALL_CAPTURE_SCRIPT } from "@/lib/pwa/installCaptureScript";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -56,14 +56,14 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang={DEFAULT_LOCALE}
+      lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="flex h-full min-h-full flex-col">
-        <script
-          dangerouslySetInnerHTML={{ __html: INLINE_INSTALL_CAPTURE_SCRIPT }}
-        />
-        <PwaProvider>{children}</PwaProvider>
+        <InstallCaptureScript />
+        <PwaProvider>
+          <I18nProvider>{children}</I18nProvider>
+        </PwaProvider>
       </body>
     </html>
   );

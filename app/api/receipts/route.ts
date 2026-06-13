@@ -21,6 +21,9 @@ import {
 import { withRequestLog } from "@/lib/server/log/withRequestLog";
 import { blobCommandOptions } from "@/lib/server/blob";
 import { parseUtcISOString, utcNow } from "@/lib/time/utc";
+import { resolveVerifyContext } from "@/lib/verify/context";
+import { logEvent } from "@/lib/server/log/logEvent";
+import { baseLogEntry } from "@/lib/server/log/context";
 
 export const maxDuration = 60;
 
@@ -133,12 +136,28 @@ export const POST = withRequestLog(
       });
 
       try {
+        const verify = await resolveVerifyContext(actor);
+        if (verify.canBypass) {
+          logEvent({
+            ...baseLogEntry("biz.verify", request, actor),
+            level: "info",
+            success: true,
+            durationMs: 0,
+            meta: {
+              verifyBypass: true,
+              mockAi: verify.canMockAi,
+              bypassPay: verify.canBypassPay,
+            },
+          });
+        }
+
         const result = await processReceiptTax({
           receiptId,
           dataRegion,
           imageBuffer: bytes,
           mime,
           industry,
+          canMockAi: verify.canMockAi,
         });
 
         return NextResponse.json(

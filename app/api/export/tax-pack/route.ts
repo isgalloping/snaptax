@@ -24,6 +24,8 @@ import { buildCpaPackZip } from "@/lib/export/buildCpaPack";
 import { buildCpaSummaryPdf } from "@/lib/export/buildCpaPdf";
 import { enrichExportRowsWithImageUrls } from "@/lib/export/receiptImageUrl";
 import { logEvent } from "@/lib/server/log/logEvent";
+import { resolveVerifyContext } from "@/lib/verify/context";
+import { ensureBypassEntitlement } from "@/lib/verify/ensureBypassEntitlement";
 
 const exportBodySchema = z.object({
   taxYear: z.string().regex(/^\d{4}$/).optional(),
@@ -36,6 +38,10 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
     if (actor.kind !== "user") throw new Error("UNAUTHORIZED");
 
     const season = currentTaxSeason();
+    const verify = await resolveVerifyContext(actor);
+    if (verify.canBypassPay) {
+      await ensureBypassEntitlement(actor.userId, season);
+    }
     const entitlement = await prisma.snaptaxSeasonEntitlement.findUnique({
       where: {
         userId_taxSeason: { userId: actor.userId, taxSeason: season },

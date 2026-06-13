@@ -15,6 +15,7 @@
     "db:studio": "node scripts/load-env.mjs && npx prisma studio"
   },
   "dependencies": {
+    "@flags-sdk/vercel": "^1.4.0",
     "@paddle/paddle-js": "^1.6.4",
     "@prisma/client": "^6.19.3",
     "@types/archiver": "^8.0.0",

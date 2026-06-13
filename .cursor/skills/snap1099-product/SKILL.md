@@ -21,13 +21,18 @@ description: >-
 
 ## Decision tree: auth UI
 
+> Onboarding canonical: `docs/superpowers/specs/2026-06-12-new-user-onboarding-design.md`
+
 ```
 User action?
 ├─ Snap receipt → no login (Ghost)
-├─ 3rd receipt OR first settings visit → soft Google banner (dismiss once forever)
+├─ 3rd done receipt → TaxHeader nudge → Settings soft Google Sheet (optional tap)
+├─ First settings visit → auto soft Google Sheet (dismiss once forever)
 ├─ Export IRS Tax Pack → hard Google → Paddle (if unpaid season) → share
 └─ View on All Devices → hard Google → sync instructions
 ```
+
+**No home-screen Google banner** (see `2026-06-07-home-remove-google-banner-design.md`).
 
 ## Decision tree: paywall
 

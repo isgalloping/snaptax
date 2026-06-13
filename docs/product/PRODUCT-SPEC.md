@@ -270,6 +270,7 @@ Next.js 16 · React 19 · Tailwind 4 · Serwist · **PostgreSQL（美国）** ·
 | [specs/2026-06-05-api-security-design.md](../superpowers/specs/2026-06-05-api-security-design.md) | API 安全 ADR（Ghost HMAC、OpenAI、IDOR、限流） |
 | [specs/2026-06-06-product-tech-code-consistency-audit.md](../superpowers/specs/2026-06-06-product-tech-code-consistency-audit.md) | 产品/技术/代码一致性审计 |
 | [specs/2026-06-07-tax-savings-regional-design.md](../superpowers/specs/2026-06-07-tax-savings-regional-design.md) | 分区域省税 US/EU + R1 |
+| [specs/2026-06-12-new-user-onboarding-design.md](../superpowers/specs/2026-06-12-new-user-onboarding-design.md) | 新人引导（业务分析 + T1/T2 软引导） |
 | [specs/2026-06-07-mvp-master-roadmap-design.md](../superpowers/specs/2026-06-07-mvp-master-roadmap-design.md) | MVP 总路线图 |
 | [plans/2026-06-07-mvp-master-implementation.md](../superpowers/plans/2026-06-07-mvp-master-implementation.md) | **MVP 总落地计划** |
 

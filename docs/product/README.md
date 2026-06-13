@@ -8,10 +8,11 @@
 | **2** | [../legal/](../legal/privacy.md) | 隐私政策 · 服务条款 |
 | **3** | [../tech/README.md](../tech/README.md) | **技术文档** — 全栈架构、API、部署 |
 | 4 | [../prd/0.0.1.md](../prd/0.0.1.md) | 完整 PRD（§2.5 合规） |
-| 5 | [../superpowers/specs/2026-06-05-compliance-privacy-design.md](../superpowers/specs/2026-06-05-compliance-privacy-design.md) | 合规与隐私 ADR |
-| 4 | [../superpowers/specs/2026-06-05-paddle-paywall-design.md](../superpowers/specs/2026-06-05-paddle-paywall-design.md) | Paddle 付费墙 + 换机提醒设计决策 |
-| 5 | [../superpowers/specs/2026-06-05-tech-architecture-design.md](../superpowers/specs/2026-06-05-tech-architecture-design.md) | 全栈技术架构 ADR |
-| 6 | [../ui/ui.html](../ui/ui.html) | 主界面静态视觉参考 |
+| 5 | [../superpowers/specs/2026-06-12-new-user-onboarding-design.md](../superpowers/specs/2026-06-12-new-user-onboarding-design.md) | **新人引导** — 业务分析 + 分阶段旅程 + Google 软引导（T1/T2） |
+| 6 | [../superpowers/specs/2026-06-05-compliance-privacy-design.md](../superpowers/specs/2026-06-05-compliance-privacy-design.md) | 合规与隐私 ADR |
+| 7 | [../superpowers/specs/2026-06-05-paddle-paywall-design.md](../superpowers/specs/2026-06-05-paddle-paywall-design.md) | Paddle 付费墙 + 换机提醒设计决策 |
+| 8 | [../superpowers/specs/2026-06-05-tech-architecture-design.md](../superpowers/specs/2026-06-05-tech-architecture-design.md) | 全栈技术架构 ADR |
+| 9 | [../ui/ui.html](../ui/ui.html) | 主界面静态视觉参考 |
 
 ## Agent / 自动化
 

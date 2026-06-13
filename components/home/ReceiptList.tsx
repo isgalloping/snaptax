@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import type { Receipt } from "@/lib/types";
 import { countByStatus } from "@/lib/receipts/receiptStats";
 import { useUserCopy } from "@/components/i18n/I18nProvider";
@@ -11,6 +11,7 @@ import { ReceiptListCard } from "./ReceiptListCard";
 interface ReceiptListProps {
   receipts: Receipt[];
   syncStuckIds: Set<string>;
+  listHeader?: ReactNode;
   onSelect: (receipt: Receipt) => void;
   onResnap: (id: string) => void;
   onRetrySync: (id: string) => void;
@@ -34,6 +35,7 @@ function filterReceipts(
 export function ReceiptList({
   receipts,
   syncStuckIds,
+  listHeader,
   onSelect,
   onResnap,
   onRetrySync,
@@ -78,6 +80,7 @@ export function ReceiptList({
       </div>
 
       <div className="min-h-0 flex-1 space-y-1.5 overflow-y-auto pr-1">
+        {listHeader}
         {visible.length === 0 ? (
           <p className="py-4 text-center text-sm text-zinc-500">
             {receipts.length === 0

@@ -1,0 +1,265 @@
+import type { UserCopy } from "../types";
+
+export const FR_FR_COPY: UserCopy = {
+  app: {
+    description:
+      "Photographiez vos reçus, catégorisation automatique. Comptabilité 1099 simplifiée.",
+  },
+  pwa: {
+    title: "Ajouter Snap1099 à l'écran d'accueil",
+    subtitle:
+      "Ouvrez comme une app native — photographiez vos reçus d'une main sur le chantier",
+    install: "Installer",
+    howToInstall: "Comment ajouter",
+    dismiss: "Pas maintenant",
+    manualHint: "Appuyez sur ⋮ dans Chrome, puis Installer l'application",
+    manualSheetTitle: "Installer Snap1099",
+    manualSheetLead:
+      "Votre navigateur ne peut pas installer automatiquement — suivez ces étapes :",
+    manualGotIt: "Compris",
+    manualSteps: {
+      chromiumAndroid: [
+        "Appuyez sur le menu ⋮ (en haut à droite de Chrome).",
+        'Appuyez sur « Installer l\'application » ou « Ajouter à l\'écran d\'accueil ».',
+        "Confirmez — Snap1099 s'ouvre depuis votre écran d'accueil comme une app native.",
+      ],
+      chromiumDesktop: [
+        "Appuyez sur le menu ⋮ (en haut à droite de Chrome ou Edge).",
+        'Appuyez sur « Applications » → « Installer Snap1099 » (ou « Installer ce site »).',
+        "Confirmez — Snap1099 s'ouvre dans sa propre fenêtre.",
+      ],
+      iosSafari: [
+        "Appuyez sur le bouton Partager (carré avec flèche) en bas de Safari.",
+        'Faites défiler et appuyez sur « Sur l\'écran d\'accueil ».',
+        'Appuyez sur « Ajouter » — ouvrez Snap1099 depuis votre écran d\'accueil.',
+      ],
+      macosSafari: [
+        "Appuyez sur le bouton Partager dans la barre d'outils de Safari.",
+        'Choisissez « Ajouter au Dock ».',
+        "Snap1099 apparaît dans votre Dock comme une app native.",
+      ],
+    },
+  },
+  camera: {
+    opening: "Ouverture de l'appareil photo…",
+    openFailed: "Impossible d'ouvrir l'appareil photo. Réessayez.",
+    captureFailed: "Échec de la capture. Réessayez.",
+    retry: "Réessayer",
+    chooseGallery: "Choisir dans la galerie",
+    errors: {
+      notAllowed:
+        "L'accès à l'appareil photo est requis pour photographier les reçus. Autorisez l'appareil photo dans les paramètres de votre navigateur.",
+      notFound: "Aucun appareil photo trouvé",
+      notReadable: "L'appareil photo est utilisé par une autre application",
+      abort: "Impossible d'ouvrir l'appareil photo. Réessayez.",
+      default: "Impossible d'ouvrir l'appareil photo. Réessayez.",
+    },
+  },
+  offline: {
+    label: "HORS LIGNE",
+    title: "Vous êtes hors ligne",
+    body: "Vous pouvez toujours photographier des reçus. Ils seront envoyés lorsque vous serez de nouveau en ligne.",
+    backHome: "Retour à l'accueil",
+  },
+  onboarding: {
+    landing: {
+      headline: "SNAP1099",
+      tagline:
+        "Reçus → économies fiscales. Conçu pour le chantier.",
+      step1: "Prenez une photo — nous classons vos dépenses professionnelles.",
+      step2: "Fonctionne hors ligne. Se synchronise en ligne.",
+      step3: "Privé et sécurisé. Conditions · Confidentialité.",
+      cta: "Commencer à photographier →",
+      ctaAria: "Commencer à photographier des reçus",
+      ariaStatus: "Chargement de Snap1099",
+    },
+    snapCoach:
+      "Appuyez sur SNAP RECEIPT — photographiez tout reçu professionnel.",
+    dismissCoach: "Fermer l'indication",
+    firstReceipt: {
+      processing:
+        "Lecture de votre reçu… Photographiez-en d'autres à tout moment.",
+      done: "Ajouté ! L'estimation d'économies fiscales se met à jour en haut.",
+      blurry: "Trop flou — appuyez sur la ligne pour reprendre la photo.",
+    },
+    googleNudge:
+      "Nouveau téléphone ? Connectez-vous avec Google pour sauvegarder vos reçus.",
+    googleNudgeDismiss: "Pas maintenant",
+  },
+  home: {
+    taxHeader: {
+      title: "Économies fiscales estimées",
+      receiptSingular: "reçu",
+      receiptPlural: "reçus",
+      tracked: "enregistrés",
+      installApp: "Installer l'application",
+      syncReceipts: "Synchroniser les reçus",
+      settings: "Paramètres",
+    },
+    snapButton: {
+      title: "Photographier un reçu",
+      resnapSubtitle: "Reprendre ce reçu",
+      subtitle: "Prenez une photo de votre reçu",
+    },
+    receiptList: {
+      filters: {
+        all: "TOUS",
+        done: "PRÊTS",
+        processing: "EN COURS",
+        blurry: "FLOUS",
+        stuckAria: "Reçus bloqués",
+      },
+      title: "Tous les reçus locaux",
+      refresh: "Tirez pour actualiser",
+      emptyFirst: "Photographiez votre premier reçu pour commencer",
+      emptyFilter: "Aucun reçu dans ce filtre",
+      uploadPaused: "ENVOI EN PAUSE",
+      analysisPaused: "ANALYSE EN PAUSE",
+      uploading: "ENVOI EN COURS...",
+      tapToRetry: "Appuyez pour réessayer",
+      processing: "En cours de traitement",
+      receiptBlurry: "Reçu flou",
+      needAction: "Action requise",
+      resnap: "Reprendre",
+      unknownMerchant: "Commerçant inconnu",
+      status: {
+        analyzing: "ANALYSE",
+        uploading: "ENVOI",
+        paused: "EN PAUSE",
+      },
+    },
+  },
+  legal: {
+    compliance: {
+      prefix: "En photographiant, vous acceptez nos ",
+      terms: "Conditions",
+      middle: " et notre ",
+      privacy: "Politique de confidentialité",
+      suffix:
+        ". Le traitement en ligne stocke les données aux États-Unis.",
+    },
+  },
+  settings: {
+    back: "< RETOUR",
+    title: "Paramètres",
+    account: {
+      title: "Compte",
+      signedInPrefix: "Connecté",
+      cloudBackupOn: "Sauvegarde cloud activée",
+      taxSeasonPaid: "Saison fiscale · Payé ✓",
+      notSignedIn:
+        "Non connecté · Les données seront perdues si vous changez de téléphone",
+      backupHint:
+        "Connectez-vous avec Google pour sauvegarder vos reçus avant de changer de téléphone.",
+      googleCta: "Continuer avec Google",
+    },
+    language: {
+      title: "Langue",
+      english: "English",
+      french: "Français",
+      german: "Deutsch",
+    },
+    industry: {
+      title: "Votre secteur",
+      labels: {
+        truck_driver: "Chauffeur routier",
+        plumber: "Plombier",
+        electrician: "Électricien",
+        construction: "Construction",
+        delivery: "Livraison",
+        general: "1099 général",
+      },
+    },
+    multiDevice: {
+      title: "Multi-appareils",
+      button: "Voir sur tous les appareils",
+    },
+    privacyData: {
+      title: "Confidentialité et données",
+      privacy: "Politique de confidentialité",
+      terms: "Conditions d'utilisation",
+      dataStorage: "Stockage des données",
+      dataStorageValue:
+        "Traitées et stockées aux États-Unis. Voir la Politique de confidentialité pour les transferts internationaux.",
+      contactPrefix: "Contact",
+      deleteAccount: "Supprimer le compte",
+      deleteFailed: "Échec de la suppression. Veuillez réessayer.",
+      deleteTitle: "Supprimer le compte",
+      deleteSignedInWarning:
+        "Cette action est irréversible. Tous les reçus cloud et les données du compte seront définitivement supprimés.",
+      deleteGhostWarning:
+        "Efface tous les reçus sur cet appareil et les données Ghost cloud. Action irréversible.",
+      deleting: "Suppression...",
+      deletePermanently: "Supprimer définitivement",
+      cancel: "Annuler",
+    },
+    export: {
+      title: "Export saison fiscale",
+      button: "Exporter le pack fiscal IRS",
+      buttonPaid: "Exporter à nouveau",
+      exporting: "Export en cours…",
+      shareText: "Votre export de dépenses prêt pour l'IRS",
+      offline: "Vous êtes hors ligne. Connectez-vous pour exporter.",
+      noReceipts:
+        "Aucun reçu terminé à exporter. Photographiez d'abord quelques reçus !",
+      failed: "Échec de l'export. Veuillez réessayer.",
+      failedAfterPayment:
+        "Échec de l'export après paiement. Essayez Exporter à nouveau.",
+      paymentConfirmed:
+        "Paiement confirmé. Appuyez sur Exporter à nouveau pour télécharger.",
+    },
+  },
+  exportEngine: {
+    title: "Exporter le pack fiscal",
+    close: "Fermer",
+    stepLabel: "Étape {step} sur {total}",
+    step1Heading: "Sélectionner l'année fiscale",
+    step2Heading: "Vérifier les catégories",
+    stepFormatHeading: "Choisir le format d'export",
+    step3Heading: "Votre pack fiscal",
+    yearCard: "Année fiscale {year}",
+    yearRange: "1er janv. – 31 déc. {year}",
+    deductionsLabel: "Déductions fiscales estimées : {amount}",
+    receiptsLabel: "{count} reçus enregistrés",
+    noReceiptsYear: "Aucun reçu pour cette année",
+    continue: "Continuer →",
+    back: "← Retour",
+    generate: "Générer →",
+    generating: "Création de votre pack…",
+    ready: "Prêt à partager",
+    share: "Partager le pack fiscal →",
+    yearSummary: "{year} · {amount} · {count} reçus",
+    formatCsvTitle: "CSV pour TurboTax / logiciel fiscal",
+    formatCsvHint:
+      "Format matriciel optimisé pour un import instantané dans les logiciels fiscaux.",
+    formatCpaTitle: "Pack d'audit CPA (ZIP + images de reçus)",
+    formatCpaHint:
+      "Piste d'audit conforme à l'IRS avec vos photos de reçus originales.",
+    sharing: "Ouverture du menu de partage…",
+    imagesComplete: "{included} sur {eligible} images de reçus incluses",
+    imagesMissing: "{missing} images de reçus n'ont pas pu être incluses",
+    sharingHint:
+      "Appuyez à nouveau sur Partager si vous avez fermé le menu",
+    reviewHint:
+      "Ces reçus nécessitent une catégorie avant que votre CPA ou logiciel fiscal puisse les utiliser.",
+    reviewUnknownMerchant: "Commerçant inconnu",
+    reviewSaving: "Enregistrement…",
+    reviewSaveFailed:
+      "Impossible d'enregistrer la catégorie. Réessayez.",
+    formatCpaPdfTitle: "PDF récapitulatif CPA (liens vers les reçus)",
+    formatCpaPdfHint:
+      "Récapitulatif conforme à l'IRS avec liens cliquables vers vos photos de reçus.",
+    turboTaxSteps: [
+      "Ouvrez TurboTax Self-Employed → Business",
+      "Choisissez Import / Upload expenses from CSV",
+      "Sélectionnez ce fichier CSV Snap1099",
+      "Associez les colonnes si demandé (Date, Amount, Category)",
+    ],
+    previewCsv: "Aperçu CSV en local",
+    previewCsvHint:
+      "Aperçu hors ligne instantané sans liens vers les images de reçus. L'export complet ajoute des URL signées.",
+    progressPreparing: "Préparation des dépenses…",
+    progressFetchingImages: "Récupération des images de reçus…",
+    progressFinalizing: "Finalisation de votre pack…",
+  },
+};

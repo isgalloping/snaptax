@@ -1,10 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Industry } from "@/lib/types";
 import { INDUSTRIES } from "@/lib/types";
 import type { GoogleUser } from "@/lib/client/authStorage";
+import { saveIndustry } from "@/lib/client/authStorage";
 import { apiFetch } from "@/lib/client/ghostClient";
+import {
+  GOOGLE_SOFT_DISMISSED_KEY,
+  isFirstSettingsSoftSheetEligible,
+  readOnboardFlag,
+  SETTINGS_VISITED_KEY,
+  writeOnboardFlag,
+} from "@/lib/onboarding/onboardingStorage";
 import { AccountStatusBlock } from "@/components/auth/AccountStatusBlock";
 import { GoogleSignInSheet, type GoogleSignInMode } from "@/components/auth/GoogleSignInSheet";
 import { useI18n } from "@/components/i18n/I18nProvider";
@@ -26,6 +34,10 @@ interface SettingsScreenProps {
   onRequestExport: () => void;
   exportBusy?: boolean;
   exportError?: string | null;
+  /** Open soft Google sheet immediately (e.g. from TaxHeader nudge). */
+  requestSoftGoogleSheet?: boolean;
+  onSoftGoogleSheetConsumed?: () => void;
+  onSoftGuideDismiss?: () => void;
 }
 
 export function SettingsScreen({
@@ -42,12 +54,49 @@ export function SettingsScreen({
   onRequestExport,
   exportBusy = false,
   exportError = null,
+  requestSoftGoogleSheet = false,
+  onSoftGoogleSheetConsumed,
+  onSoftGuideDismiss,
 }: SettingsScreenProps) {
   const { locale, setLocale, copy } = useI18n();
   const [googleSheet, setGoogleSheet] = useState<GoogleSignInMode | null>(null);
   const [showSyncHelp, setShowSyncHelp] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [pendingAfterSignIn, setPendingAfterSignIn] = useState<"sync" | null>(null);
+  const firstVisitHandled = useRef(false);
+
+  useEffect(() => {
+    if (firstVisitHandled.current) return;
+    firstVisitHandled.current = true;
+
+    const settingsVisited = readOnboardFlag(SETTINGS_VISITED_KEY);
+    writeOnboardFlag(SETTINGS_VISITED_KEY);
+
+    if (
+      isFirstSettingsSoftSheetEligible({
+        settingsVisited,
+        signedIn: isSignedIn,
+        softDismissed: readOnboardFlag(GOOGLE_SOFT_DISMISSED_KEY),
+      })
+    ) {
+      const timer = window.setTimeout(() => setGoogleSheet("soft"), 300);
+      return () => window.clearTimeout(timer);
+    }
+  }, [isSignedIn]);
+
+  useEffect(() => {
+    if (!requestSoftGoogleSheet || isSignedIn) return;
+    const timer = window.setTimeout(() => {
+      setGoogleSheet("soft");
+      onSoftGoogleSheetConsumed?.();
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [requestSoftGoogleSheet, isSignedIn, onSoftGoogleSheetConsumed]);
+
+  const handleSoftDismiss = () => {
+    writeOnboardFlag(GOOGLE_SOFT_DISMISSED_KEY);
+    onSoftGuideDismiss?.();
+  };
 
   const clearError = () => setErrorMessage(null);
   const displayError = errorMessage ?? exportError;
@@ -78,6 +127,7 @@ export function SettingsScreen({
 
   const handleIndustryChange = async (value: Industry) => {
     onIndustryChange(value);
+    saveIndustry(value);
     if (isSignedIn && navigator.onLine) {
       await apiFetch("/api/users/me", {
         method: "PATCH",
@@ -89,7 +139,8 @@ export function SettingsScreen({
 
   const languageLabels: Record<Locale, string> = {
     "en-US": copy.settings.language.english,
-    "zh-CN": copy.settings.language.chinese,
+    "fr-FR": copy.settings.language.french,
+    "de-DE": copy.settings.language.german,
   };
 
   return (
@@ -212,6 +263,7 @@ export function SettingsScreen({
             setGoogleSheet(null);
             setPendingAfterSignIn(null);
           }}
+          onSoftDismiss={googleSheet === "soft" ? handleSoftDismiss : undefined}
           onSuccess={handleGoogleSuccess}
           onFailure={(msg) => {
             setErrorMessage(msg);

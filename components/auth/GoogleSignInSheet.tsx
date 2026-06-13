@@ -30,6 +30,7 @@ interface GoogleSignInSheetProps {
   onClose: () => void;
   onSuccess: () => void | Promise<void>;
   onFailure?: (message: string) => void;
+  onSoftDismiss?: () => void;
 }
 
 export function GoogleSignInSheet({
@@ -37,6 +38,7 @@ export function GoogleSignInSheet({
   onClose,
   onSuccess,
   onFailure,
+  onSoftDismiss,
 }: GoogleSignInSheetProps) {
   const [loading, setLoading] = useState(false);
   const copy = COPY[mode];
@@ -72,7 +74,10 @@ export function GoogleSignInSheet({
         {copy.showNotNow ? (
           <button
             type="button"
-            onClick={onClose}
+            onClick={() => {
+              onSoftDismiss?.();
+              onClose();
+            }}
             className="mt-3 w-full min-h-16 py-3 text-sm font-bold text-zinc-400 transition-transform active:scale-95"
           >
             Not now

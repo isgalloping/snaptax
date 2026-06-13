@@ -38,4 +38,4 @@ alwaysApply: true
 - 核心流程 Modal；手机号注册；Paywall 用原生 Apple/Google Pay 按钮代替 Paddle
 - 未提醒换机需 Google 登录的数据「云同步」承诺
 
-改 UI/功能前对照 `docs/product/PRODUCT-SPEC.md` §11 实现状态。
+改 UI/功能前对照 `docs/product/PRODUCT-SPEC.md` §12 实现状态。

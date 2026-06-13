@@ -131,7 +131,7 @@ Privacy Policy · Terms · **Data storage（美国）** · legal@snap1099.com ·
 | 模式 | 行为 |
 |------|------|
 | **Live 连拍** | 快门不断流；每张即时写 IndexedDB |
-| **Live Footer UI** | 白快门 + 1s 绿弧 cooldown · 黄 **⚡ FLASH DONE** · 深绿 **DONE & REVIEW** · Gallery 最新张黄框 |
+| **Live Footer UI** | 白快门 + **300ms** 绿弧 cooldown · 黄 **⚡ FLASH DONE** · 深绿 **DONE & REVIEW** · Gallery 最新张黄框 |
 | **⚡ FLASH DONE** | 跳过 review → 立即 flush + 回主屏（快车道） |
 | **DONE & REVIEW** | 进入 postReview 严审 → 审完 flush |
 | **BATCH 气泡** | batchPreview 轻量查看 → BACK 继续拍 |
@@ -226,22 +226,25 @@ Next.js 16 · React 19 · Tailwind 4 · Serwist · **PostgreSQL（美国）** ·
 
 ---
 
-## 12. 产品里程碑 vs 代码（2026-06）
+## 12. 产品里程碑 vs 代码（2026-06-13）
 
 | 能力 | 产品设计 v1.2 | 代码 |
 |------|---------------|------|
-| 主界面 + 拍照 + 三态 | ✅ | ✅（AI 仍为 client mock，待接 API） |
-| 未登录 **联网 OpenAI** | ✅ | ❌ |
+| 主界面 + 拍照 + 三态 | ✅ | ✅ |
+| 未登录 **联网 OpenAI** | ✅ | ✅（`POST /api/receipts` → Vision） |
 | 美国存储 + 知情 UI | ✅ | ✅ |
-| Google 软/硬引导 UI | ✅ | ✅（mock GIS；待真实 OAuth） |
-| 蓝领新人引导（Welcome Landing + 三阶段 Coach） | ✅ | ✅ |
-| 设置页账户区 + 多端 + Paywall UI | ✅ | ✅（Paddle mock） |
+| Google 软/硬引导 UI | ✅ | ✅（GIS + 后端绑定；T1 Nudge + T2 首次 Settings Sheet） |
+| 蓝领新人引导（Welcome Landing + Coach） | ✅ | ✅（Landing + SnapCoach + FirstReceiptCoach） |
+| 设置页账户区 + 多端 + Paywall UI | ✅ | ✅（Paddle.js Overlay；无 env 时阻断，不假成功） |
 | Privacy §4 国际传输 | ✅ | ✅ |
-| Google + Ghost 绑定（后端） | ✅ | ❌ |
-| Paddle（后端 Webhook） | ✅ | ❌ |
-| Ghost 小票 API（美国） | ✅ | ❌ |
+| Google + Ghost 绑定（后端） | ✅ | ✅ |
+| Paddle（后端 Webhook） | ✅ | ✅（需配置 `PADDLE_*` / `NEXT_PUBLIC_PADDLE_*`） |
+| Ghost 小票 API（美国） | ✅ | ✅（HMAC Cookie + 限流） |
 | DB DDL + Prisma + UTC | ✅ | ✅ |
-| 分区域省税 US/EU + R1 | ✅ | ❌（代码仍 ×0.25 mock） |
+| 分区域省税 US/EU + R1 | ✅ | ✅（`SUM(tax_amount)` + `X-Tax-Region`） |
+| 行业六选一 | ✅ | ✅（登录 API 回填；Ghost `localStorage`） |
+
+**Dev 限制（非产品偏离）：** 无 Upstash 时速率限制放行；无 Paddle env 时 Paywall 显示错误而非假付费。
 
 ---
 
@@ -264,12 +267,17 @@ Next.js 16 · React 19 · Tailwind 4 · Serwist · **PostgreSQL（美国）** ·
 
 | 文档 | 用途 |
 |------|------|
-| [legal/privacy.md](../legal/privacy.md) | 隐私政策 canonical |
+| [legal/privacy.md](../legal/privacy.md) | 隐私政策 canonical（英文） |
+| [legal/privacy.fr.md](../legal/privacy.fr.md) | 隐私政策（法文） |
+| [legal/privacy.de.md](../legal/privacy.de.md) | 隐私政策（德文） |
+| [legal/terms.md](../legal/terms.md) | 服务条款（英文） |
+| [legal/terms.fr.md](../legal/terms.fr.md) | 服务条款（法文） |
+| [legal/terms.de.md](../legal/terms.de.md) | 服务条款（德文） |
 | [prd/privacy.updated.md](../prd/privacy.updated.md) | §4 国际传输摘要 |
 | [prd/0.0.1.md](../prd/0.0.1.md) | PRD §2.5 |
 | [specs/2026-06-05-compliance-privacy-design.md](../superpowers/specs/2026-06-05-compliance-privacy-design.md) | 合规 ADR（v1.2 以本文为准覆盖分区域 MVP） |
 | [specs/2026-06-05-api-security-design.md](../superpowers/specs/2026-06-05-api-security-design.md) | API 安全 ADR（Ghost HMAC、OpenAI、IDOR、限流） |
-| [specs/2026-06-06-product-tech-code-consistency-audit.md](../superpowers/specs/2026-06-06-product-tech-code-consistency-audit.md) | 产品/技术/代码一致性审计 |
+| [specs/2026-06-13-product-code-alignment-design.md](../superpowers/specs/2026-06-13-product-code-alignment-design.md) | 产品/代码全面对齐（2026-06-13） |
 | [specs/2026-06-07-tax-savings-regional-design.md](../superpowers/specs/2026-06-07-tax-savings-regional-design.md) | 分区域省税 US/EU + R1 |
 | [specs/2026-06-12-new-user-onboarding-design.md](../superpowers/specs/2026-06-12-new-user-onboarding-design.md) | 新人引导（业务分析 + T1/T2 软引导） |
 | [specs/2026-06-07-mvp-master-roadmap-design.md](../superpowers/specs/2026-06-07-mvp-master-roadmap-design.md) | MVP 总路线图 |

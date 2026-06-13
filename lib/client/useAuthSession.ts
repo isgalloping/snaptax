@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import type { Industry } from "@/lib/types";
 import {
   type GoogleUser,
   loadGoogleUser,
@@ -21,6 +22,7 @@ function seasonKey(): string {
 
 export function useAuthSession() {
   const [googleUser, setGoogleUser] = useState<GoogleUser | null>(null);
+  const [industry, setIndustry] = useState<Industry | null>(null);
   const [seasonPaid, setSeasonPaidState] = useState(false);
   const [hydrated, setHydrated] = useState(false);
 
@@ -42,6 +44,9 @@ export function useAuthSession() {
             };
             setGoogleUser(user);
             saveGoogleUser(user);
+            if (me.user.industry) {
+              setIndustry(me.user.industry as Industry);
+            }
             const paid = await fetchSeasonPaid(seasonKey());
             if (!cancelled) {
               setSeasonPaidState(paid);
@@ -50,6 +55,7 @@ export function useAuthSession() {
           } else {
             setGoogleUser(null);
             saveGoogleUser(null);
+            setIndustry(null);
           }
         } catch {
           // offline or API unavailable — keep local cache
@@ -73,6 +79,9 @@ export function useAuthSession() {
       name: result.user.name ?? result.user.email.split("@")[0] ?? "User",
     };
     setGoogleUser(user);
+    if (result.user.industry) {
+      setIndustry(result.user.industry as Industry);
+    }
     return { user, taxRecalcQueued: result.taxRecalcQueued };
   }, []);
 
@@ -98,6 +107,7 @@ export function useAuthSession() {
   return {
     hydrated,
     googleUser,
+    industry,
     isSignedIn: googleUser !== null,
     seasonPaid,
     currentSeason: seasonKey(),

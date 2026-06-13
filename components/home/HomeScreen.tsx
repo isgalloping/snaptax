@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Industry, Receipt } from "@/lib/types";
 import { useAuthSession } from "@/lib/client/useAuthSession";
 import { useIsOnline } from "@/lib/client/useIsOnline";
+import { loadIndustry, saveIndustry } from "@/lib/client/authStorage";
 import { ensureGhostSession } from "@/lib/client/ghostClient";
 import { ensureTaxRegionCandidate } from "@/lib/client/taxRegion";
 import {
@@ -52,6 +53,20 @@ import { SettingsScreen } from "@/components/settings/SettingsScreen";
 import { useTaxExportGate } from "@/components/export/useTaxExportGate";
 import { ReceiptDetailSheet } from "@/components/receipts/ReceiptDetailSheet";
 import { logStartupMarks } from "@/lib/landing/startupMetrics";
+import { GoogleBackupNudge } from "@/components/onboarding/GoogleBackupNudge";
+import { SnapCoachBanner } from "@/components/onboarding/SnapCoachBanner";
+import { FirstReceiptCoach } from "@/components/onboarding/FirstReceiptCoach";
+import { usePwaInstallOptional } from "@/components/pwa/pwaInstallContext";
+import {
+  GOOGLE_SOFT_DISMISSED_KEY,
+  isFirstReceiptCoachEligible,
+  isGoogleNudgeEligible,
+  isSnapCoachEligible,
+  ONBOARD_FIRST_RECEIPT_KEY,
+  ONBOARD_SNAP_DISMISSED_KEY,
+  readOnboardFlag,
+  writeOnboardFlag,
+} from "@/lib/onboarding/onboardingStorage";
 
 type View = "home" | "settings";
 
@@ -68,11 +83,18 @@ function stuckIdsFromReceipts(receipts: StoredReceipt[]): Set<string> {
 export function HomeScreen() {
   const auth = useAuthSession();
   const isOnline = useIsOnline();
+  const pwaInstall = usePwaInstallOptional();
+  const pwaBarVisible = pwaInstall?.mode === "bar";
   const [view, setView] = useState<View>("home");
   const [receipts, setReceipts] = useState<Receipt[]>([]);
   const [taxSaved, setTaxSaved] = useState<number | null>(null);
   const [taxAnimating, setTaxAnimating] = useState(false);
   const [industry, setIndustry] = useState<Industry | null>(null);
+  const [snapCoachDismissed, setSnapCoachDismissed] = useState(false);
+  const [firstReceiptCoachDone, setFirstReceiptCoachDone] = useState(false);
+  const [googleSoftDismissed, setGoogleSoftDismissed] = useState(false);
+  const [nudgeSessionHidden, setNudgeSessionHidden] = useState(false);
+  const [requestSoftGoogleSheet, setRequestSoftGoogleSheet] = useState(false);
   const [resnapId, setResnapId] = useState<string | null>(null);
   const [selectedReceipt, setSelectedReceipt] = useState<Receipt | null>(null);
   const [cameraOpen, setCameraOpen] = useState(false);
@@ -96,6 +118,104 @@ export function HomeScreen() {
   useEffect(() => {
     receiptsRef.current = receipts;
   }, [receipts]);
+
+  useEffect(() => {
+    setSnapCoachDismissed(readOnboardFlag(ONBOARD_SNAP_DISMISSED_KEY));
+    setFirstReceiptCoachDone(readOnboardFlag(ONBOARD_FIRST_RECEIPT_KEY));
+    setGoogleSoftDismissed(readOnboardFlag(GOOGLE_SOFT_DISMISSED_KEY));
+  }, []);
+
+  useEffect(() => {
+    if (!auth.hydrated) return;
+    if (auth.industry) {
+      setIndustry(auth.industry);
+      saveIndustry(auth.industry);
+      return;
+    }
+    const localIndustry = loadIndustry();
+    if (localIndustry) setIndustry(localIndustry);
+  }, [auth.hydrated, auth.industry]);
+
+  const doneReceiptCount = useMemo(
+    () => receipts.filter((r) => r.status === "done").length,
+    [receipts],
+  );
+
+  const showSnapCoach = isSnapCoachEligible({
+    receiptCount: receipts.length,
+    dismissed: snapCoachDismissed,
+    pwaBarVisible,
+  });
+
+  const showGoogleNudge =
+    isGoogleNudgeEligible({
+      doneReceiptCount,
+      signedIn: auth.isSignedIn,
+      dismissed: googleSoftDismissed,
+      pwaBarVisible,
+    }) && !nudgeSessionHidden;
+
+  useEffect(() => {
+    if (!showGoogleNudge) return;
+    const timer = window.setTimeout(() => setNudgeSessionHidden(true), 10_000);
+    return () => window.clearTimeout(timer);
+  }, [showGoogleNudge]);
+
+  const handleIndustryChange = useCallback((value: Industry) => {
+    setIndustry(value);
+    saveIndustry(value);
+  }, []);
+
+  const handleSnapCoachDismiss = useCallback(() => {
+    writeOnboardFlag(ONBOARD_SNAP_DISMISSED_KEY);
+    setSnapCoachDismissed(true);
+  }, []);
+
+  const handleFirstReceiptCoachComplete = useCallback(() => {
+    writeOnboardFlag(ONBOARD_FIRST_RECEIPT_KEY);
+    setFirstReceiptCoachDone(true);
+  }, []);
+
+  const handleGoogleNudgeDismiss = useCallback(() => {
+    writeOnboardFlag(GOOGLE_SOFT_DISMISSED_KEY);
+    setGoogleSoftDismissed(true);
+    setNudgeSessionHidden(true);
+  }, []);
+
+  const handleGoogleNudgeClick = useCallback(() => {
+    setNudgeSessionHidden(true);
+    setRequestSoftGoogleSheet(true);
+    setView("settings");
+  }, []);
+
+  const handleSoftGuideDismiss = useCallback(() => {
+    writeOnboardFlag(GOOGLE_SOFT_DISMISSED_KEY);
+    setGoogleSoftDismissed(true);
+    setNudgeSessionHidden(true);
+  }, []);
+
+  const firstReceiptCoach = useMemo(() => {
+    if (
+      !isFirstReceiptCoachEligible({
+        receiptCount: receipts.length,
+        coachDone: firstReceiptCoachDone,
+      })
+    ) {
+      return null;
+    }
+    const receipt = receipts[0];
+    if (!receipt) return null;
+    return (
+      <FirstReceiptCoach
+        receipt={receipt}
+        onComplete={handleFirstReceiptCoachComplete}
+      />
+    );
+  }, [
+    receipts,
+    firstReceiptCoachDone,
+    handleFirstReceiptCoachComplete,
+  ]);
 
   useEffect(() => {
     cameraOpenRef.current = cameraOpen;
@@ -721,7 +841,7 @@ export function HomeScreen() {
       <>
       <SettingsScreen
         industry={industry}
-        onIndustryChange={setIndustry}
+        onIndustryChange={handleIndustryChange}
         onBack={() => setView("home")}
         onLocalDataCleared={() => {
           setReceipts([]);
@@ -729,6 +849,7 @@ export function HomeScreen() {
           setSyncStuckIds(new Set());
           queueRef.current?.clear();
           watcherRef.current?.reset();
+          setIndustry(null);
           setView("home");
         }}
         googleUser={auth.googleUser}
@@ -740,6 +861,9 @@ export function HomeScreen() {
         exportBusy={taxExport.paywallExporting}
         exportError={taxExport.exportError}
         isSignedIn={auth.isSignedIn}
+        requestSoftGoogleSheet={requestSoftGoogleSheet}
+        onSoftGoogleSheetConsumed={() => setRequestSoftGoogleSheet(false)}
+        onSoftGuideDismiss={handleSoftGuideDismiss}
       />
       {taxExport.overlays}
     </>
@@ -759,6 +883,21 @@ export function HomeScreen() {
         syncing={listSyncing}
         syncDisabled={!isOnline}
       />
+
+      {showSnapCoach && (
+        <div className="shrink-0 px-4">
+          <SnapCoachBanner onDismiss={handleSnapCoachDismiss} />
+        </div>
+      )}
+
+      {showGoogleNudge && (
+        <div className="shrink-0 px-4">
+          <GoogleBackupNudge
+            onSignInClick={handleGoogleNudgeClick}
+            onDismiss={handleGoogleNudgeDismiss}
+          />
+        </div>
+      )}
 
       <div className="shrink-0 px-4 py-2">
         <SnapButton
@@ -781,6 +920,7 @@ export function HomeScreen() {
         <ReceiptList
           receipts={receipts}
           syncStuckIds={syncStuckIds}
+          listHeader={firstReceiptCoach}
           onSelect={(receipt) => setSelectedReceipt(receipt)}
           onResnap={handleResnap}
           onRetrySync={handleRetrySync}

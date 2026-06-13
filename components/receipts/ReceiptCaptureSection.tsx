@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { useUserCopy } from "@/components/i18n/I18nProvider";
 
 interface ReceiptCaptureSectionProps {
   title?: string;
@@ -13,18 +14,22 @@ interface ReceiptCaptureSectionProps {
 }
 
 export function ReceiptCaptureSection({
-  title = "Original Receipt Capture",
+  title,
   imageSrc,
   imageMissing,
   imageOffline = false,
-  hint = "Tap to zoom",
+  hint,
   onZoom,
   actions,
 }: ReceiptCaptureSectionProps) {
+  const copy = useUserCopy().receiptDetail;
+  const resolvedTitle = title ?? copy.originalCapture;
+  const resolvedHint = hint ?? copy.tapToZoom;
+
   return (
     <section>
       <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-zinc-500">
-        {title}
+        {resolvedTitle}
       </h3>
       {imageSrc ? (
         <div className="relative min-h-32 w-full overflow-hidden rounded-xl border border-zinc-600 bg-zinc-950">
@@ -36,11 +41,11 @@ export function ReceiptCaptureSection({
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={imageSrc}
-              alt="Receipt thumbnail"
+              alt={copy.thumbnailAlt}
               className="max-h-52 w-full object-contain"
             />
             <span className="pointer-events-none absolute bottom-2 right-2 z-[5] rounded bg-black/70 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-zinc-400">
-              {hint}
+              {resolvedHint}
             </span>
           </button>
           {actions}
@@ -48,10 +53,10 @@ export function ReceiptCaptureSection({
       ) : (
         <div className="flex min-h-32 items-center justify-center rounded-xl border border-dashed border-zinc-700 bg-zinc-950 px-4 text-center text-sm font-bold text-zinc-500">
           {imageOffline
-            ? "Photo available when you're back online"
+            ? copy.photoOffline
             : imageMissing
-              ? "Photo not on this device"
-              : "Loading photo…"}
+              ? copy.photoMissing
+              : copy.loadingPhoto}
         </div>
       )}
     </section>

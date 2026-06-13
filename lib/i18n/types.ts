@@ -10,6 +10,7 @@ export type UserCopy = {
     install: string;
     howToInstall: string;
     dismiss: string;
+    dismissInstallAria: string;
     manualHint: string;
     manualSheetTitle: string;
     manualSheetLead: string;
@@ -27,6 +28,31 @@ export type UserCopy = {
     captureFailed: string;
     retry: string;
     chooseGallery: string;
+    takePhoto: string;
+    takePhotoAria: string;
+    flashDoneLine1: string;
+    flashDoneLine2: string;
+    flashDoneAria: string;
+    doneReviewLine1: string;
+    doneReviewLine2: string;
+    doneReviewAria: string;
+    batchReviewAria: string;
+    batchLabel: string;
+    review: {
+      delete: string;
+      deleteReceipt: string;
+      deleteFromBatch: string;
+      resnap: string;
+      resnapReceipt: string;
+      done: string;
+      acceptReceipt: string;
+    };
+    gallery: {
+      latest: string;
+      selected: string;
+      accepted: string;
+      default: string;
+    };
     errors: {
       notAllowed: string;
       notFound: string;
@@ -68,6 +94,7 @@ export type UserCopy = {
       receiptSingular: string;
       receiptPlural: string;
       tracked: string;
+      exportTaxPack: string;
       installApp: string;
       syncReceipts: string;
       settings: string;
@@ -103,6 +130,85 @@ export type UserCopy = {
         uploading: string;
         paused: string;
       };
+    };
+  };
+  receiptDetail: {
+    close: string;
+    uploadPaused: string;
+    analysisPaused: string;
+    calculating: string;
+    mayTakeSeconds: string;
+    dateCapturedLong: string;
+    retryUpload: string;
+    retryAnalysis: string;
+    blurryTitle: string;
+    blurryBody: string;
+    partialDetails: string;
+    possibleMerchant: string;
+    dateCaptured: string;
+    merchant: string;
+    totalAmount: string;
+    category: string;
+    irsLine: string;
+    blurryPreview: string;
+    originalCapture: string;
+    tapToEnlarge: string;
+    tapToZoom: string;
+    encryptionNote: string;
+    thumbnailAlt: string;
+    photoOffline: string;
+    photoMissing: string;
+    loadingPhoto: string;
+    delete: string;
+    deleteReceipt: string;
+    resnap: string;
+    resnapReceipt: string;
+    deleteConfirmTitle: string;
+    deleteConfirmBody: string;
+    cancel: string;
+    stepperAria: string;
+    stepperPhoto: string;
+    stepperAnalyzing: string;
+    stepperCalculating: string;
+    zoomAria: string;
+    zoomOut: string;
+    zoomIn: string;
+    resetZoom: string;
+    receiptAlt: string;
+    partialMerchantUnknown: string;
+    partialMerchantUnclear: string;
+    hero: {
+      personalEu: string;
+      personalUs: string;
+      addedVat: string;
+      addedScheduleC: string;
+    };
+  };
+  paywall: {
+    oneTimeSeason: string;
+    description: string;
+    backupWarning: string;
+    openingPaddle: string;
+    payButton: string;
+    paymentUnavailable: string;
+    paymentFailed: string;
+    back: string;
+  };
+  auth: {
+    googleSignIn: {
+      soft: { title: string; body: string };
+      hardExport: { title: string; body: string };
+      hardSync: { title: string; body: string };
+      signingIn: string;
+      continueWithGoogle: string;
+      notNow: string;
+      back: string;
+      signInFailed: string;
+    };
+    syncInstructions: {
+      title: string;
+      steps: string[];
+      gotIt: string;
     };
   };
   legal: {

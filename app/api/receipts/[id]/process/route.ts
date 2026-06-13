@@ -13,6 +13,7 @@ import { withRequestLog } from "@/lib/server/log/withRequestLog";
 import { logEvent } from "@/lib/server/log/logEvent";
 import { baseLogEntry } from "@/lib/server/log/context";
 import { blobCommandOptions } from "@/lib/server/blob";
+import { resolveVerifyContext } from "@/lib/verify/context";
 
 export const maxDuration = 60;
 
@@ -57,6 +58,20 @@ export const POST = withRequestLog(
       }
 
       const visionStart = Date.now();
+      const verify = await resolveVerifyContext(actor);
+      if (verify.canBypass) {
+        logEvent({
+          ...baseLogEntry("biz.verify", request, actor),
+          level: "info",
+          success: true,
+          durationMs: 0,
+          meta: {
+            verifyBypass: true,
+            mockAi: verify.canMockAi,
+            bypassPay: verify.canBypassPay,
+          },
+        });
+      }
       try {
         const result = await processReceiptTax({
           receiptId: id,
@@ -64,6 +79,7 @@ export const POST = withRequestLog(
           imageBuffer: bytes,
           mime,
           industry,
+          canMockAi: verify.canMockAi,
         });
 
         logEvent({
@@ -75,6 +91,7 @@ export const POST = withRequestLog(
             receiptId: id,
             status: result.status,
             dataRegion: receipt.dataRegion,
+            ...(verify.canMockAi ? { reason: "verify_mock" } : {}),
           },
         });
 

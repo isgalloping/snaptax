@@ -1,5 +1,7 @@
 "use client";
 
+import { useUserCopy } from "@/components/i18n/I18nProvider";
+
 export type ReceiptDetailStepperPhase = "processing" | "blurry" | "done";
 
 interface ReceiptDetailStepperProps {
@@ -53,17 +55,17 @@ function stepStates(phase: ReceiptDetailStepperPhase): [StepState, StepState, St
   return ["done", "active", "pending"];
 }
 
-const LABELS = ["Photo", "Analyzing", "Calculating"] as const;
-
 export function ReceiptDetailStepper({ phase }: ReceiptDetailStepperProps) {
+  const copy = useUserCopy().receiptDetail;
   const states = stepStates(phase);
+  const labels = [copy.stepperPhoto, copy.stepperAnalyzing, copy.stepperCalculating];
 
   return (
     <div
       className="mx-auto mt-6 flex w-full max-w-sm items-start justify-between gap-2"
-      aria-label="Processing progress"
+      aria-label={copy.stepperAria}
     >
-      {LABELS.map((label, index) => {
+      {labels.map((label, index) => {
         const state = states[index]!;
         const labelColor =
           state === "active"
@@ -80,12 +82,6 @@ export function ReceiptDetailStepper({ phase }: ReceiptDetailStepperProps) {
             <span className={`text-[10px] font-bold uppercase tracking-wide ${labelColor}`}>
               {label}
             </span>
-            {index < LABELS.length - 1 && (
-              <span
-                className="pointer-events-none absolute hidden"
-                aria-hidden
-              />
-            )}
           </div>
         );
       })}

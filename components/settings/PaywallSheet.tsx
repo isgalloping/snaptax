@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { initializePaddle, Paddle } from "@paddle/paddle-js";
+import { useUserCopy } from "@/components/i18n/I18nProvider";
 import { apiFetch } from "@/lib/client/ghostClient";
 
 interface PaywallSheetProps {
@@ -17,6 +18,7 @@ export function PaywallSheet({
   onClose,
   onPaid,
 }: PaywallSheetProps) {
+  const copy = useUserCopy().paywall;
   const [paying, setPaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const paddleRef = useRef<Paddle | null>(null);
@@ -64,9 +66,9 @@ export function PaywallSheet({
         return;
       }
 
-      setError("Payment unavailable. Paddle is not configured.");
+      setError(copy.paymentUnavailable);
     } catch {
-      setError("Payment failed. Please try again.");
+      setError(copy.paymentFailed);
     } finally {
       setPaying(false);
     }
@@ -77,15 +79,13 @@ export function PaywallSheet({
       <div className="w-full rounded-t-3xl border-t-4 border-yellow-500 bg-zinc-900 p-6 pb-10">
         <p className="text-4xl font-black text-white">$49.00</p>
         <p className="mt-1 text-sm text-zinc-400">
-          One-Time for {seasonLabel} Tax Season
+          {copy.oneTimeSeason.replace("{season}", seasonLabel)}
         </p>
         <p className="mt-4 text-base leading-relaxed text-zinc-300">
-          Export an IRS-ready Excel file — send to your CPA or import into
-          TurboTax. Saves hours of manual entry.
+          {copy.description}
         </p>
         <p className="mt-4 text-sm font-bold text-yellow-400">
-          Sign in with Google before switching phones, or local data will be
-          lost.
+          {copy.backupWarning}
         </p>
         <button
           type="button"
@@ -93,7 +93,7 @@ export function PaywallSheet({
           onClick={() => void handlePay()}
           className="mt-6 w-full min-h-16 rounded-xl bg-white py-4 text-lg font-black text-black transition-transform active:scale-95 disabled:opacity-60"
         >
-          {paying ? "Opening Paddle…" : "Pay $49 with Paddle"}
+          {paying ? copy.openingPaddle : copy.payButton}
         </button>
         {error && (
           <p className="mt-3 text-center text-sm font-bold text-red-500" role="alert">
@@ -105,7 +105,7 @@ export function PaywallSheet({
           onClick={onClose}
           className="mt-3 w-full min-h-16 py-3 text-sm font-bold text-zinc-400 transition-transform active:scale-95"
         >
-          &lt; BACK
+          {copy.back}
         </button>
       </div>
     </div>

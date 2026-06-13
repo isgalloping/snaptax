@@ -1,5 +1,7 @@
 "use client";
 
+import { useUserCopy } from "@/components/i18n/I18nProvider";
+
 interface ReceiptDeleteConfirmSheetProps {
   open: boolean;
   busy?: boolean;
@@ -13,6 +15,8 @@ export function ReceiptDeleteConfirmSheet({
   onCancel,
   onConfirm,
 }: ReceiptDeleteConfirmSheetProps) {
+  const copy = useUserCopy().receiptDetail;
+
   if (!open) return null;
 
   return (
@@ -31,10 +35,10 @@ export function ReceiptDeleteConfirmSheet({
           id="delete-receipt-title"
           className="text-lg font-black text-white"
         >
-          Delete this receipt?
+          {copy.deleteConfirmTitle}
         </h2>
         <p className="mt-2 text-sm font-bold text-zinc-400">
-          This removes it from your deductions.
+          {copy.deleteConfirmBody}
         </p>
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
           <button
@@ -43,7 +47,7 @@ export function ReceiptDeleteConfirmSheet({
             disabled={busy}
             className="min-h-14 flex-1 rounded-xl border-2 border-zinc-600 bg-zinc-800 text-sm font-black uppercase tracking-wider text-white active:scale-95 disabled:opacity-40"
           >
-            Cancel
+            {copy.cancel}
           </button>
           <button
             type="button"
@@ -51,7 +55,7 @@ export function ReceiptDeleteConfirmSheet({
             disabled={busy}
             className="min-h-14 flex-1 rounded-xl border-2 border-red-700 bg-red-950 text-sm font-black uppercase tracking-wider text-red-400 active:scale-95 disabled:opacity-40"
           >
-            Delete
+            {copy.delete}
           </button>
         </div>
       </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useUserCopy } from "@/components/i18n/I18nProvider";
 
 const MIN_SCALE = 1;
 const MAX_SCALE = 4;
@@ -26,6 +27,7 @@ export function ReceiptImageZoomViewer({
   src,
   onClose,
 }: ReceiptImageZoomViewerProps) {
+  const copy = useUserCopy().receiptDetail;
   const [scale, setScale] = useState(MIN_SCALE);
   const [translate, setTranslate] = useState<Point>({ x: 0, y: 0 });
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -159,13 +161,13 @@ export function ReceiptImageZoomViewer({
     <div
       className="fixed inset-0 z-[60] flex flex-col bg-black"
       role="dialog"
-      aria-label="Receipt photo zoom"
+      aria-label={copy.zoomAria}
     >
       <button
         type="button"
         onClick={onClose}
         className="absolute right-4 top-4 z-10 flex min-h-16 min-w-16 items-center justify-center rounded-xl border-2 border-zinc-600 bg-black/80 text-2xl font-black text-white active:scale-95"
-        aria-label="Close"
+        aria-label={copy.close}
       >
         ×
       </button>
@@ -185,7 +187,7 @@ export function ReceiptImageZoomViewer({
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={src}
-            alt="Receipt"
+            alt={copy.receiptAlt}
             className="max-h-[65vh] max-w-[92vw] select-none object-contain"
             draggable={false}
           />
@@ -199,7 +201,7 @@ export function ReceiptImageZoomViewer({
             onClick={() => bumpScale(-SCALE_STEP)}
             disabled={scale <= MIN_SCALE}
             className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-zinc-600 bg-zinc-900 text-3xl font-black text-white disabled:opacity-40 active:scale-95"
-            aria-label="Zoom out"
+            aria-label={copy.zoomOut}
           >
             −
           </button>
@@ -208,7 +210,7 @@ export function ReceiptImageZoomViewer({
             onClick={() => bumpScale(SCALE_STEP)}
             disabled={scale >= MAX_SCALE}
             className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-zinc-600 bg-zinc-900 text-3xl font-black text-white disabled:opacity-40 active:scale-95"
-            aria-label="Zoom in"
+            aria-label={copy.zoomIn}
           >
             +
           </button>
@@ -219,7 +221,7 @@ export function ReceiptImageZoomViewer({
             onClick={resetTransform}
             className="text-xs font-bold uppercase tracking-wider text-zinc-500 active:text-zinc-300"
           >
-            Reset zoom (1:1)
+            {copy.resetZoom}
           </button>
         )}
       </div>

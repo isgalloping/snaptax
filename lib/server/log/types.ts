@@ -10,7 +10,8 @@ export type LogModule =
   | "biz.blob"
   | "biz.ghost"
   | "biz.paddle"
-  | "biz.export";
+  | "biz.export"
+  | "biz.verify";
 
 export type LogMeta = {
   receiptId?: string;
@@ -25,6 +26,9 @@ export type LogMeta = {
   ipHash?: string;
   dataRegion?: string;
   reason?: string;
+  verifyBypass?: boolean;
+  mockAi?: boolean;
+  bypassPay?: boolean;
 };
 
 export type LogEntry = {

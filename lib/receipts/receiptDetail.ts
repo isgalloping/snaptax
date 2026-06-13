@@ -1,4 +1,5 @@
 import type { Receipt } from "@/lib/types";
+import type { UserCopy } from "@/lib/i18n";
 import { formatCurrencyForRegion } from "@/lib/format";
 import { fetchReceiptImageUrl } from "@/lib/client/receiptApi";
 import { loadPhoto } from "@/lib/storage/receiptDb";
@@ -20,7 +21,10 @@ export type ResolvedReceiptImage =
   | { kind: "offline-placeholder" }
   | { kind: "missing" };
 
-export function buildReceiptDetailHero(receipt: Receipt): ReceiptDetailHero {
+export function buildReceiptDetailHero(
+  receipt: Receipt,
+  heroCopy: UserCopy["receiptDetail"]["hero"],
+): ReceiptDetailHero {
   if (receipt.status === "processing") return { kind: "processing" };
   if (receipt.status === "blurry") return { kind: "blurry" };
 
@@ -34,17 +38,15 @@ export function buildReceiptDetailHero(receipt: Receipt): ReceiptDetailHero {
       savedLabel: formatCurrencyForRegion(0, currency, region),
       subtitle:
         region === "eu"
-          ? "Personal expense — no VAT recovery"
-          : "Personal (Non-Deductible)",
+          ? heroCopy.personalEu
+          : heroCopy.personalUs,
       muted: true,
     };
   }
 
   const formatted = formatCurrencyForRegion(tax, currency, region);
   const subtitle =
-    region === "eu"
-      ? "✓ Added to VAT recovery"
-      : "✓ Added to Schedule C Deduction";
+    region === "eu" ? heroCopy.addedVat : heroCopy.addedScheduleC;
 
   return {
     kind: "done",
@@ -53,11 +55,19 @@ export function buildReceiptDetailHero(receipt: Receipt): ReceiptDetailHero {
   };
 }
 
-export function formatPartialMerchant(merchant: string | undefined): string {
-  if (!merchant?.trim()) return "Unknown (Unclear)";
+export function formatPartialMerchant(
+  merchant: string | undefined,
+  copy: Pick<UserCopy["receiptDetail"], "partialMerchantUnknown" | "partialMerchantUnclear">,
+): string {
+  if (!merchant?.trim()) return copy.partialMerchantUnknown;
   const trimmed = merchant.trim();
-  if (trimmed.length <= 12) return `${trimmed} (Unclear)`;
-  return `${trimmed.slice(0, 12)}... (Unclear)`;
+  if (trimmed.length <= 12) {
+    return copy.partialMerchantUnclear.replace("{merchant}", trimmed);
+  }
+  return copy.partialMerchantUnclear.replace(
+    "{merchant}",
+    `${trimmed.slice(0, 12)}...`,
+  );
 }
 
 export async function resolveReceiptImage(

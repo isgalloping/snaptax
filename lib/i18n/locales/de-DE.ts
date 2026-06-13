@@ -12,6 +12,7 @@ export const DE_DE_COPY: UserCopy = {
     install: "Installieren",
     howToInstall: "So fügen Sie hinzu",
     dismiss: "Nicht jetzt",
+    dismissInstallAria: "Installationsanweisungen schließen",
     manualHint: "Tippen Sie in Chrome auf ⋮, dann App installieren",
     manualSheetTitle: "Snap1099 installieren",
     manualSheetLead:
@@ -92,6 +93,7 @@ export const DE_DE_COPY: UserCopy = {
       receiptSingular: "Beleg",
       receiptPlural: "Belege",
       tracked: "erfasst",
+      exportTaxPack: "Steuerpaket exportieren",
       installApp: "App installieren",
       syncReceipts: "Belege synchronisieren",
       settings: "Einstellungen",

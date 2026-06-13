@@ -61,9 +61,9 @@ export default function RootLayout({
     >
       <body className="flex h-full min-h-full flex-col">
         <InstallCaptureScript />
-        <PwaProvider>
-          <I18nProvider>{children}</I18nProvider>
-        </PwaProvider>
+        <I18nProvider>
+          <PwaProvider>{children}</PwaProvider>
+        </I18nProvider>
       </body>
     </html>
   );

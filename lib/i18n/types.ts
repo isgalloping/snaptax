@@ -10,6 +10,7 @@ export type UserCopy = {
     install: string;
     howToInstall: string;
     dismiss: string;
+    dismissInstallAria: string;
     manualHint: string;
     manualSheetTitle: string;
     manualSheetLead: string;
@@ -68,6 +69,7 @@ export type UserCopy = {
       receiptSingular: string;
       receiptPlural: string;
       tracked: string;
+      exportTaxPack: string;
       installApp: string;
       syncReceipts: string;
       settings: string;

@@ -1,5 +1,6 @@
 "use client";
 
+import { useUserCopy } from "@/components/i18n/I18nProvider";
 import { formatCurrency } from "@/lib/format";
 import { homeVisual } from "@/lib/ui/homeVisual";
 import { ReceiptIcon } from "@/components/icons/ReceiptIcon";
@@ -38,10 +39,13 @@ export function TaxHeader({
   showSettings = true,
 }: TaxHeaderProps) {
   const pwaInstall = usePwaInstallOptional();
+  const copy = useUserCopy().home.taxHeader;
   const showInstallButton = pwaInstall?.mode === "header-button";
 
   const receiptLabel =
-    receiptCount === 1 ? "1 receipt" : `${receiptCount} receipts`;
+    receiptCount === 1
+      ? `1 ${copy.receiptSingular}`
+      : `${receiptCount} ${copy.receiptPlural}`;
 
   return (
     <header className="relative min-h-[132px] max-h-[24vh] shrink-0 overflow-hidden">
@@ -63,7 +67,7 @@ export function TaxHeader({
       <div className="relative z-10 flex items-center justify-between px-4 py-3">
         <div className="min-w-0 flex-1 pr-3">
           <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-200">
-            Estimated Tax Saved
+            {copy.title}
           </p>
           <p
             className={`text-4xl font-black tracking-tight text-yellow-400 ${
@@ -75,7 +79,7 @@ export function TaxHeader({
           <p className="mt-0.5 flex items-center gap-1 truncate text-[11px] font-bold text-zinc-300">
             <ReceiptIcon className="h-3 w-3 shrink-0" />
             <span>
-              {receiptLabel} • {formatCurrency(totalExpenses)} tracked
+              {receiptLabel} • {formatCurrency(totalExpenses)} {copy.tracked}
             </span>
           </p>
         </div>
@@ -85,7 +89,7 @@ export function TaxHeader({
               type="button"
               onClick={onExportClick}
               className={`${actionBtn} border-yellow-500/60`}
-              aria-label="Export tax pack"
+              aria-label={copy.exportTaxPack}
             >
               <DownloadIcon className="h-5 w-5 text-yellow-400" />
             </button>
@@ -95,7 +99,7 @@ export function TaxHeader({
               type="button"
               onClick={() => void pwaInstall.install()}
               className={`${actionBtn} border-yellow-500/60`}
-              aria-label="Install app"
+              aria-label={copy.installApp}
             >
               <InstallIcon className="h-5 w-5 text-yellow-400" />
             </button>
@@ -106,7 +110,7 @@ export function TaxHeader({
               onClick={onSyncClick}
               disabled={syncDisabled || syncing}
               className={actionBtn}
-              aria-label="Sync receipts"
+              aria-label={copy.syncReceipts}
             >
               <RefreshIcon
                 className={`h-5 w-5 text-white ${syncing ? "animate-spin" : ""}`}
@@ -118,7 +122,7 @@ export function TaxHeader({
               type="button"
               onClick={onSettingsClick}
               className={actionBtn}
-              aria-label="Settings"
+              aria-label={copy.settings}
             >
               <SlidersIcon className="h-5 w-5 text-white" />
             </button>

@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useUserCopy } from "@/components/i18n/I18nProvider";
-import type { UserCopy } from "@/lib/i18n";
+import { USER_COPY } from "@/lib/copy/userFacing";
 import {
   getInstallPlatform,
   manualCopyKeyForPlatform,
@@ -14,21 +13,17 @@ interface InstallManualSheetProps {
   onClose: () => void;
 }
 
-function stepsForPlatform(
-  manualSteps: UserCopy["pwa"]["manualSteps"],
-): readonly string[] {
+function stepsForPlatform(): readonly string[] {
   const key: ManualInstallCopyKey | null = manualCopyKeyForPlatform(
     getInstallPlatform(),
   );
   if (!key) {
-    return manualSteps.chromiumAndroid;
+    return USER_COPY.pwa.manualSteps.chromiumAndroid;
   }
-  return manualSteps[key];
+  return USER_COPY.pwa.manualSteps[key];
 }
 
 export function InstallManualSheet({ open, onClose }: InstallManualSheetProps) {
-  const copy = useUserCopy();
-
   useEffect(() => {
     if (!open) return;
 
@@ -42,7 +37,7 @@ export function InstallManualSheet({ open, onClose }: InstallManualSheetProps) {
 
   if (!open) return null;
 
-  const steps = stepsForPlatform(copy.pwa.manualSteps);
+  const steps = stepsForPlatform();
 
   return (
     <div
@@ -65,9 +60,11 @@ export function InstallManualSheet({ open, onClose }: InstallManualSheetProps) {
           id="install-manual-title"
           className="text-lg font-black uppercase tracking-wider text-white"
         >
-          {copy.pwa.manualSheetTitle}
+          {USER_COPY.pwa.manualSheetTitle}
         </h2>
-        <p className="mt-2 text-sm text-zinc-400">{copy.pwa.manualSheetLead}</p>
+        <p className="mt-2 text-sm text-zinc-400">
+          {USER_COPY.pwa.manualSheetLead}
+        </p>
         <ol className="mt-4 list-decimal space-y-3 pl-5 text-sm font-bold text-zinc-200">
           {steps.map((step) => (
             <li key={step}>{step}</li>
@@ -79,7 +76,7 @@ export function InstallManualSheet({ open, onClose }: InstallManualSheetProps) {
           onPointerUp={onClose}
           className="mt-6 min-h-16 w-full cursor-pointer rounded-xl bg-yellow-500 text-sm font-black text-black active:scale-95"
         >
-          {copy.pwa.manualGotIt}
+          {USER_COPY.pwa.manualGotIt}
         </button>
       </div>
     </div>

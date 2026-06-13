@@ -234,6 +234,7 @@ Next.js 16 · React 19 · Tailwind 4 · Serwist · **PostgreSQL（美国）** ·
 | 未登录 **联网 OpenAI** | ✅ | ❌ |
 | 美国存储 + 知情 UI | ✅ | ✅ |
 | Google 软/硬引导 UI | ✅ | ✅（mock GIS；待真实 OAuth） |
+| 蓝领新人引导（Welcome Landing + 三阶段 Coach） | ✅ | ✅ |
 | 设置页账户区 + 多端 + Paywall UI | ✅ | ✅（Paddle mock） |
 | Privacy §4 国际传输 | ✅ | ✅ |
 | Google + Ghost 绑定（后端） | ✅ | ❌ |

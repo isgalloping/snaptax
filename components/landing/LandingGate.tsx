@@ -9,7 +9,8 @@ import {
   resolveExit,
   type LandingExitMode,
 } from "@/lib/landing/landingTiming";
-import { DATA_STREAM_CHECKLIST_TITLE } from "./dataStreamCopy";
+import { DEFAULT_LOCALE, getUserCopy } from "@/lib/i18n";
+import { LANDING_CTA_EVENT } from "./WorkerWelcomeLanding";
 
 type Phase = "visible" | "exiting" | "done";
 
@@ -85,14 +86,32 @@ export function LandingGate({ homeChunkReady, onExit }: LandingGateProps) {
     tick();
   }, [homeChunkReady, tick]);
 
+  useEffect(() => {
+    const onCta = () => {
+      if (homeChunkReadyRef.current) {
+        beginExit("full-home");
+        return;
+      }
+      const tryExit = () => {
+        if (homeChunkReadyRef.current) beginExit("full-home");
+      };
+      window.setTimeout(tryExit, 100);
+      window.setTimeout(tryExit, 500);
+    };
+    window.addEventListener(LANDING_CTA_EVENT, onCta);
+    return () => window.removeEventListener(LANDING_CTA_EVENT, onCta);
+  }, [beginExit]);
+
   if (phase === "done") return null;
+
+  const landingAria = getUserCopy(DEFAULT_LOCALE).onboarding.landing.ariaStatus;
 
   return (
     <div
       className="sr-only"
       role="status"
       aria-live="polite"
-      aria-label={DATA_STREAM_CHECKLIST_TITLE}
+      aria-label={landingAria}
     />
   );
 }

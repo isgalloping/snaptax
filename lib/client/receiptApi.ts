@@ -134,6 +134,19 @@ export async function triggerReceiptProcess(
   return { ok: false, reason: "failed", status: res.status };
 }
 
+export async function patchReceiptCategory(
+  id: string,
+  category: string,
+): Promise<ApiReceipt> {
+  const res = await apiFetch(`/api/receipts/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ category }),
+  });
+  if (!res.ok) throw new Error("PATCH_RECEIPT_CATEGORY_FAILED");
+  return (await res.json()) as ApiReceipt;
+}
+
 export async function deleteReceiptRemote(id: string): Promise<void> {
   const res = await apiFetch(`/api/receipts/${id}`, { method: "DELETE" });
   if (!res.ok && res.status !== 404) throw new Error("DELETE_RECEIPT_FAILED");

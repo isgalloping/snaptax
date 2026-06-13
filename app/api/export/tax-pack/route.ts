@@ -4,7 +4,7 @@ import { z } from "zod";
 import { apiError, mapErrorToResponse } from "@/lib/api/errors";
 import { getActor } from "@/lib/auth/getActor";
 import { prisma } from "@/lib/prisma";
-import { currentTaxSeason } from "@/lib/tax/season";
+import { currentTaxSeason, defaultExportTaxYear } from "@/lib/tax/season";
 import type { TaxRegion } from "@/lib/tax/types";
 import { withRequestLog } from "@/lib/server/log/withRequestLog";
 import { formatLocalDateTime } from "@/lib/format";
@@ -21,12 +21,13 @@ import {
   buildTurboTaxCsv,
 } from "@/lib/tax/exportCsv";
 import { buildCpaPackZip } from "@/lib/export/buildCpaPack";
+import { buildCpaSummaryPdf } from "@/lib/export/buildCpaPdf";
 import { enrichExportRowsWithImageUrls } from "@/lib/export/receiptImageUrl";
 import { logEvent } from "@/lib/server/log/logEvent";
 
 const exportBodySchema = z.object({
   taxYear: z.string().regex(/^\d{4}$/).optional(),
-  format: z.enum(["csv", "cpa_pack", "xlsx"]).optional().default("csv"),
+  format: z.enum(["csv", "cpa_pack", "cpa_pdf", "xlsx"]).optional().default("csv"),
 });
 
 export const POST = withRequestLog("api.entitlement", async (request, _context) => {
@@ -46,7 +47,7 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
 
     const rawBody = await request.json().catch(() => ({}));
     const body = exportBodySchema.parse(rawBody);
-    const taxYear = body.taxYear ?? season;
+    const taxYear = body.taxYear ?? defaultExportTaxYear();
     const taxYearNum = Number(taxYear);
 
     const [user, allReceipts] = await Promise.all([
@@ -114,7 +115,11 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
       responseHeaders["X-Export-Images-Missing"] = String(
         pack.imageStats.imagesEligible - pack.imageStats.imagesIncluded,
       );
-    } else {
+    } else if (body.format === "cpa_pdf") {
+      buffer = await buildCpaSummaryPdf(taxYear, enrichedRows, summaryLines);
+      contentType = "application/pdf";
+      filename = `Snap1099-${taxYear}-CPA-Summary.pdf`;
+    } else if (body.format === "xlsx") {
       const workbook = new ExcelJS.Workbook();
       const expenses = workbook.addWorksheet("Expenses");
       expenses.columns = [
@@ -166,6 +171,8 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
       contentType =
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
       filename = `Snap1099-${taxYear}-Tax-Pack.xlsx`;
+    } else {
+      throw new Error("UNSUPPORTED_EXPORT_FORMAT");
     }
 
     await prisma.snaptaxReceipt.updateMany({

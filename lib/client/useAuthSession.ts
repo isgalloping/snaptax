@@ -13,8 +13,11 @@ import {
   signInWithGoogleApi,
   signOutApi,
 } from "@/lib/client/authApi";
+import { currentTaxSeason } from "@/lib/tax/season";
 
-const CURRENT_SEASON = "2026";
+function seasonKey(): string {
+  return currentTaxSeason();
+}
 
 export function useAuthSession() {
   const [googleUser, setGoogleUser] = useState<GoogleUser | null>(null);
@@ -39,10 +42,10 @@ export function useAuthSession() {
             };
             setGoogleUser(user);
             saveGoogleUser(user);
-            const paid = await fetchSeasonPaid(CURRENT_SEASON);
+            const paid = await fetchSeasonPaid(seasonKey());
             if (!cancelled) {
               setSeasonPaidState(paid);
-              if (!paid) setSeasonPaid(CURRENT_SEASON, false);
+              if (!paid) setSeasonPaid(seasonKey(), false);
             }
           } else {
             setGoogleUser(null);
@@ -79,15 +82,17 @@ export function useAuthSession() {
   }, []);
 
   const markSeasonPaid = useCallback(() => {
-    setSeasonPaid(CURRENT_SEASON, true);
+    const season = seasonKey();
+    setSeasonPaid(season, true);
     setSeasonPaidState(true);
   }, []);
 
   const refreshSeasonPaid = useCallback(async () => {
     if (!navigator.onLine || !googleUser) return;
-    const paid = await fetchSeasonPaid(CURRENT_SEASON);
+    const season = seasonKey();
+    const paid = await fetchSeasonPaid(season);
     setSeasonPaidState(paid);
-    if (paid) setSeasonPaid(CURRENT_SEASON, true);
+    if (paid) setSeasonPaid(season, true);
   }, [googleUser]);
 
   return {
@@ -95,7 +100,7 @@ export function useAuthSession() {
     googleUser,
     isSignedIn: googleUser !== null,
     seasonPaid,
-    currentSeason: CURRENT_SEASON,
+    currentSeason: seasonKey(),
     signInWithGoogle,
     signOut,
     markSeasonPaid,

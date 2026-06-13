@@ -1,4 +1,16 @@
+/**
+ * Paddle entitlement season label.
+ * Jan–Apr: active filing season for the current UTC year.
+ * May–Dec: sell/export pack for the upcoming filing season (next year).
+ */
 export function currentTaxSeason(date = new Date()): string {
-  // TODO: 07-paddle-billing.md specifies 5-12月 should return next year's season — needs product decision
+  const year = date.getUTCFullYear();
+  const month = date.getUTCMonth() + 1;
+  if (month <= 4) return String(year);
+  return String(year + 1);
+}
+
+/** Default tax year in export picker (calendar year of receipts). */
+export function defaultExportTaxYear(date = new Date()): string {
   return String(date.getUTCFullYear());
 }

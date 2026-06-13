@@ -442,6 +442,11 @@ export function HomeScreen() {
     [syncFromServer],
   );
 
+  const handlePostExportSync = useCallback(async () => {
+    const stored = await loadAllReceipts();
+    await syncFromServer(stored, "immediate");
+  }, [syncFromServer]);
+
   const taxExport = useTaxExportGate({
     receipts,
     googleUser: auth.googleUser,
@@ -451,6 +456,10 @@ export function HomeScreen() {
     onPostLoginSync: handlePostLoginSync,
     onSeasonPaid: auth.markSeasonPaid,
     refreshSeasonPaid: auth.refreshSeasonPaid,
+    onPostExportSync: handlePostExportSync,
+    onReceiptUpdated: (updated) => {
+      void applyReceiptUpdate(updated as StoredReceipt);
+    },
   });
 
   useEffect(() => {

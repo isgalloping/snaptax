@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { useUserCopy } from "@/components/i18n/I18nProvider";
 import { homeVisual } from "@/lib/ui/homeVisual";
 
 interface ReceiptCaptureActionsProps {
@@ -16,6 +17,7 @@ export function ReceiptCaptureActions({
   onDelete,
   onResnap,
 }: ReceiptCaptureActionsProps) {
+  const copy = useUserCopy().receiptDetail;
   const { size, delete: deleteCls, resnap } = homeVisual.reviewControl;
 
   const btn = (
@@ -50,8 +52,8 @@ export function ReceiptCaptureActions({
     >
       <div className="pointer-events-auto flex items-center justify-center gap-8">
         {btn(
-          "Delete",
-          "Delete receipt",
+          copy.delete,
+          copy.deleteReceipt,
           deleteCls,
           <span className="text-xl text-white" aria-hidden>
             🗑
@@ -61,8 +63,8 @@ export function ReceiptCaptureActions({
         {showResnap &&
           onResnap &&
           btn(
-            "Resnap",
-            "Resnap receipt",
+            copy.resnap,
+            copy.resnapReceipt,
             resnap,
             <span className="text-2xl font-black text-white" aria-hidden>
               ✕

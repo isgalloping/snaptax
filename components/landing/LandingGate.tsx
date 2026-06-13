@@ -9,7 +9,7 @@ import {
   resolveExit,
   type LandingExitMode,
 } from "@/lib/landing/landingTiming";
-import { DEFAULT_LOCALE, getUserCopy } from "@/lib/i18n";
+import { useUserCopy } from "@/components/i18n/I18nProvider";
 import { LANDING_CTA_EVENT } from "./WorkerWelcomeLanding";
 
 type Phase = "visible" | "exiting" | "done";
@@ -20,6 +20,7 @@ interface LandingGateProps {
 }
 
 export function LandingGate({ homeChunkReady, onExit }: LandingGateProps) {
+  const landingAria = useUserCopy().onboarding.landing.ariaStatus;
   const [phase, setPhase] = useState<Phase>("visible");
   const pollTimerRef = useRef<number | null>(null);
   const doneTimerRef = useRef<number | null>(null);
@@ -103,8 +104,6 @@ export function LandingGate({ homeChunkReady, onExit }: LandingGateProps) {
   }, [beginExit]);
 
   if (phase === "done") return null;
-
-  const landingAria = getUserCopy(DEFAULT_LOCALE).onboarding.landing.ariaStatus;
 
   return (
     <div

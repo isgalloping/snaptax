@@ -15,6 +15,7 @@ import {
   resolveReceiptImage,
 } from "@/lib/receipts/receiptDetail";
 import { clientTimeZone } from "@/lib/time/timeZone";
+import { useUserCopy } from "@/components/i18n/I18nProvider";
 import { ReceiptImageZoomViewer } from "@/components/receipts/ReceiptImageZoomViewer";
 import { ReceiptDetailStepper } from "@/components/receipts/ReceiptDetailStepper";
 import { ReceiptCaptureSection } from "@/components/receipts/ReceiptCaptureSection";
@@ -57,6 +58,7 @@ export function ReceiptDetailSheet({
   onRetrySync,
   onReceiptUpdate,
 }: ReceiptDetailSheetProps) {
+  const copy = useUserCopy().receiptDetail;
   const [receipt, setReceipt] = useState(initialReceipt);
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [imageMissing, setImageMissing] = useState(false);
@@ -67,7 +69,7 @@ export function ReceiptDetailSheet({
   const dragStartY = useRef<number | null>(null);
   const revokeRef = useRef<(() => void) | undefined>(undefined);
 
-  const hero = buildReceiptDetailHero(receipt);
+  const hero = buildReceiptDetailHero(receipt, copy.hero);
   const region = receipt.dataRegion ?? "us";
   const currency = receipt.currency ?? (region === "eu" ? "EUR" : "USD");
   const timeZone = clientTimeZone();
@@ -170,10 +172,10 @@ export function ReceiptDetailSheet({
 
   const processingTitle =
     receipt.pendingUpload && syncStuck
-      ? "Upload paused"
+      ? copy.uploadPaused
       : syncStuck
-        ? "Analysis paused"
-        : "Calculating your deductions...";
+        ? copy.analysisPaused
+        : copy.calculating;
 
   const stepperPhase =
     hero.kind === "done"
@@ -206,7 +208,7 @@ export function ReceiptDetailSheet({
               type="button"
               onClick={onClose}
               className="flex min-h-16 min-w-16 items-center justify-center rounded-xl border-2 border-zinc-600 bg-zinc-900 text-xl font-black text-white active:scale-95"
-              aria-label="Close"
+              aria-label={copy.close}
             >
               ×
             </button>
@@ -230,12 +232,12 @@ export function ReceiptDetailSheet({
                   </p>
                   {!syncStuck && (
                     <p className="mt-2 text-sm text-zinc-400">
-                      This may take a few seconds.
+                      {copy.mayTakeSeconds}
                     </p>
                   )}
                   <ReceiptDetailStepper phase={stepperPhase} />
                   <div className="mx-auto mt-6 max-w-sm rounded-xl bg-zinc-900 px-4 py-3 text-sm font-bold text-zinc-300">
-                    📅 Date Captured: {dateCapturedLong}
+                    {copy.dateCapturedLong.replace("{date}", dateCapturedLong)}
                   </div>
                   {syncStuck && onRetrySync && (
                     <button
@@ -244,8 +246,8 @@ export function ReceiptDetailSheet({
                       className="mt-6 min-h-14 w-full rounded-xl border-2 border-yellow-500 bg-zinc-900 py-3 text-base font-black uppercase text-yellow-400 active:scale-95"
                     >
                       {receipt.pendingUpload
-                        ? "Retry upload"
-                        : "Retry analysis"}
+                        ? copy.retryUpload
+                        : copy.retryAnalysis}
                     </button>
                   )}
                 </>
@@ -257,10 +259,10 @@ export function ReceiptDetailSheet({
                     id="receipt-detail-title"
                     className="text-2xl font-black text-red-400"
                   >
-                    ⚠️ Tax AI Couldn&apos;t Read This
+                    {copy.blurryTitle}
                   </p>
                   <p className="mt-2 text-sm text-zinc-400">
-                    The image is too blurry or shaky.
+                    {copy.blurryBody}
                   </p>
                   <ReceiptDetailStepper phase={stepperPhase} />
                 </>
@@ -290,27 +292,30 @@ export function ReceiptDetailSheet({
             {hero.kind === "blurry" && (
               <section className="mb-8 rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-3">
                 <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-zinc-500">
-                  Partial Details
+                  {copy.partialDetails}
                 </h3>
                 <p className="text-sm font-bold text-zinc-300">
-                  Possible Merchant: {formatPartialMerchant(receipt.merchant)}
+                  {copy.possibleMerchant.replace(
+                    "{merchant}",
+                    formatPartialMerchant(receipt.merchant, copy),
+                  )}
                 </p>
                 <p className="mt-1 text-sm font-bold text-zinc-300">
-                  Date Captured: {dateCaptured}
+                  {copy.dateCaptured.replace("{date}", dateCaptured)}
                 </p>
               </section>
             )}
 
             {hero.kind === "done" && (
               <section className="mb-8 rounded-xl border border-zinc-800 bg-zinc-950 px-4">
-                <DetailRow label="Merchant" value={receipt.merchant ?? "—"} />
-                <DetailRow label="Total Amount" value={totalLabel} />
+                <DetailRow label={copy.merchant} value={receipt.merchant ?? "—"} />
+                <DetailRow label={copy.totalAmount} value={totalLabel} />
                 <div className="flex items-start justify-between gap-4 border-b border-zinc-800 py-3">
-                  <span className="text-sm font-bold text-zinc-400">Category</span>
+                  <span className="text-sm font-bold text-zinc-400">{copy.category}</span>
                   <CategoryBadge category={receipt.category ?? "OTHER"} />
                 </div>
                 <DetailRow
-                  label="IRS Line"
+                  label={copy.irsLine}
                   value={irsScheduleLineBadge(receipt.category)}
                 />
               </section>
@@ -323,14 +328,14 @@ export function ReceiptDetailSheet({
                 <ReceiptCaptureSection
                   title={
                     hero.kind === "blurry"
-                      ? "Blurry Preview"
-                      : "Original Receipt Capture"
+                      ? copy.blurryPreview
+                      : copy.originalCapture
                   }
                   imageSrc={imageSrc}
                   imageMissing={imageMissing}
                   imageOffline={imageOffline}
                   hint={
-                    hero.kind === "blurry" ? "Tap to enlarge" : "Tap to zoom"
+                    hero.kind === "blurry" ? copy.tapToEnlarge : copy.tapToZoom
                   }
                   onZoom={openZoom}
                   actions={
@@ -346,8 +351,7 @@ export function ReceiptDetailSheet({
                 />
                 {hero.kind === "processing" && (
                   <p className="text-center text-[10px] font-bold leading-relaxed text-zinc-500">
-                    🛡 Photos are encrypted on this device until uploaded. After
-                    upload, your receipt is stored securely on our servers.
+                    {copy.encryptionNote}
                   </p>
                 )}
               </div>

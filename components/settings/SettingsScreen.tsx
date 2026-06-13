@@ -173,13 +173,14 @@ export function SettingsScreen({
           <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-zinc-400">
             {copy.settings.language.title}
           </h2>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             {SUPPORTED_LOCALES.map((item) => (
               <button
                 key={item}
                 type="button"
                 onClick={() => setLocale(item)}
-                className={`min-h-16 rounded-xl border-2 p-4 text-left text-sm font-bold transition-transform active:scale-95 ${
+                aria-pressed={locale === item}
+                className={`min-h-16 rounded-xl border-2 p-4 text-center text-sm font-bold transition-transform active:scale-95 ${
                   locale === item
                     ? "border-yellow-500 bg-yellow-950 text-yellow-400"
                     : "border-zinc-600 bg-zinc-800 text-white"

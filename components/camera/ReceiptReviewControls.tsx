@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { useUserCopy } from "@/components/i18n/I18nProvider";
 import { homeVisual } from "@/lib/ui/homeVisual";
 
 interface ReceiptReviewControlsProps {
@@ -16,6 +17,7 @@ export function ReceiptReviewControls({
   onAccept,
   busy = false,
 }: ReceiptReviewControlsProps) {
+  const copy = useUserCopy().camera.review;
   const { size, delete: deleteCls, resnap, accept } = homeVisual.reviewControl;
 
   const action = (
@@ -44,8 +46,8 @@ export function ReceiptReviewControls({
   return (
     <div className="flex items-end justify-between gap-2 px-6 pb-3 pt-2">
       {action(
-        "Delete",
-        "Delete receipt from batch",
+        copy.delete,
+        copy.deleteFromBatch,
         deleteCls,
         <span className="text-xl text-white" aria-hidden>
           🗑
@@ -53,8 +55,8 @@ export function ReceiptReviewControls({
         onDelete,
       )}
       {action(
-        "Resnap",
-        "Resnap receipt",
+        copy.resnap,
+        copy.resnapReceipt,
         resnap,
         <span className="text-2xl font-black text-white" aria-hidden>
           ✕
@@ -62,8 +64,8 @@ export function ReceiptReviewControls({
         onResnap,
       )}
       {action(
-        "Done",
-        "Accept receipt",
+        copy.done,
+        copy.acceptReceipt,
         accept,
         <span className="text-2xl font-black text-white" aria-hidden>
           ✓

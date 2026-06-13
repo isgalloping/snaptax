@@ -1,5 +1,6 @@
 "use client";
 
+import { useUserCopy } from "@/components/i18n/I18nProvider";
 import { homeVisual } from "@/lib/ui/homeVisual";
 import type { BatchThumb } from "@/lib/camera/batchSession";
 
@@ -18,6 +19,7 @@ export function BatchGalleryStrip({
   acceptedIds,
   onSelect,
 }: BatchGalleryStripProps) {
+  const galleryCopy = useUserCopy().camera.gallery;
   if (thumbs.length === 0) return null;
 
   return (
@@ -42,12 +44,12 @@ export function BatchGalleryStrip({
               className={`relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-zinc-900 ${ringClass}`}
               aria-label={
                 isLatest
-                  ? "Latest receipt photo"
+                  ? galleryCopy.latest
                   : selected
-                    ? "Selected receipt photo"
+                    ? galleryCopy.selected
                     : accepted
-                      ? "Accepted receipt photo"
-                      : "Receipt photo"
+                      ? galleryCopy.accepted
+                      : galleryCopy.default
               }
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useUserCopy } from "@/components/i18n/I18nProvider";
 import { SHUTTER_COOLDOWN_MS } from "@/lib/camera/shutterCooldown";
 
 const COMPACT_RING = 56;
@@ -53,6 +54,7 @@ export function CameraShutterControl({
   compact = false,
   size,
 }: CameraShutterControlProps) {
+  const copy = useUserCopy().camera;
   const resolvedSize: ShutterSize = size ?? (compact ? "compact" : "full");
   const { ring: ringSize, stroke, inner: innerSize, button: buttonSize } =
     ringConfig(resolvedSize);
@@ -92,7 +94,7 @@ export function CameraShutterControl({
         type="button"
         onClick={onClick}
         disabled={!ready || capturing}
-        aria-label="Take photo"
+        aria-label={copy.takePhotoAria}
         aria-busy={capturing}
         className={`relative flex ${buttonSize} items-center justify-center transition-transform active:scale-95 disabled:opacity-50`}
       >
@@ -139,7 +141,7 @@ export function CameraShutterControl({
       </button>
       {showLabel && (
         <span className="text-[9px] font-bold uppercase tracking-wide text-white">
-          Take Photo
+          {copy.takePhoto}
         </span>
       )}
     </div>

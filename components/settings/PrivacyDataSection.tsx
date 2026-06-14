@@ -1,16 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { LegalDoc } from "@/lib/legal/content";
 import { LEGAL_CONTACT_EMAIL } from "@/lib/legal/content";
 import { useUserCopy } from "@/components/i18n/I18nProvider";
 import { LegalSheet } from "@/components/legal/LegalSheet";
-import { clearLocalAppData } from "@/lib/storage/clearLocalData";
-import { deleteAccountApi } from "@/lib/client/authApi";
-import { ensureGhostSession } from "@/lib/client/ghostClient";
+import {
+  deleteAccountAndLocalData,
+  isDeleteAccountOfflineError,
+} from "@/lib/client/deleteAccountFlow";
 
 interface PrivacyDataSectionProps {
   isSignedIn?: boolean;
+  onAccountDeleted?: () => void;
+  /** @deprecated use onAccountDeleted */
   onLocalDataCleared?: () => void;
 }
 
@@ -48,6 +51,7 @@ function SettingsRow({
 
 export function PrivacyDataSection({
   isSignedIn = false,
+  onAccountDeleted,
   onLocalDataCleared,
 }: PrivacyDataSectionProps) {
   const copy = useUserCopy().settings.privacyData;
@@ -55,26 +59,40 @@ export function PrivacyDataSection({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isOnline, setIsOnline] = useState(
+    () => typeof navigator !== "undefined" && navigator.onLine,
+  );
+
+  useEffect(() => {
+    const syncOnline = () =>
+      setIsOnline(typeof navigator !== "undefined" && navigator.onLine);
+    window.addEventListener("online", syncOnline);
+    window.addEventListener("offline", syncOnline);
+    return () => {
+      window.removeEventListener("online", syncOnline);
+      window.removeEventListener("offline", syncOnline);
+    };
+  }, []);
 
   const handleDelete = async () => {
     setDeleting(true);
     setError(null);
     try {
-      if (navigator.onLine) {
-        if (!isSignedIn) {
-          await ensureGhostSession();
-        }
-        await deleteAccountApi(isSignedIn);
-      }
-      await clearLocalAppData();
+      await deleteAccountAndLocalData(isSignedIn);
       setShowDeleteConfirm(false);
-      onLocalDataCleared?.();
-    } catch {
-      setError(copy.deleteFailed);
+      (onAccountDeleted ?? onLocalDataCleared)?.();
+    } catch (err) {
+      if (isDeleteAccountOfflineError(err)) {
+        setError(copy.deleteRequiresOnline);
+      } else {
+        setError(copy.deleteFailed);
+      }
     } finally {
       setDeleting(false);
     }
   };
+
+  const offline = !isOnline;
 
   return (
     <>
@@ -106,10 +124,13 @@ export function PrivacyDataSection({
           <SettingsRow
             label={copy.deleteAccount}
             destructive
-            onClick={() => setShowDeleteConfirm(true)}
+            onClick={() => {
+              setError(null);
+              setShowDeleteConfirm(true);
+            }}
           />
         </div>
-        {error && (
+        {error && !showDeleteConfirm && (
           <p className="mt-3 text-center text-sm font-bold text-red-500" role="alert">
             {error}
           </p>
@@ -129,9 +150,19 @@ export function PrivacyDataSection({
                 ? copy.deleteSignedInWarning
                 : copy.deleteGhostWarning}
             </p>
+            {offline && (
+              <p className="mt-4 text-sm font-bold text-yellow-400" role="alert">
+                {copy.deleteRequiresOnline}
+              </p>
+            )}
+            {error && (
+              <p className="mt-4 text-sm font-bold text-red-500" role="alert">
+                {error}
+              </p>
+            )}
             <button
               type="button"
-              disabled={deleting}
+              disabled={deleting || offline}
               onClick={() => void handleDelete()}
               className="mt-6 w-full min-h-16 rounded-xl border-2 border-red-600 bg-red-950 py-4 text-lg font-black uppercase tracking-wider text-red-400 transition-transform active:scale-95 disabled:opacity-60"
             >
@@ -139,7 +170,10 @@ export function PrivacyDataSection({
             </button>
             <button
               type="button"
-              onClick={() => setShowDeleteConfirm(false)}
+              onClick={() => {
+                setShowDeleteConfirm(false);
+                setError(null);
+              }}
               className="mt-3 w-full min-h-16 py-3 text-sm font-bold text-zinc-400 transition-transform active:scale-95"
             >
               {copy.cancel}

@@ -1,3 +1,5 @@
+import type { LandingVariant } from "@/lib/landing/landingVariant";
+
 export const LANDING_MIN_MS = 2400;
 export const LANDING_SOFT_MAX_MS = 5000;
 export const LANDING_FADE_MS = 200;
@@ -13,10 +15,21 @@ export function landingElapsedMs(): number {
 export function resolveExit(
   elapsedMs: number,
   homeChunkReady: boolean,
+  variant: LandingVariant = "data_stream",
 ): LandingExitMode | null {
   if (elapsedMs >= LANDING_SOFT_MAX_MS) {
     return homeChunkReady ? "full-home" : "offline-pack";
   }
+
+  if (variant === "none") {
+    if (homeChunkReady) return "full-home";
+    return null;
+  }
+
+  if (variant === "hero") {
+    return null;
+  }
+
   if (elapsedMs >= LANDING_MIN_MS && homeChunkReady) {
     return "full-home";
   }

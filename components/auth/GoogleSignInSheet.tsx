@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useUserCopy } from "@/components/i18n/I18nProvider";
+import { signInWithGoogleApi } from "@/lib/client/authApi";
+import { ensureGhostSession } from "@/lib/client/ghostClient";
 
 export type GoogleSignInMode =
   | "soft"
@@ -9,12 +11,17 @@ export type GoogleSignInMode =
   | "hard-sync"
   | "onboarding-signup";
 
+export type GoogleSignInResult = {
+  taxRecalcQueued: number;
+};
+
 interface GoogleSignInSheetProps {
   mode: GoogleSignInMode;
   onClose: () => void;
-  onSuccess: () => void | Promise<void>;
+  onSuccess: (result: GoogleSignInResult) => void | Promise<void>;
   onFailure?: (message: string) => void;
   onSoftDismiss?: () => void;
+  onSignIn?: () => Promise<GoogleSignInResult>;
 }
 
 export function GoogleSignInSheet({
@@ -23,6 +30,7 @@ export function GoogleSignInSheet({
   onSuccess,
   onFailure,
   onSoftDismiss,
+  onSignIn,
 }: GoogleSignInSheetProps) {
   const authCopy = useUserCopy().auth.googleSignIn;
   const [loading, setLoading] = useState(false);
@@ -42,7 +50,13 @@ export function GoogleSignInSheet({
   const handleGoogle = async () => {
     setLoading(true);
     try {
-      await onSuccess();
+      await ensureGhostSession();
+      const result = onSignIn
+        ? await onSignIn()
+        : {
+            taxRecalcQueued: (await signInWithGoogleApi()).taxRecalcQueued,
+          };
+      await onSuccess(result);
     } catch {
       onFailure?.(authCopy.signInFailed);
     } finally {

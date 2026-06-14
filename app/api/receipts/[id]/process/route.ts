@@ -8,6 +8,7 @@ import {
 import { getActor } from "@/lib/auth/getActor";
 import { prisma } from "@/lib/prisma";
 import { assertReceiptAccess } from "@/lib/receipts/ownership";
+import { assertPersistedReceiptId } from "@/lib/receipts/receiptId";
 import { processReceiptTax } from "@/lib/receipts/processReceiptTax";
 import {
   mimeForKind,
@@ -27,6 +28,7 @@ export const POST = withRequestLog(
     try {
       const actor = await getActor(request, { requireWrite: true });
       const { id } = await context.params;
+      assertPersistedReceiptId(id);
       const receipt = await prisma.snaptaxReceipt.findUnique({ where: { id } });
       if (!receipt) throw new Error("NOT_FOUND");
       assertReceiptAccess(receipt, actor);

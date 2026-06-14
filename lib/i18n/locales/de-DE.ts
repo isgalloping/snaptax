@@ -89,19 +89,21 @@ export const DE_DE_COPY: UserCopy = {
   },
   onboarding: {
     landing: {
-      headline: "SNAP1099",
-      tagline:
-        "Belege → Steuerersparnis. Für die Baustelle entwickelt.",
-      step1: "Foto machen — wir sortieren Ihre Geschäftsausgaben.",
-      step2: "Funktioniert offline. Synchronisiert bei Verbindung.",
-      step3: "Privat und sicher. AGB · Datenschutz.",
-      cta: "Jetzt fotografieren →",
-      ctaAria: "Belege fotografieren starten",
+      headlineLead: "Behalten Sie mehr von Ihrem",
+      headlineAccent: "harte Arbeit verdienten Geld.",
+      tagline: "KI findet Steuerabzüge, die andere übersehen.",
+      check1: "Funktioniert offline",
+      check2: "10 Belege in 10 Sek.",
+      check3: "Keine Anmeldung nötig",
+      cta: "Los geht's! ⚡",
+      ctaAria: "Onboarding starten",
       ariaStatus: "Snap1099 wird geladen",
     },
     snapCoach:
       "Tippen Sie auf SNAP RECEIPT — fotografieren Sie jeden Geschäftsbeleg.",
     dismissCoach: "Hinweis schließen",
+    skip: "Überspringen",
+    skipAria: "Onboarding-Tutorial überspringen",
     firstReceipt: {
       processing:
         "Beleg wird gelesen… Jederzeit weitere Belege fotografieren.",
@@ -115,6 +117,8 @@ export const DE_DE_COPY: UserCopy = {
       snapTooltip:
         "Hier tippen, um ein Foto zu machen und Ihre Steuerersparnis sofort zu sehen.",
       sandboxShutterAria: "Beispielbeleg fotografieren",
+      sandboxTooltip:
+        "Tippen Sie auf den Auslöser, um Ihren Beispielbeleg zu fotografieren.",
       snackbar: "Sie haben gerade 28,50 $ gespart!",
       signup: {
         title: "Steuerersparnis sichern",
@@ -322,6 +326,8 @@ export const DE_DE_COPY: UserCopy = {
       contactPrefix: "Kontakt",
       deleteAccount: "Konto löschen",
       deleteFailed: "Löschen fehlgeschlagen. Bitte erneut versuchen.",
+      deleteRequiresOnline:
+        "Verbinden Sie sich mit dem Internet, um Ihr Konto und Cloud-Daten zu löschen.",
       deleteTitle: "Konto löschen",
       deleteSignedInWarning:
         "Dies ist unwiderruflich. Alle Cloud-Belege und Kontodaten werden dauerhaft gelöscht.",

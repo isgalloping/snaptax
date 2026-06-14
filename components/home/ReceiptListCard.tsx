@@ -15,10 +15,13 @@ import { CircularStatusIcon } from "./CircularStatusIcon";
 import { StatusPill } from "./StatusPill";
 import { ChevronRightIcon } from "@/components/icons/ChevronRightIcon";
 import { useUserCopy } from "@/components/i18n/I18nProvider";
+import { CoachPulseOverlay } from "@/components/onboarding/CoachPulseOverlay";
 
 interface ReceiptListCardProps {
   receipt: Receipt;
   syncStuck?: boolean;
+  ahaCoach?: boolean;
+  onAhaCoachDismiss?: () => void;
   onSelect: (receipt: Receipt) => void;
   onResnap: (id: string) => void;
   onRetrySync: (id: string) => void;
@@ -66,6 +69,8 @@ function CardShell({
 export function ReceiptListCard({
   receipt,
   syncStuck = false,
+  ahaCoach = false,
+  onAhaCoachDismiss,
   onSelect,
   onResnap,
   onRetrySync,
@@ -179,10 +184,15 @@ export function ReceiptListCard({
   const demoDone = receipt.isOnboardingDemo && receipt.status === "done";
 
   return (
-    <CardShell
-      className={`p-3 ${demoDone ? "border-l-4 border-l-green-500" : ""}`}
-      onClick={() => onSelect(receipt)}
-    >
+    <div className="relative">
+      {ahaCoach && demoDone && <CoachPulseOverlay />}
+      <CardShell
+        className={`p-3 ${demoDone ? "border-l-4 border-l-green-500" : ""}`}
+        onClick={() => {
+          if (ahaCoach && demoDone) onAhaCoachDismiss?.();
+          onSelect(receipt);
+        }}
+      >
       <CircularStatusIcon state="done" emoji={categoryEmoji} />
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-extrabold uppercase text-white">
@@ -206,5 +216,6 @@ export function ReceiptListCard({
         <ChevronRightIcon className="h-5 w-5 text-zinc-500" />
       </div>
     </CardShell>
+    </div>
   );
 }

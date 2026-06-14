@@ -9,15 +9,15 @@ import { utcNow } from "@/lib/time/utc";
 
 export const ONBOARDING_DEMO_RECEIPT_ID = "onboarding-demo-receipt";
 export const ONBOARDING_DEMO_TAX_SAVED = 28.5;
-export const ONBOARDING_DEMO_AMOUNT = 182.12;
-export const DEMO_SAMPLE_IMAGE_URL = "/onboarding/sample-home-depot.png";
+export const ONBOARDING_DEMO_AMOUNT = 193.12;
+export const DEMO_SAMPLE_IMAGE_URL = "/onboarding/sample-builder-depot.png";
 
 export function createShadowDemoReceipt(): StoredReceipt {
   const now = utcNow();
   return {
     id: ONBOARDING_DEMO_RECEIPT_ID,
     status: "processing",
-    merchant: "SAMPLE: Home Depot",
+    merchant: "SAMPLE: Builder Depot",
     amount: ONBOARDING_DEMO_AMOUNT,
     taxAmount: 0,
     currency: "USD",
@@ -39,6 +39,20 @@ export function completeDemoReceipt(receipt: StoredReceipt): StoredReceipt {
     subtitle: "COMPLETE",
     updatedAt: now,
   };
+}
+
+/** Idempotent: ensures onboarding demo is `done` for Aha/export (repairs stale processing). */
+export async function ensureOnboardingDemoDone(): Promise<StoredReceipt> {
+  let demo = await loadReceipt(ONBOARDING_DEMO_RECEIPT_ID);
+  if (!demo) {
+    demo = createShadowDemoReceipt();
+  }
+  if (demo.status === "done") {
+    return demo;
+  }
+  const completed = completeDemoReceipt(demo);
+  await saveReceipt(completed);
+  return completed;
 }
 
 export async function attachDemoSamplePhoto(): Promise<boolean> {

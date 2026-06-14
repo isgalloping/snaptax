@@ -14,6 +14,8 @@ describe("createShadowDemoReceipt", () => {
     assert.equal(receipt.id, ONBOARDING_DEMO_RECEIPT_ID);
     assert.equal(receipt.isOnboardingDemo, true);
     assert.equal(receipt.status, "processing");
+    assert.equal(receipt.merchant, "SAMPLE: Builder Depot");
+    assert.equal(receipt.amount, 193.12);
     assert.equal(receipt.taxAmount, 0);
     assert.equal(receipt.subtitle, "Pending Test");
   });
@@ -27,5 +29,12 @@ describe("completeDemoReceipt", () => {
     assert.equal(receipt.status, "done");
     assert.equal(receipt.taxAmount, ONBOARDING_DEMO_TAX_SAVED);
     assert.equal(receipt.subtitle, "COMPLETE");
+  });
+
+  it("is idempotent for already-done receipts", () => {
+    const done = completeDemoReceipt(createShadowDemoReceipt());
+    const again = completeDemoReceipt(done);
+    assert.equal(again.status, "done");
+    assert.equal(again.taxAmount, ONBOARDING_DEMO_TAX_SAVED);
   });
 });

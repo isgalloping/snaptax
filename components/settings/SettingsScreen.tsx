@@ -23,6 +23,8 @@ interface SettingsScreenProps {
   industry: Industry | null;
   onIndustryChange: (industry: Industry) => void;
   onBack: () => void;
+  onAccountDeleted?: () => void;
+  /** @deprecated use onAccountDeleted */
   onLocalDataCleared?: () => void;
   googleUser: GoogleUser | null;
   seasonPaid: boolean;
@@ -45,6 +47,7 @@ export function SettingsScreen({
   industry,
   onIndustryChange,
   onBack,
+  onAccountDeleted,
   onLocalDataCleared,
   googleUser,
   seasonPaid,
@@ -102,9 +105,8 @@ export function SettingsScreen({
   const clearError = () => setErrorMessage(null);
   const displayError = errorMessage ?? exportError;
 
-  const handleGoogleSuccess = async () => {
-    const { taxRecalcQueued } = await onSignInWithGoogle();
-    await onPostLoginSync?.(taxRecalcQueued);
+  const handleGoogleSuccess = async (result: { taxRecalcQueued: number }) => {
+    await onPostLoginSync?.(result.taxRecalcQueued);
     setGoogleSheet(null);
     if (pendingAfterSignIn === "sync") {
       setShowSyncHelp(true);
@@ -230,7 +232,7 @@ export function SettingsScreen({
 
         <PrivacyDataSection
           isSignedIn={isSignedIn}
-          onLocalDataCleared={onLocalDataCleared}
+          onAccountDeleted={onAccountDeleted ?? onLocalDataCleared}
         />
 
         <section>
@@ -266,6 +268,7 @@ export function SettingsScreen({
             setPendingAfterSignIn(null);
           }}
           onSoftDismiss={googleSheet === "soft" ? handleSoftDismiss : undefined}
+          onSignIn={onSignInWithGoogle}
           onSuccess={handleGoogleSuccess}
           onFailure={(msg) => {
             setErrorMessage(msg);

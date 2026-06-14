@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import type { Industry } from "@/lib/types";
 import { INDUSTRIES } from "@/lib/types";
 import type { GoogleUser } from "@/lib/client/authStorage";
@@ -228,6 +229,23 @@ export function SettingsScreen({
           >
             {copy.settings.multiDevice.button}
           </button>
+        </section>
+
+        <section className="mb-8">
+          <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-zinc-400">
+            {copy.settings.help.title}
+          </h2>
+          <Link
+            href="/help"
+            className="block w-full min-h-16 rounded-xl border-2 border-zinc-600 bg-zinc-800 p-4 text-left transition-transform active:scale-95"
+          >
+            <span className="text-sm font-bold text-white">
+              {copy.settings.help.button}
+            </span>
+            <span className="mt-1 block text-xs leading-relaxed text-zinc-400">
+              {copy.settings.help.hint}
+            </span>
+          </Link>
         </section>
 
         <PrivacyDataSection

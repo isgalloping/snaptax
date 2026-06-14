@@ -352,6 +352,205 @@ export const FR_FR_COPY: UserCopy = {
       paymentConfirmed:
         "Paiement confirmé. Appuyez sur Exporter à nouveau pour télécharger.",
     },
+    help: {
+      title: "Aide",
+      button: "Comment utiliser Snap1099",
+      hint: "Guides rapides pour photographier, sauvegarder et exporter.",
+    },
+  },
+  help: {
+    pageTitle: "Aide",
+    backToApp: "< BACK",
+    backToTopics: "< BACK",
+    allTopics: "Tous les sujets",
+    contact: "Besoin d'aide ? legal@snap1099.com",
+    tocTitle: "Sujets",
+    toc: {
+      quickStart: "Démarrage rapide (30 s)",
+      snapReceipt: "Photographier un reçu",
+      homeScreen: "Écran d'accueil",
+      googleBackup: "Sauvegarder avec Google",
+      taxExport: "Export saison fiscale",
+      faq: "Questions fréquentes",
+      privacy: "Vos données",
+    },
+    sections: {
+      quickStart: {
+        title: "Commencer en 30 secondes",
+        steps: [
+          "Ouvrez Snap1099. **Pas d'inscription.**",
+          "Appuyez sur le gros bouton jaune **PHOTOGRAPHIER UN REÇU**.",
+          "Pointez la caméra sur le reçu. Appuyez sur l'obturateur. **C'est fait — retour au travail.**",
+          "Avec du réseau, l'app lit le reçu et affiche le montant.",
+          "**Économie fiscale estimée** en haut augmente.",
+        ],
+        closing:
+          "C'est tout. Connectez-vous avec **Continuer avec Google** avant de changer de téléphone.",
+      },
+      snapReceipt: {
+        title: "Photographier un reçu",
+        stepsTitle: "Étapes",
+        steps: [
+          "Appuyez sur **PHOTOGRAPHIER UN REÇU** (gros bouton jaune).",
+          "La caméra s'ouvre en plein écran.",
+          "Tenez le reçu à plat. Appuyez sur l'obturateur.",
+          "Retour immédiat à l'accueil. **Pas besoin de vérifier la netteté.**",
+        ],
+        tipsTitle: "Conseils",
+        tips: [
+          "**Bonne lumière** aide. Évitez les reflets.",
+          "Un reçu par photo, c'est l'idéal.",
+          "**Mode rafale :** continuez — **TERMINÉ ET VÉRIFIER** quand vous avez fini.",
+        ],
+        blurryTitle: "Photo floue",
+        blurry:
+          "La liste affiche en rouge **Reçu flou. Appuyez pour reprendre**. Appuyez sur la ligne pour une nouvelle photo.",
+        offlineTitle: "Pas d'internet ?",
+        offline:
+          "Vous pouvez quand même photographier. Le reçu reste sur le téléphone avec **Traitement...** et **Envoi en cours**. Il s'envoie automatiquement avec le réseau.",
+      },
+      homeScreen: {
+        title: "L'écran d'accueil",
+        rows: [
+          {
+            label: "**Économie fiscale estimée** (jaune, en haut)",
+            meaning:
+              "Estimation approximative. **Pas un conseil fiscal officiel.**",
+          },
+          {
+            label: "**PHOTOGRAPHIER UN REÇU**",
+            meaning: "Prendre une photo d'un reçu.",
+          },
+          {
+            label: "**Traitement...** + **Envoi en cours**",
+            meaning: "Enregistré. Attente réseau ou IA.",
+          },
+          {
+            label: "**45,20 $** + **ESSENCE CAMION**",
+            meaning: "Terminé. Montant et catégorie pro.",
+          },
+          {
+            label: "**Personnel (non déductible)**",
+            meaning: "Achat perso — ne compte pas dans l'économie.",
+          },
+          {
+            label: "Icône engrenage (en haut à droite)",
+            meaning: "**Paramètres** — export, compte, secteur.",
+          },
+          {
+            label: "**TIRER POUR ACTUALISER**",
+            meaning: "Tirez la liste vers le bas pour synchroniser.",
+          },
+        ],
+        filtersNote:
+          "Filtres en bas : **Tout** · **Terminé** · **En cours** · **Flou**",
+      },
+      googleBackup: {
+        title: "Ne perdez pas vos reçus",
+        whyTitle: "Pourquoi se connecter ?",
+        why: [
+          "Sauvegarde les reçus dans le cloud.",
+          "**Obligatoire avant de changer de téléphone.**",
+          "Mêmes données sur téléphone, tablette ou ordinateur.",
+        ],
+        howTitle: "Comment",
+        how: [
+          "Engrenage → **Paramètres**.",
+          "Appuyez sur **Continuer avec Google**.",
+          "Choisissez votre compte Google. Terminé.",
+        ],
+        staySame:
+          "**Vos reçus restent identiques** — rien ne bouge ni ne se réinitialise.",
+        warningTitle: "Important",
+        warnings: [
+          "**Non connecté + nouveau téléphone = données perdues.** Pas de récupération.",
+          "Connectez-vous **avant** de changer ou perdre votre téléphone.",
+        ],
+        multiDeviceTitle: "Voir sur tous les appareils",
+        multiDevice:
+          "**Paramètres** → **Voir sur tous les appareils**. Même **compte Google** sur chaque appareil.",
+      },
+      taxExport: {
+        title: "Exporter pour les impôts",
+        when:
+          "Photographiez toute l'année — **payez seulement à l'export.** Généralement janvier–avril (saison fiscale US).",
+        whatTitle: "Ce que vous obtenez",
+        what: [
+          "**CSV pour TurboTax** — import dans TurboTax ou autre logiciel.",
+          "**Pack audit CPA** — ZIP avec tableau et photos pour votre comptable.",
+        ],
+        stepsTitle: "Étapes",
+        steps: [
+          "**Paramètres** → **Exporter le pack fiscal IRS**",
+          "Connectez-vous avec Google (si pas encore fait).",
+          "**49 $** une fois par saison fiscale (via Paddle).",
+          "Choisissez l'année fiscale et le format.",
+          "Partagez le fichier — e-mail, WhatsApp ou Fichiers.",
+        ],
+        afterPayTitle: "Après le paiement",
+        afterPay: [
+          "**Exporter à nouveau** autant que vous voulez **cette saison**.",
+          "Les nouveaux reçus sont inclus.",
+          "Prochaine saison = nouveau **49 $**.",
+        ],
+        beforePay:
+          "Lisez l'avertissement jaune : **Connectez-vous avec Google avant de changer de téléphone.**",
+      },
+      faq: {
+        title: "Questions fréquentes",
+        items: [
+          {
+            q: "Faut-il un compte pour photographier ?",
+            a: "Non. Photographiez d'abord. Connectez-vous plus tard pour sauvegarder.",
+          },
+          {
+            q: "Photographier est gratuit ?",
+            a: "Oui. **49 $** seulement à l'export pour la saison fiscale.",
+          },
+          {
+            q: "J'ai photographié sans réseau. Mon reçu est-il en sécurité ?",
+            a: "Oui. Il est sur le téléphone. Il s'envoie quand vous êtes en ligne.",
+          },
+          {
+            q: "Pourquoi c'est encore « Traitement... » ?",
+            a: "Attente réseau ou serveur. Tirez pour actualiser. Appuyez sur la ligne pour réessayer.",
+          },
+          {
+            q: "J'ai photographié mon déjeuner par erreur.",
+            a: "L'IA peut marquer **Personnel (non déductible)**. Ça ne compte pas.",
+          },
+          {
+            q: "Qu'est-ce que « Économie fiscale estimée » ?",
+            a: "Une estimation. **Pas** ce que l'IRS vous doit. Demandez à un CPA.",
+          },
+          {
+            q: "Nouveau téléphone. Où sont mes reçus ?",
+            a: "Snap1099 → **Continuer avec Google** avec le **même compte**. Ils se synchronisent.",
+          },
+          {
+            q: "Jamais connecté, nouveau téléphone.",
+            a: "Désolé — impossible à récupérer.",
+          },
+          {
+            q: "Payé mais pas d'export.",
+            a: "Attendez quelques secondes. Essayez **Exporter à nouveau**. Vérifiez internet.",
+          },
+          {
+            q: "Tout supprimer ?",
+            a: "**Paramètres** → **Confidentialité et données** → **Supprimer le compte**.",
+          },
+        ],
+      },
+      privacy: {
+        title: "Vos données",
+        paragraphs: [
+          "Les photos de reçus sont stockées en sécurité aux **États-Unis** en ligne.",
+          "L'IA lit les reçus. Nous **ne vendons pas** vos données. Pas de pub.",
+        ],
+        privacyLink: "Politique de confidentialité",
+        termsLink: "Conditions d'utilisation",
+      },
+    },
   },
   exportEngine: {
     title: "Exporter le pack fiscal",

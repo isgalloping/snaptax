@@ -1,8 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useUserCopy } from "@/components/i18n/I18nProvider";
 import { commitHeroLandingStart } from "@/lib/onboarding/onboardingState";
+import {
+  HERO_AUTO_ADVANCE_MS,
+  HERO_CTA_READY_MS,
+} from "@/lib/landing/heroLandingTiming";
 import { LANDING_CTA_EVENT } from "./landingEvents";
 
 const HERO_IMAGE = "/onboarding/onboarding-hero.png";
@@ -11,18 +15,30 @@ export function HeroWelcomeLanding() {
   const copy = useUserCopy().onboarding.landing;
   const [ctaReady, setCtaReady] = useState(false);
   const [heroLoaded, setHeroLoaded] = useState(false);
+  const startedRef = useRef(false);
+
+  const startOnboarding = useCallback(async () => {
+    if (startedRef.current) return;
+    startedRef.current = true;
+    await commitHeroLandingStart();
+    window.dispatchEvent(new Event(LANDING_CTA_EVENT));
+  }, []);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setCtaReady(true), 600);
-    return () => window.clearTimeout(timer);
-  }, []);
+    const ctaTimer = window.setTimeout(() => setCtaReady(true), HERO_CTA_READY_MS);
+    const autoTimer = window.setTimeout(() => {
+      void startOnboarding();
+    }, HERO_AUTO_ADVANCE_MS);
+
+    return () => {
+      window.clearTimeout(ctaTimer);
+      window.clearTimeout(autoTimer);
+    };
+  }, [startOnboarding]);
 
   const handleStart = () => {
     if (!ctaReady) return;
-    void (async () => {
-      await commitHeroLandingStart();
-      window.dispatchEvent(new Event(LANDING_CTA_EVENT));
-    })();
+    void startOnboarding();
   };
 
   const checks = [copy.check1, copy.check2, copy.check3];
@@ -68,10 +84,7 @@ export function HeroWelcomeLanding() {
           ))}
         </ul>
 
-        <div
-          className="mt-8 flex justify-center gap-2"
-          aria-hidden
-        >
+        <div className="mt-8 flex justify-center gap-2" aria-hidden>
           <span className="h-2 w-2 rounded-full bg-yellow-500" />
           <span className="h-2 w-2 rounded-full bg-zinc-600" />
           <span className="h-2 w-2 rounded-full bg-zinc-600" />

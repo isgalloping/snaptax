@@ -1,6 +1,6 @@
 import { get } from "@vercel/blob";
 import { NextResponse } from "next/server";
-import { apiError, mapErrorToResponse } from "@/lib/api/errors";
+import { apiError, mapErrorToResponse, rateLimitError } from "@/lib/api/errors";
 import {
   checkActorProcessLimit,
   checkReceiptProcessCooldown,
@@ -41,12 +41,12 @@ export const POST = withRequestLog(
 
       const cooldown = await checkReceiptProcessCooldown(id);
       if (!cooldown.ok) {
-        return apiError("RATE_LIMITED", "Too many requests", 429);
+        return rateLimitError(cooldown.retryAfterSec);
       }
 
       const actorLimit = await checkActorProcessLimit(actor);
       if (!actorLimit.ok) {
-        return apiError("RATE_LIMITED", "Too many requests", 429);
+        return rateLimitError(actorLimit.retryAfterSec);
       }
 
       const blobResult = await get(receipt.imageUrl, {

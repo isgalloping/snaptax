@@ -25,6 +25,7 @@ export type LogMeta = {
   tokenUsageCompletion?: number;
   ipHash?: string;
   dataRegion?: string;
+  headerRegion?: string;
   reason?: string;
   verifyBypass?: boolean;
   mockAi?: boolean;

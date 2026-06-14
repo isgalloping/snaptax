@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { apiError } from "@/lib/api/errors";
+import { rateLimitError } from "@/lib/api/errors";
 import { checkGhostRegisterLimit, clientIp } from "@/lib/api/rateLimit";
 import {
   GHOST_COOKIE_NAME,
@@ -21,7 +21,7 @@ export const POST = withRequestLog("api.auth", async (request: NextRequest, _con
   const ip = clientIp(request);
   const registerLimit = await checkGhostRegisterLimit(ip);
   if (!registerLimit.ok) {
-    return apiError("RATE_LIMITED", "Too many requests", 429);
+    return rateLimitError(registerLimit.retryAfterSec);
   }
 
   const existingToken = readGhostTokenFromCookie(request.headers.get("cookie"));

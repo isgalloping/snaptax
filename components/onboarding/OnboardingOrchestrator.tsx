@@ -75,7 +75,8 @@ export function OnboardingOrchestrator({
     if (status !== "stage_3") return;
 
     let cancelled = false;
-    const timers: ReturnType<typeof setTimeout>[] = [];
+    let toStageAha: number | undefined;
+    let stopAnim: number | undefined;
 
     void (async () => {
       await ensureOnboardingDemoDone();
@@ -86,25 +87,22 @@ export function OnboardingOrchestrator({
       onTaxAnimatingRef.current(true);
       setShowSnackbar(true);
 
-      timers.push(
-        window.setTimeout(() => {
-          if (cancelled) return;
-          void setOnboardingStatus("stage_aha").then(() =>
-            onStatusChangeRef.current("stage_aha"),
-          );
-        }, 400),
-      );
+      toStageAha = window.setTimeout(() => {
+        if (cancelled) return;
+        void setOnboardingStatus("stage_aha").then(() =>
+          onStatusChangeRef.current("stage_aha"),
+        );
+      }, 400);
 
-      timers.push(
-        window.setTimeout(() => {
-          if (!cancelled) onTaxAnimatingRef.current(false);
-        }, 600),
-      );
+      stopAnim = window.setTimeout(() => {
+        if (!cancelled) onTaxAnimatingRef.current(false);
+      }, 600);
     })();
 
     return () => {
       cancelled = true;
-      for (const id of timers) window.clearTimeout(id);
+      if (toStageAha !== undefined) window.clearTimeout(toStageAha);
+      if (stopAnim !== undefined) window.clearTimeout(stopAnim);
     };
   }, [status]);
 

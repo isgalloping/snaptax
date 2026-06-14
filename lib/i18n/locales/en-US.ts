@@ -154,6 +154,8 @@ export const EN_US_COPY: UserCopy = {
         emptyFilter: "No receipts in this filter",
         uploadPaused: "UPLOAD PAUSED",
         analysisPaused: "ANALYSIS PAUSED",
+        photoMissingTitle: "PHOTO MISSING",
+        photoMissingSubtitle: "Tap to resnap",
         uploading: "UPLOADING...",
         tapToRetry: "Tap to retry",
         processing: "Processing",

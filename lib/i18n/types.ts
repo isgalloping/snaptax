@@ -133,6 +133,8 @@ export type UserCopy = {
       emptyFilter: string;
       uploadPaused: string;
       analysisPaused: string;
+      photoMissingTitle: string;
+      photoMissingSubtitle: string;
       uploading: string;
       tapToRetry: string;
       processing: string;

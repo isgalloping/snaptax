@@ -196,11 +196,11 @@ export async function pollEntitlementReady(
   return false;
 }
 
-export async function deleteAccountApi(isSignedIn: boolean): Promise<void> {
-  const path = isSignedIn ? "/api/users/me" : "/api/ghost/data";
+export async function deleteAccountApi(useUserApi: boolean): Promise<void> {
+  const path = useUserApi ? "/api/users/me" : "/api/ghost/data";
   const res = await apiFetch(path, { method: "DELETE" });
   if (!res.ok && res.status !== 204) throw new Error("DELETE_ACCOUNT_FAILED");
-  if (isSignedIn) saveGoogleUser(null);
+  if (useUserApi) saveGoogleUser(null);
 }
 
 export function markSeasonPaidLocal(season: string): void {

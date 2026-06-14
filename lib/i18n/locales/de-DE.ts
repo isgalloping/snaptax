@@ -158,6 +158,8 @@ export const DE_DE_COPY: UserCopy = {
       emptyFilter: "Keine Belege in diesem Filter",
       uploadPaused: "UPLOAD PAUSIERT",
       analysisPaused: "ANALYSE PAUSIERT",
+      photoMissingTitle: "FOTO FEHLT",
+      photoMissingSubtitle: "Tippen zum erneuten Fotografieren",
       uploading: "WIRD HOCHGELADEN...",
       tapToRetry: "Tippen zum erneuten Versuch",
       processing: "In Bearbeitung",

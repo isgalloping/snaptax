@@ -345,7 +345,9 @@ export const EN_US_COPY: UserCopy = {
     },
     help: {
       pageTitle: "Help",
-      backToApp: "< Back to Snap1099",
+      backToApp: "< BACK",
+      backToTopics: "< BACK",
+      allTopics: "All topics",
       contact: "Need more help? legal@snap1099.com",
       tocTitle: "Topics",
       toc: {

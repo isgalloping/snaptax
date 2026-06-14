@@ -298,6 +298,8 @@ export type UserCopy = {
   help: {
     pageTitle: string;
     backToApp: string;
+    backToTopics: string;
+    allTopics: string;
     contact: string;
     tocTitle: string;
     toc: {

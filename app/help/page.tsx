@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { HelpPageContent } from "@/components/help/HelpPageContent";
 
 export const metadata = {
@@ -5,5 +6,9 @@ export const metadata = {
 };
 
 export default function HelpPage() {
-  return <HelpPageContent />;
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-black" />}>
+      <HelpPageContent />
+    </Suspense>
+  );
 }

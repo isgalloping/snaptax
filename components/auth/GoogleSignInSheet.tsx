@@ -142,7 +142,12 @@ export function GoogleSignInSheet({
             className={`flex w-full justify-center ${signingIn || preparing ? "pointer-events-none opacity-60" : ""}`}
             aria-busy={preparing || signingIn}
           />
-          {(preparing || signingIn) && signingIn && (
+          {preparing && !signingIn && (
+            <p className="mt-2 text-center text-sm font-bold text-zinc-400">
+              {authCopy.signingIn}
+            </p>
+          )}
+          {signingIn && (
             <p className="mt-2 text-center text-sm font-bold text-zinc-400">
               {authCopy.signingIn}
             </p>

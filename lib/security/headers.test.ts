@@ -8,6 +8,8 @@ test("securityHeaders includes baseline protections", () => {
   assert.equal(headers["X-Content-Type-Options"], "nosniff");
   assert.match(headers["Content-Security-Policy"], /frame-ancestors 'none'/);
   assert.match(headers["Content-Security-Policy"], /accounts\.google\.com/);
+  assert.match(headers["Content-Security-Policy"], /www\.gstatic\.com/);
+  assert.match(headers["Content-Security-Policy"], /fonts\.gstatic\.com/);
   assert.match(headers["Content-Security-Policy"], /paddle\.com/);
 });
 

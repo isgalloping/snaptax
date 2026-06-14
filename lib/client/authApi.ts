@@ -1,6 +1,6 @@
 "use client";
 
-import { apiFetch } from "@/lib/client/ghostClient";
+import { apiFetch, ensureGhostSession } from "@/lib/client/ghostClient";
 import { clientTimeZone } from "@/lib/time/timeZone";
 import { requestGoogleCredential } from "@/lib/client/googleAuth";
 import {
@@ -57,6 +57,7 @@ export async function signInWithGoogleCredential(
 }
 
 export async function signInWithGoogleApi(): Promise<GoogleAuthResponse> {
+  await ensureGhostSession();
   const credential = await requestGoogleCredential();
   return signInWithGoogleCredential(credential);
 }

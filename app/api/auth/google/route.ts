@@ -67,7 +67,7 @@ export const POST = withRequestLog("api.auth", async (request, _context) => {
           meta: {
             reason: resolved.reason ?? "region_adjusted",
             headerRegion,
-            resolvedRegion: resolved.region,
+            dataRegion: resolved.region,
           },
         });
       }

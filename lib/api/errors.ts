@@ -104,8 +104,19 @@ export function buildErrorMeta(err: unknown): LogMeta {
   };
 }
 
-export function apiError(code: string, message: string, status: number) {
-  return NextResponse.json({ error: { code, message } }, { status });
+export function apiError(
+  code: string,
+  message: string,
+  status: number,
+  headers?: HeadersInit,
+) {
+  return NextResponse.json({ error: { code, message } }, { status, headers });
+}
+
+export function rateLimitError(retryAfterSec: number) {
+  return apiError("RATE_LIMITED", "Too many requests", 429, {
+    "Retry-After": String(retryAfterSec),
+  });
 }
 
 export function mapErrorToResponse(err: unknown) {

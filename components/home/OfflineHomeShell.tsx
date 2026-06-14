@@ -65,7 +65,9 @@ export function OfflineHomeShell() {
   const onboarding = useOnboardingFlow({
     receipts,
     taxSaved,
-    onRefreshReceipts: refreshListFromLocal,
+    onRefreshReceipts: async () => {
+      await refreshListFromLocal();
+    },
     onGoogleSuccess: handleOnboardingGoogleSuccess,
   });
 

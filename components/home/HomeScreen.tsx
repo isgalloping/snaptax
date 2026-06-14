@@ -104,6 +104,12 @@ export function HomeScreen() {
     taxSavedEstimate?: number;
   } | null>(null);
   const snapButtonRef = useRef<SnapButtonHandle>(null);
+  const setTaxAnimatingRef = useRef<(value: boolean) => void>(() => {});
+
+  const pulseTaxAnimating = useCallback(() => {
+    setTaxAnimatingRef.current(true);
+    window.setTimeout(() => setTaxAnimatingRef.current(false), 600);
+  }, []);
 
   useEffect(() => {
     receiptsRef.current = receipts;
@@ -221,11 +227,10 @@ export function HomeScreen() {
       await saveReceipt(merged);
 
       if (merged.status === "done" && merged.taxAmount != null) {
-        setTaxAnimating(true);
-        setTimeout(() => setTaxAnimating(false), 600);
+        pulseTaxAnimating();
       }
     },
-    [refreshTaxSaved],
+    [pulseTaxAnimating, refreshTaxSaved],
   );
 
   const applyFromApi = useCallback(
@@ -558,7 +563,9 @@ export function HomeScreen() {
   const onboarding = useOnboardingFlow({
     receipts,
     taxSaved,
-    onRefreshReceipts: refreshListFromLocal,
+    onRefreshReceipts: async () => {
+      await refreshListFromLocal();
+    },
     onGoogleSuccess: handleOnboardingGoogleSuccess,
   });
 
@@ -568,10 +575,13 @@ export function HomeScreen() {
     skipSoftGoogleSheet,
     displayTaxSaved,
     taxAnimating,
+    setTaxAnimating,
     handleSnapIntent,
     orchestratorProps,
     onboardingStatus,
   } = onboarding;
+
+  setTaxAnimatingRef.current = setTaxAnimating;
 
   useEffect(() => {
     performance.mark("startup:home-ready");
@@ -754,8 +764,7 @@ export function HomeScreen() {
         await saveReceipt(updated);
 
         if (updated.status === "done" && updated.taxAmount != null) {
-          setTaxAnimating(true);
-          setTimeout(() => setTaxAnimating(false), 600);
+          pulseTaxAnimating();
         }
 
         if (updated.status === "processing") {
@@ -772,7 +781,7 @@ export function HomeScreen() {
         }
       }
     },
-    [resnapId, enqueueReceipt, refreshTaxSaved],
+    [resnapId, enqueueReceipt, refreshTaxSaved, pulseTaxAnimating],
   );
 
   const handleResnap = useCallback((id: string) => {

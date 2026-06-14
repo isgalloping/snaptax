@@ -5,6 +5,7 @@ export type LogModule =
   | "api.receipt"
   | "api.user"
   | "api.entitlement"
+  | "api.billing"
   | "api.webhook"
   | "biz.openai"
   | "biz.blob"
@@ -20,11 +21,14 @@ export type LogMeta = {
   errorMessage?: string;
   taxSeason?: string;
   transactionId?: string;
+  eventType?: string;
+  intentId?: string | null;
   openaiModel?: string;
   tokenUsagePrompt?: number;
   tokenUsageCompletion?: number;
   ipHash?: string;
   dataRegion?: string;
+  headerRegion?: string;
   reason?: string;
   verifyBypass?: boolean;
   mockAi?: boolean;

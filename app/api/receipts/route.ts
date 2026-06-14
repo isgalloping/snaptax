@@ -8,7 +8,7 @@ import {
   checkUserReceiptLimit,
   clientIp,
 } from "@/lib/api/rateLimit";
-import { apiError, mapErrorToResponse } from "@/lib/api/errors";
+import { apiError, mapErrorToResponse, rateLimitError } from "@/lib/api/errors";
 import { getActor } from "@/lib/auth/getActor";
 import { prisma } from "@/lib/prisma";
 import { processReceiptTax } from "@/lib/receipts/processReceiptTax";
@@ -70,12 +70,12 @@ export const POST = withRequestLog(
       const ip = clientIp(request);
       const ipLimit = await checkIpReceiptLimit(ip);
       if (!ipLimit.ok) {
-        return apiError("RATE_LIMITED", "Too many requests", 429);
+        return rateLimitError(ipLimit.retryAfterSec);
       }
       if (actor.kind === "ghost") {
         const ghostLimit = await checkGhostReceiptLimit(actor.ghostId);
         if (!ghostLimit.ok) {
-          return apiError("RATE_LIMITED", "Too many requests", 429);
+          return rateLimitError(ghostLimit.retryAfterSec);
         }
         const maxUnbound = Number(process.env.RECEIPT_GHOST_MAX_UNBOUND ?? 50);
         const count = await prisma.snaptaxReceipt.count({
@@ -87,7 +87,7 @@ export const POST = withRequestLog(
       } else {
         const userLimit = await checkUserReceiptLimit(actor.userId);
         if (!userLimit.ok) {
-          return apiError("RATE_LIMITED", "Too many requests", 429);
+          return rateLimitError(userLimit.retryAfterSec);
         }
       }
 

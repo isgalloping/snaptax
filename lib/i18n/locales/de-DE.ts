@@ -111,6 +111,17 @@ export const DE_DE_COPY: UserCopy = {
     googleNudge:
       "Neues Handy? Mit Google anmelden, um Belege zu speichern.",
     googleNudgeDismiss: "Nicht jetzt",
+    aha: {
+      snapTooltip:
+        "Hier tippen, um ein Foto zu machen und Ihre Steuerersparnis sofort zu sehen.",
+      sandboxShutterAria: "Beispielbeleg fotografieren",
+      snackbar: "Sie haben gerade 28,50 $ gespart!",
+      signup: {
+        title: "Steuerersparnis sichern",
+        body: "Sie haben gerade Ihre ersten 28,50 $ gespart! Erstellen Sie jetzt Ihren sicheren lokalen Tresor und sichern Sie Ihre Steuerersparnis dauerhaft.",
+        later: "Später",
+      },
+    },
   },
   home: {
     taxHeader: {
@@ -240,6 +251,11 @@ export const DE_DE_COPY: UserCopy = {
       notNow: "Nicht jetzt",
       back: "< ZURÜCK",
       signInFailed: "Anmeldung fehlgeschlagen. Bitte erneut versuchen.",
+      onboardingSignup: {
+        title: "Steuerersparnis sichern",
+        body: "Sie haben gerade Ihre ersten 28,50 $ gespart! Erstellen Sie jetzt Ihren sicheren lokalen Tresor und sichern Sie Ihre Steuerersparnis dauerhaft.",
+        later: "Später",
+      },
     },
     syncInstructions: {
       title: "Auf allen Geräten anzeigen",

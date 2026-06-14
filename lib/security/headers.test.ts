@@ -10,3 +10,15 @@ test("securityHeaders includes baseline protections", () => {
   assert.match(headers["Content-Security-Policy"], /accounts\.google\.com/);
   assert.match(headers["Content-Security-Policy"], /paddle\.com/);
 });
+
+test("securityHeaders allows unsafe-eval only in development", () => {
+  const prev = process.env.NODE_ENV;
+  process.env.NODE_ENV = "development";
+  assert.match(securityHeaders()["Content-Security-Policy"], /'unsafe-eval'/);
+  process.env.NODE_ENV = "production";
+  assert.doesNotMatch(
+    securityHeaders()["Content-Security-Policy"],
+    /'unsafe-eval'/,
+  );
+  process.env.NODE_ENV = prev;
+});

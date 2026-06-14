@@ -4,18 +4,6 @@ import { logEvent } from "@/lib/server/log/logEvent";
 
 const MAX_AGE_SEC = 300;
 
-const PLACEHOLDER_SECRETS = new Set([
-  "abc",
-  "changeme",
-  "placeholder",
-  "your_webhook_secret",
-]);
-
-export function isPaddleWebhookSecretPlaceholder(secret: string): boolean {
-  const normalized = secret.trim().toLowerCase();
-  return PLACEHOLDER_SECRETS.has(normalized);
-}
-
 function parsePaddleSignatureHeader(header: string): {
   ts: string | null;
   h1: string[];

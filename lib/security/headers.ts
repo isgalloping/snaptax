@@ -1,7 +1,17 @@
 export function securityHeaders(): Record<string, string> {
+  const isDev = process.env.NODE_ENV === "development";
+  const scriptSrc = [
+    "'self'",
+    "'unsafe-inline'",
+    ...(isDev ? ["'unsafe-eval'"] : []),
+    "https://accounts.google.com",
+    "https://cdn.paddle.com",
+    "https://*.paddle.com",
+  ].join(" ");
+
   const csp = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' https://accounts.google.com https://cdn.paddle.com https://*.paddle.com",
+    `script-src ${scriptSrc}`,
     "style-src 'self' 'unsafe-inline' https://accounts.google.com https://cdn.paddle.com",
     "connect-src 'self' https://*.paddle.com https://accounts.google.com https://oauth2.googleapis.com https://*.vercel-storage.com https://vitals.vercel-insights.com",
     "frame-src https://buy.paddle.com https://*.paddle.com https://accounts.google.com",

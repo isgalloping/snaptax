@@ -6,6 +6,7 @@ import { homeVisual } from "@/lib/ui/homeVisual";
 
 interface ReceiptCaptureActionsProps {
   showResnap?: boolean;
+  showDelete?: boolean;
   busy?: boolean;
   onDelete: () => void;
   onResnap?: () => void;
@@ -13,6 +14,7 @@ interface ReceiptCaptureActionsProps {
 
 export function ReceiptCaptureActions({
   showResnap = true,
+  showDelete = true,
   busy = false,
   onDelete,
   onResnap,
@@ -51,15 +53,16 @@ export function ReceiptCaptureActions({
       className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center gap-8 bg-black/25"
     >
       <div className="pointer-events-auto flex items-center justify-center gap-8">
-        {btn(
-          copy.delete,
-          copy.deleteReceipt,
-          deleteCls,
-          <span className="text-xl text-white" aria-hidden>
-            🗑
-          </span>,
-          onDelete,
-        )}
+        {showDelete &&
+          btn(
+            copy.delete,
+            copy.deleteReceipt,
+            deleteCls,
+            <span className="text-xl text-white" aria-hidden>
+              🗑
+            </span>,
+            onDelete,
+          )}
         {showResnap &&
           onResnap &&
           btn(

@@ -76,6 +76,26 @@ export function ReceiptListCard({
   const timeZone = clientTimeZone();
   const listDate = formatLocalDate(receipt.timestamp, timeZone, region);
 
+  if (receipt.isOnboardingDemo && receipt.status === "processing") {
+    return (
+      <CardShell
+        className="p-3 ring-2 ring-yellow-500/60 animate-pulse shadow-[0_0_16px_rgba(234,179,8,0.45)]"
+        onClick={() => onSelect(receipt)}
+      >
+        <CircularStatusIcon state="analyzing" />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-extrabold uppercase text-yellow-400">
+            {receipt.merchant ?? copy.unknownMerchant}
+          </p>
+          <p className="mt-0.5 truncate text-xs text-zinc-400">
+            {receipt.subtitle ?? copy.processing}
+          </p>
+        </div>
+        <ChevronRightIcon className="h-5 w-5 shrink-0 text-zinc-500" />
+      </CardShell>
+    );
+  }
+
   if (receipt.status === "processing") {
     const pending = receipt.pendingUpload === true;
     const { state, pill } = resolveVisualState(receipt, syncStuck);
@@ -156,17 +176,25 @@ export function ReceiptListCard({
   const lineBadge = irsScheduleLineBadge(receipt.category);
   const categoryLabel = receipt.category ?? "OTHER";
   const categoryEmoji = getReceiptListIcon(receipt).emoji;
+  const demoDone = receipt.isOnboardingDemo && receipt.status === "done";
 
   return (
-    <CardShell className="p-3" onClick={() => onSelect(receipt)}>
+    <CardShell
+      className={`p-3 ${demoDone ? "border-l-4 border-l-green-500" : ""}`}
+      onClick={() => onSelect(receipt)}
+    >
       <CircularStatusIcon state="done" emoji={categoryEmoji} />
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-extrabold uppercase text-white">
           {receipt.merchant ?? copy.unknownMerchant}
         </p>
         <div className="mt-0.5 flex items-center justify-between gap-2">
-          <p className="truncate text-xs text-zinc-400">
-            {listDate} · {categoryLabel}
+          <p
+            className={`truncate text-xs ${demoDone ? "font-bold text-green-400" : "text-zinc-400"}`}
+          >
+            {demoDone
+              ? (receipt.subtitle ?? "COMPLETE")
+              : `${listDate} · ${categoryLabel}`}
           </p>
           <span className="shrink-0 rounded bg-zinc-700 px-1.5 py-0.5 text-[10px] font-bold text-zinc-200">
             {lineBadge}

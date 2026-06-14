@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Industry, Receipt } from "@/lib/types";
 import { useAuthSession } from "@/lib/client/useAuthSession";
 import { useIsOnline } from "@/lib/client/useIsOnline";
@@ -53,18 +53,15 @@ import { SettingsScreen } from "@/components/settings/SettingsScreen";
 import { useTaxExportGate } from "@/components/export/useTaxExportGate";
 import { ReceiptDetailSheet } from "@/components/receipts/ReceiptDetailSheet";
 import { logStartupMarks } from "@/lib/landing/startupMetrics";
-import { GoogleBackupNudge } from "@/components/onboarding/GoogleBackupNudge";
-import { SnapCoachBanner } from "@/components/onboarding/SnapCoachBanner";
-import { FirstReceiptCoach } from "@/components/onboarding/FirstReceiptCoach";
-import { usePwaInstallOptional } from "@/components/pwa/pwaInstallContext";
+import { OnboardingOrchestrator } from "@/components/onboarding/OnboardingOrchestrator";
+import { SnapTooltip } from "@/components/onboarding/SnapTooltip";
+import { useOnboardingFlow } from "@/components/onboarding/useOnboardingFlow";
+import {
+  convertDemoReceiptAfterLogin,
+  ensureConvertedDemoUploadReady,
+} from "@/lib/onboarding/demoReceipt";
 import {
   GOOGLE_SOFT_DISMISSED_KEY,
-  isFirstReceiptCoachEligible,
-  isGoogleNudgeEligible,
-  isSnapCoachEligible,
-  ONBOARD_FIRST_RECEIPT_KEY,
-  ONBOARD_SNAP_DISMISSED_KEY,
-  readOnboardFlag,
   writeOnboardFlag,
 } from "@/lib/onboarding/onboardingStorage";
 
@@ -83,17 +80,10 @@ function stuckIdsFromReceipts(receipts: StoredReceipt[]): Set<string> {
 export function HomeScreen() {
   const auth = useAuthSession();
   const isOnline = useIsOnline();
-  const pwaInstall = usePwaInstallOptional();
-  const pwaBarVisible = pwaInstall?.mode === "bar";
   const [view, setView] = useState<View>("home");
   const [receipts, setReceipts] = useState<Receipt[]>([]);
   const [taxSaved, setTaxSaved] = useState<number | null>(null);
-  const [taxAnimating, setTaxAnimating] = useState(false);
   const [industry, setIndustry] = useState<Industry | null>(null);
-  const [snapCoachDismissed, setSnapCoachDismissed] = useState(false);
-  const [firstReceiptCoachDone, setFirstReceiptCoachDone] = useState(false);
-  const [googleSoftDismissed, setGoogleSoftDismissed] = useState(false);
-  const [nudgeSessionHidden, setNudgeSessionHidden] = useState(false);
   const [requestSoftGoogleSheet, setRequestSoftGoogleSheet] = useState(false);
   const [resnapId, setResnapId] = useState<string | null>(null);
   const [selectedReceipt, setSelectedReceipt] = useState<Receipt | null>(null);
@@ -120,12 +110,6 @@ export function HomeScreen() {
   }, [receipts]);
 
   useEffect(() => {
-    setSnapCoachDismissed(readOnboardFlag(ONBOARD_SNAP_DISMISSED_KEY));
-    setFirstReceiptCoachDone(readOnboardFlag(ONBOARD_FIRST_RECEIPT_KEY));
-    setGoogleSoftDismissed(readOnboardFlag(GOOGLE_SOFT_DISMISSED_KEY));
-  }, []);
-
-  useEffect(() => {
     if (!auth.hydrated) return;
     if (auth.industry) {
       setIndustry(auth.industry);
@@ -136,86 +120,14 @@ export function HomeScreen() {
     if (localIndustry) setIndustry(localIndustry);
   }, [auth.hydrated, auth.industry]);
 
-  const doneReceiptCount = useMemo(
-    () => receipts.filter((r) => r.status === "done").length,
-    [receipts],
-  );
-
-  const showSnapCoach = isSnapCoachEligible({
-    receiptCount: receipts.length,
-    dismissed: snapCoachDismissed,
-    pwaBarVisible,
-  });
-
-  const showGoogleNudge =
-    isGoogleNudgeEligible({
-      doneReceiptCount,
-      signedIn: auth.isSignedIn,
-      dismissed: googleSoftDismissed,
-      pwaBarVisible,
-    }) && !nudgeSessionHidden;
-
-  useEffect(() => {
-    if (!showGoogleNudge) return;
-    const timer = window.setTimeout(() => setNudgeSessionHidden(true), 10_000);
-    return () => window.clearTimeout(timer);
-  }, [showGoogleNudge]);
-
   const handleIndustryChange = useCallback((value: Industry) => {
     setIndustry(value);
     saveIndustry(value);
   }, []);
 
-  const handleSnapCoachDismiss = useCallback(() => {
-    writeOnboardFlag(ONBOARD_SNAP_DISMISSED_KEY);
-    setSnapCoachDismissed(true);
-  }, []);
-
-  const handleFirstReceiptCoachComplete = useCallback(() => {
-    writeOnboardFlag(ONBOARD_FIRST_RECEIPT_KEY);
-    setFirstReceiptCoachDone(true);
-  }, []);
-
-  const handleGoogleNudgeDismiss = useCallback(() => {
-    writeOnboardFlag(GOOGLE_SOFT_DISMISSED_KEY);
-    setGoogleSoftDismissed(true);
-    setNudgeSessionHidden(true);
-  }, []);
-
-  const handleGoogleNudgeClick = useCallback(() => {
-    setNudgeSessionHidden(true);
-    setRequestSoftGoogleSheet(true);
-    setView("settings");
-  }, []);
-
   const handleSoftGuideDismiss = useCallback(() => {
     writeOnboardFlag(GOOGLE_SOFT_DISMISSED_KEY);
-    setGoogleSoftDismissed(true);
-    setNudgeSessionHidden(true);
   }, []);
-
-  const firstReceiptCoach = useMemo(() => {
-    if (
-      !isFirstReceiptCoachEligible({
-        receiptCount: receipts.length,
-        coachDone: firstReceiptCoachDone,
-      })
-    ) {
-      return null;
-    }
-    const receipt = receipts[0];
-    if (!receipt) return null;
-    return (
-      <FirstReceiptCoach
-        receipt={receipt}
-        onComplete={handleFirstReceiptCoachComplete}
-      />
-    );
-  }, [
-    receipts,
-    firstReceiptCoachDone,
-    handleFirstReceiptCoachComplete,
-  ]);
 
   useEffect(() => {
     cameraOpenRef.current = cameraOpen;
@@ -376,6 +288,7 @@ export function HomeScreen() {
   uploadPendingInnerRef.current = uploadPendingInner;
 
   const flushPendingUploads = useCallback(async () => {
+    await ensureConvertedDemoUploadReady();
     const stored = await loadAllReceipts();
     const pending = stored.filter(
       (r) => r.pendingUpload && !isSyncStuck(r),
@@ -583,48 +496,6 @@ export function HomeScreen() {
   });
 
   useEffect(() => {
-    performance.mark("startup:home-ready");
-    logStartupMarks();
-
-    let cancelled = false;
-
-    void (async () => {
-      try {
-        ensureTaxRegionCandidate();
-        const hot = await loadRecentUnfiledReceipts(STARTUP_UNFILED_LIMIT);
-        if (cancelled) return;
-
-        setReceipts(hot);
-        setSyncStuckIds(stuckIdsFromReceipts(hot));
-        setTaxSaved(await sumUnfiledLocalTaxSavedIndexed());
-
-        deferAfterPaint(async () => {
-          if (cancelled) return;
-          const visible = await loadTopByUpdatedAt(UI_RECEIPT_LIMIT);
-          if (cancelled) return;
-          setReceipts(visible);
-          setSyncStuckIds(stuckIdsFromReceipts(visible));
-        });
-
-        if (navigator.onLine) {
-          runDeferredStartup(() => cancelled);
-        }
-      } catch {
-        const visible = await loadTopByUpdatedAt(UI_RECEIPT_LIMIT).catch(() => []);
-        if (!cancelled) {
-          setReceipts(visible);
-          setSyncStuckIds(stuckIdsFromReceipts(visible));
-          setTaxSaved(await sumUnfiledLocalTaxSavedIndexed().catch(() => 0));
-        }
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [runDeferredStartup]);
-
-  useEffect(() => {
     const handleOnline = () => {
       void (async () => {
         try {
@@ -675,6 +546,77 @@ export function HomeScreen() {
     setSyncStuckIds(stuckIdsFromReceipts(visible));
     return visible;
   }, [refreshTaxSaved]);
+
+  const handleOnboardingGoogleSuccess = useCallback(async () => {
+    const { taxRecalcQueued } = await auth.signInWithGoogle();
+    await handlePostLoginSync(taxRecalcQueued);
+    await convertDemoReceiptAfterLogin();
+    await ensureConvertedDemoUploadReady();
+    await refreshListFromLocal();
+  }, [auth.signInWithGoogle, handlePostLoginSync, refreshListFromLocal]);
+
+  const onboarding = useOnboardingFlow({
+    receipts,
+    taxSaved,
+    onRefreshReceipts: refreshListFromLocal,
+    onGoogleSuccess: handleOnboardingGoogleSuccess,
+  });
+
+  const {
+    initializeOnboarding,
+    resetOnboarding,
+    skipSoftGoogleSheet,
+    displayTaxSaved,
+    taxAnimating,
+    handleSnapIntent,
+    orchestratorProps,
+    onboardingStatus,
+  } = onboarding;
+
+  useEffect(() => {
+    performance.mark("startup:home-ready");
+    logStartupMarks();
+
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        ensureTaxRegionCandidate();
+        await initializeOnboarding();
+        if (cancelled) return;
+
+        const hot = await loadRecentUnfiledReceipts(STARTUP_UNFILED_LIMIT);
+        if (cancelled) return;
+
+        setReceipts(hot);
+        setSyncStuckIds(stuckIdsFromReceipts(hot));
+        setTaxSaved(await sumUnfiledLocalTaxSavedIndexed());
+
+        deferAfterPaint(async () => {
+          if (cancelled) return;
+          const visible = await loadTopByUpdatedAt(UI_RECEIPT_LIMIT);
+          if (cancelled) return;
+          setReceipts(visible);
+          setSyncStuckIds(stuckIdsFromReceipts(visible));
+        });
+
+        if (navigator.onLine) {
+          runDeferredStartup(() => cancelled);
+        }
+      } catch {
+        const visible = await loadTopByUpdatedAt(UI_RECEIPT_LIMIT).catch(() => []);
+        if (!cancelled) {
+          setReceipts(visible);
+          setSyncStuckIds(stuckIdsFromReceipts(visible));
+          setTaxSaved(await sumUnfiledLocalTaxSavedIndexed().catch(() => 0));
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [initializeOnboarding, runDeferredStartup]);
 
   const handleBatchShot = useCallback(async (file: File): Promise<string> => {
     const id = crypto.randomUUID();
@@ -730,6 +672,9 @@ export function HomeScreen() {
 
   const handleDeleteReceipt = useCallback(
     async (id: string) => {
+      const existing = receiptsRef.current.find((r) => r.id === id);
+      if (existing?.isOnboardingDemo) return;
+
       setReceipts((prev) => prev.filter((r) => r.id !== id));
       setSelectedReceipt((prev) => (prev?.id === id ? null : prev));
       watcherRef.current?.unwatch(id);
@@ -844,14 +789,19 @@ export function HomeScreen() {
         onIndustryChange={handleIndustryChange}
         onBack={() => setView("home")}
         onLocalDataCleared={() => {
-          setReceipts([]);
-          setTaxSaved(null);
-          setSyncStuckIds(new Set());
-          queueRef.current?.clear();
-          watcherRef.current?.reset();
-          setIndustry(null);
-          setView("home");
+          void (async () => {
+            setReceipts([]);
+            setTaxSaved(null);
+            setSyncStuckIds(new Set());
+            queueRef.current?.clear();
+            watcherRef.current?.reset();
+            setIndustry(null);
+            await resetOnboarding();
+            await refreshListFromLocal();
+            setView("home");
+          })();
         }}
+        skipSoftGoogleSheet={skipSoftGoogleSheet}
         googleUser={auth.googleUser}
         seasonPaid={auth.seasonPaid}
         currentSeason={auth.currentSeason}
@@ -874,6 +824,7 @@ export function HomeScreen() {
     <div className="flex h-full flex-col overflow-hidden bg-black font-sans text-white select-none">
       <TaxHeader
         taxSaved={taxSaved}
+        displayTaxSaved={displayTaxSaved}
         totalExpenses={sumDoneExpenses(receipts)}
         receiptCount={receipts.length}
         animating={taxAnimating}
@@ -884,22 +835,8 @@ export function HomeScreen() {
         syncDisabled={!isOnline}
       />
 
-      {showSnapCoach && (
-        <div className="shrink-0 px-4">
-          <SnapCoachBanner onDismiss={handleSnapCoachDismiss} />
-        </div>
-      )}
-
-      {showGoogleNudge && (
-        <div className="shrink-0 px-4">
-          <GoogleBackupNudge
-            onSignInClick={handleGoogleNudgeClick}
-            onDismiss={handleGoogleNudgeDismiss}
-          />
-        </div>
-      )}
-
-      <div className="shrink-0 px-4 py-2">
+      <div className="relative shrink-0 px-4 py-2">
+        {onboardingStatus === "stage_1" && <SnapTooltip />}
         <SnapButton
           ref={snapButtonRef}
           onCapture={handleCapture}
@@ -913,6 +850,7 @@ export function HomeScreen() {
           onSettingsClick={() => setView("settings")}
           syncing={listSyncing}
           syncDisabled={!isOnline}
+          onSnapIntent={handleSnapIntent}
         />
       </div>
 
@@ -920,7 +858,6 @@ export function HomeScreen() {
         <ReceiptList
           receipts={receipts}
           syncStuckIds={syncStuckIds}
-          listHeader={firstReceiptCoach}
           onSelect={(receipt) => setSelectedReceipt(receipt)}
           onResnap={handleResnap}
           onRetrySync={handleRetrySync}
@@ -929,6 +866,10 @@ export function HomeScreen() {
           syncDisabled={!isOnline}
         />
       </div>
+
+      {orchestratorProps && (
+        <OnboardingOrchestrator {...orchestratorProps} />
+      )}
 
       {selectedReceipt && (
         <ReceiptDetailSheet

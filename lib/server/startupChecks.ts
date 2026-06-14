@@ -1,5 +1,5 @@
 import { getPaddleWebhookSecret } from "@/lib/server/env";
-import { isPaddleWebhookSecretPlaceholder } from "@/lib/server/paddleWebhook";
+import { isPaddleWebhookSecretPlaceholder } from "@/lib/server/paddleWebhookSecret";
 
 export function isProdLikeDeployEnv(): boolean {
   const env = process.env.VERCEL_ENV;

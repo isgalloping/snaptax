@@ -21,6 +21,7 @@ interface TaxHeaderProps {
   syncing?: boolean;
   syncDisabled?: boolean;
   showSettings?: boolean;
+  displayTaxSaved?: number | null;
 }
 
 const actionBtn =
@@ -37,10 +38,12 @@ export function TaxHeader({
   syncing = false,
   syncDisabled = false,
   showSettings = true,
+  displayTaxSaved,
 }: TaxHeaderProps) {
   const pwaInstall = usePwaInstallOptional();
   const copy = useUserCopy().home.taxHeader;
   const showInstallButton = pwaInstall?.mode === "header-button";
+  const headerTaxSaved = displayTaxSaved ?? taxSaved;
 
   const receiptLabel =
     receiptCount === 1
@@ -74,7 +77,7 @@ export function TaxHeader({
               animating ? "animate-tax-bounce text-green-400" : ""
             }`}
           >
-            {taxSaved === null ? "$- - -" : formatCurrency(taxSaved)}
+            {headerTaxSaved === null ? "$- - -" : formatCurrency(headerTaxSaved)}
           </p>
           <p className="mt-0.5 flex items-center gap-1 truncate text-[11px] font-bold text-zinc-300">
             <ReceiptIcon className="h-3 w-3 shrink-0" />

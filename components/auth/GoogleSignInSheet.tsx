@@ -3,7 +3,11 @@
 import { useState } from "react";
 import { useUserCopy } from "@/components/i18n/I18nProvider";
 
-export type GoogleSignInMode = "soft" | "hard-export" | "hard-sync";
+export type GoogleSignInMode =
+  | "soft"
+  | "hard-export"
+  | "hard-sync"
+  | "onboarding-signup";
 
 interface GoogleSignInSheetProps {
   mode: GoogleSignInMode;
@@ -28,8 +32,12 @@ export function GoogleSignInSheet({
       ? authCopy.soft
       : mode === "hard-export"
         ? authCopy.hardExport
-        : authCopy.hardSync;
-  const showNotNow = mode === "soft";
+        : mode === "onboarding-signup"
+          ? authCopy.onboardingSignup
+          : authCopy.hardSync;
+  const showNotNow = mode === "soft" || mode === "onboarding-signup";
+  const dismissLabel =
+    mode === "onboarding-signup" ? authCopy.onboardingSignup.later : authCopy.notNow;
 
   const handleGoogle = async () => {
     setLoading(true);
@@ -68,7 +76,7 @@ export function GoogleSignInSheet({
             }}
             className="mt-3 w-full min-h-16 py-3 text-sm font-bold text-zinc-400 transition-transform active:scale-95"
           >
-            {authCopy.notNow}
+            {dismissLabel}
           </button>
         ) : (
           <button

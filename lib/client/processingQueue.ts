@@ -6,18 +6,33 @@ export type ProcessingQueueCallbacks = {
 };
 
 export function collectProcessingIds(
-  receipts: { id: string; status: string; pendingUpload?: boolean }[],
+  receipts: {
+    id: string;
+    status: string;
+    pendingUpload?: boolean;
+    isOnboardingDemo?: boolean;
+  }[],
 ) {
   return receipts
-    .filter((r) => r.status === "processing" && !r.pendingUpload)
+    .filter(
+      (r) =>
+        r.status === "processing" && !r.pendingUpload && !r.isOnboardingDemo,
+    )
     .map((r) => r.id);
 }
 
 export function newestProcessingId(
-  receipts: { id: string; status: string; pendingUpload?: boolean; timestamp: Date }[],
+  receipts: {
+    id: string;
+    status: string;
+    pendingUpload?: boolean;
+    isOnboardingDemo?: boolean;
+    timestamp: Date;
+  }[],
 ): string | null {
   const processing = receipts.filter(
-    (r) => r.status === "processing" && !r.pendingUpload,
+    (r) =>
+      r.status === "processing" && !r.pendingUpload && !r.isOnboardingDemo,
   );
   if (processing.length === 0) return null;
   return processing.sort(

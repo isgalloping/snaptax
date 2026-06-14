@@ -1,5 +1,7 @@
 # Snap1099 新人引导设计 — 业务分析与交互规范
 
+> **Partially superseded** by [`2026-06-13-aha-moment-onboarding-design.md`](./2026-06-13-aha-moment-onboarding-design.md) (2026-06-13). P2–P5 soft-coach flows (SnapCoach, 3rd-receipt Nudge, settings soft Sheet) replaced by Aha Moment onboarding for first-time users. P0 Landing + P6+ settings/export gates remain valid.
+
 **日期：** 2026-06-12  
 **状态：** 已实现（2026-06-13 接线完成）  
 **读者：** 产品、设计、研发、测试、Cursor Agent  

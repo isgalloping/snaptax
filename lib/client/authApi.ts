@@ -42,12 +42,18 @@ export async function fetchAuthMe(): Promise<AuthMeResponse> {
 export async function signInWithGoogleCredential(
   credential: string,
 ): Promise<GoogleAuthResponse> {
+  await ensureGhostSession();
   const res = await apiFetch("/api/auth/google", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ credential }),
   });
-  if (!res.ok) throw new Error("GOOGLE_AUTH_FAILED");
+  if (!res.ok) {
+    const body = (await res.json().catch(() => null)) as {
+      error?: { code?: string };
+    } | null;
+    throw new Error(body?.error?.code ?? "GOOGLE_AUTH_FAILED");
+  }
   const data = (await res.json()) as GoogleAuthResponse;
   saveGoogleUser({
     email: data.user.email,

@@ -20,6 +20,9 @@ test("mapGoogleAuthError maps known GIS and auth failures", () => {
     "ghost register failed",
     "GOOGLE_AUTH_FAILED",
     "GOOGLE_CLIENT_ID missing",
+    "UNAUTHORIZED",
+    "INVALID_GOOGLE_TOKEN",
+    "GHOST_ALREADY_BOUND",
   ]) {
     assert.equal(mapGoogleAuthError(new Error(code), failed), failed);
   }

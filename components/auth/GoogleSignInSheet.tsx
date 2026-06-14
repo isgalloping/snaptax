@@ -40,9 +40,12 @@ export function GoogleSignInSheet({
   onSoftDismiss,
   onUserSignedIn,
 }: GoogleSignInSheetProps) {
-  const authCopy = useUserCopy().auth.googleSignIn;
+  const userCopy = useUserCopy();
+  const authCopy = userCopy.auth.googleSignIn;
   const [signingIn, setSigningIn] = useState(false);
   const [preparing, setPreparing] = useState(true);
+  const [mountFailed, setMountFailed] = useState(false);
+  const [mountAttempt, setMountAttempt] = useState(0);
   const [inlineError, setInlineError] = useState<string | null>(null);
   const buttonHostRef = useRef<HTMLDivElement>(null);
   const mountRef = useRef<GoogleSignInMount | null>(null);
@@ -91,7 +94,11 @@ export function GoogleSignInSheet({
           const result = await signInWithGoogleCredential(credential);
           if (cancelled) return;
           onUserSignedInRef.current?.(result);
-          await onSuccessRef.current({ taxRecalcQueued: result.taxRecalcQueued });
+          try {
+            await onSuccessRef.current({ taxRecalcQueued: result.taxRecalcQueued });
+          } catch (syncError) {
+            console.error("[auth] post-login sync failed", syncError);
+          }
         } catch (error) {
           if (!cancelled) handleAuthError(error);
         } finally {
@@ -103,6 +110,7 @@ export function GoogleSignInSheet({
 
     void (async () => {
       setPreparing(true);
+      setMountFailed(false);
       setInlineError(null);
       try {
         await ensureGhostSession();
@@ -115,7 +123,10 @@ export function GoogleSignInSheet({
           },
         });
       } catch (error) {
-        if (!cancelled) handleAuthError(error);
+        if (!cancelled) {
+          setMountFailed(true);
+          handleAuthError(error);
+        }
       } finally {
         if (!cancelled) setPreparing(false);
       }
@@ -126,7 +137,7 @@ export function GoogleSignInSheet({
       mountRef.current?.cleanup();
       mountRef.current = null;
     };
-  }, [authCopy.signInFailed]);
+  }, [authCopy.signInFailed, mountAttempt]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-end bg-black/70">
@@ -139,20 +150,31 @@ export function GoogleSignInSheet({
         <div className="relative mt-6 min-h-16 w-full">
           <div
             ref={buttonHostRef}
-            className={`flex w-full justify-center ${signingIn || preparing ? "pointer-events-none opacity-60" : ""}`}
+            className={`flex w-full justify-center ${signingIn ? "pointer-events-none opacity-60" : ""}`}
             aria-busy={preparing || signingIn}
           />
-          {preparing && !signingIn && (
+          {preparing && (
             <p className="mt-2 text-center text-sm font-bold text-zinc-400">
               {authCopy.signingIn}
             </p>
           )}
-          {signingIn && (
+          {signingIn && !preparing && (
             <p className="mt-2 text-center text-sm font-bold text-zinc-400">
               {authCopy.signingIn}
             </p>
           )}
         </div>
+
+        {mountFailed && !preparing && (
+          <button
+            type="button"
+            disabled={signingIn}
+            onClick={() => setMountAttempt((attempt) => attempt + 1)}
+            className="mt-3 w-full min-h-12 rounded-xl border-2 border-yellow-500 py-3 text-sm font-black uppercase tracking-wider text-yellow-500 transition-transform active:scale-95 disabled:opacity-60"
+          >
+            {userCopy.camera.retry}
+          </button>
+        )}
 
         {inlineError && (
           <p className="mt-3 text-center text-sm font-bold text-red-500" role="alert">

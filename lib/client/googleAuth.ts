@@ -86,6 +86,21 @@ export type GoogleSignInMount = {
   cleanup: () => void;
 };
 
+async function waitForRenderedButton(
+  container: HTMLElement,
+  timeoutMs = 5_000,
+): Promise<void> {
+  for (let elapsed = 0; elapsed < timeoutMs; elapsed += 50) {
+    const hasRenderedChild =
+      container.querySelector('[role="button"]') != null ||
+      container.querySelector("iframe") != null ||
+      container.childElementCount > 0;
+    if (hasRenderedChild && container.offsetHeight > 0) return;
+    await new Promise<void>((resolve) => window.setTimeout(resolve, 50));
+  }
+  throw new Error("GIS_BUTTON_FAILED");
+}
+
 export async function mountGoogleSignInButton(
   container: HTMLElement,
   callbacks: {
@@ -98,6 +113,7 @@ export async function mountGoogleSignInButton(
   if (!clientId) throw new Error("GOOGLE_CLIENT_ID missing");
   if (!gisReady()) throw new Error("GIS_NOT_READY");
 
+  window.google!.accounts.id.cancel();
   container.replaceChildren();
 
   window.google!.accounts.id.initialize({
@@ -111,6 +127,7 @@ export async function mountGoogleSignInButton(
     },
     auto_select: false,
     cancel_on_tap_outside: true,
+    use_fedcm_for_button: false,
   });
 
   const width = Math.min(400, Math.max(240, await waitForContainerWidth(container)));
@@ -123,11 +140,11 @@ export async function mountGoogleSignInButton(
     shape: "rectangular",
   });
 
-  const button = container.querySelector<HTMLElement>('[role="button"]');
-  if (!button) throw new Error("GIS_BUTTON_FAILED");
+  await waitForRenderedButton(container);
 
   return {
     cleanup: () => {
+      window.google?.accounts.id.cancel();
       container.replaceChildren();
     },
   };
@@ -193,7 +210,10 @@ export function mapGoogleAuthError(
     message === "GIS_BUTTON_FAILED" ||
     message === "GOOGLE_SIGN_IN_TIMEOUT" ||
     message === "ghost register failed" ||
-    message === "GOOGLE_AUTH_FAILED"
+    message === "GOOGLE_AUTH_FAILED" ||
+    message === "UNAUTHORIZED" ||
+    message === "INVALID_GOOGLE_TOKEN" ||
+    message === "GHOST_ALREADY_BOUND"
   ) {
     return signInFailedMessage;
   }

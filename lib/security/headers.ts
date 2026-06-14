@@ -14,7 +14,7 @@ export function securityHeaders(): Record<string, string> {
     "default-src 'self'",
     `script-src ${scriptSrc}`,
     "style-src 'self' 'unsafe-inline' https://accounts.google.com https://www.gstatic.com https://cdn.paddle.com",
-    "connect-src 'self' https://*.paddle.com https://accounts.google.com https://oauth2.googleapis.com https://www.gstatic.com https://*.vercel-storage.com https://vitals.vercel-insights.com",
+    "connect-src 'self' https://*.paddle.com https://accounts.google.com https://oauth2.googleapis.com https://www.googleapis.com https://www.gstatic.com https://*.vercel-storage.com https://vitals.vercel-insights.com",
     "frame-src https://buy.paddle.com https://*.paddle.com https://accounts.google.com https://www.gstatic.com",
     "img-src 'self' data: blob: https:",
     "font-src 'self' data: https://fonts.gstatic.com https://www.gstatic.com https://cdn.paddle.com",
@@ -29,7 +29,7 @@ export function securityHeaders(): Record<string, string> {
     "X-Content-Type-Options": "nosniff",
     "X-Frame-Options": "DENY",
     "Referrer-Policy": "strict-origin-when-cross-origin",
-    "Permissions-Policy": "camera=(self), geolocation=()",
+    "Permissions-Policy": "camera=(self), geolocation=(), identity-credentials-get=(self)",
     "Content-Security-Policy": csp,
   };
 }

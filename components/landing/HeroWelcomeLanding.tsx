@@ -4,35 +4,56 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useUserCopy } from "@/components/i18n/I18nProvider";
 import { commitHeroLandingStart } from "@/lib/onboarding/onboardingState";
 import {
+  beginHeroLandingSession,
+  endHeroLandingSession,
+  heroCountdownSeconds,
+} from "@/lib/landing/heroLandingSession";
+import {
   HERO_AUTO_ADVANCE_MS,
   HERO_CTA_READY_MS,
 } from "@/lib/landing/heroLandingTiming";
 import { LANDING_CTA_EVENT } from "./landingEvents";
 
 const HERO_IMAGE = "/onboarding/onboarding-hero.png";
+const COUNTDOWN_TICK_MS = 100;
+const HERO_COUNTDOWN_START = Math.ceil(HERO_AUTO_ADVANCE_MS / 1000);
+
+function formatCtaCountdown(template: string, seconds: number): string {
+  return template.replace("{seconds}", String(seconds));
+}
 
 export function HeroWelcomeLanding() {
   const copy = useUserCopy().onboarding.landing;
   const [ctaReady, setCtaReady] = useState(false);
   const [heroLoaded, setHeroLoaded] = useState(false);
+  const [countdownSeconds, setCountdownSeconds] = useState(HERO_COUNTDOWN_START);
   const startedRef = useRef(false);
 
   const startOnboarding = useCallback(async () => {
     if (startedRef.current) return;
     startedRef.current = true;
     await commitHeroLandingStart();
+    endHeroLandingSession();
     window.dispatchEvent(new Event(LANDING_CTA_EVENT));
   }, []);
 
   useEffect(() => {
+    beginHeroLandingSession();
+    setCountdownSeconds(heroCountdownSeconds(HERO_AUTO_ADVANCE_MS, 0));
+
     const ctaTimer = window.setTimeout(() => setCtaReady(true), HERO_CTA_READY_MS);
     const autoTimer = window.setTimeout(() => {
       void startOnboarding();
     }, HERO_AUTO_ADVANCE_MS);
+    const countdownTimer = window.setInterval(() => {
+      setCountdownSeconds(heroCountdownSeconds(HERO_AUTO_ADVANCE_MS));
+    }, COUNTDOWN_TICK_MS);
 
     return () => {
       window.clearTimeout(ctaTimer);
       window.clearTimeout(autoTimer);
+      window.clearInterval(countdownTimer);
+      endHeroLandingSession();
     };
   }, [startOnboarding]);
 
@@ -40,6 +61,10 @@ export function HeroWelcomeLanding() {
     if (!ctaReady) return;
     void startOnboarding();
   };
+
+  const buttonLabel = ctaReady
+    ? copy.cta
+    : formatCtaCountdown(copy.ctaCountdown, countdownSeconds);
 
   const checks = [copy.check1, copy.check2, copy.check3];
 
@@ -67,7 +92,7 @@ export function HeroWelcomeLanding() {
           {copy.tagline}
         </p>
 
-        <ul className="mt-6 space-y-3">
+        <ul className="mt-6 mb-6 space-y-3">
           {checks.map((item) => (
             <li
               key={item}
@@ -83,12 +108,6 @@ export function HeroWelcomeLanding() {
             </li>
           ))}
         </ul>
-
-        <div className="mt-8 flex justify-center gap-2" aria-hidden>
-          <span className="h-2 w-2 rounded-full bg-yellow-500" />
-          <span className="h-2 w-2 rounded-full bg-zinc-600" />
-          <span className="h-2 w-2 rounded-full bg-zinc-600" />
-        </div>
       </div>
 
       <button
@@ -98,7 +117,7 @@ export function HeroWelcomeLanding() {
         aria-label={copy.ctaAria}
         className="relative z-10 mx-5 mb-6 min-h-16 rounded-xl bg-yellow-500 text-base font-black uppercase tracking-wider text-black transition-transform active:scale-95 disabled:opacity-50"
       >
-        {copy.cta}
+        {buttonLabel}
       </button>
     </div>
   );

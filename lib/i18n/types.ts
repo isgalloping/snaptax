@@ -76,6 +76,7 @@ export type UserCopy = {
       check2: string;
       check3: string;
       cta: string;
+      ctaCountdown: string;
       ctaAria: string;
       ariaStatus: string;
     };

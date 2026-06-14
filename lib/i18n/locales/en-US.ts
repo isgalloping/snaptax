@@ -95,6 +95,7 @@ export const EN_US_COPY: UserCopy = {
         check2: "10 Receipts in 10 Sec",
         check3: "No Signup Needed",
         cta: "Let's Go! ⚡",
+        ctaCountdown: "Let's Go! ({seconds})",
         ctaAria: "Start onboarding",
         ariaStatus: "Loading Snap1099",
       },

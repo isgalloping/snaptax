@@ -1,3 +1,4 @@
+import { isHeroLandingSessionActive } from "@/lib/landing/heroLandingSession";
 import type { LandingVariant } from "@/lib/landing/landingVariant";
 
 export const LANDING_MIN_MS = 2400;
@@ -17,6 +18,10 @@ export function resolveExit(
   homeChunkReady: boolean,
   variant: LandingVariant = "data_stream",
 ): LandingExitMode | null {
+  if (isHeroLandingSessionActive()) {
+    return null;
+  }
+
   if (elapsedMs >= LANDING_SOFT_MAX_MS) {
     return homeChunkReady ? "full-home" : "offline-pack";
   }

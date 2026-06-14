@@ -8,6 +8,7 @@ import {
   formatReceiptDetailLongDateTime,
 } from "@/lib/format";
 import { fetchReceiptById, apiReceiptToLocal } from "@/lib/client/receiptApi";
+import { isPersistedReceiptId } from "@/lib/receipts/receiptId";
 import {
   buildReceiptDetailHero,
   formatPartialMerchant,
@@ -85,7 +86,14 @@ export function ReceiptDetailSheet({
   }, [initialReceipt]);
 
   useEffect(() => {
-    if (!navigator.onLine || receipt.status === "processing") return;
+    if (
+      !navigator.onLine ||
+      receipt.status === "processing" ||
+      receipt.isOnboardingDemo ||
+      !isPersistedReceiptId(receipt.id)
+    ) {
+      return;
+    }
     void fetchReceiptById(receipt.id)
       .then((remote) => {
         const updated = apiReceiptToLocal(remote);

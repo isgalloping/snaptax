@@ -55,12 +55,11 @@ export function OfflineHomeShell() {
     return visible;
   }, []);
 
-  const handleOnboardingGoogleSuccess = useCallback(async () => {
-    await auth.signInWithGoogle();
+  const handleOnboardingPostLogin = useCallback(async (_taxRecalcQueued: number) => {
     await convertDemoReceiptAfterLogin();
     await ensureConvertedDemoUploadReady();
     await refreshListFromLocal();
-  }, [auth.signInWithGoogle, refreshListFromLocal]);
+  }, [refreshListFromLocal]);
 
   const onboarding = useOnboardingFlow({
     receipts,
@@ -68,7 +67,8 @@ export function OfflineHomeShell() {
     onRefreshReceipts: async () => {
       await refreshListFromLocal();
     },
-    onGoogleSuccess: handleOnboardingGoogleSuccess,
+    onGoogleSignIn: auth.signInWithGoogle,
+    onGooglePostLogin: handleOnboardingPostLogin,
   });
 
   const {

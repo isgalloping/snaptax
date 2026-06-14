@@ -15,14 +15,16 @@ interface UseOnboardingFlowOptions {
   receipts: Receipt[];
   taxSaved: number | null;
   onRefreshReceipts: () => Promise<void>;
-  onGoogleSuccess: () => Promise<void>;
+  onGoogleSignIn: () => Promise<{ taxRecalcQueued: number }>;
+  onGooglePostLogin: (taxRecalcQueued: number) => Promise<void>;
 }
 
 export function useOnboardingFlow({
   receipts,
   taxSaved,
   onRefreshReceipts,
-  onGoogleSuccess,
+  onGoogleSignIn,
+  onGooglePostLogin,
 }: UseOnboardingFlowOptions) {
   const [onboardingStatus, setOnboardingStatusState] =
     useState<OnboardingStatus | null>(null);
@@ -41,8 +43,7 @@ export function useOnboardingFlow({
     () =>
       onboardingStatus != null &&
       (isOnboardingActive(onboardingStatus) ||
-        onboardingStatus === "stage_4" ||
-        onboardingStatus === "deferred_login"),
+        onboardingStatus === "stage_4"),
     [onboardingStatus],
   );
 
@@ -54,15 +55,12 @@ export function useOnboardingFlow({
   const displayTaxSaved = useMemo(() => {
     if (taxDisplayOverride != null) return taxDisplayOverride;
     if (onboardingStatus === "stage_1") return 0;
-    if (
-      onboardingStatus === "stage_4" ||
-      onboardingStatus === "deferred_login"
-    ) {
+    if (onboardingStatus === "stage_4") {
       const demo = receipts.find(
         (r) => r.isOnboardingDemo && r.status === "done",
       );
       if (demo?.taxAmount != null) return demo.taxAmount;
-      if (onboardingStatus === "stage_4") return ONBOARDING_DEMO_TAX_SAVED;
+      return ONBOARDING_DEMO_TAX_SAVED;
     }
     return taxSaved;
   }, [taxDisplayOverride, onboardingStatus, taxSaved, receipts]);
@@ -80,11 +78,6 @@ export function useOnboardingFlow({
       openSandbox: () => {
         void setOnboardingStatus("stage_2").then(() =>
           setOnboardingStatusState("stage_2"),
-        );
-      },
-      openSignup: () => {
-        void setOnboardingStatus("stage_4").then(() =>
-          setOnboardingStatusState("stage_4"),
         );
       },
     });
@@ -113,7 +106,8 @@ export function useOnboardingFlow({
             status: onboardingStatus,
             onStatusChange: handleOnboardingStatusChange,
             onRefreshReceipts,
-            onGoogleSuccess,
+            onGoogleSignIn,
+            onGooglePostLogin,
             onTaxDisplayOverride: setTaxDisplayOverride,
             onTaxAnimating: setTaxAnimating,
           }

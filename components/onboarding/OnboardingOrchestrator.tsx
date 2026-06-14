@@ -18,14 +18,10 @@ import { useTaxOdometer } from "./TaxSavedOdometer";
 
 export function resolveSnapIntent(
   status: OnboardingStatus,
-  handlers: { openSandbox: () => void; openSignup: () => void },
+  handlers: { openSandbox: () => void },
 ): boolean {
   if (status === "stage_1") {
     handlers.openSandbox();
-    return false;
-  }
-  if (status === "deferred_login") {
-    handlers.openSignup();
     return false;
   }
   if (
@@ -42,7 +38,8 @@ interface OnboardingOrchestratorProps {
   status: OnboardingStatus;
   onStatusChange: (next: OnboardingStatus) => void;
   onRefreshReceipts: () => Promise<void>;
-  onGoogleSuccess: () => Promise<void>;
+  onGoogleSignIn: () => Promise<{ taxRecalcQueued: number }>;
+  onGooglePostLogin: (taxRecalcQueued: number) => Promise<void>;
   onTaxDisplayOverride: (value: number | null) => void;
   onTaxAnimating: (active: boolean) => void;
 }
@@ -51,7 +48,8 @@ export function OnboardingOrchestrator({
   status,
   onStatusChange,
   onRefreshReceipts,
-  onGoogleSuccess,
+  onGoogleSignIn,
+  onGooglePostLogin,
   onTaxDisplayOverride,
   onTaxAnimating,
 }: OnboardingOrchestratorProps) {
@@ -113,15 +111,18 @@ export function OnboardingOrchestrator({
   }, [sandboxBusy, onRefreshReceipts, onStatusChange]);
 
   const handleSignupLater = useCallback(async () => {
-    await setOnboardingStatus("deferred_login");
-    onStatusChange("deferred_login");
-  }, [onStatusChange]);
-
-  const handleGoogleDone = useCallback(async () => {
-    await onGoogleSuccess();
     await setOnboardingStatus("completed");
     onStatusChange("completed");
-  }, [onGoogleSuccess, onStatusChange]);
+  }, [onStatusChange]);
+
+  const handleGoogleDone = useCallback(
+    async (result: { taxRecalcQueued: number }) => {
+      await onGooglePostLogin(result.taxRecalcQueued);
+      await setOnboardingStatus("completed");
+      onStatusChange("completed");
+    },
+    [onGooglePostLogin, onStatusChange],
+  );
 
   return (
     <>
@@ -147,6 +148,7 @@ export function OnboardingOrchestrator({
             mode="onboarding-signup"
             onClose={() => {}}
             onSoftDismiss={() => void handleSignupLater()}
+            onSignIn={onGoogleSignIn}
             onSuccess={handleGoogleDone}
             onFailure={setSignInError}
           />

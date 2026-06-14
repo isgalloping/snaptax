@@ -60,8 +60,13 @@ export async function requestGoogleCredential(): Promise<string> {
 
     const host = document.createElement("div");
     host.style.position = "fixed";
-    host.style.left = "-9999px";
-    host.style.top = "0";
+    host.style.left = "50%";
+    host.style.top = "50%";
+    host.style.transform = "translate(-50%, -50%)";
+    host.style.zIndex = "60";
+    host.style.width = "1px";
+    host.style.height = "1px";
+    host.style.overflow = "hidden";
     document.body.appendChild(host);
 
     window.google!.accounts.id.renderButton(host, {

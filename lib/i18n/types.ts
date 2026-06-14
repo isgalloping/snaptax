@@ -69,11 +69,12 @@ export type UserCopy = {
   };
   onboarding: {
     landing: {
-      headline: string;
+      headlineLead: string;
+      headlineAccent: string;
       tagline: string;
-      step1: string;
-      step2: string;
-      step3: string;
+      check1: string;
+      check2: string;
+      check3: string;
       cta: string;
       ctaAria: string;
       ariaStatus: string;
@@ -270,6 +271,7 @@ export type UserCopy = {
       contactPrefix: string;
       deleteAccount: string;
       deleteFailed: string;
+      deleteRequiresOnline: string;
       deleteTitle: string;
       deleteSignedInWarning: string;
       deleteGhostWarning: string;

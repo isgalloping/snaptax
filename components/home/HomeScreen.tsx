@@ -552,13 +552,15 @@ export function HomeScreen() {
     return visible;
   }, [refreshTaxSaved]);
 
-  const handleOnboardingGoogleSuccess = useCallback(async () => {
-    const { taxRecalcQueued } = await auth.signInWithGoogle();
-    await handlePostLoginSync(taxRecalcQueued);
-    await convertDemoReceiptAfterLogin();
-    await ensureConvertedDemoUploadReady();
-    await refreshListFromLocal();
-  }, [auth.signInWithGoogle, handlePostLoginSync, refreshListFromLocal]);
+  const handleOnboardingPostLogin = useCallback(
+    async (taxRecalcQueued: number) => {
+      await handlePostLoginSync(taxRecalcQueued);
+      await convertDemoReceiptAfterLogin();
+      await ensureConvertedDemoUploadReady();
+      await refreshListFromLocal();
+    },
+    [handlePostLoginSync, refreshListFromLocal],
+  );
 
   const onboarding = useOnboardingFlow({
     receipts,
@@ -566,7 +568,8 @@ export function HomeScreen() {
     onRefreshReceipts: async () => {
       await refreshListFromLocal();
     },
-    onGoogleSuccess: handleOnboardingGoogleSuccess,
+    onGoogleSignIn: auth.signInWithGoogle,
+    onGooglePostLogin: handleOnboardingPostLogin,
   });
 
   const {
@@ -797,7 +800,7 @@ export function HomeScreen() {
         industry={industry}
         onIndustryChange={handleIndustryChange}
         onBack={() => setView("home")}
-        onLocalDataCleared={() => {
+        onAccountDeleted={() => {
           void (async () => {
             setReceipts([]);
             setTaxSaved(null);
@@ -805,7 +808,9 @@ export function HomeScreen() {
             queueRef.current?.clear();
             watcherRef.current?.reset();
             setIndustry(null);
+            auth.resetAfterAccountDelete();
             await resetOnboarding();
+            await ensureGhostSession();
             await refreshListFromLocal();
             setView("home");
           })();

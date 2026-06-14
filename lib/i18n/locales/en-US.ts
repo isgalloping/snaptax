@@ -88,13 +88,14 @@ export const EN_US_COPY: UserCopy = {
     },
     onboarding: {
       landing: {
-        headline: "SNAP1099",
-        tagline: "Receipts → tax savings. Built for the job site.",
-        step1: "Snap a photo — we sort work expenses.",
-        step2: "Works offline. Syncs when you're online.",
-        step3: "Private & secure. Terms · Privacy.",
-        cta: "Start Snapping →",
-        ctaAria: "Start snapping receipts",
+        headlineLead: "Keep More of Your",
+        headlineAccent: "Hard Earned Money.",
+        tagline: "AI finds tax deductions others miss.",
+        check1: "Works Offline",
+        check2: "10 Receipts in 10 Sec",
+        check3: "No Signup Needed",
+        cta: "Let's Go! ⚡",
+        ctaAria: "Start onboarding",
         ariaStatus: "Loading Snap1099",
       },
       snapCoach: "Tap SNAP RECEIPT — photo any work receipt.",
@@ -315,9 +316,11 @@ export const EN_US_COPY: UserCopy = {
         contactPrefix: "Contact",
         deleteAccount: "Delete Account",
         deleteFailed: "Delete failed. Please try again.",
+        deleteRequiresOnline:
+          "Connect to the internet to delete your account and cloud data.",
         deleteTitle: "Delete Account",
         deleteSignedInWarning:
-          "This is irreversible. All cloud receipts and account data will be permanently deleted.",
+          "This is irreversible. All cloud receipts, export records, and account data will be permanently deleted.",
         deleteGhostWarning:
           "Clears all receipts on this device and cloud Ghost data. Cannot be undone.",
         deleting: "Deleting...",

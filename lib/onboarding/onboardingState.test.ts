@@ -12,8 +12,8 @@ describe("onboardingState helpers", () => {
     assert.equal(isOnboardingActive("completed"), false);
   });
 
-  it("deferred_login triggers snap gate", () => {
-    assert.equal(isSnapGateActive("deferred_login"), true);
+  it("deferred_login has no snap gate", () => {
+    assert.equal(isSnapGateActive("deferred_login"), false);
     assert.equal(isSnapGateActive("stage_1"), false);
   });
 

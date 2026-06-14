@@ -1,8 +1,7 @@
 "use client";
 
 import { useUserCopy } from "@/components/i18n/I18nProvider";
-
-const SAMPLE_IMAGE = "/onboarding/sample-home-depot.png";
+import { DEMO_SAMPLE_IMAGE_URL } from "@/lib/onboarding/demoReceipt";
 
 interface SandboxCameraSheetProps {
   onComplete: () => void;
@@ -15,7 +14,7 @@ export function SandboxCameraSheet({ onComplete }: SandboxCameraSheetProps) {
     <div className="fixed inset-0 z-50 flex flex-col bg-black">
       <div
         className="relative min-h-0 flex-1 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(${SAMPLE_IMAGE})` }}
+        style={{ backgroundImage: `url(${DEMO_SAMPLE_IMAGE_URL})` }}
       >
         <div className="absolute inset-0 bg-black/30" aria-hidden />
       </div>

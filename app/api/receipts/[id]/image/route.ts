@@ -4,6 +4,7 @@ import { getActor } from "@/lib/auth/getActor";
 import { mapErrorToResponse } from "@/lib/api/errors";
 import { prisma } from "@/lib/prisma";
 import { assertReceiptAccess } from "@/lib/receipts/ownership";
+import { assertPersistedReceiptId } from "@/lib/receipts/receiptId";
 import { withRequestLog } from "@/lib/server/log/withRequestLog";
 import { blobCommandOptions } from "@/lib/server/blob";
 
@@ -18,6 +19,7 @@ export const GET = withRequestLog(
   async (request, context) => {
     try {
       const { id } = await context.params;
+      assertPersistedReceiptId(id);
       const actor = await getActor(request);
       const receipt = await prisma.snaptaxReceipt.findUnique({ where: { id } });
       if (!receipt) throw new Error("NOT_FOUND");

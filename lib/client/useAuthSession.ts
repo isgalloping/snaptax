@@ -104,6 +104,13 @@ export function useAuthSession() {
     if (paid) setSeasonPaid(season, true);
   }, [googleUser]);
 
+  const resetAfterAccountDelete = useCallback(() => {
+    saveGoogleUser(null);
+    setGoogleUser(null);
+    setIndustry(null);
+    setSeasonPaidState(false);
+  }, []);
+
   return {
     hydrated,
     googleUser,
@@ -115,5 +122,6 @@ export function useAuthSession() {
     signOut,
     markSeasonPaid,
     refreshSeasonPaid,
+    resetAfterAccountDelete,
   };
 }

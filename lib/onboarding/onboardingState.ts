@@ -12,6 +12,7 @@ import {
   ONBOARD_SNAP_DISMISSED_KEY,
   readOnboardFlag,
   SETTINGS_VISITED_KEY,
+  writeOnboardingStatusMirror,
 } from "./onboardingStorage";
 
 export type OnboardingStatus =
@@ -53,8 +54,18 @@ export function isOnboardingActive(status: OnboardingStatus): boolean {
   return status.startsWith("stage_");
 }
 
-export function isSnapGateActive(status: OnboardingStatus): boolean {
-  return status === "deferred_login";
+export function isSnapGateActive(_status: OnboardingStatus): boolean {
+  return false;
+}
+
+export async function normalizeOnboardingStatus(
+  status: OnboardingStatus,
+): Promise<OnboardingStatus> {
+  if (status === "deferred_login") {
+    await setOnboardingStatus("completed");
+    return "completed";
+  }
+  return status;
 }
 
 export function shouldSkipLegacyCoaches(status: OnboardingStatus): boolean {
@@ -64,7 +75,9 @@ export function shouldSkipLegacyCoaches(status: OnboardingStatus): boolean {
 export async function getOnboardingStatus(): Promise<OnboardingStatus> {
   const stored = await readSystemMeta<OnboardingStatus>(ONBOARDING_STATUS_KEY);
   if (stored != null && isValidOnboardingStatus(stored)) {
-    return stored;
+    const status = await normalizeOnboardingStatus(stored);
+    writeOnboardingStatusMirror(status);
+    return status;
   }
   return "not_started";
 }
@@ -73,14 +86,23 @@ export async function setOnboardingStatus(
   status: OnboardingStatus,
 ): Promise<void> {
   await writeSystemMeta(ONBOARDING_STATUS_KEY, status);
+  writeOnboardingStatusMirror(status);
 }
 
 async function ensureDemoReceiptPresent(status: OnboardingStatus): Promise<void> {
-  if (status === "completed") return;
+  if (status === "completed" || status === "not_started") return;
   const demo = await loadReceipt(ONBOARDING_DEMO_RECEIPT_ID);
   if (!demo) {
     await saveReceipt(createShadowDemoReceipt());
   }
+}
+
+export async function commitHeroLandingStart(): Promise<void> {
+  const demo = await loadReceipt(ONBOARDING_DEMO_RECEIPT_ID);
+  if (!demo) {
+    await saveReceipt(createShadowDemoReceipt());
+  }
+  await setOnboardingStatus("stage_1");
 }
 
 export async function ensureOnboardingInitialized(): Promise<OnboardingStatus> {
@@ -102,16 +124,12 @@ export async function ensureOnboardingInitialized(): Promise<OnboardingStatus> {
         status = "stage_1";
       }
     } else {
-      await saveReceipt(createShadowDemoReceipt());
-      await setOnboardingStatus("stage_1");
-      status = "stage_1";
+      status = "not_started";
     }
   } else {
-    await saveReceipt(createShadowDemoReceipt());
-    await setOnboardingStatus("stage_1");
-    status = "stage_1";
+    status = "not_started";
   }
 
   await ensureDemoReceiptPresent(status);
-  return status;
+  return normalizeOnboardingStatus(status);
 }

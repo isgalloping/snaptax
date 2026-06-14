@@ -14,6 +14,8 @@ describe("createShadowDemoReceipt", () => {
     assert.equal(receipt.id, ONBOARDING_DEMO_RECEIPT_ID);
     assert.equal(receipt.isOnboardingDemo, true);
     assert.equal(receipt.status, "processing");
+    assert.equal(receipt.merchant, "SAMPLE: Builder Depot");
+    assert.equal(receipt.amount, 193.12);
     assert.equal(receipt.taxAmount, 0);
     assert.equal(receipt.subtitle, "Pending Test");
   });

@@ -1,14 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useUserCopy } from "@/components/i18n/I18nProvider";
 import {
   type GoogleAuthResponse,
   signInWithGoogleCredential,
 } from "@/lib/client/authApi";
 import { ensureGhostSession } from "@/lib/client/ghostClient";
+import { mapGoogleAuthErrorMessage } from "@/lib/client/googleAuthErrors";
 import {
-  mapGoogleAuthError,
   mountGoogleSignInButton,
   type GoogleSignInMount,
 } from "@/lib/client/googleAuth";
@@ -44,6 +44,7 @@ export function GoogleSignInSheet({
   const [signingIn, setSigningIn] = useState(false);
   const [preparing, setPreparing] = useState(true);
   const [inlineError, setInlineError] = useState<string | null>(null);
+  const [inlineWarning, setInlineWarning] = useState<string | null>(null);
   const buttonHostRef = useRef<HTMLDivElement>(null);
   const mountRef = useRef<GoogleSignInMount | null>(null);
   const signingInRef = useRef(false);
@@ -53,6 +54,25 @@ export function GoogleSignInSheet({
   onSuccessRef.current = onSuccess;
   onFailureRef.current = onFailure;
   onUserSignedInRef.current = onUserSignedIn;
+
+  const errorMessages = useMemo(
+    () => ({
+      signInFailed: authCopy.signInFailed,
+      signInUnauthorized: authCopy.signInUnauthorized,
+      signInGhostBound: authCopy.signInGhostBound,
+      signInServerError: authCopy.signInServerError,
+      signInConfig: authCopy.signInConfig,
+      ghostRegisterFailed: authCopy.ghostRegisterFailed,
+    }),
+    [
+      authCopy.signInFailed,
+      authCopy.signInUnauthorized,
+      authCopy.signInGhostBound,
+      authCopy.signInServerError,
+      authCopy.signInConfig,
+      authCopy.ghostRegisterFailed,
+    ],
+  );
 
   const modeCopy =
     mode === "soft"
@@ -73,7 +93,7 @@ export function GoogleSignInSheet({
     let cancelled = false;
 
     const handleAuthError = (error: unknown) => {
-      const message = mapGoogleAuthError(error, authCopy.signInFailed);
+      const message = mapGoogleAuthErrorMessage(error, errorMessages);
       if (message) {
         setInlineError(message);
         onFailureRef.current?.(message);
@@ -85,13 +105,20 @@ export function GoogleSignInSheet({
       signingInRef.current = true;
       setSigningIn(true);
       setInlineError(null);
+      setInlineWarning(null);
 
       void (async () => {
         try {
           const result = await signInWithGoogleCredential(credential);
           if (cancelled) return;
           onUserSignedInRef.current?.(result);
-          await onSuccessRef.current({ taxRecalcQueued: result.taxRecalcQueued });
+          try {
+            await onSuccessRef.current({ taxRecalcQueued: result.taxRecalcQueued });
+          } catch {
+            if (!cancelled) {
+              setInlineWarning(authCopy.syncAfterSignInFailed);
+            }
+          }
         } catch (error) {
           if (!cancelled) handleAuthError(error);
         } finally {
@@ -104,6 +131,7 @@ export function GoogleSignInSheet({
     void (async () => {
       setPreparing(true);
       setInlineError(null);
+      setInlineWarning(null);
       try {
         await ensureGhostSession();
         if (cancelled) return;
@@ -126,7 +154,7 @@ export function GoogleSignInSheet({
       mountRef.current?.cleanup();
       mountRef.current = null;
     };
-  }, [authCopy.signInFailed]);
+  }, [authCopy.syncAfterSignInFailed, errorMessages]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-end bg-black/70">
@@ -142,7 +170,12 @@ export function GoogleSignInSheet({
             className={`flex w-full justify-center ${signingIn || preparing ? "pointer-events-none opacity-60" : ""}`}
             aria-busy={preparing || signingIn}
           />
-          {(preparing || signingIn) && signingIn && (
+          {preparing && !signingIn && (
+            <p className="mt-2 text-center text-sm font-bold text-zinc-400">
+              {authCopy.preparingGoogle}
+            </p>
+          )}
+          {signingIn && (
             <p className="mt-2 text-center text-sm font-bold text-zinc-400">
               {authCopy.signingIn}
             </p>
@@ -152,6 +185,12 @@ export function GoogleSignInSheet({
         {inlineError && (
           <p className="mt-3 text-center text-sm font-bold text-red-500" role="alert">
             {inlineError}
+          </p>
+        )}
+
+        {inlineWarning && (
+          <p className="mt-3 text-center text-sm font-bold text-yellow-400" role="status">
+            {inlineWarning}
           </p>
         )}
 

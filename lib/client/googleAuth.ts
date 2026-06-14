@@ -36,6 +36,32 @@ export type GoogleSignInMount = {
   cleanup: () => void;
 };
 
+let gisInitializedForClient: string | null = null;
+type GisCredentialHandler = {
+  onCredential: (credential: string) => void;
+  onError?: (error: Error) => void;
+};
+let activeGisHandler: GisCredentialHandler | null = null;
+
+function ensureGisInitialized(clientId: string): void {
+  if (gisInitializedForClient === clientId) return;
+  if (!window.google?.accounts?.id) throw new Error("GIS_NOT_READY");
+
+  window.google.accounts.id.initialize({
+    client_id: clientId,
+    callback: (response) => {
+      if (response.credential) {
+        activeGisHandler?.onCredential(response.credential);
+      } else {
+        activeGisHandler?.onError?.(new Error("GOOGLE_SIGN_IN_CANCELLED"));
+      }
+    },
+    auto_select: false,
+    cancel_on_tap_outside: true,
+  });
+  gisInitializedForClient = clientId;
+}
+
 export async function mountGoogleSignInButton(
   container: HTMLElement,
   callbacks: {
@@ -48,18 +74,8 @@ export async function mountGoogleSignInButton(
   if (!clientId) throw new Error("GOOGLE_CLIENT_ID missing");
   if (!window.google?.accounts?.id) throw new Error("GIS_NOT_READY");
 
-  window.google.accounts.id.initialize({
-    client_id: clientId,
-    callback: (response) => {
-      if (response.credential) {
-        callbacks.onCredential(response.credential);
-      } else {
-        callbacks.onError?.(new Error("GOOGLE_SIGN_IN_CANCELLED"));
-      }
-    },
-    auto_select: false,
-    cancel_on_tap_outside: true,
-  });
+  activeGisHandler = callbacks;
+  ensureGisInitialized(clientId);
 
   const width = Math.min(400, Math.max(240, container.clientWidth || 320));
   window.google.accounts.id.renderButton(container, {
@@ -74,6 +90,9 @@ export async function mountGoogleSignInButton(
   return {
     cleanup: () => {
       container.replaceChildren();
+      if (activeGisHandler === callbacks) {
+        activeGisHandler = null;
+      }
     },
   };
 }
@@ -125,6 +144,7 @@ export async function requestGoogleCredential(): Promise<string> {
   });
 }
 
+/** @deprecated Use mapGoogleAuthErrorMessage from googleAuthErrors.ts */
 export function mapGoogleAuthError(
   error: unknown,
   signInFailedMessage: string,

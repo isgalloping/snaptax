@@ -92,7 +92,7 @@ export function HeroWelcomeLanding() {
           {copy.tagline}
         </p>
 
-        <ul className="mt-6 space-y-3">
+        <ul className="mt-6 mb-6 space-y-3">
           {checks.map((item) => (
             <li
               key={item}
@@ -108,12 +108,6 @@ export function HeroWelcomeLanding() {
             </li>
           ))}
         </ul>
-
-        <div className="mt-8 flex justify-center gap-2" aria-hidden>
-          <span className="h-2 w-2 rounded-full bg-yellow-500" />
-          <span className="h-2 w-2 rounded-full bg-zinc-600" />
-          <span className="h-2 w-2 rounded-full bg-zinc-600" />
-        </div>
       </div>
 
       <button

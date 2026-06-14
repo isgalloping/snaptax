@@ -215,10 +215,17 @@ export type UserCopy = {
       hardExport: { title: string; body: string };
       hardSync: { title: string; body: string };
       signingIn: string;
+      preparingGoogle: string;
       continueWithGoogle: string;
       notNow: string;
       back: string;
       signInFailed: string;
+      signInUnauthorized: string;
+      signInGhostBound: string;
+      signInServerError: string;
+      signInConfig: string;
+      ghostRegisterFailed: string;
+      syncAfterSignInFailed: string;
       onboardingSignup: {
         title: string;
         body: string;

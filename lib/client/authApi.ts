@@ -1,6 +1,7 @@
 "use client";
 
-import { apiFetch } from "@/lib/client/ghostClient";
+import { apiFetch, ensureGhostSession } from "@/lib/client/ghostClient";
+import { GoogleAuthError } from "@/lib/client/googleAuthErrors";
 import { clientTimeZone } from "@/lib/time/timeZone";
 import { requestGoogleCredential } from "@/lib/client/googleAuth";
 import {
@@ -39,15 +40,37 @@ export async function fetchAuthMe(): Promise<AuthMeResponse> {
   return (await res.json()) as AuthMeResponse;
 }
 
+async function parseGoogleAuthError(res: Response): Promise<GoogleAuthError> {
+  try {
+    const body = (await res.json()) as {
+      error?: { code?: string; message?: string };
+    };
+    const code = body.error?.code ?? "GOOGLE_AUTH_FAILED";
+    return new GoogleAuthError(code);
+  } catch {
+    return new GoogleAuthError("GOOGLE_AUTH_FAILED");
+  }
+}
+
 export async function signInWithGoogleCredential(
   credential: string,
+  options?: { ghostRetried?: boolean },
 ): Promise<GoogleAuthResponse> {
   const res = await apiFetch("/api/auth/google", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ credential }),
   });
-  if (!res.ok) throw new Error("GOOGLE_AUTH_FAILED");
+
+  if (res.status === 401 && !options?.ghostRetried) {
+    await ensureGhostSession();
+    return signInWithGoogleCredential(credential, { ghostRetried: true });
+  }
+
+  if (!res.ok) {
+    throw await parseGoogleAuthError(res);
+  }
+
   const data = (await res.json()) as GoogleAuthResponse;
   saveGoogleUser({
     email: data.user.email,

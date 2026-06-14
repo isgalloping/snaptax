@@ -252,10 +252,22 @@ export const DE_DE_COPY: UserCopy = {
         body: "Zum Synchronisieren zwischen Handy, Tablet oder Computer mit Google anmelden.",
       },
       signingIn: "Anmeldung…",
+      preparingGoogle: "Google-Anmeldung wird geladen…",
       continueWithGoogle: "Mit Google fortfahren",
       notNow: "Nicht jetzt",
       back: "< ZURÜCK",
       signInFailed: "Anmeldung fehlgeschlagen. Bitte erneut versuchen.",
+      signInUnauthorized:
+        "Sitzung abgelaufen. Seite aktualisieren und erneut versuchen.",
+      signInGhostBound:
+        "Dieses Gerät ist bereits mit einem anderen Google-Konto verknüpft.",
+      signInServerError:
+        "Dienst vorübergehend nicht verfügbar. Bitte später erneut versuchen.",
+      signInConfig: "Google-Anmeldung ist in diesem Build nicht konfiguriert.",
+      ghostRegisterFailed:
+        "Gerätesitzung konnte nicht gestartet werden. Verbindung prüfen.",
+      syncAfterSignInFailed:
+        "Angemeldet, aber Sync läuft noch. Ihre Belege sind auf diesem Gerät sicher.",
       onboardingSignup: {
         title: "Steuerersparnis sichern",
         body: "Sie haben gerade Ihre ersten 28,50 $ gespart! Erstellen Sie jetzt Ihren sicheren lokalen Tresor und sichern Sie Ihre Steuerersparnis dauerhaft.",

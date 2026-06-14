@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Receipt } from "@/lib/types";
 import { resolveSnapIntent } from "@/components/onboarding/OnboardingOrchestrator";
 import { ONBOARDING_DEMO_TAX_SAVED } from "@/lib/onboarding/demoReceipt";
@@ -10,19 +10,22 @@ import {
   setOnboardingStatus,
   type OnboardingStatus,
 } from "@/lib/onboarding/onboardingState";
+import { skipOnboarding } from "@/lib/onboarding/skipOnboarding";
 
 interface UseOnboardingFlowOptions {
   receipts: Receipt[];
   taxSaved: number | null;
   onRefreshReceipts: () => Promise<void>;
-  onGoogleSuccess: () => Promise<void>;
+  onGoogleSignIn: () => Promise<{ taxRecalcQueued: number }>;
+  onGooglePostLogin: (taxRecalcQueued: number) => Promise<void>;
 }
 
 export function useOnboardingFlow({
   receipts,
   taxSaved,
   onRefreshReceipts,
-  onGoogleSuccess,
+  onGoogleSignIn,
+  onGooglePostLogin,
 }: UseOnboardingFlowOptions) {
   const [onboardingStatus, setOnboardingStatusState] =
     useState<OnboardingStatus | null>(null);
@@ -30,6 +33,23 @@ export function useOnboardingFlow({
     null,
   );
   const [taxAnimating, setTaxAnimating] = useState(false);
+
+  const completeAhaCoach = useCallback(async () => {
+    setTaxDisplayOverride(null);
+    await setOnboardingStatus("completed");
+    setOnboardingStatusState("completed");
+  }, []);
+
+  const ahaCoachActive = useMemo(
+    () => onboardingStatus === "stage_aha",
+    [onboardingStatus],
+  );
+
+  const dismissAhaCoach = useCallback(() => {
+    if (onboardingStatus === "stage_aha") {
+      void completeAhaCoach();
+    }
+  }, [onboardingStatus, completeAhaCoach]);
 
   const initializeOnboarding = useCallback(async () => {
     const status = await ensureOnboardingInitialized();
@@ -39,10 +59,7 @@ export function useOnboardingFlow({
 
   const onboardingInFlow = useMemo(
     () =>
-      onboardingStatus != null &&
-      (isOnboardingActive(onboardingStatus) ||
-        onboardingStatus === "stage_4" ||
-        onboardingStatus === "deferred_login"),
+      onboardingStatus != null && isOnboardingActive(onboardingStatus),
     [onboardingStatus],
   );
 
@@ -54,15 +71,12 @@ export function useOnboardingFlow({
   const displayTaxSaved = useMemo(() => {
     if (taxDisplayOverride != null) return taxDisplayOverride;
     if (onboardingStatus === "stage_1") return 0;
-    if (
-      onboardingStatus === "stage_4" ||
-      onboardingStatus === "deferred_login"
-    ) {
+    if (onboardingStatus === "stage_aha") {
       const demo = receipts.find(
         (r) => r.isOnboardingDemo && r.status === "done",
       );
       if (demo?.taxAmount != null) return demo.taxAmount;
-      if (onboardingStatus === "stage_4") return ONBOARDING_DEMO_TAX_SAVED;
+      return ONBOARDING_DEMO_TAX_SAVED;
     }
     return taxSaved;
   }, [taxDisplayOverride, onboardingStatus, taxSaved, receipts]);
@@ -82,11 +96,6 @@ export function useOnboardingFlow({
           setOnboardingStatusState("stage_2"),
         );
       },
-      openSignup: () => {
-        void setOnboardingStatus("stage_4").then(() =>
-          setOnboardingStatusState("stage_4"),
-        );
-      },
     });
   }, [onboardingStatus]);
 
@@ -97,15 +106,27 @@ export function useOnboardingFlow({
     return status;
   }, []);
 
+  const skipOnboardingFlow = useCallback(async () => {
+    if (!onboardingStatus || !isOnboardingActive(onboardingStatus)) return;
+    setTaxDisplayOverride(null);
+    await skipOnboarding();
+    setOnboardingStatusState("completed");
+    await onRefreshReceipts();
+  }, [onboardingStatus, onRefreshReceipts]);
+
   return {
     onboardingStatus,
     initializeOnboarding,
     resetOnboarding,
+    skipOnboardingFlow,
     onboardingInFlow,
     skipSoftGoogleSheet,
     displayTaxSaved,
     taxAnimating,
     setTaxAnimating,
+    ahaCoachActive,
+    dismissAhaCoach,
+    completeAhaCoach,
     handleSnapIntent,
     orchestratorProps:
       onboardingInFlow && onboardingStatus
@@ -113,7 +134,8 @@ export function useOnboardingFlow({
             status: onboardingStatus,
             onStatusChange: handleOnboardingStatusChange,
             onRefreshReceipts,
-            onGoogleSuccess,
+            onGoogleSignIn,
+            onGooglePostLogin,
             onTaxDisplayOverride: setTaxDisplayOverride,
             onTaxAnimating: setTaxAnimating,
           }

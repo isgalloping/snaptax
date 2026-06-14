@@ -9,8 +9,11 @@ import {
   resolveExit,
   type LandingExitMode,
 } from "@/lib/landing/landingTiming";
+import {
+  readLandingVariantMirror,
+} from "@/lib/landing/landingVariant";
 import { useUserCopy } from "@/components/i18n/I18nProvider";
-import { LANDING_CTA_EVENT } from "./WorkerWelcomeLanding";
+import { LANDING_CTA_EVENT } from "./landingEvents";
 
 type Phase = "visible" | "exiting" | "done";
 
@@ -67,6 +70,7 @@ export function LandingGate({ homeChunkReady, onExit }: LandingGateProps) {
     const mode = resolveExit(
       landingElapsedMs(),
       homeChunkReadyRef.current,
+      readLandingVariantMirror(),
     );
     if (mode) beginExit(mode);
   }, [beginExit]);
@@ -74,6 +78,7 @@ export function LandingGate({ homeChunkReady, onExit }: LandingGateProps) {
   useEffect(() => {
     void warmReceiptDb();
     performance.mark("startup:landing-paint");
+    document.documentElement.classList.add("landing-react-ready");
   }, []);
 
   useEffect(() => {

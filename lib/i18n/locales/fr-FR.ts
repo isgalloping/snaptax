@@ -89,19 +89,21 @@ export const FR_FR_COPY: UserCopy = {
   },
   onboarding: {
     landing: {
-      headline: "SNAP1099",
-      tagline:
-        "Reçus → économies fiscales. Conçu pour le chantier.",
-      step1: "Prenez une photo — nous classons vos dépenses professionnelles.",
-      step2: "Fonctionne hors ligne. Se synchronise en ligne.",
-      step3: "Privé et sécurisé. Conditions · Confidentialité.",
-      cta: "Commencer à photographier →",
-      ctaAria: "Commencer à photographier des reçus",
+      headlineLead: "Gardez plus de votre",
+      headlineAccent: "argent durement gagné.",
+      tagline: "L'IA trouve des déductions fiscales que d'autres manquent.",
+      check1: "Fonctionne hors ligne",
+      check2: "10 reçus en 10 sec",
+      check3: "Pas d'inscription requise",
+      cta: "C'est parti ! ⚡",
+      ctaAria: "Commencer l'introduction",
       ariaStatus: "Chargement de Snap1099",
     },
     snapCoach:
       "Appuyez sur SNAP RECEIPT — photographiez tout reçu professionnel.",
     dismissCoach: "Fermer l'indication",
+    skip: "Passer",
+    skipAria: "Passer le tutoriel d'introduction",
     firstReceipt: {
       processing:
         "Lecture de votre reçu… Photographiez-en d'autres à tout moment.",
@@ -115,6 +117,8 @@ export const FR_FR_COPY: UserCopy = {
       snapTooltip:
         "Appuyez ici pour prendre une photo et voir vos économies fiscales instantanément.",
       sandboxShutterAria: "Prendre une photo d'exemple de reçu",
+      sandboxTooltip:
+        "Appuyez sur l'obturateur pour photographier votre reçu d'exemple.",
       snackbar: "Vous venez d'économiser 28,50 $ !",
       signup: {
         title: "Sécurisez vos économies fiscales",
@@ -322,6 +326,8 @@ export const FR_FR_COPY: UserCopy = {
       contactPrefix: "Contact",
       deleteAccount: "Supprimer le compte",
       deleteFailed: "Échec de la suppression. Veuillez réessayer.",
+      deleteRequiresOnline:
+        "Connectez-vous à Internet pour supprimer votre compte et vos données cloud.",
       deleteTitle: "Supprimer le compte",
       deleteSignedInWarning:
         "Cette action est irréversible. Tous les reçus cloud et les données du compte seront définitivement supprimés.",

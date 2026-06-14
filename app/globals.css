@@ -52,3 +52,90 @@ html.landing-done #landing-ssr-layer {
 .animate-tax-bounce {
   animation: tax-bounce 0.6s ease-out;
 }
+
+/* --- Onboarding Stage 1 SNAP focus ring --- */
+
+@keyframes snap-coach-heartbeat {
+  0% {
+    opacity: 1;
+    transform: scale(1.02);
+    box-shadow:
+      0 0 40px rgba(234, 179, 8, 0.95),
+      0 0 16px rgba(250, 204, 21, 0.6);
+  }
+  15% {
+    opacity: 0.25;
+    transform: scale(1);
+    box-shadow: 0 0 4px rgba(234, 179, 8, 0.2);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1.02);
+    box-shadow:
+      0 0 40px rgba(234, 179, 8, 0.95),
+      0 0 16px rgba(250, 204, 21, 0.6);
+  }
+  50%,
+  100% {
+    opacity: 0.15;
+    transform: scale(1);
+    box-shadow: none;
+  }
+}
+
+.snap-focus-ring__pulse {
+  border: 3px solid #eab308;
+  transform-origin: center;
+  animation: snap-coach-heartbeat 1.2s ease-in-out infinite;
+}
+
+@keyframes snap-coach-heartbeat-export {
+  0% {
+    opacity: 1;
+    transform: scale(1.06);
+    box-shadow:
+      0 0 48px rgba(234, 179, 8, 0.95),
+      0 0 20px rgba(250, 204, 21, 0.7);
+  }
+  15% {
+    opacity: 0.25;
+    transform: scale(1);
+    box-shadow: 0 0 4px rgba(234, 179, 8, 0.2);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1.06);
+    box-shadow:
+      0 0 48px rgba(234, 179, 8, 0.95),
+      0 0 20px rgba(250, 204, 21, 0.7);
+  }
+  50%,
+  100% {
+    opacity: 0.15;
+    transform: scale(1);
+    box-shadow: none;
+  }
+}
+
+.snap-focus-ring__pulse--export {
+  border-color: #facc15;
+  animation-name: snap-coach-heartbeat-export;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .snap-focus-ring__pulse {
+    animation: none !important;
+    opacity: 1;
+    transform: none;
+    box-shadow: 0 0 0 2px rgba(234, 179, 8, 0.8);
+  }
+
+  .snap-focus-ring__pulse--export {
+    animation: none !important;
+    box-shadow: 0 0 0 2px rgba(250, 204, 21, 0.9);
+  }
+
+  .snap-focus-ring {
+    box-shadow: 0 0 0 2px rgba(234, 179, 8, 0.8);
+  }
+}

@@ -7,12 +7,12 @@
 **Canonical sources:**
 
 - [`docs/prd/onboarding.md`](../../prd/onboarding.md)
-- [`docs/ui/onboarding.png`](../../ui/onboarding.png)
+- [`docs/ui/onboarding.png`](../../ui/onboarding-primary.png)
 - [`docs/product/PRODUCT-SPEC.md`](../../product/PRODUCT-SPEC.md)
 
 **Supersedes (partial):** P2–P5 soft-coach flows in [`2026-06-12-new-user-onboarding-design.md`](./2026-06-12-new-user-onboarding-design.md) — SnapCoach, FirstReceiptCoach, 3rd-receipt Nudge, first-settings soft Sheet for **new users**.
 
-**Preserves:** [`2026-06-10-unified-data-stream-splash-design.md`](./2026-06-10-unified-data-stream-splash-design.md) — `data_stream` Landing on every cold start.
+**Amended by:** [`2026-06-14-onboarding-optional-signup-design.md`](./2026-06-14-onboarding-optional-signup-design.md) — Later → `completed` (no SNAP gate); Google login optional in onboarding.
 
 ---
 
@@ -28,12 +28,12 @@ New users see an empty list and `$0.00` tax saved — no immediate proof of valu
 
 | Topic | Choice |
 |-------|--------|
-| Landing vs onboarding | **`data_stream` every cold start** (app entry); **onboarding only first time inside app** |
+| Landing vs onboarding | ~~`data_stream` every cold start~~ → **首次 Hero Stage 0**；**回访 `data_stream`**（见 [`2026-06-14-onboarding-hero-first-visit-design.md`](./2026-06-14-onboarding-hero-first-visit-design.md)） |
 | Second visit | No shadow / tooltip / sandbox; status `deferred_login` or `completed` |
 | Signup | **Google only** — no Sign in with Apple |
 | Old coaches | **Fully replaced** when new onboarding path applies; removed for users who complete or defer |
 | Sandbox snap | **Pure local mock** — no camera API, no OpenAI/API; fixed **$28.50** tax saved |
-| Later button | → `deferred_login`; **next real SNAP hard-opens Google Sheet** |
+| Later button | → **`completed`** (2026-06-14 amendment); ~~`deferred_login` + SNAP gate~~ |
 | UI tabs in mockup | **Ignored** — keep 2 logical pages (home + settings) |
 | Architecture | **Centralized `OnboardingOrchestrator`** + `lib/onboarding/*` state module |
 
@@ -139,17 +139,11 @@ type OnboardingStatus =
 
 - Primary CTA: **Continue with Google** (iOS and Android)
 - **No Apple Sign-In**
-- **Later** → `deferred_login`; demo receipt stays in IndexedDB
+- **Later** → **`completed`** (2026-06-14); demo receipt stays in IndexedDB
 
-### 7.1 Deferred login snap gate
+### 7.1 ~~Deferred login snap gate~~ (superseded 2026-06-14)
 
-When `onboarding_status === "deferred_login"` and user taps **SNAP RECEIPT**:
-
-- Intercept before real camera
-- Hard-open Google Sheet (same copy)
-- After login → `completed`, proceed to normal camera on subsequent snaps
-
-Export / multi-device hard gates unchanged (existing PRD).
+> **Superseded:** See [`2026-06-14-onboarding-optional-signup-design.md`](./2026-06-14-onboarding-optional-signup-design.md). Later no longer sets `deferred_login`; SNAP is never intercepted for onboarding login. Export / Settings hard gates unchanged.
 
 ---
 
@@ -268,7 +262,7 @@ Bump `receiptDb` version:
 | AC-2 | After sandbox shutter: odometer ≤300ms, haptic sync, ≥55fps on mid device |
 | AC-3 | Google login: demo receipt not lost; onboarding not restarted |
 | AC-4 | Second cold start: no shadow/tooltip/sandbox |
-| AC-5 | Later → next real SNAP opens Google Sheet |
+| AC-5 | ~~Later → SNAP opens Google Sheet~~ → **Later → `completed`; no onboarding Google Sheet** (amended 2026-06-14) |
 | AC-6 | After `completed`: no SnapCoach / FirstReceiptCoach / 3rd-receipt Nudge |
 | AC-7 | `data_stream` Landing still plays every cold start, independent of onboarding |
 
@@ -290,4 +284,4 @@ Bump `receiptDb` version:
 |------|--------|
 | Design spec | ✅ Approved |
 | Implementation plan | ✅ [`2026-06-13-aha-moment-onboarding.md`](../plans/2026-06-13-aha-moment-onboarding.md) |
-| Code | ✅ Implemented (remediation 2026-06-14) |
+| Code | ✅ Implemented (remediation 2026-06-14); optional-signup amendment **pending** — see [`2026-06-14-onboarding-optional-signup-design.md`](./2026-06-14-onboarding-optional-signup-design.md) |

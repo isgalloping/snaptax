@@ -73,9 +73,8 @@ export function useTaxExportGate({
     }
   };
 
-  const handleGoogleSuccess = async () => {
-    const { taxRecalcQueued } = await onSignInWithGoogle();
-    await onPostLoginSync?.(taxRecalcQueued);
+  const handleGoogleSuccess = async (result: { taxRecalcQueued: number }) => {
+    await onPostLoginSync?.(result.taxRecalcQueued);
     setGoogleSheet(null);
     const paid = await fetchSeasonPaid(currentSeason).catch(() => seasonPaid);
     if (paid) {
@@ -91,6 +90,7 @@ export function useTaxExportGate({
         <GoogleSignInSheet
           mode={googleSheet}
           onClose={() => setGoogleSheet(null)}
+          onSignIn={onSignInWithGoogle}
           onSuccess={handleGoogleSuccess}
           onFailure={(msg) => {
             setErrorMessage(msg);

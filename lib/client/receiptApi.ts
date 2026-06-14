@@ -2,6 +2,7 @@ import { isReceiptFiled } from "@/lib/receipts/filedStatus";
 import type { Receipt } from "@/lib/types";
 import type { TaxRegion } from "@/lib/tax/types";
 import { parseUtcISOString, toUtcISOString } from "@/lib/time/utc";
+import { isPersistedReceiptId } from "@/lib/receipts/receiptId";
 import { apiFetch } from "@/lib/client/ghostClient";
 
 export type ApiReceipt = {
@@ -58,6 +59,7 @@ export type ReceiptImageUrlResponse = {
 export async function fetchReceiptImageUrl(
   id: string,
 ): Promise<ReceiptImageUrlResponse> {
+  if (!isPersistedReceiptId(id)) throw new Error("FETCH_RECEIPT_IMAGE_FAILED");
   const res = await apiFetch(`/api/receipts/${id}/image`);
   if (!res.ok) throw new Error("FETCH_RECEIPT_IMAGE_FAILED");
   return (await res.json()) as ReceiptImageUrlResponse;
@@ -87,6 +89,7 @@ export async function fetchReceiptList(
 }
 
 export async function fetchReceiptById(id: string): Promise<ApiReceipt> {
+  if (!isPersistedReceiptId(id)) throw new Error("FETCH_RECEIPT_FAILED");
   const res = await apiFetch(`/api/receipts/${id}`);
   if (!res.ok) throw new Error("FETCH_RECEIPT_FAILED");
   return (await res.json()) as ApiReceipt;
@@ -128,6 +131,9 @@ export type ProcessTriggerResult =
 export async function triggerReceiptProcess(
   id: string,
 ): Promise<ProcessTriggerResult> {
+  if (!isPersistedReceiptId(id)) {
+    return { ok: false, reason: "not_found", status: 404 };
+  }
   const res = await apiFetch(`/api/receipts/${id}/process`, { method: "POST" });
   if (res.ok) return { ok: true };
   if (res.status === 404) return { ok: false, reason: "not_found", status: 404 };
@@ -138,6 +144,7 @@ export async function patchReceiptCategory(
   id: string,
   category: string,
 ): Promise<ApiReceipt> {
+  if (!isPersistedReceiptId(id)) throw new Error("PATCH_RECEIPT_CATEGORY_FAILED");
   const res = await apiFetch(`/api/receipts/${id}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
@@ -148,6 +155,7 @@ export async function patchReceiptCategory(
 }
 
 export async function deleteReceiptRemote(id: string): Promise<void> {
+  if (!isPersistedReceiptId(id)) return;
   const res = await apiFetch(`/api/receipts/${id}`, { method: "DELETE" });
   if (!res.ok && res.status !== 404) throw new Error("DELETE_RECEIPT_FAILED");
 }

@@ -18,11 +18,45 @@ export function retryAfterSecFromWindow(
 }
 
 const GC_RETENTION_MS = 24 * 60 * 60 * 1000;
+const GC_SAMPLE_RATE = 0.02;
+
+let gcInFlight: Promise<void> | null = null;
 
 async function pruneStaleBuckets(before: Date): Promise<void> {
   await prisma.snaptaxRateLimitBucket.deleteMany({
     where: { windowStart: { lt: before } },
   });
+}
+
+function maybePruneStaleBuckets(before: Date): void {
+  if (Math.random() >= GC_SAMPLE_RATE) return;
+  if (gcInFlight) return;
+  gcInFlight = pruneStaleBuckets(before)
+    .catch(() => {})
+    .finally(() => {
+      gcInFlight = null;
+    });
+}
+
+/** Single-statement upsert — avoids interactive transactions (P2028 on pooled connections). */
+async function incrementRateLimitBucket(
+  bucketKey: string,
+  windowStart: Date,
+): Promise<number> {
+  const rows = await prisma.$queryRaw<Array<{ count: number | bigint }>>`
+    INSERT INTO snaptax_rate_limit_buckets (bucket_key, window_start, count, updated_at)
+    VALUES (${bucketKey}, ${windowStart}, 1, CURRENT_TIMESTAMP)
+    ON CONFLICT (bucket_key) DO UPDATE SET
+      count = CASE
+        WHEN snaptax_rate_limit_buckets.window_start = EXCLUDED.window_start
+        THEN snaptax_rate_limit_buckets.count + 1
+        ELSE 1
+      END,
+      window_start = EXCLUDED.window_start,
+      updated_at = CURRENT_TIMESTAMP
+    RETURNING count
+  `;
+  return Number(rows[0]?.count ?? 1);
 }
 
 export async function consumeRateLimit(params: {
@@ -36,43 +70,8 @@ export async function consumeRateLimit(params: {
   const windowStart = new Date(windowStartMs);
   const gcBefore = new Date(nowMs - GC_RETENTION_MS);
 
-  const count = await prisma.$transaction(async (tx) => {
-    const existing = await tx.snaptaxRateLimitBucket.findUnique({
-      where: { bucketKey: params.bucketKey },
-    });
-
-    let nextCount: number;
-    if (
-      !existing ||
-      existing.windowStart.getTime() !== windowStartMs
-    ) {
-      const row = await tx.snaptaxRateLimitBucket.upsert({
-        where: { bucketKey: params.bucketKey },
-        create: {
-          bucketKey: params.bucketKey,
-          windowStart,
-          count: 1,
-        },
-        update: {
-          windowStart,
-          count: 1,
-        },
-      });
-      nextCount = row.count;
-    } else {
-      const row = await tx.snaptaxRateLimitBucket.update({
-        where: { bucketKey: params.bucketKey },
-        data: { count: { increment: 1 } },
-      });
-      nextCount = row.count;
-    }
-
-    await tx.snaptaxRateLimitBucket.deleteMany({
-      where: { windowStart: { lt: gcBefore } },
-    });
-
-    return nextCount;
-  });
+  const count = await incrementRateLimitBucket(params.bucketKey, windowStart);
+  maybePruneStaleBuckets(gcBefore);
 
   if (count > params.limit) {
     return {

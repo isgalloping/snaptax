@@ -1,38 +1,27 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { GoogleSignInSheet } from "@/components/auth/GoogleSignInSheet";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  ONBOARDING_DEMO_RECEIPT_ID,
   ONBOARDING_DEMO_TAX_SAVED,
-  completeDemoReceipt,
+  ensureOnboardingDemoDone,
 } from "@/lib/onboarding/demoReceipt";
 import {
   setOnboardingStatus,
   type OnboardingStatus,
 } from "@/lib/onboarding/onboardingState";
-import { loadReceipt, saveReceipt } from "@/lib/storage/receiptDb";
 import { OnboardingSnackbar } from "./OnboardingSnackbar";
 import { SandboxCameraSheet } from "./SandboxCameraSheet";
 import { useTaxOdometer } from "./TaxSavedOdometer";
 
 export function resolveSnapIntent(
   status: OnboardingStatus,
-  handlers: { openSandbox: () => void; openSignup: () => void },
+  handlers: { openSandbox: () => void },
 ): boolean {
   if (status === "stage_1") {
     handlers.openSandbox();
     return false;
   }
-  if (status === "deferred_login") {
-    handlers.openSignup();
-    return false;
-  }
-  if (
-    status === "stage_2" ||
-    status === "stage_3" ||
-    status === "stage_4"
-  ) {
+  if (status === "stage_2" || status === "stage_3") {
     return false;
   }
   return true;
@@ -42,7 +31,8 @@ interface OnboardingOrchestratorProps {
   status: OnboardingStatus;
   onStatusChange: (next: OnboardingStatus) => void;
   onRefreshReceipts: () => Promise<void>;
-  onGoogleSuccess: () => Promise<void>;
+  onGoogleSignIn: () => Promise<{ taxRecalcQueued: number }>;
+  onGooglePostLogin: (taxRecalcQueued: number) => Promise<void>;
   onTaxDisplayOverride: (value: number | null) => void;
   onTaxAnimating: (active: boolean) => void;
 }
@@ -51,17 +41,20 @@ export function OnboardingOrchestrator({
   status,
   onStatusChange,
   onRefreshReceipts,
-  onGoogleSuccess,
   onTaxDisplayOverride,
   onTaxAnimating,
 }: OnboardingOrchestratorProps) {
   const [showSnackbar, setShowSnackbar] = useState(false);
   const [sandboxBusy, setSandboxBusy] = useState(false);
-  const [signInError, setSignInError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (status === "stage_4") setSignInError(null);
-  }, [status]);
+  const onRefreshRef = useRef(onRefreshReceipts);
+  const onStatusChangeRef = useRef(onStatusChange);
+  const onTaxAnimatingRef = useRef(onTaxAnimating);
+  const onTaxDisplayOverrideRef = useRef(onTaxDisplayOverride);
+  onRefreshRef.current = onRefreshReceipts;
+  onStatusChangeRef.current = onStatusChange;
+  onTaxAnimatingRef.current = onTaxAnimating;
+  onTaxDisplayOverrideRef.current = onTaxDisplayOverride;
 
   const odometerValue = useTaxOdometer(
     status === "stage_3",
@@ -72,56 +65,59 @@ export function OnboardingOrchestrator({
 
   useEffect(() => {
     if (status === "stage_3") {
-      onTaxDisplayOverride(odometerValue);
-    } else if (status !== "stage_1" && status !== "stage_4") {
-      onTaxDisplayOverride(null);
+      onTaxDisplayOverrideRef.current(odometerValue);
+    } else if (status !== "stage_1") {
+      onTaxDisplayOverrideRef.current(null);
     }
-  }, [status, odometerValue, onTaxDisplayOverride]);
+  }, [status, odometerValue]);
 
   useEffect(() => {
     if (status !== "stage_3") return;
 
-    onTaxAnimating(true);
-    setShowSnackbar(true);
+    let cancelled = false;
+    let toStageAha: number | undefined;
+    let stopAnim: number | undefined;
 
-    const toStage4 = window.setTimeout(() => {
-      void setOnboardingStatus("stage_4").then(() => onStatusChange("stage_4"));
-    }, 400);
+    void (async () => {
+      await ensureOnboardingDemoDone();
+      if (cancelled) return;
+      await onRefreshRef.current();
+      if (cancelled) return;
 
-    const stopAnim = window.setTimeout(() => onTaxAnimating(false), 600);
+      onTaxAnimatingRef.current(true);
+      setShowSnackbar(true);
+
+      toStageAha = window.setTimeout(() => {
+        if (cancelled) return;
+        void setOnboardingStatus("stage_aha").then(() =>
+          onStatusChangeRef.current("stage_aha"),
+        );
+      }, 400);
+
+      stopAnim = window.setTimeout(() => {
+        if (!cancelled) onTaxAnimatingRef.current(false);
+      }, 600);
+    })();
 
     return () => {
-      window.clearTimeout(toStage4);
-      window.clearTimeout(stopAnim);
+      cancelled = true;
+      if (toStageAha !== undefined) window.clearTimeout(toStageAha);
+      if (stopAnim !== undefined) window.clearTimeout(stopAnim);
     };
-  }, [status, onStatusChange, onTaxAnimating]);
+  }, [status]);
 
   const handleSandboxComplete = useCallback(async () => {
     if (sandboxBusy) return;
     setSandboxBusy(true);
     try {
-      const demo = await loadReceipt(ONBOARDING_DEMO_RECEIPT_ID);
-      if (demo) {
-        await saveReceipt(completeDemoReceipt(demo));
-      }
-      await onRefreshReceipts();
+      await ensureOnboardingDemoDone();
+      await onRefreshRef.current();
       await setOnboardingStatus("stage_3");
-      onStatusChange("stage_3");
+      onStatusChangeRef.current("stage_3");
     } finally {
       setSandboxBusy(false);
     }
-  }, [sandboxBusy, onRefreshReceipts, onStatusChange]);
-
-  const handleSignupLater = useCallback(async () => {
-    await setOnboardingStatus("deferred_login");
-    onStatusChange("deferred_login");
-  }, [onStatusChange]);
-
-  const handleGoogleDone = useCallback(async () => {
-    await onGoogleSuccess();
-    await setOnboardingStatus("completed");
-    onStatusChange("completed");
-  }, [onGoogleSuccess, onStatusChange]);
+  }, [sandboxBusy]);
 
   return (
     <>
@@ -129,28 +125,8 @@ export function OnboardingOrchestrator({
         <SandboxCameraSheet onComplete={() => void handleSandboxComplete()} />
       )}
 
-      {showSnackbar && (status === "stage_3" || status === "stage_4") && (
+      {showSnackbar && status === "stage_3" && (
         <OnboardingSnackbar onDismiss={() => setShowSnackbar(false)} />
-      )}
-
-      {status === "stage_4" && (
-        <>
-          {signInError && (
-            <p
-              className="fixed bottom-4 left-4 right-4 z-[60] rounded-xl border border-red-500/60 bg-zinc-900 px-4 py-3 text-center text-sm font-bold text-red-400"
-              role="alert"
-            >
-              {signInError}
-            </p>
-          )}
-          <GoogleSignInSheet
-            mode="onboarding-signup"
-            onClose={() => {}}
-            onSoftDismiss={() => void handleSignupLater()}
-            onSuccess={handleGoogleDone}
-            onFailure={setSignInError}
-          />
-        </>
       )}
     </>
   );

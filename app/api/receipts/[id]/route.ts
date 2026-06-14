@@ -4,6 +4,7 @@ import { getActor } from "@/lib/auth/getActor";
 import { mapErrorToResponse } from "@/lib/api/errors";
 import { prisma } from "@/lib/prisma";
 import { assertReceiptAccess } from "@/lib/receipts/ownership";
+import { assertPersistedReceiptId } from "@/lib/receipts/receiptId";
 import { serializeReceipt } from "@/lib/receipts/serialize";
 import { updateReceiptCategory } from "@/lib/receipts/updateReceiptCategory";
 import { US_EXPORT_CATEGORIES } from "@/lib/tax/usExportCategories";
@@ -22,6 +23,7 @@ export const GET = withRequestLog(
   async (request, context) => {
     try {
       const { id } = await context.params;
+      assertPersistedReceiptId(id);
       const actor = await getActor(request);
       const receipt = await prisma.snaptaxReceipt.findUnique({ where: { id } });
       if (!receipt) throw new Error("NOT_FOUND");
@@ -39,6 +41,7 @@ export const DELETE = withRequestLog(
   async (request, context) => {
     try {
       const { id } = await context.params;
+      assertPersistedReceiptId(id);
       const actor = await getActor(request, { requireWrite: true });
       const receipt = await prisma.snaptaxReceipt.findUnique({ where: { id } });
       if (!receipt) throw new Error("NOT_FOUND");
@@ -57,6 +60,7 @@ export const PATCH = withRequestLog(
   async (request, context) => {
     try {
       const { id } = await context.params;
+      assertPersistedReceiptId(id);
       const actor = await getActor(request, { requireWrite: true });
       const receipt = await prisma.snaptaxReceipt.findUnique({ where: { id } });
       if (!receipt) throw new Error("NOT_FOUND");

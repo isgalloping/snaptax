@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useSyncExternalStore } from "react";
+import { useCallback, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { HelpText } from "@/components/help/HelpText";
 import { useI18n } from "@/components/i18n/I18nProvider";
@@ -244,12 +244,6 @@ export function HelpPageContent() {
   const sectionParam = searchParams.get("section");
   const activeSection = isSectionId(sectionParam) ? sectionParam : null;
 
-  const canGoBack = useSyncExternalStore(
-    () => () => {},
-    () => typeof window !== "undefined" && window.history.length > 1,
-    () => false,
-  );
-
   const tocItems = useMemo(
     () => [
       { id: SECTION_IDS[0], label: help.toc.quickStart, title: sections.quickStart.title },
@@ -268,22 +262,18 @@ export function HelpPageContent() {
 
   const openSection = useCallback(
     (id: SectionId) => {
-      router.push(`/help?section=${id}`, { scroll: true });
+      router.replace(`/help?section=${id}`, { scroll: true });
     },
     [router],
   );
 
   const closeSection = useCallback(() => {
-    router.push("/help", { scroll: true });
+    router.replace("/help", { scroll: true });
   }, [router]);
 
   const goHome = useCallback(() => {
-    if (canGoBack) {
-      router.back();
-      return;
-    }
     router.push("/");
-  }, [canGoBack, router]);
+  }, [router]);
 
   const handleHeaderBack = () => {
     if (activeSection) {

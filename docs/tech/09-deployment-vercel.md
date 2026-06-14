@@ -29,12 +29,50 @@ DATABASE_URL=
 BLOB_READ_WRITE_TOKEN=
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
-AUTH_SECRET=
+GHOST_HMAC_SECRET=          # 必填 — Ghost Cookie HMAC（见 §9.3.1）
+AUTH_SECRET=                # 必填 — Session JWT（见 §9.3.1）
 OPENAI_API_KEY=
 PADDLE_API_KEY=
-PADDLE_WEBHOOK_SECRET=
+PADDLE_WEBHOOK_SECRET=      # 必填 — production/preview 不可为 placeholder
 PADDLE_PRICE_ID=
 ```
+
+### 9.3.1 身份密钥（Production / Preview 强制）
+
+`instrumentation.ts` 在 **production** 与 **preview** 启动时执行 `runStartupChecks()`（见 `lib/server/startupChecks.ts`）。以下任一项缺失或不合规，**整站无法启动**，表现为：
+
+```text
+Error: An error occurred while loading instrumentation hook:
+GHOST_HMAC_SECRET and AUTH_SECRET must both be set in production/preview
+```
+
+连带症状：Google 登录、`POST /api/ghost/register`、`POST /api/auth/google` 等全部失败。
+
+| 变量 | 用途 | 要求 |
+|------|------|------|
+| `GHOST_HMAC_SECRET` | 签发/校验 `snap1099_ghost` Cookie | Production/Preview **必须显式设置**（无 fallback） |
+| `AUTH_SECRET` | 签发/校验 `snap1099_session` Cookie | 同上 |
+| 两者关系 | 独立密钥 | **必须不同**；建议各 ≥32 字符随机串 |
+
+生成示例（本地生成后粘贴到 Vercel → Settings → Environment Variables，**Production 与 Preview 都要配**）：
+
+```bash
+openssl rand -base64 32   # → GHOST_HMAC_SECRET
+openssl rand -base64 32   # → AUTH_SECRET（勿与上一行相同）
+```
+
+**注意：**
+
+- 仅配 `AUTH_SECRET` 而不配 `GHOST_HMAC_SECRET` 仍会启动失败（与本地 `.env.local` 双变量要求一致）。
+- 修改上述变量后须 **重新 Deploy**（触发新构建），不能依赖旧 deployment。
+- Development（`vercel dev` / 本地）允许 `GHOST_HMAC_SECRET` 与 `AUTH_SECRET` 在缺省时 fallback，但生产环境不允许。
+
+Google 登录另需（build 时打入客户端 bundle）：
+
+- `GOOGLE_CLIENT_ID` + `GOOGLE_CLIENT_SECRET`
+- `NEXT_PUBLIC_GOOGLE_CLIENT_ID`（可与 `GOOGLE_CLIENT_ID` 相同；`next.config.ts` 会在 build 时从 `GOOGLE_CLIENT_ID` 回填）
+
+详见 [`05-auth-ghost-google.md`](./05-auth-ghost-google.md)、[`docs/superpowers/specs/2026-06-14-google-login-production-fix-design.md`](../superpowers/specs/2026-06-14-google-login-production-fix-design.md)。
 
 ### 可选
 
@@ -94,6 +132,8 @@ Preview 部署需在 Paddle Sandbox 单独配置。
 - [ ] `/` 在 SW precache
 - [ ] `manifest.webmanifest` 可访问
 - [ ] 相机权限（Permissions-Policy 如需要）
+- [ ] `GHOST_HMAC_SECRET` + `AUTH_SECRET` 已在 Production/Preview 配置且互不相同
+- [ ] `PADDLE_WEBHOOK_SECRET` 为真实 Paddle destination secret（非 placeholder）
 
 ## 9.7 本地开发
 

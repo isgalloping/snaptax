@@ -32,6 +32,53 @@ export function getGoogleClientId(): string {
   return process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? "";
 }
 
+export type GoogleSignInMount = {
+  cleanup: () => void;
+};
+
+export async function mountGoogleSignInButton(
+  container: HTMLElement,
+  callbacks: {
+    onCredential: (credential: string) => void;
+    onError?: (error: Error) => void;
+  },
+): Promise<GoogleSignInMount> {
+  await loadGoogleIdentityScript();
+  const clientId = getGoogleClientId();
+  if (!clientId) throw new Error("GOOGLE_CLIENT_ID missing");
+  if (!window.google?.accounts?.id) throw new Error("GIS_NOT_READY");
+
+  window.google.accounts.id.initialize({
+    client_id: clientId,
+    callback: (response) => {
+      if (response.credential) {
+        callbacks.onCredential(response.credential);
+      } else {
+        callbacks.onError?.(new Error("GOOGLE_SIGN_IN_CANCELLED"));
+      }
+    },
+    auto_select: false,
+    cancel_on_tap_outside: true,
+  });
+
+  const width = Math.min(400, Math.max(240, container.clientWidth || 320));
+  window.google.accounts.id.renderButton(container, {
+    type: "standard",
+    theme: "outline",
+    size: "large",
+    width: String(width),
+    text: "continue_with",
+    shape: "rectangular",
+  });
+
+  return {
+    cleanup: () => {
+      container.replaceChildren();
+    },
+  };
+}
+
+/** @deprecated Prefer mountGoogleSignInButton inside GoogleSignInSheet */
 export async function requestGoogleCredential(): Promise<string> {
   await loadGoogleIdentityScript();
   const clientId = getGoogleClientId();
@@ -46,46 +93,43 @@ export async function requestGoogleCredential(): Promise<string> {
       fn();
     };
 
-    window.google!.accounts.id.initialize({
-      client_id: clientId,
-      callback: (response) => {
-        finish(() => {
-          if (response.credential) resolve(response.credential);
-          else reject(new Error("GOOGLE_SIGN_IN_CANCELLED"));
-        });
-      },
-      auto_select: false,
-      cancel_on_tap_outside: true,
-    });
-
     const host = document.createElement("div");
     host.style.position = "fixed";
     host.style.left = "50%";
     host.style.top = "50%";
     host.style.transform = "translate(-50%, -50%)";
     host.style.zIndex = "60";
-    host.style.width = "1px";
-    host.style.height = "1px";
-    host.style.overflow = "hidden";
+    host.style.width = "320px";
     document.body.appendChild(host);
 
-    window.google!.accounts.id.renderButton(host, {
-      type: "standard",
-      theme: "outline",
-      size: "large",
+    void mountGoogleSignInButton(host, {
+      onCredential: (credential) => {
+        host.remove();
+        finish(() => resolve(credential));
+      },
+      onError: (error) => {
+        host.remove();
+        finish(() => reject(error));
+      },
+    }).catch((error: unknown) => {
+      host.remove();
+      finish(() =>
+        reject(error instanceof Error ? error : new Error("GIS_BUTTON_FAILED")),
+      );
     });
 
-    const button = host.querySelector("div[role=button]") as HTMLElement | null;
-    if (!button) {
-      host.remove();
-      reject(new Error("GIS_BUTTON_FAILED"));
-      return;
-    }
-
-    button.click();
     window.setTimeout(() => {
       host.remove();
       finish(() => reject(new Error("GOOGLE_SIGN_IN_TIMEOUT")));
     }, 120_000);
   });
+}
+
+export function mapGoogleAuthError(
+  error: unknown,
+  signInFailedMessage: string,
+): string | null {
+  const message = error instanceof Error ? error.message : "";
+  if (message === "GOOGLE_SIGN_IN_CANCELLED") return null;
+  return signInFailedMessage;
 }

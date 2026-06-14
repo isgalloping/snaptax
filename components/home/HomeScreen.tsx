@@ -495,7 +495,7 @@ export function HomeScreen() {
     googleUser: auth.googleUser,
     seasonPaid: auth.seasonPaid,
     currentSeason: auth.currentSeason,
-    onSignInWithGoogle: auth.signInWithGoogle,
+    onUserSignedIn: auth.applyGoogleSignIn,
     onPostLoginSync: handlePostLoginSync,
     onSeasonPaid: auth.markSeasonPaid,
     refreshSeasonPaid: auth.refreshSeasonPaid,
@@ -854,7 +854,7 @@ export function HomeScreen() {
         googleUser={auth.googleUser}
         seasonPaid={auth.seasonPaid}
         currentSeason={auth.currentSeason}
-        onSignInWithGoogle={auth.signInWithGoogle}
+        onUserSignedIn={auth.applyGoogleSignIn}
         onPostLoginSync={handlePostLoginSync}
         onRequestExport={taxExport.requestExport}
         exportBusy={taxExport.paywallExporting}

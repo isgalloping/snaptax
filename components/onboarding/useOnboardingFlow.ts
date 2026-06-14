@@ -105,6 +105,7 @@ export function useOnboardingFlow({
     skipSoftGoogleSheet,
     displayTaxSaved,
     taxAnimating,
+    setTaxAnimating,
     handleSnapIntent,
     orchestratorProps:
       onboardingInFlow && onboardingStatus

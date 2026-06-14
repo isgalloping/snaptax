@@ -1,8 +1,10 @@
 # Onboarding Stage 1 — SNAP Focus Ring Design
 
 **Date:** 2026-06-14  
-**Status:** Approved  
+**Status:** Approved (visual superseded)  
 **Scope:** `stage_1` first-screen photo-area guidance — animated overlay on SNAP button (border breathe + marching stroke). Does **not** change button styling.
+
+**Amended by:** [`2026-06-14-onboarding-snap-focus-heartbeat-design.md`](./2026-06-14-onboarding-snap-focus-heartbeat-design.md) — marching stroke removed; heartbeat border + extreme glow + scale pulse.
 
 **Amends:** [`2026-06-13-aha-moment-onboarding-design.md`](./2026-06-13-aha-moment-onboarding-design.md) §3.1 Stage 1 visual guidance.
 

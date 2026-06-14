@@ -289,6 +289,82 @@ export type UserCopy = {
       failedAfterPayment: string;
       paymentConfirmed: string;
     };
+    help: {
+      title: string;
+      button: string;
+      hint: string;
+    };
+  };
+  help: {
+    pageTitle: string;
+    backToApp: string;
+    contact: string;
+    tocTitle: string;
+    toc: {
+      quickStart: string;
+      snapReceipt: string;
+      homeScreen: string;
+      googleBackup: string;
+      taxExport: string;
+      faq: string;
+      privacy: string;
+    };
+    sections: {
+      quickStart: {
+        title: string;
+        steps: string[];
+        closing: string;
+      };
+      snapReceipt: {
+        title: string;
+        stepsTitle: string;
+        steps: string[];
+        tipsTitle: string;
+        tips: string[];
+        blurryTitle: string;
+        blurry: string;
+        offlineTitle: string;
+        offline: string;
+      };
+      homeScreen: {
+        title: string;
+        rows: { label: string; meaning: string }[];
+        filtersNote: string;
+      };
+      googleBackup: {
+        title: string;
+        whyTitle: string;
+        why: string[];
+        howTitle: string;
+        how: string[];
+        staySame: string;
+        warningTitle: string;
+        warnings: string[];
+        multiDeviceTitle: string;
+        multiDevice: string;
+      };
+      taxExport: {
+        title: string;
+        when: string;
+        whatTitle: string;
+        what: string[];
+        stepsTitle: string;
+        steps: string[];
+        afterPayTitle: string;
+        afterPay: string[];
+        beforePay: string;
+      };
+      faq: {
+        title: string;
+        items: { q: string; a: string }[];
+      };
+      privacy: {
+        title: string;
+        paragraphs: string[];
+        privacyLink: string;
+        termsLink: string;
+      };
+    };
   };
   exportEngine: {
     title: string;

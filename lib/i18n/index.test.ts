@@ -42,3 +42,12 @@ test("getUserCopy returns localized core UI copy", () => {
   assert.equal(french.legal.compliance.terms, "Conditions");
   assert.equal(german.settings.account.title, "Konto");
 });
+
+test("getUserCopy includes localized help sections", () => {
+  for (const locale of SUPPORTED_LOCALES) {
+    const copy = getUserCopy(locale);
+    assert.ok(copy.help.sections.quickStart.steps.length >= 3);
+    assert.ok(copy.help.sections.faq.items.length >= 5);
+    assert.equal(typeof copy.settings.help.button, "string");
+  }
+});

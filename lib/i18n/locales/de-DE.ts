@@ -346,6 +346,203 @@ export const DE_DE_COPY: UserCopy = {
       paymentConfirmed:
         "Zahlung bestätigt. Tippen Sie auf Erneut exportieren zum Herunterladen.",
     },
+    help: {
+      title: "Hilfe",
+      button: "So nutzen Sie Snap1099",
+      hint: "Kurzanleitungen für Fotos, Backup und Steuerexport.",
+    },
+  },
+  help: {
+    pageTitle: "Hilfe",
+    backToApp: "< Zurück zu Snap1099",
+    contact: "Weitere Fragen? legal@snap1099.com",
+    tocTitle: "Themen",
+    toc: {
+      quickStart: "Schnellstart (30 Sek.)",
+      snapReceipt: "Beleg fotografieren",
+      homeScreen: "Startbildschirm",
+      googleBackup: "Mit Google sichern",
+      taxExport: "Steuerexport",
+      faq: "Häufige Fragen",
+      privacy: "Ihre Daten",
+    },
+    sections: {
+      quickStart: {
+        title: "In 30 Sekunden starten",
+        steps: [
+          "Snap1099 öffnen. **Keine Anmeldung nötig.**",
+          "Auf den großen gelben Button **BELEG FOTOGRAFIEREN** tippen.",
+          "Kamera auf den Beleg richten. Auslöser tippen. **Fertig — weiterarbeiten.**",
+          "Mit Internet liest die App den Beleg und zeigt den Betrag.",
+          "**Geschätzte Steuerersparnis** oben steigt.",
+        ],
+        closing:
+          "Das war's. Später mit **Mit Google fortfahren** anmelden, bevor Sie ein neues Handy bekommen.",
+      },
+      snapReceipt: {
+        title: "Beleg fotografieren",
+        stepsTitle: "Schritte",
+        steps: [
+          "Auf **BELEG FOTOGRAFIEREN** tippen (großer gelber Button).",
+          "Die Handy-Kamera öffnet sich im Vollbild.",
+          "Beleg flach halten. Auslöser tippen.",
+          "Sofort zurück auf dem Startbildschirm. **Kein Prüfen nötig.**",
+        ],
+        tipsTitle: "Tipps",
+        tips: [
+          "**Gutes Licht** hilft. Blendung vermeiden.",
+          "Ein Beleg pro Foto ist am besten.",
+          "**Serienmodus:** weiter fotografieren — **FERTIG & ÜBERPRÜFEN** wenn fertig.",
+        ],
+        blurryTitle: "Unscharfes Foto",
+        blurry:
+          "Die Liste zeigt rot **Beleg unscharf. Tippen zum Neufotografieren**. Zeile antippen für neues Foto.",
+        offlineTitle: "Kein Internet?",
+        offline:
+          "Fotografieren geht trotzdem. Beleg bleibt auf dem Handy mit **Wird verarbeitet...** und **Wird hochgeladen**. Bei Internet lädt er automatisch hoch.",
+      },
+      homeScreen: {
+        title: "Der Startbildschirm",
+        rows: [
+          {
+            label: "**Geschätzte Steuerersparnis** (gelb, oben)",
+            meaning:
+              "Grobe Schätzung. **Keine offizielle Steuerberatung.**",
+          },
+          {
+            label: "**BELEG FOTOGRAFIEREN**",
+            meaning: "Foto vom Beleg machen.",
+          },
+          {
+            label: "**Wird verarbeitet...** + **Wird hochgeladen**",
+            meaning: "Gespeichert. Wartet auf Internet oder KI.",
+          },
+          {
+            label: "**45,20 $** + **LKW-TANKEN**",
+            meaning: "Fertig. Betrag und Kategorie.",
+          },
+          {
+            label: "**Privat (nicht absetzbar)**",
+            meaning: "Privatausgabe — zählt nicht zur Ersparnis.",
+          },
+          {
+            label: "Zahnrad (oben rechts)",
+            meaning: "**Einstellungen** — Export, Konto, Branche.",
+          },
+          {
+            label: "**ZUM AKTUALISIEREN ZIEHEN**",
+            meaning: "Liste nach unten ziehen zum Synchronisieren.",
+          },
+        ],
+        filtersNote:
+          "Filter unten: **Alle** · **Fertig** · **In Bearbeitung** · **Unscharf**",
+      },
+      googleBackup: {
+        title: "Belege nicht verlieren",
+        whyTitle: "Warum anmelden?",
+        why: [
+          "Sichert Belege in der Cloud.",
+          "**Pflicht vor dem Handywechsel.**",
+          "Gleiche Daten auf Handy, Tablet oder PC.",
+        ],
+        howTitle: "So geht's",
+        how: [
+          "Zahnrad → **Einstellungen**.",
+          "**Mit Google fortfahren** tippen.",
+          "Google-Konto wählen. Fertig.",
+        ],
+        staySame:
+          "**Ihre Belege bleiben gleich** — nichts wird verschoben oder zurückgesetzt.",
+        warningTitle: "Wichtig",
+        warnings: [
+          "**Nicht angemeldet + neues Handy = Daten weg.** Keine Wiederherstellung.",
+          "Vor Handytausch oder Verlust **anmelden**.",
+        ],
+        multiDeviceTitle: "Auf allen Geräten",
+        multiDevice:
+          "**Einstellungen** → **Auf allen Geräten anzeigen**. Gleiches **Google-Konto** auf jedem Gerät.",
+      },
+      taxExport: {
+        title: "Export zur Steuerzeit",
+        when:
+          "Das ganze Jahr fotografieren — **nur beim Export zahlen.** Meist Januar–April (US-Steuersaison).",
+        whatTitle: "Was Sie bekommen",
+        what: [
+          "**CSV für TurboTax** — Import in TurboTax oder andere Software.",
+          "**CPA-Audit-Paket** — ZIP mit Tabelle und Belegfotos für den Steuerberater.",
+        ],
+        stepsTitle: "Schritte",
+        steps: [
+          "**Einstellungen** → **IRS-Steuerpaket exportieren**",
+          "Mit Google anmelden (falls noch nicht).",
+          "**49 $** einmal pro Steuersaison (über Paddle).",
+          "Steuerjahr und Dateityp wählen.",
+          "Datei teilen — E-Mail, WhatsApp oder Speichern.",
+        ],
+        afterPayTitle: "Nach der Zahlung",
+        afterPay: [
+          "**Erneut exportieren** beliebig oft **diese Saison**.",
+          "Neue Belege danach sind dabei.",
+          "Nächste Steuersaison = neue **49 $**.",
+        ],
+        beforePay:
+          "Gelbe Warnung lesen: **Mit Google anmelden vor dem Handywechsel.**",
+      },
+      faq: {
+        title: "Häufige Fragen",
+        items: [
+          {
+            q: "Brauche ich ein Konto zum Fotografieren?",
+            a: "Nein. Erst fotografieren. Später anmelden zum Backup.",
+          },
+          {
+            q: "Ist Fotografieren kostenlos?",
+            a: "Ja. **49 $** nur beim Steuerexport.",
+          },
+          {
+            q: "Ohne Empfang fotografiert. Ist der Beleg sicher?",
+            a: "Ja. Er ist auf dem Handy. Upload bei Internet.",
+          },
+          {
+            q: "Warum noch „Wird verarbeitet...“?",
+            a: "Wartet auf Internet oder Server. Zum Aktualisieren ziehen. Zeile antippen zum Wiederholen.",
+          },
+          {
+            q: "Aus Versehen Mittagessen fotografiert.",
+            a: "KI markiert **Privat (nicht absetzbar)**. Zählt nicht zur Ersparnis.",
+          },
+          {
+            q: "Was ist „Geschätzte Steuerersparnis“?",
+            a: "Nur Schätzung. **Nicht** der IRS-Betrag. CPA fragen.",
+          },
+          {
+            q: "Neues Handy. Wo sind meine Belege?",
+            a: "Snap1099 → **Mit Google fortfahren** mit **gleichem Konto**. Sync zurück.",
+          },
+          {
+            q: "Nie angemeldet, neues Handy.",
+            a: "Leider nicht wiederherstellbar.",
+          },
+          {
+            q: "Bezahlt, aber kein Export.",
+            a: "Kurz warten. **Erneut exportieren** versuchen. Internet prüfen.",
+          },
+          {
+            q: "Alles löschen?",
+            a: "**Einstellungen** → **Datenschutz & Daten** → **Konto löschen**.",
+          },
+        ],
+      },
+      privacy: {
+        title: "Ihre Daten",
+        paragraphs: [
+          "Belegfotos werden online sicher in den **Vereinigten Staaten** gespeichert.",
+          "KI liest Belege. Wir **verkaufen keine** Daten. Keine Werbung.",
+        ],
+        privacyLink: "Datenschutzerklärung",
+        termsLink: "Nutzungsbedingungen",
+      },
+    },
   },
   exportEngine: {
     title: "Steuerpaket exportieren",

@@ -337,6 +337,203 @@ export const EN_US_COPY: UserCopy = {
         failedAfterPayment: "Export failed after payment. Try Export Again.",
         paymentConfirmed: "Payment confirmed. Tap Export Again to download.",
       },
+      help: {
+        title: "Help",
+        button: "How to Use Snap1099",
+        hint: "Quick guides for snapping, saving, and tax export.",
+      },
+    },
+    help: {
+      pageTitle: "Help",
+      backToApp: "< Back to Snap1099",
+      contact: "Need more help? legal@snap1099.com",
+      tocTitle: "Topics",
+      toc: {
+        quickStart: "Quick start (30 sec)",
+        snapReceipt: "Snap a receipt",
+        homeScreen: "Home screen",
+        googleBackup: "Save with Google",
+        taxExport: "Tax season export",
+        faq: "Common questions",
+        privacy: "Your data",
+      },
+      sections: {
+        quickStart: {
+          title: "Get started in 30 seconds",
+          steps: [
+            "Open Snap1099. **No sign-up needed.**",
+            "Tap the big yellow **SNAP RECEIPT** button.",
+            "Point your camera at the receipt. Tap shutter. **Done — go back to work.**",
+            "When you have signal, the app reads the receipt and shows the amount.",
+            "Watch **Est. Tax Saved** at the top go up.",
+          ],
+          closing:
+            "That's it. Sign in with **Continue with Google** later to back up before you get a new phone.",
+        },
+        snapReceipt: {
+          title: "How to snap a receipt",
+          stepsTitle: "Steps",
+          steps: [
+            "Tap **SNAP RECEIPT** (big yellow button).",
+            "Your phone camera opens full screen.",
+            "Hold the receipt flat. Tap the shutter.",
+            "You're back on the home screen right away. **No need to check if it's clear.**",
+          ],
+          tipsTitle: "Tips",
+          tips: [
+            "**Good light** helps. Avoid glare.",
+            "One receipt per photo works best.",
+            "**Batch mode:** keep shooting — tap **DONE & REVIEW** when finished.",
+          ],
+          blurryTitle: "Blurry photo",
+          blurry:
+            "The list shows **Receipt blurry. Tap to resnap** in red. Tap that row to take a new photo.",
+          offlineTitle: "No internet?",
+          offline:
+            "You can still snap. The receipt saves on your phone with **Processing...** and **Uploading**. When signal comes back, it uploads automatically.",
+        },
+        homeScreen: {
+          title: "What you see on the home screen",
+          rows: [
+            {
+              label: "**Est. Tax Saved** (yellow, top)",
+              meaning:
+                "Rough guess of tax you might save. **Not official tax advice.**",
+            },
+            {
+              label: "**SNAP RECEIPT**",
+              meaning: "Take a photo of a receipt.",
+            },
+            {
+              label: "**Processing...** + **Uploading**",
+              meaning: "Saved. Waiting for internet or AI.",
+            },
+            {
+              label: "**$45.20** + **TRUCK GAS**",
+              meaning: "Done. Amount and work category.",
+            },
+            {
+              label: "**Personal (Non-Deductible)**",
+              meaning: "Private purchase — won't add to tax saved.",
+            },
+            {
+              label: "Gear icon (top right)",
+              meaning: "**Settings** — export, account, industry.",
+            },
+            {
+              label: "**PULL TO REFRESH**",
+              meaning: "Pull down the list to sync.",
+            },
+          ],
+          filtersNote:
+            "Filter tabs at the bottom: **All** · **Done** · **Processing** · **Blurry**",
+        },
+        googleBackup: {
+          title: "Don't lose your receipts",
+          whyTitle: "Why sign in?",
+          why: [
+            "Backs up receipts to the cloud.",
+            "**Required before you switch phones.**",
+            "Same data on phone, tablet, or computer.",
+          ],
+          howTitle: "How",
+          how: [
+            "Tap the gear → **Settings**.",
+            "Tap **Continue with Google**.",
+            "Pick your Google account. Done.",
+          ],
+          staySame:
+            "**Your receipts stay the same** — nothing moves or resets.",
+          warningTitle: "Important",
+          warnings: [
+            "**Not signed in + new phone = data gone.** We can't get it back.",
+            "Sign in **before** you trade in or lose your phone.",
+          ],
+          multiDeviceTitle: "View on all devices",
+          multiDevice:
+            "**Settings** → **View on All Devices**. Sign in with the **same Google account** on each device.",
+        },
+        taxExport: {
+          title: "Export for tax time",
+          when:
+            "Snap all year — **pay only when you export.** Usually January–April (US tax season).",
+          whatTitle: "What you get",
+          what: [
+            "**CSV for TurboTax** — import into TurboTax or other tax software.",
+            "**CPA Audit Pack** — ZIP with spreadsheet + receipt photos for your accountant.",
+          ],
+          stepsTitle: "Steps",
+          steps: [
+            "**Settings** → **Export IRS Tax Pack**",
+            "Sign in with Google (if not yet).",
+            "Pay **$49** once for this tax season (via Paddle).",
+            "Pick your tax year and file type.",
+            "Share the file — email, WhatsApp, or save to Files.",
+          ],
+          afterPayTitle: "After you pay",
+          afterPay: [
+            "**Export Again** as many times as you want **this season**.",
+            "New receipts you snap later are included.",
+            "Next tax season = new **$49**.",
+          ],
+          beforePay:
+            "Read the yellow warning before you pay: **Sign in with Google before switching phones.**",
+        },
+        faq: {
+          title: "Common questions",
+          items: [
+            {
+              q: "Do I need an account to snap receipts?",
+              a: "No. Snap first. Sign in later to back up.",
+            },
+            {
+              q: "Is snapping free?",
+              a: "Yes. You only pay **$49** when you export for tax season.",
+            },
+            {
+              q: "I snapped with no signal. Is my receipt safe?",
+              a: "Yes. It's on your phone. It uploads when you're online.",
+            },
+            {
+              q: 'Why is it still "Processing..."?',
+              a: "Waiting for internet or the server. Pull to refresh. Tap the row to retry if stuck.",
+            },
+            {
+              q: "I snapped my lunch by mistake.",
+              a: "AI may mark it **Personal (Non-Deductible)**. It won't count toward tax saved.",
+            },
+            {
+              q: 'What is "Est. Tax Saved"?',
+              a: "A rough estimate. **Not** what the IRS owes you. Talk to a CPA for real numbers.",
+            },
+            {
+              q: "I got a new phone. Where are my receipts?",
+              a: "Open Snap1099 → **Continue with Google** with the **same account**. They sync back.",
+            },
+            {
+              q: "I never signed in and got a new phone.",
+              a: "Sorry — those receipts can't be recovered.",
+            },
+            {
+              q: "Payment worked but export didn't start.",
+              a: "Wait a few seconds. Try **Export Again**. Check internet.",
+            },
+            {
+              q: "How do I delete everything?",
+              a: "**Settings** → **Privacy & Data** → **Delete Account**.",
+            },
+          ],
+        },
+        privacy: {
+          title: "Your data",
+          paragraphs: [
+            "Receipt photos are stored securely in the **United States** when you're online.",
+            "We use AI to read receipts. We **don't sell** your data. No ads.",
+          ],
+          privacyLink: "Privacy Policy",
+          termsLink: "Terms of Service",
+        },
+      },
     },
     exportEngine: {
       title: "Export Tax Pack",

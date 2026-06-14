@@ -12,6 +12,7 @@ export function landingVariantFromStatus(
     status === "stage_1" ||
     status === "stage_2" ||
     status === "stage_3" ||
+    status === "stage_aha" ||
     status === "stage_4"
   ) {
     return "none";
@@ -28,6 +29,7 @@ export function readOnboardingStatusMirror(): OnboardingStatus | null {
       raw === "stage_1" ||
       raw === "stage_2" ||
       raw === "stage_3" ||
+      raw === "stage_aha" ||
       raw === "stage_4" ||
       raw === "deferred_login" ||
       raw === "completed"

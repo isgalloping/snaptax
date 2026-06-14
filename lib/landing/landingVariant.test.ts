@@ -9,7 +9,7 @@ describe("landingVariantFromStatus", () => {
   it("maps onboarding status to landing variant", () => {
     assert.equal(landingVariantFromStatus("not_started"), "hero");
     assert.equal(landingVariantFromStatus("stage_1"), "none");
-    assert.equal(landingVariantFromStatus("stage_4"), "none");
+    assert.equal(landingVariantFromStatus("stage_aha"), "none");
     assert.equal(landingVariantFromStatus("completed"), "data_stream");
   });
 });

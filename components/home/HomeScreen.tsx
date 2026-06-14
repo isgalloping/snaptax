@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Industry, Receipt } from "@/lib/types";
 import { useAuthSession } from "@/lib/client/useAuthSession";
 import { useIsOnline } from "@/lib/client/useIsOnline";
@@ -54,16 +54,21 @@ import { useTaxExportGate } from "@/components/export/useTaxExportGate";
 import { ReceiptDetailSheet } from "@/components/receipts/ReceiptDetailSheet";
 import { logStartupMarks } from "@/lib/landing/startupMetrics";
 import { OnboardingOrchestrator } from "@/components/onboarding/OnboardingOrchestrator";
+import { OnboardingSkipButton } from "@/components/onboarding/OnboardingSkipButton";
+import { SnapFocusRing } from "@/components/onboarding/SnapFocusRing";
 import { SnapTooltip } from "@/components/onboarding/SnapTooltip";
 import { useOnboardingFlow } from "@/components/onboarding/useOnboardingFlow";
+import { downloadOnboardingSampleCsv } from "@/lib/export/downloadOnboardingSampleCsv";
 import {
   convertDemoReceiptAfterLogin,
   ensureConvertedDemoUploadReady,
+  ensureOnboardingDemoDone,
 } from "@/lib/onboarding/demoReceipt";
 import {
   GOOGLE_SOFT_DISMISSED_KEY,
   writeOnboardFlag,
 } from "@/lib/onboarding/onboardingStorage";
+import { visibleReceiptsForOnboarding } from "@/lib/onboarding/onboardingReceipts";
 
 type View = "home" | "settings";
 
@@ -562,12 +567,14 @@ export function HomeScreen() {
     [handlePostLoginSync, refreshListFromLocal],
   );
 
+  const handleOnboardingRefreshReceipts = useCallback(async () => {
+    await refreshListFromLocal();
+  }, [refreshListFromLocal]);
+
   const onboarding = useOnboardingFlow({
     receipts,
     taxSaved,
-    onRefreshReceipts: async () => {
-      await refreshListFromLocal();
-    },
+    onRefreshReceipts: handleOnboardingRefreshReceipts,
     onGoogleSignIn: auth.signInWithGoogle,
     onGooglePostLogin: handleOnboardingPostLogin,
   });
@@ -575,14 +582,42 @@ export function HomeScreen() {
   const {
     initializeOnboarding,
     resetOnboarding,
+    skipOnboardingFlow,
     skipSoftGoogleSheet,
     displayTaxSaved,
     taxAnimating,
     setTaxAnimating,
+    ahaCoachActive,
+    dismissAhaCoach,
+    completeAhaCoach,
     handleSnapIntent,
     orchestratorProps,
     onboardingStatus,
+    onboardingInFlow,
   } = onboarding;
+
+  const displayReceipts = useMemo(
+    () => visibleReceiptsForOnboarding(receipts, onboardingStatus),
+    [receipts, onboardingStatus],
+  );
+
+  const handleExportClick = useCallback(() => {
+    if (onboardingStatus === "stage_3" || onboardingStatus === "stage_aha") {
+      void (async () => {
+        const demo = await ensureOnboardingDemoDone();
+        await refreshListFromLocal();
+        downloadOnboardingSampleCsv(demo);
+        await completeAhaCoach();
+      })();
+      return;
+    }
+    taxExport.requestExport();
+  }, [
+    onboardingStatus,
+    refreshListFromLocal,
+    completeAhaCoach,
+    taxExport,
+  ]);
 
   setTaxAnimatingRef.current = setTaxAnimating;
 
@@ -839,11 +874,13 @@ export function HomeScreen() {
       <TaxHeader
         taxSaved={taxSaved}
         displayTaxSaved={displayTaxSaved}
-        totalExpenses={sumDoneExpenses(receipts)}
-        receiptCount={receipts.length}
+        totalExpenses={sumDoneExpenses(displayReceipts)}
+        receiptCount={displayReceipts.length}
         animating={taxAnimating}
+        ahaCoachActive={ahaCoachActive}
+        onAhaCoachDismiss={dismissAhaCoach}
         onSettingsClick={() => setView("settings")}
-        onExportClick={taxExport.requestExport}
+        onExportClick={handleExportClick}
         onSyncClick={handleManualListSync}
         syncing={listSyncing}
         syncDisabled={!isOnline}
@@ -851,27 +888,32 @@ export function HomeScreen() {
 
       <div className="relative shrink-0 px-4 py-2">
         {onboardingStatus === "stage_1" && <SnapTooltip />}
-        <SnapButton
-          ref={snapButtonRef}
-          onCapture={handleCapture}
-          onBatchShot={handleBatchShot}
-          onBatchDone={handleBatchDone}
-          onBatchClose={handleBatchClose}
-          onReviewDelete={handleReviewDelete}
-          resnapId={resnapId}
-          onCameraOpenChange={setCameraOpen}
-          onSyncClick={handleManualListSync}
-          onSettingsClick={() => setView("settings")}
-          syncing={listSyncing}
-          syncDisabled={!isOnline}
-          onSnapIntent={handleSnapIntent}
-        />
+        <div className="relative w-full">
+          {onboardingStatus === "stage_1" && <SnapFocusRing />}
+          <SnapButton
+            ref={snapButtonRef}
+            onCapture={handleCapture}
+            onBatchShot={handleBatchShot}
+            onBatchDone={handleBatchDone}
+            onBatchClose={handleBatchClose}
+            onReviewDelete={handleReviewDelete}
+            resnapId={resnapId}
+            onCameraOpenChange={setCameraOpen}
+            onSyncClick={handleManualListSync}
+            onSettingsClick={() => setView("settings")}
+            syncing={listSyncing}
+            syncDisabled={!isOnline}
+            onSnapIntent={handleSnapIntent}
+          />
+        </div>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col">
         <ReceiptList
-          receipts={receipts}
+          receipts={displayReceipts}
           syncStuckIds={syncStuckIds}
+          ahaCoachActive={ahaCoachActive}
+          onAhaCoachDismiss={dismissAhaCoach}
           onSelect={(receipt) => setSelectedReceipt(receipt)}
           onResnap={handleResnap}
           onRetrySync={handleRetrySync}
@@ -883,6 +925,10 @@ export function HomeScreen() {
 
       {orchestratorProps && (
         <OnboardingOrchestrator {...orchestratorProps} />
+      )}
+
+      {onboardingInFlow && (
+        <OnboardingSkipButton onSkip={skipOnboardingFlow} />
       )}
 
       {selectedReceipt && (

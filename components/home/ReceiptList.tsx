@@ -18,6 +18,8 @@ interface ReceiptListProps {
   onSyncClick?: () => void;
   syncing?: boolean;
   syncDisabled?: boolean;
+  ahaCoachActive?: boolean;
+  onAhaCoachDismiss?: () => void;
 }
 
 function filterReceipts(
@@ -42,6 +44,8 @@ export function ReceiptList({
   onSyncClick,
   syncing = false,
   syncDisabled = false,
+  ahaCoachActive = false,
+  onAhaCoachDismiss,
 }: ReceiptListProps) {
   const copy = useUserCopy().home.receiptList;
   const [filter, setFilter] = useState<ReceiptFilter>("all");
@@ -93,6 +97,8 @@ export function ReceiptList({
               key={receipt.id}
               receipt={receipt}
               syncStuck={syncStuckIds.has(receipt.id)}
+              ahaCoach={ahaCoachActive}
+              onAhaCoachDismiss={onAhaCoachDismiss}
               onSelect={onSelect}
               onResnap={onResnap}
               onRetrySync={onRetrySync}

@@ -41,6 +41,20 @@ export function completeDemoReceipt(receipt: StoredReceipt): StoredReceipt {
   };
 }
 
+/** Idempotent: ensures onboarding demo is `done` for Aha/export (repairs stale processing). */
+export async function ensureOnboardingDemoDone(): Promise<StoredReceipt> {
+  let demo = await loadReceipt(ONBOARDING_DEMO_RECEIPT_ID);
+  if (!demo) {
+    demo = createShadowDemoReceipt();
+  }
+  if (demo.status === "done") {
+    return demo;
+  }
+  const completed = completeDemoReceipt(demo);
+  await saveReceipt(completed);
+  return completed;
+}
+
 export async function attachDemoSamplePhoto(): Promise<boolean> {
   if (typeof fetch === "undefined") return false;
   try {

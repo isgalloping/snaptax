@@ -102,6 +102,8 @@ export const FR_FR_COPY: UserCopy = {
     snapCoach:
       "Appuyez sur SNAP RECEIPT — photographiez tout reçu professionnel.",
     dismissCoach: "Fermer l'indication",
+    skip: "Passer",
+    skipAria: "Passer le tutoriel d'introduction",
     firstReceipt: {
       processing:
         "Lecture de votre reçu… Photographiez-en d'autres à tout moment.",
@@ -115,6 +117,8 @@ export const FR_FR_COPY: UserCopy = {
       snapTooltip:
         "Appuyez ici pour prendre une photo et voir vos économies fiscales instantanément.",
       sandboxShutterAria: "Prendre une photo d'exemple de reçu",
+      sandboxTooltip:
+        "Appuyez sur l'obturateur pour photographier votre reçu d'exemple.",
       snackbar: "Vous venez d'économiser 28,50 $ !",
       signup: {
         title: "Sécurisez vos économies fiscales",

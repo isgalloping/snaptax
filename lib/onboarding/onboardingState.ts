@@ -3,9 +3,14 @@ import {
   loadReceipt,
   readSystemMeta,
   saveReceipt,
+  deleteReceipt,
   writeSystemMeta,
 } from "@/lib/storage/receiptDb";
-import { createShadowDemoReceipt, ONBOARDING_DEMO_RECEIPT_ID } from "./demoReceipt";
+import {
+  createShadowDemoReceipt,
+  ensureOnboardingDemoDone,
+  ONBOARDING_DEMO_RECEIPT_ID,
+} from "./demoReceipt";
 import {
   GOOGLE_SOFT_DISMISSED_KEY,
   ONBOARD_FIRST_RECEIPT_KEY,
@@ -20,6 +25,7 @@ export type OnboardingStatus =
   | "stage_1"
   | "stage_2"
   | "stage_3"
+  | "stage_aha"
   | "stage_4"
   | "deferred_login"
   | "completed";
@@ -40,6 +46,7 @@ function isValidOnboardingStatus(value: unknown): value is OnboardingStatus {
       value === "stage_1" ||
       value === "stage_2" ||
       value === "stage_3" ||
+      value === "stage_aha" ||
       value === "stage_4" ||
       value === "deferred_login" ||
       value === "completed")
@@ -65,6 +72,10 @@ export async function normalizeOnboardingStatus(
     await setOnboardingStatus("completed");
     return "completed";
   }
+  if (status === "stage_4") {
+    await setOnboardingStatus("stage_aha");
+    return "stage_aha";
+  }
   return status;
 }
 
@@ -89,8 +100,22 @@ export async function setOnboardingStatus(
   writeOnboardingStatusMirror(status);
 }
 
+async function purgeStage1ShadowDemo(): Promise<void> {
+  const demo = await loadReceipt(ONBOARDING_DEMO_RECEIPT_ID);
+  if (demo?.isOnboardingDemo && demo.status === "processing") {
+    await deleteReceipt(ONBOARDING_DEMO_RECEIPT_ID);
+  }
+}
+
 async function ensureDemoReceiptPresent(status: OnboardingStatus): Promise<void> {
-  if (status === "completed" || status === "not_started") return;
+  if (
+    status === "completed" ||
+    status === "not_started" ||
+    status === "stage_1" ||
+    status === "stage_2"
+  ) {
+    return;
+  }
   const demo = await loadReceipt(ONBOARDING_DEMO_RECEIPT_ID);
   if (!demo) {
     await saveReceipt(createShadowDemoReceipt());
@@ -98,10 +123,7 @@ async function ensureDemoReceiptPresent(status: OnboardingStatus): Promise<void>
 }
 
 export async function commitHeroLandingStart(): Promise<void> {
-  const demo = await loadReceipt(ONBOARDING_DEMO_RECEIPT_ID);
-  if (!demo) {
-    await saveReceipt(createShadowDemoReceipt());
-  }
+  await purgeStage1ShadowDemo();
   await setOnboardingStatus("stage_1");
 }
 
@@ -119,7 +141,6 @@ export async function ensureOnboardingInitialized(): Promise<OnboardingStatus> {
         await setOnboardingStatus("completed");
         status = "completed";
       } else {
-        await saveReceipt(createShadowDemoReceipt());
         await setOnboardingStatus("stage_1");
         status = "stage_1";
       }
@@ -131,5 +152,12 @@ export async function ensureOnboardingInitialized(): Promise<OnboardingStatus> {
   }
 
   await ensureDemoReceiptPresent(status);
-  return normalizeOnboardingStatus(status);
+  const normalized = await normalizeOnboardingStatus(status);
+  if (normalized === "stage_1") {
+    await purgeStage1ShadowDemo();
+  }
+  if (normalized === "stage_3" || normalized === "stage_aha") {
+    await ensureOnboardingDemoDone();
+  }
+  return normalized;
 }

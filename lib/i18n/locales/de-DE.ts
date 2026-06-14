@@ -102,6 +102,8 @@ export const DE_DE_COPY: UserCopy = {
     snapCoach:
       "Tippen Sie auf SNAP RECEIPT — fotografieren Sie jeden Geschäftsbeleg.",
     dismissCoach: "Hinweis schließen",
+    skip: "Überspringen",
+    skipAria: "Onboarding-Tutorial überspringen",
     firstReceipt: {
       processing:
         "Beleg wird gelesen… Jederzeit weitere Belege fotografieren.",
@@ -115,6 +117,8 @@ export const DE_DE_COPY: UserCopy = {
       snapTooltip:
         "Hier tippen, um ein Foto zu machen und Ihre Steuerersparnis sofort zu sehen.",
       sandboxShutterAria: "Beispielbeleg fotografieren",
+      sandboxTooltip:
+        "Tippen Sie auf den Auslöser, um Ihren Beispielbeleg zu fotografieren.",
       snackbar: "Sie haben gerade 28,50 $ gespart!",
       signup: {
         title: "Steuerersparnis sichern",

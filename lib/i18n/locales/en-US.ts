@@ -100,6 +100,8 @@ export const EN_US_COPY: UserCopy = {
       },
       snapCoach: "Tap SNAP RECEIPT — photo any work receipt.",
       dismissCoach: "Dismiss hint",
+      skip: "Skip",
+      skipAria: "Skip onboarding tutorial",
       firstReceipt: {
         processing: "Reading your receipt… Snap more anytime.",
         done: "Added! Est. Tax Saved updates at the top.",
@@ -111,6 +113,8 @@ export const EN_US_COPY: UserCopy = {
         snapTooltip:
           "Tap here to snap a photo and see your tax saved instantly.",
         sandboxShutterAria: "Take sample receipt photo",
+        sandboxTooltip:
+          "Tap the shutter to snap your sample receipt.",
         snackbar: "You just saved $28.50!",
         signup: {
           title: "Secure your tax assets",

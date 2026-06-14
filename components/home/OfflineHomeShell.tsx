@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Receipt } from "@/lib/types";
 import { useAuthSession } from "@/lib/client/useAuthSession";
 import {
@@ -24,8 +24,11 @@ import {
 } from "@/lib/storage/receiptDb";
 import { sumDoneExpenses } from "@/lib/receipts/receiptStats";
 import { OnboardingOrchestrator } from "@/components/onboarding/OnboardingOrchestrator";
+import { OnboardingSkipButton } from "@/components/onboarding/OnboardingSkipButton";
+import { SnapFocusRing } from "@/components/onboarding/SnapFocusRing";
 import { SnapTooltip } from "@/components/onboarding/SnapTooltip";
 import { useOnboardingFlow } from "@/components/onboarding/useOnboardingFlow";
+import { visibleReceiptsForOnboarding } from "@/lib/onboarding/onboardingReceipts";
 import { TaxHeader } from "./TaxHeader";
 import { SnapButton } from "./SnapButton";
 import { ReceiptList } from "./ReceiptList";
@@ -61,12 +64,14 @@ export function OfflineHomeShell() {
     await refreshListFromLocal();
   }, [refreshListFromLocal]);
 
+  const handleOnboardingRefreshReceipts = useCallback(async () => {
+    await refreshListFromLocal();
+  }, [refreshListFromLocal]);
+
   const onboarding = useOnboardingFlow({
     receipts,
     taxSaved,
-    onRefreshReceipts: async () => {
-      await refreshListFromLocal();
-    },
+    onRefreshReceipts: handleOnboardingRefreshReceipts,
     onGoogleSignIn: auth.signInWithGoogle,
     onGooglePostLogin: handleOnboardingPostLogin,
   });
@@ -75,10 +80,19 @@ export function OfflineHomeShell() {
     initializeOnboarding,
     displayTaxSaved,
     taxAnimating,
+    ahaCoachActive,
+    dismissAhaCoach,
     handleSnapIntent,
+    skipOnboardingFlow,
     orchestratorProps,
     onboardingStatus,
+    onboardingInFlow,
   } = onboarding;
+
+  const displayReceipts = useMemo(
+    () => visibleReceiptsForOnboarding(receipts, onboardingStatus),
+    [receipts, onboardingStatus],
+  );
 
   useEffect(() => {
     performance.mark("startup:offline-home");
@@ -134,30 +148,37 @@ export function OfflineHomeShell() {
       <TaxHeader
         taxSaved={taxSaved}
         displayTaxSaved={displayTaxSaved}
-        totalExpenses={sumDoneExpenses(receipts)}
-        receiptCount={receipts.length}
+        totalExpenses={sumDoneExpenses(displayReceipts)}
+        receiptCount={displayReceipts.length}
         animating={taxAnimating}
+        ahaCoachActive={ahaCoachActive}
+        onAhaCoachDismiss={dismissAhaCoach}
         onSettingsClick={() => {}}
         showSettings={false}
       />
 
       <div className="relative shrink-0 px-4 py-2">
         {onboardingStatus === "stage_1" && <SnapTooltip />}
-        <SnapButton
-          onCapture={handleCapture}
-          onBatchShot={noopBatchShot}
-          onBatchDone={noopAsync}
-          onBatchClose={noopAsync}
-          onReviewDelete={noopAsync}
-          syncDisabled
-          onSnapIntent={handleSnapIntent}
-        />
+        <div className="relative w-full">
+          {onboardingStatus === "stage_1" && <SnapFocusRing />}
+          <SnapButton
+            onCapture={handleCapture}
+            onBatchShot={noopBatchShot}
+            onBatchDone={noopAsync}
+            onBatchClose={noopAsync}
+            onReviewDelete={noopAsync}
+            syncDisabled
+            onSnapIntent={handleSnapIntent}
+          />
+        </div>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col">
         <ReceiptList
-          receipts={receipts}
+          receipts={displayReceipts}
           syncStuckIds={syncStuckIds}
+          ahaCoachActive={ahaCoachActive}
+          onAhaCoachDismiss={dismissAhaCoach}
           onSelect={() => {}}
           onResnap={() => {}}
           onRetrySync={() => {}}
@@ -167,6 +188,10 @@ export function OfflineHomeShell() {
 
       {orchestratorProps && (
         <OnboardingOrchestrator {...orchestratorProps} />
+      )}
+
+      {onboardingInFlow && (
+        <OnboardingSkipButton onSkip={skipOnboardingFlow} />
       )}
     </div>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Receipt } from "@/lib/types";
 import { resolveSnapIntent } from "@/components/onboarding/OnboardingOrchestrator";
 import { ONBOARDING_DEMO_TAX_SAVED } from "@/lib/onboarding/demoReceipt";
@@ -10,6 +10,7 @@ import {
   setOnboardingStatus,
   type OnboardingStatus,
 } from "@/lib/onboarding/onboardingState";
+import { skipOnboarding } from "@/lib/onboarding/skipOnboarding";
 
 interface UseOnboardingFlowOptions {
   receipts: Receipt[];
@@ -33,6 +34,23 @@ export function useOnboardingFlow({
   );
   const [taxAnimating, setTaxAnimating] = useState(false);
 
+  const completeAhaCoach = useCallback(async () => {
+    setTaxDisplayOverride(null);
+    await setOnboardingStatus("completed");
+    setOnboardingStatusState("completed");
+  }, []);
+
+  const ahaCoachActive = useMemo(
+    () => onboardingStatus === "stage_aha",
+    [onboardingStatus],
+  );
+
+  const dismissAhaCoach = useCallback(() => {
+    if (onboardingStatus === "stage_aha") {
+      void completeAhaCoach();
+    }
+  }, [onboardingStatus, completeAhaCoach]);
+
   const initializeOnboarding = useCallback(async () => {
     const status = await ensureOnboardingInitialized();
     setOnboardingStatusState(status);
@@ -41,9 +59,7 @@ export function useOnboardingFlow({
 
   const onboardingInFlow = useMemo(
     () =>
-      onboardingStatus != null &&
-      (isOnboardingActive(onboardingStatus) ||
-        onboardingStatus === "stage_4"),
+      onboardingStatus != null && isOnboardingActive(onboardingStatus),
     [onboardingStatus],
   );
 
@@ -55,7 +71,7 @@ export function useOnboardingFlow({
   const displayTaxSaved = useMemo(() => {
     if (taxDisplayOverride != null) return taxDisplayOverride;
     if (onboardingStatus === "stage_1") return 0;
-    if (onboardingStatus === "stage_4") {
+    if (onboardingStatus === "stage_aha") {
       const demo = receipts.find(
         (r) => r.isOnboardingDemo && r.status === "done",
       );
@@ -90,15 +106,27 @@ export function useOnboardingFlow({
     return status;
   }, []);
 
+  const skipOnboardingFlow = useCallback(async () => {
+    if (!onboardingStatus || !isOnboardingActive(onboardingStatus)) return;
+    setTaxDisplayOverride(null);
+    await skipOnboarding();
+    setOnboardingStatusState("completed");
+    await onRefreshReceipts();
+  }, [onboardingStatus, onRefreshReceipts]);
+
   return {
     onboardingStatus,
     initializeOnboarding,
     resetOnboarding,
+    skipOnboardingFlow,
     onboardingInFlow,
     skipSoftGoogleSheet,
     displayTaxSaved,
     taxAnimating,
     setTaxAnimating,
+    ahaCoachActive,
+    dismissAhaCoach,
+    completeAhaCoach,
     handleSnapIntent,
     orchestratorProps:
       onboardingInFlow && onboardingStatus

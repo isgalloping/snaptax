@@ -9,6 +9,7 @@ import { RefreshIcon } from "@/components/icons/RefreshIcon";
 import { DownloadIcon } from "@/components/icons/DownloadIcon";
 import { InstallIcon } from "@/components/icons/InstallIcon";
 import { usePwaInstallOptional } from "@/components/pwa/pwaInstallContext";
+import { CoachPulseOverlay } from "@/components/onboarding/CoachPulseOverlay";
 
 interface TaxHeaderProps {
   taxSaved: number | null;
@@ -22,6 +23,8 @@ interface TaxHeaderProps {
   syncDisabled?: boolean;
   showSettings?: boolean;
   displayTaxSaved?: number | null;
+  ahaCoachActive?: boolean;
+  onAhaCoachDismiss?: () => void;
 }
 
 const actionBtn =
@@ -39,6 +42,8 @@ export function TaxHeader({
   syncDisabled = false,
   showSettings = true,
   displayTaxSaved,
+  ahaCoachActive = false,
+  onAhaCoachDismiss,
 }: TaxHeaderProps) {
   const pwaInstall = usePwaInstallOptional();
   const copy = useUserCopy().home.taxHeader;
@@ -69,33 +74,58 @@ export function TaxHeader({
       />
       <div className="relative z-10 flex items-center justify-between px-4 py-3">
         <div className="min-w-0 flex-1 pr-3">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-200">
-            {copy.title}
-          </p>
-          <p
-            className={`text-4xl font-black tracking-tight text-yellow-400 ${
-              animating ? "animate-tax-bounce text-green-400" : ""
-            }`}
+          <div
+            className={`relative w-fit max-w-full ${ahaCoachActive ? "cursor-pointer rounded-xl px-2.5 py-2" : ""}`}
+            role={ahaCoachActive ? "button" : undefined}
+            tabIndex={ahaCoachActive ? 0 : undefined}
+            onClick={ahaCoachActive ? onAhaCoachDismiss : undefined}
+            onKeyDown={
+              ahaCoachActive
+                ? (e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      onAhaCoachDismiss?.();
+                    }
+                  }
+                : undefined
+            }
           >
-            {headerTaxSaved === null ? "$- - -" : formatCurrency(headerTaxSaved)}
-          </p>
-          <p className="mt-0.5 flex items-center gap-1 truncate text-[11px] font-bold text-zinc-300">
-            <ReceiptIcon className="h-3 w-3 shrink-0" />
-            <span>
-              {receiptLabel} • {formatCurrency(totalExpenses)} {copy.tracked}
-            </span>
-          </p>
+            {ahaCoachActive && <CoachPulseOverlay />}
+            <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-200">
+              {copy.title}
+            </p>
+            <p
+              className={`text-4xl font-black tracking-tight text-yellow-400 ${
+                animating ? "animate-tax-bounce text-green-400" : ""
+              }`}
+            >
+              {headerTaxSaved === null ? "$- - -" : formatCurrency(headerTaxSaved)}
+            </p>
+            <p className="mt-0.5 flex items-center gap-1 truncate text-[11px] font-bold text-zinc-300">
+              <ReceiptIcon className="h-3 w-3 shrink-0" />
+              <span>
+                {receiptLabel} • {formatCurrency(totalExpenses)} {copy.tracked}
+              </span>
+            </p>
+          </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {onExportClick && (
-            <button
-              type="button"
-              onClick={onExportClick}
-              className={`${actionBtn} border-yellow-500/60`}
-              aria-label={copy.exportTaxPack}
-            >
-              <DownloadIcon className="h-5 w-5 text-yellow-400" />
-            </button>
+            <div className="relative">
+              {ahaCoachActive && <CoachPulseOverlay variant="export" />}
+              <button
+                type="button"
+                onClick={onExportClick}
+                className={`${actionBtn} ${
+                  ahaCoachActive
+                    ? "relative border-yellow-400 ring-2 ring-black/70"
+                    : "border-yellow-500/60"
+                }`}
+                aria-label={copy.exportTaxPack}
+              >
+                <DownloadIcon className="h-5 w-5 text-yellow-400" />
+              </button>
+            </div>
           )}
           {showInstallButton && pwaInstall && (
             <button

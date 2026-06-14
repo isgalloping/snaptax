@@ -234,7 +234,7 @@ Next.js 16 · React 19 · Tailwind 4 · Serwist · **PostgreSQL（美国）** ·
 | 未登录 **联网 OpenAI** | ✅ | ✅（`POST /api/receipts` → Vision） |
 | 美国存储 + 知情 UI | ✅ | ✅ |
 | Google 软/硬引导 UI | ✅ | ✅（GIS + 后端绑定；T1 Nudge + T2 首次 Settings Sheet） |
-| 蓝领新人引导（Welcome Landing + Coach） | ✅ | ✅（Landing + SnapCoach + FirstReceiptCoach） |
+| 蓝领新人引导（Aha onboarding） | ✅ | ✅（Hero Stage 0 + shadow/sandbox/Aha + Stage 1 SNAP focus ring） |
 | 设置页账户区 + 多端 + Paywall UI | ✅ | ✅（Paddle.js Overlay；无 env 时阻断，不假成功） |
 | Privacy §4 国际传输 | ✅ | ✅ |
 | Google + Ghost 绑定（后端） | ✅ | ✅ |

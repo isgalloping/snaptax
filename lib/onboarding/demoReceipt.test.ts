@@ -30,4 +30,11 @@ describe("completeDemoReceipt", () => {
     assert.equal(receipt.taxAmount, ONBOARDING_DEMO_TAX_SAVED);
     assert.equal(receipt.subtitle, "COMPLETE");
   });
+
+  it("is idempotent for already-done receipts", () => {
+    const done = completeDemoReceipt(createShadowDemoReceipt());
+    const again = completeDemoReceipt(done);
+    assert.equal(again.status, "done");
+    assert.equal(again.taxAmount, ONBOARDING_DEMO_TAX_SAVED);
+  });
 });

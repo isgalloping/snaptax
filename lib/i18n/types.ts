@@ -81,6 +81,8 @@ export type UserCopy = {
     };
     snapCoach: string;
     dismissCoach: string;
+    skip: string;
+    skipAria: string;
     firstReceipt: {
       processing: string;
       done: string;
@@ -91,6 +93,7 @@ export type UserCopy = {
     aha: {
       snapTooltip: string;
       sandboxShutterAria: string;
+      sandboxTooltip: string;
       snackbar: string;
       signup: {
         title: string;

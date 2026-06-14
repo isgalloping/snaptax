@@ -1,9 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useUserCopy } from "@/components/i18n/I18nProvider";
-import { signInWithGoogleApi } from "@/lib/client/authApi";
+import {
+  type GoogleAuthResponse,
+  signInWithGoogleCredential,
+} from "@/lib/client/authApi";
 import { ensureGhostSession } from "@/lib/client/ghostClient";
+import {
+  mapGoogleAuthError,
+  mountGoogleSignInButton,
+  type GoogleSignInMount,
+} from "@/lib/client/googleAuth";
 
 export type GoogleSignInMode =
   | "soft"
@@ -21,7 +29,7 @@ interface GoogleSignInSheetProps {
   onSuccess: (result: GoogleSignInResult) => void | Promise<void>;
   onFailure?: (message: string) => void;
   onSoftDismiss?: () => void;
-  onSignIn?: () => Promise<GoogleSignInResult>;
+  onUserSignedIn?: (result: GoogleAuthResponse) => void;
 }
 
 export function GoogleSignInSheet({
@@ -30,10 +38,21 @@ export function GoogleSignInSheet({
   onSuccess,
   onFailure,
   onSoftDismiss,
-  onSignIn,
+  onUserSignedIn,
 }: GoogleSignInSheetProps) {
   const authCopy = useUserCopy().auth.googleSignIn;
-  const [loading, setLoading] = useState(false);
+  const [signingIn, setSigningIn] = useState(false);
+  const [preparing, setPreparing] = useState(true);
+  const [inlineError, setInlineError] = useState<string | null>(null);
+  const buttonHostRef = useRef<HTMLDivElement>(null);
+  const mountRef = useRef<GoogleSignInMount | null>(null);
+  const signingInRef = useRef(false);
+  const onSuccessRef = useRef(onSuccess);
+  const onFailureRef = useRef(onFailure);
+  const onUserSignedInRef = useRef(onUserSignedIn);
+  onSuccessRef.current = onSuccess;
+  onFailureRef.current = onFailure;
+  onUserSignedInRef.current = onUserSignedIn;
 
   const modeCopy =
     mode === "soft"
@@ -47,22 +66,67 @@ export function GoogleSignInSheet({
   const dismissLabel =
     mode === "onboarding-signup" ? authCopy.onboardingSignup.later : authCopy.notNow;
 
-  const handleGoogle = async () => {
-    setLoading(true);
-    try {
-      await ensureGhostSession();
-      const result = onSignIn
-        ? await onSignIn()
-        : {
-            taxRecalcQueued: (await signInWithGoogleApi()).taxRecalcQueued,
-          };
-      await onSuccess(result);
-    } catch {
-      onFailure?.(authCopy.signInFailed);
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    const host = buttonHostRef.current;
+    if (!host) return;
+
+    let cancelled = false;
+
+    const handleAuthError = (error: unknown) => {
+      const message = mapGoogleAuthError(error, authCopy.signInFailed);
+      if (message) {
+        setInlineError(message);
+        onFailureRef.current?.(message);
+      }
+    };
+
+    const handleCredential = (credential: string) => {
+      if (signingInRef.current) return;
+      signingInRef.current = true;
+      setSigningIn(true);
+      setInlineError(null);
+
+      void (async () => {
+        try {
+          const result = await signInWithGoogleCredential(credential);
+          if (cancelled) return;
+          onUserSignedInRef.current?.(result);
+          await onSuccessRef.current({ taxRecalcQueued: result.taxRecalcQueued });
+        } catch (error) {
+          if (!cancelled) handleAuthError(error);
+        } finally {
+          signingInRef.current = false;
+          if (!cancelled) setSigningIn(false);
+        }
+      })();
+    };
+
+    void (async () => {
+      setPreparing(true);
+      setInlineError(null);
+      try {
+        await ensureGhostSession();
+        if (cancelled) return;
+        mountRef.current?.cleanup();
+        mountRef.current = await mountGoogleSignInButton(host, {
+          onCredential: handleCredential,
+          onError: (error) => {
+            if (!cancelled) handleAuthError(error);
+          },
+        });
+      } catch (error) {
+        if (!cancelled) handleAuthError(error);
+      } finally {
+        if (!cancelled) setPreparing(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      mountRef.current?.cleanup();
+      mountRef.current = null;
+    };
+  }, [authCopy.signInFailed]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-end bg-black/70">
@@ -72,31 +136,43 @@ export function GoogleSignInSheet({
         </p>
         <p className="mt-4 text-sm leading-relaxed text-zinc-300">{modeCopy.body}</p>
 
-        <button
-          type="button"
-          disabled={loading}
-          onClick={() => void handleGoogle()}
-          className="mt-6 w-full min-h-16 rounded-xl border-4 border-white bg-yellow-500 py-4 text-lg font-black uppercase tracking-wider text-black transition-transform active:scale-95 disabled:opacity-60"
-        >
-          {loading ? authCopy.signingIn : authCopy.continueWithGoogle}
-        </button>
+        <div className="relative mt-6 min-h-16 w-full">
+          <div
+            ref={buttonHostRef}
+            className={`flex w-full justify-center ${signingIn || preparing ? "pointer-events-none opacity-60" : ""}`}
+            aria-busy={preparing || signingIn}
+          />
+          {(preparing || signingIn) && signingIn && (
+            <p className="mt-2 text-center text-sm font-bold text-zinc-400">
+              {authCopy.signingIn}
+            </p>
+          )}
+        </div>
+
+        {inlineError && (
+          <p className="mt-3 text-center text-sm font-bold text-red-500" role="alert">
+            {inlineError}
+          </p>
+        )}
 
         {showNotNow ? (
           <button
             type="button"
+            disabled={signingIn}
             onClick={() => {
               onSoftDismiss?.();
               onClose();
             }}
-            className="mt-3 w-full min-h-16 py-3 text-sm font-bold text-zinc-400 transition-transform active:scale-95"
+            className="mt-3 w-full min-h-16 py-3 text-sm font-bold text-zinc-400 transition-transform active:scale-95 disabled:opacity-60"
           >
             {dismissLabel}
           </button>
         ) : (
           <button
             type="button"
+            disabled={signingIn}
             onClick={onClose}
-            className="mt-3 w-full min-h-16 py-3 text-sm font-black uppercase tracking-wider text-zinc-400 transition-transform active:scale-95"
+            className="mt-3 w-full min-h-16 py-3 text-sm font-black uppercase tracking-wider text-zinc-400 transition-transform active:scale-95 disabled:opacity-60"
           >
             {authCopy.back}
           </button>

@@ -39,8 +39,9 @@ export async function fetchAuthMe(): Promise<AuthMeResponse> {
   return (await res.json()) as AuthMeResponse;
 }
 
-export async function signInWithGoogleApi(): Promise<GoogleAuthResponse> {
-  const credential = await requestGoogleCredential();
+export async function signInWithGoogleCredential(
+  credential: string,
+): Promise<GoogleAuthResponse> {
   const res = await apiFetch("/api/auth/google", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -53,6 +54,11 @@ export async function signInWithGoogleApi(): Promise<GoogleAuthResponse> {
     name: data.user.name ?? data.user.email.split("@")[0] ?? "User",
   });
   return data;
+}
+
+export async function signInWithGoogleApi(): Promise<GoogleAuthResponse> {
+  const credential = await requestGoogleCredential();
+  return signInWithGoogleCredential(credential);
 }
 
 export async function signOutApi(): Promise<void> {

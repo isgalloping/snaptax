@@ -6,6 +6,7 @@ import type { GoogleUser } from "@/lib/client/authStorage";
 import {
   fetchSeasonPaid,
   pollEntitlementReady,
+  type GoogleAuthResponse,
 } from "@/lib/client/authApi";
 import {
   GoogleSignInSheet,
@@ -20,7 +21,7 @@ interface UseTaxExportGateOptions {
   googleUser: GoogleUser | null;
   seasonPaid: boolean;
   currentSeason: string;
-  onSignInWithGoogle: () => Promise<{ user: GoogleUser; taxRecalcQueued: number }>;
+  onUserSignedIn?: (result: GoogleAuthResponse) => void;
   onPostLoginSync?: (taxRecalcQueued: number) => Promise<void>;
   onSeasonPaid: () => void;
   refreshSeasonPaid?: () => Promise<void>;
@@ -33,7 +34,7 @@ export function useTaxExportGate({
   googleUser,
   seasonPaid,
   currentSeason,
-  onSignInWithGoogle,
+  onUserSignedIn,
   onPostLoginSync,
   onSeasonPaid,
   refreshSeasonPaid,
@@ -90,11 +91,10 @@ export function useTaxExportGate({
         <GoogleSignInSheet
           mode={googleSheet}
           onClose={() => setGoogleSheet(null)}
-          onSignIn={onSignInWithGoogle}
+          onUserSignedIn={onUserSignedIn}
           onSuccess={handleGoogleSuccess}
           onFailure={(msg) => {
             setErrorMessage(msg);
-            setGoogleSheet(null);
           }}
         />
       )}

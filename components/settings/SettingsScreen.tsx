@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { Industry } from "@/lib/types";
 import { INDUSTRIES } from "@/lib/types";
 import type { GoogleUser } from "@/lib/client/authStorage";
+import type { GoogleAuthResponse } from "@/lib/client/authApi";
 import { saveIndustry } from "@/lib/client/authStorage";
 import { apiFetch } from "@/lib/client/ghostClient";
 import {
@@ -31,7 +32,7 @@ interface SettingsScreenProps {
   seasonPaid: boolean;
   currentSeason: string;
   isSignedIn: boolean;
-  onSignInWithGoogle: () => Promise<{ user: GoogleUser; taxRecalcQueued: number }>;
+  onUserSignedIn?: (result: GoogleAuthResponse) => void;
   onPostLoginSync?: (taxRecalcQueued: number) => Promise<void>;
   onRequestExport: () => void;
   exportBusy?: boolean;
@@ -54,7 +55,7 @@ export function SettingsScreen({
   seasonPaid,
   currentSeason,
   isSignedIn,
-  onSignInWithGoogle,
+  onUserSignedIn,
   onPostLoginSync,
   onRequestExport,
   exportBusy = false,
@@ -286,12 +287,10 @@ export function SettingsScreen({
             setPendingAfterSignIn(null);
           }}
           onSoftDismiss={googleSheet === "soft" ? handleSoftDismiss : undefined}
-          onSignIn={onSignInWithGoogle}
+          onUserSignedIn={onUserSignedIn}
           onSuccess={handleGoogleSuccess}
           onFailure={(msg) => {
             setErrorMessage(msg);
-            setGoogleSheet(null);
-            setPendingAfterSignIn(null);
           }}
         />
       )}

@@ -13,6 +13,7 @@ import {
   fetchSeasonPaid,
   signInWithGoogleApi,
   signOutApi,
+  type GoogleAuthResponse,
 } from "@/lib/client/authApi";
 import { currentTaxSeason } from "@/lib/tax/season";
 
@@ -72,18 +73,24 @@ export function useAuthSession() {
     };
   }, []);
 
-  const signInWithGoogle = useCallback(async () => {
-    const result = await signInWithGoogleApi();
+  const applyGoogleSignIn = useCallback((result: GoogleAuthResponse) => {
     const user: GoogleUser = {
       email: result.user.email,
       name: result.user.name ?? result.user.email.split("@")[0] ?? "User",
     };
     setGoogleUser(user);
+    saveGoogleUser(user);
     if (result.user.industry) {
       setIndustry(result.user.industry as Industry);
     }
-    return { user, taxRecalcQueued: result.taxRecalcQueued };
+    return user;
   }, []);
+
+  const signInWithGoogle = useCallback(async () => {
+    const result = await signInWithGoogleApi();
+    const user = applyGoogleSignIn(result);
+    return { user, taxRecalcQueued: result.taxRecalcQueued };
+  }, [applyGoogleSignIn]);
 
   const signOut = useCallback(async () => {
     await signOutApi();
@@ -119,6 +126,7 @@ export function useAuthSession() {
     seasonPaid,
     currentSeason: seasonKey(),
     signInWithGoogle,
+    applyGoogleSignIn,
     signOut,
     markSeasonPaid,
     refreshSeasonPaid,

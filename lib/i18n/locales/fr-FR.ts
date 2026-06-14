@@ -96,6 +96,7 @@ export const FR_FR_COPY: UserCopy = {
       check2: "10 reçus en 10 sec",
       check3: "Pas d'inscription requise",
       cta: "C'est parti ! ⚡",
+      ctaCountdown: "C'est parti ! ({seconds})",
       ctaAria: "Commencer l'introduction",
       ariaStatus: "Chargement de Snap1099",
     },

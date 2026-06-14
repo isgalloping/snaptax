@@ -96,6 +96,7 @@ export const DE_DE_COPY: UserCopy = {
       check2: "10 Belege in 10 Sek.",
       check3: "Keine Anmeldung nötig",
       cta: "Los geht's! ⚡",
+      ctaCountdown: "Los geht's! ({seconds})",
       ctaAria: "Onboarding starten",
       ariaStatus: "Snap1099 wird geladen",
     },

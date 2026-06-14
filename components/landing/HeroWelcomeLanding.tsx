@@ -16,6 +16,7 @@ import { LANDING_CTA_EVENT } from "./landingEvents";
 
 const HERO_IMAGE = "/onboarding/onboarding-hero.png";
 const COUNTDOWN_TICK_MS = 100;
+const HERO_COUNTDOWN_START = Math.ceil(HERO_AUTO_ADVANCE_MS / 1000);
 
 function formatCtaCountdown(template: string, seconds: number): string {
   return template.replace("{seconds}", String(seconds));
@@ -25,7 +26,7 @@ export function HeroWelcomeLanding() {
   const copy = useUserCopy().onboarding.landing;
   const [ctaReady, setCtaReady] = useState(false);
   const [heroLoaded, setHeroLoaded] = useState(false);
-  const [countdownSeconds, setCountdownSeconds] = useState(3);
+  const [countdownSeconds, setCountdownSeconds] = useState(HERO_COUNTDOWN_START);
   const startedRef = useRef(false);
 
   const startOnboarding = useCallback(async () => {

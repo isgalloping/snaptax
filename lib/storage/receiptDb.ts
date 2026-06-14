@@ -11,8 +11,11 @@ import {
 } from "@/lib/storage/crypto/photoStore";
 
 const DB_NAME = "snap1099";
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 const RECEIPTS_STORE = "receipts";
+const SYSTEM_META_STORE = "system_meta";
+
+type SystemMetaRow<T> = { key: string; value: T };
 
 export interface StoredReceipt extends Receipt {
   timestamp: Date;
@@ -99,6 +102,7 @@ function legacyDeserialize(raw: Record<string, unknown>): StoredReceipt {
       : undefined,
     pendingUpload: raw.pendingUpload as boolean | undefined,
     writeBudgetRemaining: raw.writeBudgetRemaining as number | undefined,
+    isOnboardingDemo: raw.isOnboardingDemo as boolean | undefined,
   };
 }
 
@@ -217,6 +221,12 @@ function openDb(): Promise<IDBDatabase> {
 
       if (!db.objectStoreNames.contains(PHOTOS_STORE)) {
         db.createObjectStore(PHOTOS_STORE, { keyPath: "id" });
+      }
+
+      if (event.oldVersion < 4) {
+        if (!db.objectStoreNames.contains(SYSTEM_META_STORE)) {
+          db.createObjectStore(SYSTEM_META_STORE, { keyPath: "key" });
+        }
       }
     };
   });
@@ -347,6 +357,19 @@ export async function loadReceipts(): Promise<StoredReceipt[]> {
   return loadAllReceipts();
 }
 
+export async function loadReceipt(id: string): Promise<StoredReceipt | null> {
+  const db = await openDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(RECEIPTS_STORE, "readonly");
+    const request = tx.objectStore(RECEIPTS_STORE).get(id);
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => {
+      const raw = request.result as SerializedReceipt | undefined;
+      resolve(raw ? deserializeReceipt(raw) : null);
+    };
+  });
+}
+
 export async function saveReceipt(receipt: StoredReceipt): Promise<void> {
   const db = await openDb();
   return new Promise((resolve, reject) => {
@@ -407,6 +430,31 @@ export async function hasStoredData(): Promise<boolean> {
   });
 }
 
+export async function readSystemMeta<T>(key: string): Promise<T | null> {
+  const db = await openDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(SYSTEM_META_STORE, "readonly");
+    const request = tx.objectStore(SYSTEM_META_STORE).get(key);
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => {
+      const row = request.result as SystemMetaRow<T> | undefined;
+      resolve(row?.value ?? null);
+    };
+  });
+}
+
+export async function writeSystemMeta<T>(key: string, value: T): Promise<void> {
+  const db = await openDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(SYSTEM_META_STORE, "readwrite");
+    const request = tx
+      .objectStore(SYSTEM_META_STORE)
+      .put({ key, value } satisfies SystemMetaRow<T>);
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => resolve();
+  });
+}
+
 export async function clearAllLocalData(): Promise<void> {
   const db = await openDb();
   return new Promise((resolve, reject) => {
@@ -414,11 +462,17 @@ export async function clearAllLocalData(): Promise<void> {
     if (db.objectStoreNames.contains(CRYPTO_META_STORE)) {
       stores.push(CRYPTO_META_STORE);
     }
+    if (db.objectStoreNames.contains(SYSTEM_META_STORE)) {
+      stores.push(SYSTEM_META_STORE);
+    }
     const tx = db.transaction(stores, "readwrite");
     tx.objectStore(RECEIPTS_STORE).clear();
     tx.objectStore(PHOTOS_STORE).clear();
     if (db.objectStoreNames.contains(CRYPTO_META_STORE)) {
       tx.objectStore(CRYPTO_META_STORE).clear();
+    }
+    if (db.objectStoreNames.contains(SYSTEM_META_STORE)) {
+      tx.objectStore(SYSTEM_META_STORE).clear();
     }
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);

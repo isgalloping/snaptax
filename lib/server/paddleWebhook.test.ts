@@ -36,15 +36,20 @@ test("reject tampered Paddle webhook body", () => {
   process.env.NODE_ENV = prevEnv;
 });
 
-test("skip verify in dev when secret is placeholder abc", () => {
+test("skip verify only when dev flag is set", () => {
   const prevEnv = process.env.NODE_ENV;
+  const prevSkip = process.env.PADDLE_WEBHOOK_SKIP_VERIFY;
   process.env.NODE_ENV = "development";
   process.env.PADDLE_WEBHOOK_SECRET = "abc";
+  process.env.PADDLE_WEBHOOK_SKIP_VERIFY = "1";
   assert.equal(verifyPaddleWebhookSignature("{}", null), true);
+  delete process.env.PADDLE_WEBHOOK_SKIP_VERIFY;
+  assert.equal(verifyPaddleWebhookSignature("{}", null), false);
   process.env.NODE_ENV = prevEnv;
+  process.env.PADDLE_WEBHOOK_SKIP_VERIFY = prevSkip;
 });
 
-test("placeholder secret still requires signature in production", () => {
+test("placeholder secret requires signature without dev skip flag", () => {
   const prevEnv = process.env.NODE_ENV;
   process.env.NODE_ENV = "production";
   process.env.PADDLE_WEBHOOK_SECRET = "abc";

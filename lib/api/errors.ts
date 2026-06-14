@@ -42,6 +42,12 @@ export function resolveApiError(err: unknown): ResolvedApiError {
         clientMessage: "Only JPEG and PNG are allowed",
         status: 415,
       };
+    case "INVALID_INDUSTRY":
+      return {
+        code: "INVALID_INDUSTRY",
+        clientMessage: "Invalid industry selection",
+        status: 400,
+      };
     case "GHOST_RECEIPT_LIMIT":
       return {
         code: "GHOST_RECEIPT_LIMIT",

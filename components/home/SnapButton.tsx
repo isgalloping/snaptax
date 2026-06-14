@@ -43,6 +43,7 @@ interface SnapButtonProps {
   onSettingsClick?: () => void;
   syncing?: boolean;
   syncDisabled?: boolean;
+  onSnapIntent?: () => boolean;
 }
 
 export interface SnapButtonHandle {
@@ -63,6 +64,7 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
       onSettingsClick,
       syncing = false,
       syncDisabled = false,
+      onSnapIntent,
     },
     ref,
   ) {
@@ -103,6 +105,7 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
     );
 
     const openCamera = useCallback(() => {
+      if (onSnapIntent && !onSnapIntent()) return;
       if (isCameraSupported()) {
         resetSession();
         streamPromiseRef.current = openCameraStream();
@@ -110,7 +113,7 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
       } else {
         inputRef.current?.click();
       }
-    }, [resetSession, setCamera]);
+    }, [onSnapIntent, resetSession, setCamera]);
 
     useImperativeHandle(ref, () => ({ openCamera }), [openCamera]);
 

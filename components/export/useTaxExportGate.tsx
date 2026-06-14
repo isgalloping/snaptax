@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { Receipt } from "@/lib/types";
 import type { GoogleUser } from "@/lib/client/authStorage";
 import {
@@ -53,6 +53,11 @@ export function useTaxExportGate({
     clearError();
     setShowExportSheet(true);
   };
+
+  const exportableReceipts = useMemo(
+    () => receipts.filter((r) => !r.isOnboardingDemo),
+    [receipts],
+  );
 
   const runExportGate = async () => {
     clearError();
@@ -122,7 +127,7 @@ export function useTaxExportGate({
 
       {showExportSheet && (
         <ExportEngineSheet
-          receipts={receipts}
+          receipts={exportableReceipts}
           onClose={() => setShowExportSheet(false)}
           onExported={async () => {
             await refreshSeasonPaid?.();

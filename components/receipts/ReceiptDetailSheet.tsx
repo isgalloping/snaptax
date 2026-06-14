@@ -342,6 +342,7 @@ export function ReceiptDetailSheet({
                     imageSrc ? (
                       <ReceiptCaptureActions
                         showResnap={showResnap}
+                        showDelete={!receipt.isOnboardingDemo}
                         busy={deleteBusy}
                         onDelete={handleDeleteClick}
                         onResnap={showResnap ? handleResnap : undefined}

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { Receipt } from "@/lib/types";
+import { useAuthSession } from "@/lib/client/useAuthSession";
 import {
   STARTUP_UNFILED_LIMIT,
   UI_RECEIPT_LIMIT,
@@ -9,6 +10,10 @@ import {
 import { withFreshBudget, isSyncStuck } from "@/lib/client/receiptSyncBudget";
 import { ensureTaxRegionCandidate } from "@/lib/client/taxRegion";
 import { utcNow } from "@/lib/time/utc";
+import {
+  convertDemoReceiptAfterLogin,
+  ensureConvertedDemoUploadReady,
+} from "@/lib/onboarding/demoReceipt";
 import {
   loadRecentUnfiledReceipts,
   loadTopByUpdatedAt,
@@ -18,6 +23,9 @@ import {
   type StoredReceipt,
 } from "@/lib/storage/receiptDb";
 import { sumDoneExpenses } from "@/lib/receipts/receiptStats";
+import { OnboardingOrchestrator } from "@/components/onboarding/OnboardingOrchestrator";
+import { SnapTooltip } from "@/components/onboarding/SnapTooltip";
+import { useOnboardingFlow } from "@/components/onboarding/useOnboardingFlow";
 import { TaxHeader } from "./TaxHeader";
 import { SnapButton } from "./SnapButton";
 import { ReceiptList } from "./ReceiptList";
@@ -34,9 +42,41 @@ function stuckIdsFromReceipts(receipts: StoredReceipt[]): Set<string> {
 }
 
 export function OfflineHomeShell() {
+  const auth = useAuthSession();
   const [receipts, setReceipts] = useState<Receipt[]>([]);
   const [taxSaved, setTaxSaved] = useState<number | null>(null);
   const [syncStuckIds, setSyncStuckIds] = useState<Set<string>>(() => new Set());
+
+  const refreshListFromLocal = useCallback(async () => {
+    const visible = await loadTopByUpdatedAt(UI_RECEIPT_LIMIT);
+    setReceipts(visible);
+    setSyncStuckIds(stuckIdsFromReceipts(visible));
+    setTaxSaved(await sumUnfiledLocalTaxSavedIndexed());
+    return visible;
+  }, []);
+
+  const handleOnboardingGoogleSuccess = useCallback(async () => {
+    await auth.signInWithGoogle();
+    await convertDemoReceiptAfterLogin();
+    await ensureConvertedDemoUploadReady();
+    await refreshListFromLocal();
+  }, [auth.signInWithGoogle, refreshListFromLocal]);
+
+  const onboarding = useOnboardingFlow({
+    receipts,
+    taxSaved,
+    onRefreshReceipts: refreshListFromLocal,
+    onGoogleSuccess: handleOnboardingGoogleSuccess,
+  });
+
+  const {
+    initializeOnboarding,
+    displayTaxSaved,
+    taxAnimating,
+    handleSnapIntent,
+    orchestratorProps,
+    onboardingStatus,
+  } = onboarding;
 
   useEffect(() => {
     performance.mark("startup:offline-home");
@@ -46,6 +86,9 @@ export function OfflineHomeShell() {
 
     void (async () => {
       ensureTaxRegionCandidate();
+      await initializeOnboarding();
+      if (cancelled) return;
+
       const hot = await loadRecentUnfiledReceipts(STARTUP_UNFILED_LIMIT);
       if (cancelled) return;
 
@@ -55,17 +98,14 @@ export function OfflineHomeShell() {
 
       deferAfterPaint(async () => {
         if (cancelled) return;
-        const visible = await loadTopByUpdatedAt(UI_RECEIPT_LIMIT);
-        if (cancelled) return;
-        setReceipts(visible);
-        setSyncStuckIds(stuckIdsFromReceipts(visible));
+        await refreshListFromLocal();
       });
     })();
 
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [initializeOnboarding, refreshListFromLocal]);
 
   const handleCapture = useCallback(async (file: File) => {
     const id = crypto.randomUUID();
@@ -81,12 +121,8 @@ export function OfflineHomeShell() {
 
     await savePhoto(id, file);
     await saveReceipt(processingReceipt);
-
-    const visible = await loadTopByUpdatedAt(UI_RECEIPT_LIMIT);
-    setReceipts(visible);
-    setSyncStuckIds(stuckIdsFromReceipts(visible));
-    setTaxSaved(await sumUnfiledLocalTaxSavedIndexed());
-  }, []);
+    await refreshListFromLocal();
+  }, [refreshListFromLocal]);
 
   const noopAsync = useCallback(async () => {}, []);
   const noopBatchShot = useCallback(async () => crypto.randomUUID(), []);
@@ -95,14 +131,16 @@ export function OfflineHomeShell() {
     <div className="flex h-full flex-col overflow-hidden bg-black font-sans text-white select-none">
       <TaxHeader
         taxSaved={taxSaved}
+        displayTaxSaved={displayTaxSaved}
         totalExpenses={sumDoneExpenses(receipts)}
         receiptCount={receipts.length}
-        animating={false}
+        animating={taxAnimating}
         onSettingsClick={() => {}}
         showSettings={false}
       />
 
-      <div className="shrink-0 px-4 py-2">
+      <div className="relative shrink-0 px-4 py-2">
+        {onboardingStatus === "stage_1" && <SnapTooltip />}
         <SnapButton
           onCapture={handleCapture}
           onBatchShot={noopBatchShot}
@@ -110,6 +148,7 @@ export function OfflineHomeShell() {
           onBatchClose={noopAsync}
           onReviewDelete={noopAsync}
           syncDisabled
+          onSnapIntent={handleSnapIntent}
         />
       </div>
 
@@ -123,6 +162,10 @@ export function OfflineHomeShell() {
           syncDisabled
         />
       </div>
+
+      {orchestratorProps && (
+        <OnboardingOrchestrator {...orchestratorProps} />
+      )}
     </div>
   );
 }

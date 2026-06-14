@@ -87,6 +87,16 @@ export type UserCopy = {
     };
     googleNudge: string;
     googleNudgeDismiss: string;
+    aha: {
+      snapTooltip: string;
+      sandboxShutterAria: string;
+      snackbar: string;
+      signup: {
+        title: string;
+        body: string;
+        later: string;
+      };
+    };
   };
   home: {
     taxHeader: {
@@ -204,6 +214,11 @@ export type UserCopy = {
       notNow: string;
       back: string;
       signInFailed: string;
+      onboardingSignup: {
+        title: string;
+        body: string;
+        later: string;
+      };
     };
     syncInstructions: {
       title: string;

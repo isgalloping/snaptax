@@ -48,25 +48,38 @@ export function PaywallSheet({
     setPaying(true);
     setError(null);
     try {
-      const me = await apiFetch("/api/auth/me");
-      const meData = (await me.json()) as { user?: { id: string } | null };
-      const dbUserId = meData.user?.id;
       const priceId = process.env.NEXT_PUBLIC_PADDLE_PRICE_ID;
       const paddle = paddleRef.current;
 
-      if (paddle && priceId && dbUserId) {
-        paddle.Checkout.open({
-          items: [{ priceId, quantity: 1 }],
-          customData: {
-            userId: dbUserId,
-            taxSeason: seasonLabel,
-          },
-          customer: { email: userId },
-        });
+      if (!paddle || !priceId) {
+        setError(copy.paymentUnavailable);
         return;
       }
 
-      setError(copy.paymentUnavailable);
+      const intentRes = await apiFetch("/api/billing/checkout-intent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ taxSeason: seasonLabel }),
+      });
+
+      if (!intentRes.ok) {
+        setError(copy.paymentUnavailable);
+        return;
+      }
+
+      const intentData = (await intentRes.json()) as { intentId?: string };
+      if (!intentData.intentId) {
+        setError(copy.paymentUnavailable);
+        return;
+      }
+
+      paddle.Checkout.open({
+        items: [{ priceId, quantity: 1 }],
+        customData: {
+          intentId: intentData.intentId,
+        },
+        customer: { email: userId },
+      });
     } catch {
       setError(copy.paymentFailed);
     } finally {

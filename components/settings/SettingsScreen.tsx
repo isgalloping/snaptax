@@ -8,7 +8,6 @@ import { saveIndustry } from "@/lib/client/authStorage";
 import { apiFetch } from "@/lib/client/ghostClient";
 import {
   GOOGLE_SOFT_DISMISSED_KEY,
-  isFirstSettingsSoftSheetEligible,
   readOnboardFlag,
   SETTINGS_VISITED_KEY,
   writeOnboardFlag,
@@ -38,6 +37,8 @@ interface SettingsScreenProps {
   requestSoftGoogleSheet?: boolean;
   onSoftGoogleSheetConsumed?: () => void;
   onSoftGuideDismiss?: () => void;
+  /** Skip first-visit soft Google sheet (Aha onboarding path). */
+  skipSoftGoogleSheet?: boolean;
 }
 
 export function SettingsScreen({
@@ -57,6 +58,7 @@ export function SettingsScreen({
   requestSoftGoogleSheet = false,
   onSoftGoogleSheetConsumed,
   onSoftGuideDismiss,
+  skipSoftGoogleSheet = false,
 }: SettingsScreenProps) {
   const { locale, setLocale, copy } = useI18n();
   const [googleSheet, setGoogleSheet] = useState<GoogleSignInMode | null>(null);
@@ -73,25 +75,24 @@ export function SettingsScreen({
     writeOnboardFlag(SETTINGS_VISITED_KEY);
 
     if (
-      isFirstSettingsSoftSheetEligible({
-        settingsVisited,
-        signedIn: isSignedIn,
-        softDismissed: readOnboardFlag(GOOGLE_SOFT_DISMISSED_KEY),
-      })
+      !skipSoftGoogleSheet &&
+      !isSignedIn &&
+      !settingsVisited &&
+      !readOnboardFlag(GOOGLE_SOFT_DISMISSED_KEY)
     ) {
       const timer = window.setTimeout(() => setGoogleSheet("soft"), 300);
       return () => window.clearTimeout(timer);
     }
-  }, [isSignedIn]);
+  }, [isSignedIn, skipSoftGoogleSheet]);
 
   useEffect(() => {
-    if (!requestSoftGoogleSheet || isSignedIn) return;
+    if (!requestSoftGoogleSheet || isSignedIn || skipSoftGoogleSheet) return;
     const timer = window.setTimeout(() => {
       setGoogleSheet("soft");
       onSoftGoogleSheetConsumed?.();
     }, 0);
     return () => window.clearTimeout(timer);
-  }, [requestSoftGoogleSheet, isSignedIn, onSoftGoogleSheetConsumed]);
+  }, [requestSoftGoogleSheet, isSignedIn, onSoftGoogleSheetConsumed, skipSoftGoogleSheet]);
 
   const handleSoftDismiss = () => {
     writeOnboardFlag(GOOGLE_SOFT_DISMISSED_KEY);

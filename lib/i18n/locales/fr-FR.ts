@@ -111,6 +111,17 @@ export const FR_FR_COPY: UserCopy = {
     googleNudge:
       "Nouveau téléphone ? Connectez-vous avec Google pour sauvegarder vos reçus.",
     googleNudgeDismiss: "Pas maintenant",
+    aha: {
+      snapTooltip:
+        "Appuyez ici pour prendre une photo et voir vos économies fiscales instantanément.",
+      sandboxShutterAria: "Prendre une photo d'exemple de reçu",
+      snackbar: "Vous venez d'économiser 28,50 $ !",
+      signup: {
+        title: "Sécurisez vos économies fiscales",
+        body: "Vous venez d'économiser vos premiers 28,50 $ ! Créez votre coffre-fort local sécurisé pour verrouiller et sauvegarder vos économies fiscales de façon permanente.",
+        later: "Plus tard",
+      },
+    },
   },
   home: {
     taxHeader: {
@@ -240,6 +251,11 @@ export const FR_FR_COPY: UserCopy = {
       notNow: "Pas maintenant",
       back: "< RETOUR",
       signInFailed: "Échec de la connexion. Veuillez réessayer.",
+      onboardingSignup: {
+        title: "Sécurisez vos économies fiscales",
+        body: "Vous venez d'économiser vos premiers 28,50 $ ! Créez votre coffre-fort local sécurisé pour verrouiller et sauvegarder vos économies fiscales de façon permanente.",
+        later: "Plus tard",
+      },
     },
     syncInstructions: {
       title: "Voir sur tous les appareils",

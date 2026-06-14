@@ -4,18 +4,6 @@ import { logEvent } from "@/lib/server/log/logEvent";
 
 const MAX_AGE_SEC = 300;
 
-const PLACEHOLDER_SECRETS = new Set([
-  "abc",
-  "changeme",
-  "placeholder",
-  "your_webhook_secret",
-]);
-
-export function isPaddleWebhookSecretPlaceholder(secret: string): boolean {
-  const normalized = secret.trim().toLowerCase();
-  return PLACEHOLDER_SECRETS.has(normalized);
-}
-
 function parsePaddleSignatureHeader(header: string): {
   ts: string | null;
   h1: string[];
@@ -50,10 +38,11 @@ export function verifyPaddleWebhookSignature(
   const secret = getPaddleWebhookSecret();
   if (!secret) throw new Error("PADDLE_WEBHOOK_SECRET missing");
 
-  if (
-    process.env.NODE_ENV !== "production" &&
-    isPaddleWebhookSecretPlaceholder(secret)
-  ) {
+  const maySkipVerify =
+    process.env.NODE_ENV === "development" &&
+    process.env.PADDLE_WEBHOOK_SKIP_VERIFY === "1";
+
+  if (maySkipVerify) {
     logEvent({
       ts: new Date().toISOString(),
       level: "warn",
@@ -61,7 +50,7 @@ export function verifyPaddleWebhookSignature(
       success: true,
       durationMs: 0,
       meta: {
-        reason: "webhook_verify_skipped_placeholder_secret",
+        reason: "webhook_verify_skipped_dev_flag",
       },
     });
     return true;

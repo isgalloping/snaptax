@@ -22,8 +22,8 @@
 sequenceDiagram
     participant User
     participant Client
-    participant Paddle
     participant API
+    participant Paddle
     participant DB
 
     User->>Client: Export IRS Tax Pack
@@ -31,9 +31,12 @@ sequenceDiagram
     Client->>API: GET /api/entitlements/current
     alt 未付费
         Client->>User: Paywall + 换机警告
-        User->>Paddle: Pay $49 Overlay
+        Client->>API: POST /api/billing/checkout-intent
+        API->>DB: checkout_intents (pending, 15min TTL)
+        API->>Client: { intentId }
+        Client->>Paddle: Checkout.open({ customData: { intentId } })
         Paddle->>API: Webhook transaction.completed
-        API->>DB: season_entitlements
+        API->>DB: intent → userId + season_entitlements
         Paddle->>Client: checkout.completed
     end
     Client->>API: POST /api/export/tax-pack
@@ -44,18 +47,19 @@ sequenceDiagram
 
 - **Product:** Snap1099 Tax Season Export
 - **Price:** $49 USD one-time
-- **Custom data:** `{ userId, taxSeason: "2026" }` 传入 checkout
+- **Custom data:** `{ intentId }` — 由 `POST /api/billing/checkout-intent` 签发；**不再**传客户端 `userId`
 - **Webhook events:** `transaction.completed`
+- **Legacy（30 天兼容）：** `{ userId, taxSeason }` 仍接受但记 warn 日志
 
 ## 7.5 Webhook 处理
 
 ```typescript
 // 伪代码
 verifyPaddleSignature(req)
-const { transaction_id, custom_data, status } = payload
-if (status === 'completed') {
-  upsert season_entitlements (user_id, tax_season, transaction_id) // idempotent
-}
+validate amount/status/currency
+grant = resolve intentId → checkout_intents.userId (or legacy userId warn)
+upsert season_entitlements
+mark intent consumed
 return 200
 ```
 

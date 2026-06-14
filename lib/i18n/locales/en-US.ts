@@ -106,6 +106,17 @@ export const EN_US_COPY: UserCopy = {
       },
       googleNudge: "New phone? Sign in with Google to save your receipts.",
       googleNudgeDismiss: "Not now",
+      aha: {
+        snapTooltip:
+          "Tap here to snap a photo and see your tax saved instantly.",
+        sandboxShutterAria: "Take sample receipt photo",
+        snackbar: "You just saved $28.50!",
+        signup: {
+          title: "Secure your tax assets",
+          body: "You just saved your first $28.50! Create your secure local vault now to lock and backup your tax assets permanently.",
+          later: "Later",
+        },
+      },
     },
     home: {
       taxHeader: {
@@ -235,6 +246,11 @@ export const EN_US_COPY: UserCopy = {
         notNow: "Not now",
         back: "< BACK",
         signInFailed: "Sign-in failed. Please try again.",
+        onboardingSignup: {
+          title: "Secure your tax assets",
+          body: "You just saved your first $28.50! Create your secure local vault now to lock and backup your tax assets permanently.",
+          later: "Later",
+        },
       },
       syncInstructions: {
         title: "View on all devices",

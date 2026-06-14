@@ -34,6 +34,7 @@ export interface Receipt {
   taxSeasonDate?: Date;
   subtitle?: string;
   pendingUpload?: boolean;
+  isOnboardingDemo?: boolean;
 }
 
 export const INDUSTRIES: { id: Industry; label: string }[] = [

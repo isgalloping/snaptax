@@ -63,11 +63,21 @@ describe("buildVerifyContext", () => {
     assert.equal(ctx.canBypassPay, false);
   });
 
-  it("requires isMockAI true for mock bypass", () => {
-    const ctx = buildVerifyContext(userActor, {
-      ...verifyFlags,
-      isMockAI: false,
-    });
+  it("blocks verify bypass on production platform even when flags allow", () => {
+    const prev = process.env.VERCEL_ENV;
+    process.env.VERCEL_ENV = "production";
+    const ctx = buildVerifyContext(userActor, verifyFlags);
+    assert.equal(ctx.canBypass, false);
+    assert.equal(ctx.canBypassPay, false);
     assert.equal(ctx.canMockAi, false);
+    process.env.VERCEL_ENV = prev;
+  });
+
+  it("allows verify bypass on preview platform", () => {
+    const prev = process.env.VERCEL_ENV;
+    process.env.VERCEL_ENV = "preview";
+    const ctx = buildVerifyContext(userActor, verifyFlags);
+    assert.equal(ctx.canBypass, true);
+    process.env.VERCEL_ENV = prev;
   });
 });

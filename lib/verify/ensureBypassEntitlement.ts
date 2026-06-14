@@ -2,11 +2,13 @@ import { prisma } from "@/lib/prisma";
 import { currentTaxSeason } from "@/lib/tax/season";
 import { utcNow } from "@/lib/time/utc";
 import { bypassTransactionId } from "@/lib/verify/bypassTransactionId";
+import { isPlatformVerifyAllowed } from "@/lib/verify/buildVerifyContext";
 
 export async function ensureBypassEntitlement(
   userId: string,
   taxSeason: string = currentTaxSeason(),
 ): Promise<boolean> {
+  if (!isPlatformVerifyAllowed()) return false;
   const existing = await prisma.snaptaxSeasonEntitlement.findUnique({
     where: { userId_taxSeason: { userId, taxSeason } },
   });

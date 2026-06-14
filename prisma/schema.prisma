@@ -28,6 +28,7 @@ model SnaptaxUser {
   ghostAccount       SnaptaxGhostAccount?
   receipts           SnaptaxReceipt[]
   seasonEntitlements SnaptaxSeasonEntitlement[]
+  checkoutIntents    SnaptaxCheckoutIntent[]
 
   @@unique([authChannel, userId], map: "snaptax_users_auth_channel_user_id_key")
   @@index([userEmail], map: "snaptax_users_user_email_idx")
@@ -97,4 +98,32 @@ model SnaptaxSeasonEntitlement {
 
   @@unique([userId, taxSeason], map: "snaptax_season_entitlements_user_season_key")
   @@map("snaptax_season_entitlements")
+}
+
+/// Fixed-window rate limit counters (Postgres-backed; no Redis)
+model SnaptaxRateLimitBucket {
+  bucketKey   String   @id @map("bucket_key") @db.VarChar(255)
+  windowStart DateTime @map("window_start") @db.Timestamptz(3)
+  count       Int      @default(0)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([windowStart], map: "snaptax_rate_limit_buckets_window_start_idx")
+  @@map("snaptax_rate_limit_buckets")
+}
+
+/// Paddle checkout intent — binds payment to session user (SEC-03)
+model SnaptaxCheckoutIntent {
+  id            String   @id @default(uuid()) @db.Uuid
+  userId        String   @map("user_id") @db.Uuid
+  taxSeason     String   @map("tax_season") @db.VarChar(255)
+  status        String   @default("pending") @db.VarChar(32)
+  expiresAt     DateTime @map("expires_at") @db.Timestamptz(3)
+  transactionId String?  @unique @map("transaction_id") @db.VarChar(128)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  user SnaptaxUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, taxSeason], map: "snaptax_checkout_intents_user_season_idx")
+  @@map("snaptax_checkout_intents")
 }

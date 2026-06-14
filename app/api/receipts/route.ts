@@ -5,6 +5,7 @@ import { parseTaxRegionHeader } from "@/lib/api/taxRegion";
 import {
   checkGhostReceiptLimit,
   checkIpReceiptLimit,
+  checkUserReceiptLimit,
   clientIp,
 } from "@/lib/api/rateLimit";
 import { apiError, mapErrorToResponse } from "@/lib/api/errors";
@@ -82,6 +83,11 @@ export const POST = withRequestLog(
         });
         if (count >= maxUnbound) {
           throw new Error("GHOST_RECEIPT_LIMIT");
+        }
+      } else {
+        const userLimit = await checkUserReceiptLimit(actor.userId);
+        if (!userLimit.ok) {
+          return apiError("RATE_LIMITED", "Too many requests", 429);
         }
       }
 

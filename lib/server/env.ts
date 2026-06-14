@@ -7,6 +7,11 @@ function firstDefined(...values: (string | undefined)[]): string {
   return "";
 }
 
+function isProdLikeDeployEnv(): boolean {
+  const env = process.env.VERCEL_ENV;
+  return env === "production" || env === "preview";
+}
+
 export function getDatabaseUrl(): string {
   return firstDefined(
     process.env.DATABASE_URL,
@@ -17,6 +22,9 @@ export function getDatabaseUrl(): string {
 }
 
 export function getGhostHmacSecret(): string {
+  if (isProdLikeDeployEnv()) {
+    return firstDefined(process.env.GHOST_HMAC_SECRET);
+  }
   return firstDefined(
     process.env.GHOST_HMAC_SECRET,
     process.env.SUPABASE_JWT_SECRET,
@@ -25,6 +33,9 @@ export function getGhostHmacSecret(): string {
 }
 
 export function getAuthSecret(): string {
+  if (isProdLikeDeployEnv()) {
+    return firstDefined(process.env.AUTH_SECRET);
+  }
   return firstDefined(
     process.env.AUTH_SECRET,
     process.env.SUPABASE_JWT_SECRET,
@@ -113,6 +124,7 @@ export function applyEnvAliases(): void {
   if (!process.env.DATABASE_URL && getDatabaseUrl()) {
     process.env.DATABASE_URL = getDatabaseUrl();
   }
+  if (isProdLikeDeployEnv()) return;
   if (!process.env.GHOST_HMAC_SECRET && getGhostHmacSecret()) {
     process.env.GHOST_HMAC_SECRET = getGhostHmacSecret();
   }

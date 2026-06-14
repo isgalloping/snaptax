@@ -1,6 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyPaddleWebhookSignature } from "@/lib/server/paddleWebhook";
+import {
+  validatePaddleTransaction,
+  type PaddleWebhookPayload,
+} from "@/lib/billing/validatePaddleTransaction";
+import {
+  markCheckoutIntentConsumed,
+  resolveWebhookGrantTarget,
+} from "@/lib/billing/checkoutIntent";
 import { currentTaxSeason } from "@/lib/tax/season";
 import { withRequestLog } from "@/lib/server/log/withRequestLog";
 import { logEvent } from "@/lib/server/log/logEvent";
@@ -37,18 +45,9 @@ export const POST = withRequestLog("api.webhook", async (request, _context) => {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 
-  let payload: {
-    event_type?: string;
-    data?: {
-      id?: string;
-      status?: string;
-      custom_data?: { userId?: string; taxSeason?: string };
-      details?: { totals?: { total?: string } };
-    };
-  };
-
+  let payload: PaddleWebhookPayload;
   try {
-    payload = JSON.parse(rawBody) as typeof payload;
+    payload = JSON.parse(rawBody) as PaddleWebhookPayload;
   } catch {
     return NextResponse.json({ error: "invalid json" }, { status: 400 });
   }
@@ -57,31 +56,76 @@ export const POST = withRequestLog("api.webhook", async (request, _context) => {
     return NextResponse.json({ ok: true });
   }
 
-  const data = payload.data;
-  const userId = data?.custom_data?.userId;
-  const transactionId = data?.id;
-  if (!userId || !transactionId) {
-    return NextResponse.json({ ok: true });
+  const validated = validatePaddleTransaction(payload);
+  if (!validated.ok) {
+    logEvent({
+      ts: new Date().toISOString(),
+      level: "warn",
+      module: "biz.paddle",
+      success: false,
+      durationMs: 0,
+      meta: {
+        reason: validated.reason,
+        eventType: payload.event_type,
+      },
+    });
+    return NextResponse.json({ ok: true, ignored: true });
   }
 
-  const taxSeason = data.custom_data?.taxSeason ?? currentTaxSeason();
-  const amount = Number(data.details?.totals?.total ?? 49);
+  const grant = await resolveWebhookGrantTarget(validated.customData);
+  if (!grant.ok) {
+    logEvent({
+      ts: new Date().toISOString(),
+      level: "warn",
+      module: "biz.paddle",
+      success: false,
+      durationMs: 0,
+      meta: {
+        reason: grant.reason,
+        transactionId: validated.transactionId,
+      },
+    });
+    return NextResponse.json({ ok: true, ignored: true });
+  }
+
+  if (grant.legacyUserIdPath) {
+    logEvent({
+      ts: new Date().toISOString(),
+      level: "warn",
+      module: "biz.paddle",
+      success: true,
+      durationMs: 0,
+      meta: {
+        reason: "deprecated_custom_data_user_id",
+        transactionId: validated.transactionId,
+      },
+    });
+  }
+
+  const taxSeason =
+    grant.taxSeason && grant.taxSeason.length > 0
+      ? grant.taxSeason
+      : currentTaxSeason();
 
   await prisma.snaptaxSeasonEntitlement.upsert({
-    where: { transactionId },
+    where: { transactionId: validated.transactionId },
     create: {
-      userId,
+      userId: grant.userId,
       taxSeason,
-      transactionId,
+      transactionId: validated.transactionId,
       paidAt: utcNow(),
-      amount,
+      amount: validated.amountUsd,
       channelCode: "paddle",
     },
     update: {
       paidAt: utcNow(),
-      amount,
+      amount: validated.amountUsd,
     },
   });
+
+  if (grant.intentId) {
+    await markCheckoutIntentConsumed(grant.intentId, validated.transactionId);
+  }
 
   logEvent({
     ts: new Date().toISOString(),
@@ -90,8 +134,9 @@ export const POST = withRequestLog("api.webhook", async (request, _context) => {
     success: true,
     durationMs: 0,
     meta: {
-      transactionId,
+      transactionId: validated.transactionId,
       taxSeason,
+      intentId: grant.intentId ?? null,
     },
   });
 

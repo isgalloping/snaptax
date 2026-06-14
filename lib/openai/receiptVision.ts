@@ -7,6 +7,10 @@ import { computeEuVatAmount } from "@/lib/tax/computeEu";
 import { usDeductibleBase } from "@/lib/tax/computeUs";
 import { usMarginalRate } from "@/lib/tax/usCategories";
 import type { ReceiptAiFields, TaxRegion } from "@/lib/tax/types";
+import {
+  industryLabelForPrompt,
+  type ValidIndustry,
+} from "@/lib/users/industrySchema";
 
 import {
   getOpenAiApiKey,
@@ -49,6 +53,17 @@ export type VisionProcessResult = {
   deductible: boolean;
 };
 
+function isValidIndustry(value: string): value is ValidIndustry {
+  return (
+    value === "truck_driver" ||
+    value === "plumber" ||
+    value === "electrician" ||
+    value === "construction" ||
+    value === "delivery" ||
+    value === "general"
+  );
+}
+
 export async function processReceiptVision(
   imageBuffer: Buffer,
   mime: "image/jpeg" | "image/png",
@@ -58,9 +73,10 @@ export async function processReceiptVision(
   const model = getOpenAiModel();
   const systemPrompt =
     dataRegion === "eu" ? EU_RECEIPT_PROMPT : US_RECEIPT_PROMPT;
-  const industryHint = industry
-    ? `User industry context: ${industry}.`
-    : "";
+  const industryHint =
+    industry && isValidIndustry(industry)
+      ? `User industry context: ${industryLabelForPrompt(industry)}.`
+      : "";
 
   const prepared = await prepareVisionImage(imageBuffer, mime);
   const client = openaiClient();

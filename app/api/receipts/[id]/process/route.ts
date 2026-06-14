@@ -1,7 +1,11 @@
 import { get } from "@vercel/blob";
 import { NextResponse } from "next/server";
+import { apiError, mapErrorToResponse } from "@/lib/api/errors";
+import {
+  checkActorProcessLimit,
+  checkReceiptProcessCooldown,
+} from "@/lib/api/rateLimit";
 import { getActor } from "@/lib/auth/getActor";
-import { mapErrorToResponse } from "@/lib/api/errors";
 import { prisma } from "@/lib/prisma";
 import { assertReceiptAccess } from "@/lib/receipts/ownership";
 import { processReceiptTax } from "@/lib/receipts/processReceiptTax";
@@ -33,6 +37,16 @@ export const POST = withRequestLog(
           status: receipt.status,
           taxAmount: Number(receipt.taxAmount),
         });
+      }
+
+      const cooldown = await checkReceiptProcessCooldown(id);
+      if (!cooldown.ok) {
+        return apiError("RATE_LIMITED", "Too many requests", 429);
+      }
+
+      const actorLimit = await checkActorProcessLimit(actor);
+      if (!actorLimit.ok) {
+        return apiError("RATE_LIMITED", "Too many requests", 429);
       }
 
       const blobResult = await get(receipt.imageUrl, {

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { ZodError } from "zod";
 import { mapErrorToResponse } from "@/lib/api/errors";
 import { getActor } from "@/lib/auth/getActor";
 import { GHOST_COOKIE_NAME } from "@/lib/auth/ghostToken";
@@ -7,6 +8,7 @@ import { deleteUserAccount } from "@/lib/receipts/accountCleanup";
 import { getSessionFromCookies } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
 import { withRequestLog } from "@/lib/server/log/withRequestLog";
+import { patchUserBodySchema } from "@/lib/users/industrySchema";
 
 export const DELETE = withRequestLog("api.user", async (request, _context) => {
   try {
@@ -41,10 +43,8 @@ export const PATCH = withRequestLog("api.user", async (request, _context) => {
     const actor = await getActor(request, { requireWrite: false });
     if (actor.kind !== "user") throw new Error("UNAUTHORIZED");
 
-    const body = (await request.json()) as { industry?: string };
-    if (!body.industry) {
-      return NextResponse.json({ ok: true });
-    }
+    const raw = await request.json();
+    const body = patchUserBodySchema.parse(raw);
 
     const user = await prisma.snaptaxUser.update({
       where: { id: actor.userId },
@@ -54,6 +54,9 @@ export const PATCH = withRequestLog("api.user", async (request, _context) => {
 
     return NextResponse.json({ user });
   } catch (err) {
+    if (err instanceof ZodError) {
+      return mapErrorToResponse(new Error("INVALID_INDUSTRY"));
+    }
     return mapErrorToResponse(err);
   }
 });

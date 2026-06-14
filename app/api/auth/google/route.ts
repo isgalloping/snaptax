@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { parseTaxRegionHeader } from "@/lib/api/taxRegion";
+import {
+  parseTaxRegionHeader,
+  resolveInitialDataRegion,
+} from "@/lib/api/taxRegion";
 import { mapErrorToResponse } from "@/lib/api/errors";
 import { verifyGoogleIdToken } from "@/lib/auth/googleVerify";
 import {
@@ -15,6 +18,7 @@ import {
   enqueueTaxRecalc,
   resolveGhostCandidate,
 } from "@/lib/receipts/taxRecalcQueue";
+import { logEvent } from "@/lib/server/log/logEvent";
 import { withRequestLog } from "@/lib/server/log/withRequestLog";
 import { shouldRecalcOnLogin } from "@/lib/tax/shouldRecalcOnLogin";
 import type { TaxRegion } from "@/lib/tax/types";
@@ -31,8 +35,6 @@ export const POST = withRequestLog("api.auth", async (request, _context) => {
     const { ghostId } = verifyGhostToken(ghostToken);
 
     const profile = await verifyGoogleIdToken(body.credential);
-    const lockedRegion = parseTaxRegionHeader(request) as TaxRegion;
-    const ghostCandidate = await resolveGhostCandidate(ghostId, lockedRegion);
 
     const existingBinding = await prisma.snaptaxGhostAccount.findUnique({
       where: { ghostId },
@@ -49,25 +51,41 @@ export const POST = withRequestLog("api.auth", async (request, _context) => {
     });
 
     if (!user) {
+      const headerRegion = parseTaxRegionHeader(request) as TaxRegion;
+      const resolved = resolveInitialDataRegion({
+        headerRegion,
+        acceptLanguage: request.headers.get("accept-language"),
+      });
+
+      if (resolved.adjusted) {
+        logEvent({
+          ts: new Date().toISOString(),
+          level: "warn",
+          module: "api.auth",
+          success: true,
+          durationMs: 0,
+          meta: {
+            reason: resolved.reason ?? "region_adjusted",
+            headerRegion,
+            resolvedRegion: resolved.region,
+          },
+        });
+      }
+
       user = await prisma.snaptaxUser.create({
         data: {
           userId: profile.sub,
           userEmail: profile.email,
           userName: profile.name ?? null,
           authChannel: "google",
-          dataRegion: lockedRegion,
-          dataRegionLockedAt: utcNow(),
-        },
-      });
-    } else if (user.dataRegion !== lockedRegion) {
-      user = await prisma.snaptaxUser.update({
-        where: { id: user.id },
-        data: {
-          dataRegion: lockedRegion,
+          dataRegion: resolved.region,
           dataRegionLockedAt: utcNow(),
         },
       });
     }
+
+    const lockedRegion = user.dataRegion as TaxRegion;
+    const ghostCandidate = await resolveGhostCandidate(ghostId, lockedRegion);
 
     if (existingBinding && existingBinding.userId !== user.id) {
       throw new Error("GHOST_ALREADY_BOUND");
@@ -85,10 +103,10 @@ export const POST = withRequestLog("api.auth", async (request, _context) => {
     });
 
     let taxRecalcQueued = 0;
-    if (shouldRecalcOnLogin(user.dataRegion as TaxRegion, ghostCandidate)) {
+    if (shouldRecalcOnLogin(lockedRegion, ghostCandidate)) {
       taxRecalcQueued = await enqueueTaxRecalc({
         userId: user.id,
-        lockedRegion: user.dataRegion as TaxRegion,
+        lockedRegion,
         industry: user.industry,
       });
     }

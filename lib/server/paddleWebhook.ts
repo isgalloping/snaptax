@@ -50,10 +50,11 @@ export function verifyPaddleWebhookSignature(
   const secret = getPaddleWebhookSecret();
   if (!secret) throw new Error("PADDLE_WEBHOOK_SECRET missing");
 
-  if (
-    process.env.NODE_ENV !== "production" &&
-    isPaddleWebhookSecretPlaceholder(secret)
-  ) {
+  const maySkipVerify =
+    process.env.NODE_ENV === "development" &&
+    process.env.PADDLE_WEBHOOK_SKIP_VERIFY === "1";
+
+  if (maySkipVerify) {
     logEvent({
       ts: new Date().toISOString(),
       level: "warn",
@@ -61,7 +62,7 @@ export function verifyPaddleWebhookSignature(
       success: true,
       durationMs: 0,
       meta: {
-        reason: "webhook_verify_skipped_placeholder_secret",
+        reason: "webhook_verify_skipped_dev_flag",
       },
     });
     return true;

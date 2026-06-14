@@ -19,6 +19,10 @@ function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
 
+export function isPlatformVerifyAllowed(): boolean {
+  return process.env.VERCEL_ENV !== "production";
+}
+
 export function buildVerifyContext(
   actor: Actor,
   flags: VerifyFlagValues,
@@ -29,7 +33,8 @@ export function buildVerifyContext(
     !!actor.email &&
     !!flags.verfyUser &&
     normalizeEmail(actor.email) === normalizeEmail(flags.verfyUser);
-  const canBypass = isVerifyMode && isWhitelisted;
+  const canBypass =
+    isPlatformVerifyAllowed() && isVerifyMode && isWhitelisted;
 
   return {
     isVerifyMode,

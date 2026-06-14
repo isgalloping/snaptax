@@ -65,7 +65,7 @@ Single Next.js app (no monorepo). Package manager is **npm** (`package-lock.json
 ### Env file (required, gitignored)
 - `.env.local` holds local secrets and is intentionally **not committed**. If missing, recreate it with at least:
   - `DATABASE_URL` and `POSTGRES_URL_NON_POOLING` → `postgresql://snaptax:snaptax@localhost:5432/snaptax?schema=public`
-  - `GHOST_HMAC_SECRET` and `AUTH_SECRET` → any string ≥32 chars (required to sign Ghost/session cookies; write APIs 500 without them)
+  - `GHOST_HMAC_SECRET` and `AUTH_SECRET` → **two different** strings ≥32 chars (required to sign Ghost/session cookies; write APIs 500 without them). In production/preview they must not share the same value or cross-fallback.
 - Env name aliasing lives in `lib/server/env.ts` + `scripts/load-env.mjs`.
 
 ### Migrations

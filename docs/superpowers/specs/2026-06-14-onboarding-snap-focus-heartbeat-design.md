@@ -143,7 +143,7 @@ Remove `__breathe` and `__marquee` child divs.
 
 ## 6. Out of scope
 
-- Tooltip text or sync animation
-- Stage 2 sandbox shutter highlight
+- Tooltip text or sync animation on stage_1 SNAP
+- Stage 2 sandbox shutter — see [`2026-06-14-onboarding-sandbox-shutter-coach-design.md`](./2026-06-14-onboarding-sandbox-shutter-coach-design.md)
 - Red border color
 - Auto-dismiss timeout

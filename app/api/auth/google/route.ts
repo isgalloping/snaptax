@@ -91,7 +91,31 @@ export const POST = withRequestLog("api.auth", async (request, _context) => {
       throw new Error("GHOST_ALREADY_BOUND");
     }
 
-    if (!existingBinding) {
+    const userBinding = await prisma.snaptaxGhostAccount.findUnique({
+      where: { userId: user.id },
+    });
+
+    if (userBinding) {
+      if (userBinding.ghostId !== ghostId) {
+        logEvent({
+          ts: new Date().toISOString(),
+          level: "info",
+          module: "api.auth",
+          success: true,
+          durationMs: 0,
+          meta: {
+            reason: "ghost_rebind",
+            previousGhostId: userBinding.ghostId,
+            ghostId,
+            userId: user.id,
+          },
+        });
+        await prisma.snaptaxGhostAccount.update({
+          where: { userId: user.id },
+          data: { ghostId, boundAt: utcNow() },
+        });
+      }
+    } else if (!existingBinding) {
       await prisma.snaptaxGhostAccount.create({
         data: { ghostId, userId: user.id },
       });

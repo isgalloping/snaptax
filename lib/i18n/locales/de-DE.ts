@@ -309,6 +309,14 @@ export const DE_DE_COPY: UserCopy = {
       backupHint:
         "Mit Google anmelden, um Belege vor dem Handywechsel zu sichern.",
       googleCta: "Weiter mit Google",
+      signOut: "Abmelden",
+      signOutTitle: "Abmelden?",
+      signOutWarning:
+        "Ihre Belege bleiben in der Cloud gesichert. Lokale Kopien bleiben auf diesem Gerät.",
+      signOutRequiresOnline:
+        "Stellen Sie eine Internetverbindung her, um sich abzumelden.",
+      signOutFailed: "Abmeldung fehlgeschlagen. Bitte erneut versuchen.",
+      signingOut: "Abmeldung…",
     },
     language: {
       title: "Sprache",

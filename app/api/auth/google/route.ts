@@ -34,7 +34,12 @@ export const POST = withRequestLog("api.auth", async (request, _context) => {
     if (!ghostToken) throw new Error("UNAUTHORIZED");
     const { ghostId } = verifyGhostToken(ghostToken);
 
-    const profile = await verifyGoogleIdToken(body.credential);
+    let profile;
+    try {
+      profile = await verifyGoogleIdToken(body.credential);
+    } catch {
+      throw new Error("INVALID_GOOGLE_TOKEN");
+    }
 
     const existingBinding = await prisma.snaptaxGhostAccount.findUnique({
       where: { ghostId },
@@ -162,9 +167,6 @@ export const POST = withRequestLog("api.auth", async (request, _context) => {
 
     return res;
   } catch (err) {
-    if (err instanceof Error && err.message === "INVALID_GOOGLE_TOKEN") {
-      return mapErrorToResponse(new Error("UNAUTHORIZED"));
-    }
     if (err instanceof Error && err.message === "GHOST_ALREADY_BOUND") {
       return NextResponse.json(
         { error: { code: "GHOST_ALREADY_BOUND", message: "Ghost already linked" } },

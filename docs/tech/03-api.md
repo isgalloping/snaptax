@@ -40,7 +40,7 @@ Header: **`X-Tax-Region`**（`us` \| `eu`；与客户端 `snap1099_region_candid
 
 ### `POST /api/auth/logout`
 
-清除 session cookie。
+清除 session cookie 与 ghost cookie（登出后客户端应 `POST /api/ghost/register` 获取新 Ghost）。
 
 ### `GET /api/auth/me`
 

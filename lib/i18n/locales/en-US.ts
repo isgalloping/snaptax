@@ -302,6 +302,13 @@ export const EN_US_COPY: UserCopy = {
         backupHint:
           "Sign in with Google to back up receipts before switching phones.",
         googleCta: "Continue with Google",
+        signOut: "Sign out",
+        signOutTitle: "Sign out?",
+        signOutWarning:
+          "Your receipts stay backed up in the cloud. Local copies remain on this device.",
+        signOutRequiresOnline: "Connect to the internet to sign out.",
+        signOutFailed: "Could not sign out. Try again.",
+        signingOut: "Signing out…",
       },
       language: {
         title: "Language",

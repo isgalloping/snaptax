@@ -5,15 +5,17 @@ declare global {
         id: {
           initialize: (config: {
             client_id: string;
-            callback: (response: { credential: string }) => void;
+            callback: (response: { credential?: string }) => void;
             auto_select?: boolean;
             cancel_on_tap_outside?: boolean;
+            use_fedcm_for_button?: boolean;
           }) => void;
           renderButton: (
             parent: HTMLElement,
             options: Record<string, string>,
           ) => void;
           prompt: () => void;
+          cancel: () => void;
         };
       };
     };

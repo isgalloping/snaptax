@@ -8,6 +8,7 @@ interface AccountStatusBlockProps {
   seasonPaid: boolean;
   seasonLabel: string;
   onSignIn: () => void;
+  onSignOut?: () => void;
 }
 
 export function AccountStatusBlock({
@@ -15,6 +16,7 @@ export function AccountStatusBlock({
   seasonPaid,
   seasonLabel,
   onSignIn,
+  onSignOut,
 }: AccountStatusBlockProps) {
   const copy = useUserCopy().settings.account;
 
@@ -32,6 +34,15 @@ export function AccountStatusBlock({
             <p className="mt-2 text-sm font-bold text-yellow-400">
               {seasonLabel} {copy.taxSeasonPaid}
             </p>
+          )}
+          {onSignOut && (
+            <button
+              type="button"
+              onClick={onSignOut}
+              className="mt-4 w-full min-h-16 rounded-xl border-2 border-zinc-600 bg-zinc-900 py-3 text-sm font-black uppercase tracking-wider text-white transition-transform active:scale-95"
+            >
+              {copy.signOut}
+            </button>
           )}
         </>
       ) : (

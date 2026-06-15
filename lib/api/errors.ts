@@ -18,6 +18,18 @@ export function resolveApiError(err: unknown): ResolvedApiError {
         clientMessage: "Authentication required",
         status: 401,
       };
+    case "INVALID_GOOGLE_TOKEN":
+      return {
+        code: "INVALID_GOOGLE_TOKEN",
+        clientMessage: "Google sign-in token invalid",
+        status: 401,
+      };
+    case "GHOST_ALREADY_BOUND":
+      return {
+        code: "GHOST_ALREADY_BOUND",
+        clientMessage: "This device is already linked to another account",
+        status: 409,
+      };
     case "GOOGLE_LOGIN_REQUIRED":
       return {
         code: "GOOGLE_LOGIN_REQUIRED",

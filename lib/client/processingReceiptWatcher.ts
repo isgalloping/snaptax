@@ -1,4 +1,5 @@
 import {
+  fetchReceiptByIdIfExists,
   fetchReceiptList,
   triggerReceiptProcess,
   type ApiReceipt,
@@ -12,7 +13,13 @@ export type ProcessingWatcherCallbacks = {
   onWriteFailure: (id: string) => void;
 };
 
-/** Polls one active processing receipt via list endpoint; pauses when UI is busy. */
+export type ProcessingWatcherDeps = {
+  fetchReceipt?: (id: string) => Promise<ApiReceipt | null>;
+  fetchList?: () => ReturnType<typeof fetchReceiptList>;
+  triggerProcess?: typeof triggerReceiptProcess;
+};
+
+/** Polls one active processing receipt by id; pauses when UI is busy. */
 export class ProcessingReceiptWatcher {
   private activeId: string | null = null;
   private pollAttempts = 0;
@@ -20,13 +27,21 @@ export class ProcessingReceiptWatcher {
   private resumeTimer: ReturnType<typeof setTimeout> | null = null;
   private tickInFlight = false;
   private paused = false;
+  private readonly fetchReceipt: (id: string) => Promise<ApiReceipt | null>;
+  private readonly fetchList: () => ReturnType<typeof fetchReceiptList>;
+  private readonly triggerProcess: typeof triggerReceiptProcess;
 
   constructor(
     private readonly callbacks: ProcessingWatcherCallbacks,
+    deps: ProcessingWatcherDeps = {},
     private readonly intervalMs = 3000,
     private readonly processAfterAttempts = 6,
     private readonly resumeDebounceMs = 1000,
-  ) {}
+  ) {
+    this.fetchReceipt = deps.fetchReceipt ?? fetchReceiptByIdIfExists;
+    this.fetchList = deps.fetchList ?? fetchReceiptList;
+    this.triggerProcess = deps.triggerProcess ?? triggerReceiptProcess;
+  }
 
   get isPaused(): boolean {
     return this.paused;
@@ -69,9 +84,9 @@ export class ProcessingReceiptWatcher {
     }
   }
 
-  /** User-initiated retry — one list fetch even while paused. */
+  /** User-initiated retry — one poll even while paused. */
   tickOnce() {
-    void this.tick({ bypassPause: true });
+    return this.tick({ bypassPause: true });
   }
 
   /** Clear active watch without tearing down callbacks (e.g. settings clear data). */
@@ -106,14 +121,14 @@ export class ProcessingReceiptWatcher {
     const id = this.activeId;
     this.tickInFlight = true;
     try {
-      const { receipts, taxSavedEstimate } = await fetchReceiptList();
-      const receipt = receipts.find((r) => r.id === id);
+      const receipt = await this.fetchReceipt(id);
       if (!receipt) {
         this.unwatch(id);
         return;
       }
 
       if (receipt.status !== "processing") {
+        const { taxSavedEstimate } = await this.fetchList();
         this.callbacks.onReceiptUpdate(receipt);
         this.unwatch(id);
         this.callbacks.onTaxSaved?.(taxSavedEstimate);
@@ -127,7 +142,7 @@ export class ProcessingReceiptWatcher {
         this.pollAttempts % this.processAfterAttempts === 0;
 
       if (shouldTryProcess && this.callbacks.getWriteBudget(id) > 0) {
-        const result = await triggerReceiptProcess(id);
+        const result = await this.triggerProcess(id);
         if (result.ok === false) {
           if (result.reason === "not_found") {
             this.unwatch(id);
@@ -140,8 +155,6 @@ export class ProcessingReceiptWatcher {
           }
         }
       }
-
-      this.callbacks.onTaxSaved?.(taxSavedEstimate);
     } catch {
       // retry on next interval
     } finally {

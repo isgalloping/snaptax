@@ -26,6 +26,7 @@ import { enrichExportRowsWithImageUrls } from "@/lib/export/receiptImageUrl";
 import { logEvent } from "@/lib/server/log/logEvent";
 import { resolveVerifyContext } from "@/lib/verify/context";
 import { ensureBypassEntitlement } from "@/lib/verify/ensureBypassEntitlement";
+import { userAccountReceiptFilter } from "@/lib/receipts/accountCleanup";
 
 const exportBodySchema = z.object({
   taxYear: z.string().regex(/^\d{4}$/).optional(),
@@ -56,21 +57,29 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
     const taxYear = body.taxYear ?? defaultExportTaxYear();
     const taxYearNum = Number(taxYear);
 
-    const [user, allReceipts] = await Promise.all([
+    const [user, binding] = await Promise.all([
       prisma.snaptaxUser.findUnique({
         where: { id: actor.userId },
         select: { industry: true, dataRegion: true },
       }),
-      prisma.snaptaxReceipt.findMany({
-        where: {
-          userId: actor.userId,
-          status: "done",
-        },
-        orderBy: { capturedAt: "asc" },
+      prisma.snaptaxGhostAccount.findUnique({
+        where: { userId: actor.userId },
+        select: { ghostId: true },
       }),
     ]);
 
     if (!user) throw new Error("UNAUTHORIZED");
+
+    const allReceipts = await prisma.snaptaxReceipt.findMany({
+      where: {
+        ...userAccountReceiptFilter(
+          actor.userId,
+          binding?.ghostId ?? null,
+        ),
+        status: "done",
+      },
+      orderBy: { capturedAt: "asc" },
+    });
 
     const timeZone = parseRequestTimeZone(request.headers.get("X-Time-Zone"));
     const region = (user.dataRegion ?? "us") as TaxRegion;

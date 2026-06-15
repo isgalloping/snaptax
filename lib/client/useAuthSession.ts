@@ -95,6 +95,8 @@ export function useAuthSession() {
   const signOut = useCallback(async () => {
     await signOutApi();
     setGoogleUser(null);
+    setSeasonPaidState(false);
+    setSeasonPaid(seasonKey(), false);
   }, []);
 
   const markSeasonPaid = useCallback(() => {
@@ -108,7 +110,7 @@ export function useAuthSession() {
     const season = seasonKey();
     const paid = await fetchSeasonPaid(season);
     setSeasonPaidState(paid);
-    if (paid) setSeasonPaid(season, true);
+    setSeasonPaid(season, paid);
   }, [googleUser]);
 
   const resetAfterAccountDelete = useCallback(() => {

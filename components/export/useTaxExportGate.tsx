@@ -16,6 +16,7 @@ import {
 import { PaywallSheet } from "@/components/settings/PaywallSheet";
 import { ExportEngineSheet } from "@/components/export/ExportEngineSheet";
 import { useI18n } from "@/components/i18n/I18nProvider";
+import { hasExportableReceipts } from "@/lib/tax/exportGate";
 
 interface UseTaxExportGateOptions {
   receipts: Receipt[];
@@ -26,7 +27,7 @@ interface UseTaxExportGateOptions {
   onPostLoginSync?: (taxRecalcQueued: number) => Promise<void>;
   onSeasonPaid: () => void;
   refreshSeasonPaid?: () => Promise<void>;
-  onPreExportPrepare?: () => Promise<void>;
+  onPreExportPrepare?: () => Promise<Receipt[] | void>;
   onPostExportSync?: () => Promise<void>;
   onReceiptUpdated?: (receipt: Receipt) => void;
 }
@@ -64,6 +65,16 @@ export function useTaxExportGate({
     [receipts],
   );
 
+  const blockIfNoExportableReceipts = (prepared?: Receipt[] | void) => {
+    const list = prepared !== undefined ? prepared : exportableReceipts;
+    const exportable = list.filter((r) => !r.isOnboardingDemo);
+    if (!hasExportableReceipts(exportable)) {
+      setErrorMessage(copy.exportEngine.noDeductibleReceipts);
+      return true;
+    }
+    return false;
+  };
+
   const resolveSeasonPaid = async (): Promise<boolean> => {
     if (navigator.onLine) {
       const paid = await fetchSeasonPaid(currentSeason).catch(() => false);
@@ -75,12 +86,14 @@ export function useTaxExportGate({
 
   const openExportAfterPrepare = async () => {
     if (!onPreExportPrepare) {
+      if (blockIfNoExportableReceipts()) return;
       openExportEngine();
       return;
     }
     setPreparingExport(true);
     try {
-      await onPreExportPrepare();
+      const prepared = await onPreExportPrepare();
+      if (blockIfNoExportableReceipts(prepared)) return;
       openExportEngine();
     } catch (err) {
       if (err instanceof Error && err.message === "EXPORT_OFFLINE") {

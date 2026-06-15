@@ -8,6 +8,7 @@ import {
   taxYearDeductions,
   receiptsInTaxYear,
 } from "@/lib/tax/taxYearStats";
+import { pickDefaultExportTaxYear } from "@/lib/tax/exportGate";
 import { defaultExportTaxYear } from "@/lib/tax/season";
 import { receiptsNeedingExportReview } from "@/lib/tax/exportReview";
 import { formatCurrency } from "@/lib/format";
@@ -26,7 +27,7 @@ type Step = 1 | 2 | 3 | 4;
 interface ExportEngineSheetProps {
   receipts: Receipt[];
   onClose: () => void;
-  onPreExportPrepare?: () => Promise<void>;
+  onPreExportPrepare?: () => Promise<void | Receipt[]>;
   onExported?: () => void | Promise<void>;
   onPaymentRequired?: () => void;
   onReceiptUpdated?: (receipt: Receipt) => void;
@@ -56,9 +57,10 @@ export function ExportEngineSheet({
   }, [receipts, timeZone, defaultYear]);
 
   const [step, setStep] = useState<Step>(1);
-  const [taxYear, setTaxYear] = useState<number>(
-    years.includes(defaultYear) ? defaultYear : years[0]!,
+  const [taxYear, setTaxYear] = useState<number>(() =>
+    pickDefaultExportTaxYear(receipts, timeZone),
   );
+  const [step1Hint, setStep1Hint] = useState<string | null>(null);
   const [format, setFormat] = useState<ExportFormat>("csv");
   const [generating, setGenerating] = useState(false);
   const [previewing, setPreviewing] = useState(false);
@@ -80,6 +82,15 @@ export function ExportEngineSheet({
   const includesReview = reviewReceipts.length > 0;
   const totalSteps = includesReview ? 4 : 3;
   const canContinueStep1 = yearReceipts.length > 0;
+
+  useEffect(() => {
+    if (receiptsInTaxYear(receipts, taxYear, timeZone).length > 0) return;
+    const next = pickDefaultExportTaxYear(receipts, timeZone);
+    if (receiptsInTaxYear(receipts, next, timeZone).length > 0) {
+      setTaxYear(next);
+      setStep1Hint(null);
+    }
+  }, [receipts, taxYear, timeZone]);
 
   const displayStep = useMemo(() => {
     if (!includesReview && step >= 2) return step - 1;
@@ -149,6 +160,11 @@ export function ExportEngineSheet({
   };
 
   const handleContinueFromYear = () => {
+    if (yearReceipts.length === 0) {
+      setStep1Hint(t.noDeductibleReceipts);
+      return;
+    }
+    setStep1Hint(null);
     if (includesReview) {
       setStep(2);
     } else {
@@ -284,7 +300,10 @@ export function ExportEngineSheet({
                     key={year}
                     type="button"
                     disabled={disabled}
-                    onClick={() => setTaxYear(year)}
+                    onClick={() => {
+                      setTaxYear(year);
+                      setStep1Hint(null);
+                    }}
                     className={`w-full min-h-[88px] rounded-xl border-2 p-4 text-left transition-transform active:scale-95 disabled:opacity-40 ${
                       selected
                         ? "border-yellow-500 bg-yellow-950"
@@ -313,11 +332,19 @@ export function ExportEngineSheet({
                 );
               })}
             </div>
+            {!canContinueStep1 && (
+              <p className="mt-4 rounded-xl border-2 border-red-600 bg-red-950/40 px-4 py-3 text-sm font-bold text-red-400">
+                {step1Hint ?? t.noDeductibleReceipts}
+              </p>
+            )}
             <button
               type="button"
-              disabled={!canContinueStep1}
               onClick={handleContinueFromYear}
-              className="mt-6 w-full min-h-16 rounded-xl border-4 border-white bg-yellow-500 py-4 text-lg font-black uppercase tracking-wider text-black transition-transform active:scale-95 disabled:opacity-50"
+              className={`mt-6 w-full min-h-16 rounded-xl border-4 py-4 text-lg font-black uppercase tracking-wider transition-transform active:scale-95 ${
+                canContinueStep1
+                  ? "border-white bg-yellow-500 text-black"
+                  : "cursor-not-allowed border-zinc-600 bg-zinc-800 text-zinc-500"
+              }`}
             >
               {t.continue}
             </button>

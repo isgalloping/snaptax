@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getActor } from "@/lib/auth/getActor";
 import { mapErrorToResponse } from "@/lib/api/errors";
 import { prisma } from "@/lib/prisma";
+import { deleteReceiptBlobs } from "@/lib/receipts/accountCleanup";
 import { assertReceiptAccess } from "@/lib/receipts/ownership";
 import { assertPersistedReceiptId } from "@/lib/receipts/receiptId";
 import { serializeReceipt } from "@/lib/receipts/serialize";
@@ -46,6 +47,9 @@ export const DELETE = withRequestLog(
       const receipt = await prisma.snaptaxReceipt.findUnique({ where: { id } });
       if (!receipt) throw new Error("NOT_FOUND");
       assertReceiptAccess(receipt, actor);
+      if (receipt.imageUrl?.trim()) {
+        await deleteReceiptBlobs([receipt.imageUrl]);
+      }
       await prisma.snaptaxReceipt.delete({ where: { id } });
       return new NextResponse(null, { status: 204 });
     } catch (err) {

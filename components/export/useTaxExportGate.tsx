@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { Receipt } from "@/lib/types";
 import type { GoogleUser } from "@/lib/client/authStorage";
+import { isSeasonPaid, setSeasonPaid } from "@/lib/client/authStorage";
 import {
   fetchSeasonPaid,
   pollEntitlementReady,
@@ -25,6 +26,7 @@ interface UseTaxExportGateOptions {
   onPostLoginSync?: (taxRecalcQueued: number) => Promise<void>;
   onSeasonPaid: () => void;
   refreshSeasonPaid?: () => Promise<void>;
+  onPreExportPrepare?: () => Promise<void>;
   onPostExportSync?: () => Promise<void>;
   onReceiptUpdated?: (receipt: Receipt) => void;
 }
@@ -32,12 +34,13 @@ interface UseTaxExportGateOptions {
 export function useTaxExportGate({
   receipts,
   googleUser,
-  seasonPaid,
+  seasonPaid: _seasonPaid,
   currentSeason,
   onUserSignedIn,
   onPostLoginSync,
   onSeasonPaid,
   refreshSeasonPaid,
+  onPreExportPrepare,
   onPostExportSync,
   onReceiptUpdated,
 }: UseTaxExportGateOptions) {
@@ -47,6 +50,7 @@ export function useTaxExportGate({
   const [showExportSheet, setShowExportSheet] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [paywallExporting, setPaywallExporting] = useState(false);
+  const [preparingExport, setPreparingExport] = useState(false);
 
   const clearError = () => setErrorMessage(null);
 
@@ -60,15 +64,44 @@ export function useTaxExportGate({
     [receipts],
   );
 
+  const resolveSeasonPaid = async (): Promise<boolean> => {
+    if (navigator.onLine) {
+      const paid = await fetchSeasonPaid(currentSeason).catch(() => false);
+      setSeasonPaid(currentSeason, paid);
+      return paid;
+    }
+    return isSeasonPaid(currentSeason);
+  };
+
+  const openExportAfterPrepare = async () => {
+    if (!onPreExportPrepare) {
+      openExportEngine();
+      return;
+    }
+    setPreparingExport(true);
+    try {
+      await onPreExportPrepare();
+      openExportEngine();
+    } catch (err) {
+      if (err instanceof Error && err.message === "EXPORT_OFFLINE") {
+        setErrorMessage(copy.settings.export.offline);
+      } else {
+        setErrorMessage(copy.settings.export.failed);
+      }
+    } finally {
+      setPreparingExport(false);
+    }
+  };
+
   const runExportGate = async () => {
     clearError();
     if (!googleUser) {
       setGoogleSheet("hard-export");
       return;
     }
-    const paid = await fetchSeasonPaid(currentSeason).catch(() => seasonPaid);
+    const paid = await resolveSeasonPaid();
     if (paid) {
-      openExportEngine();
+      await openExportAfterPrepare();
     } else {
       setShowPaywall(true);
     }
@@ -77,9 +110,9 @@ export function useTaxExportGate({
   const handleGoogleSuccess = async (result: { taxRecalcQueued: number }) => {
     await onPostLoginSync?.(result.taxRecalcQueued);
     setGoogleSheet(null);
-    const paid = await fetchSeasonPaid(currentSeason).catch(() => seasonPaid);
+    const paid = await resolveSeasonPaid();
     if (paid) {
-      openExportEngine();
+      await openExportAfterPrepare();
     } else {
       setShowPaywall(true);
     }
@@ -114,7 +147,7 @@ export function useTaxExportGate({
                 setErrorMessage(copy.settings.export.paymentConfirmed);
                 return;
               }
-              openExportEngine();
+              await openExportAfterPrepare();
               refreshSeasonPaid?.();
             } catch {
               setErrorMessage(copy.settings.export.failedAfterPayment);
@@ -129,6 +162,7 @@ export function useTaxExportGate({
         <ExportEngineSheet
           receipts={exportableReceipts}
           onClose={() => setShowExportSheet(false)}
+          onPreExportPrepare={onPreExportPrepare}
           onExported={async () => {
             await refreshSeasonPaid?.();
             await onPostExportSync?.();
@@ -146,6 +180,7 @@ export function useTaxExportGate({
     requestExport: () => void runExportGate(),
     exportError: errorMessage,
     paywallExporting,
+    preparingExport,
     overlays,
   };
 }

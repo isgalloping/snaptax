@@ -95,6 +95,16 @@ export async function fetchReceiptById(id: string): Promise<ApiReceipt> {
   return (await res.json()) as ApiReceipt;
 }
 
+export async function fetchReceiptByIdIfExists(
+  id: string,
+): Promise<ApiReceipt | null> {
+  if (!isPersistedReceiptId(id)) return null;
+  const res = await apiFetch(`/api/receipts/${id}`);
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error("FETCH_RECEIPT_FAILED");
+  return (await res.json()) as ApiReceipt;
+}
+
 export type UploadCreateResponse = {
   id: string;
   status: Receipt["status"];

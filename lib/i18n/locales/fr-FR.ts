@@ -158,6 +158,8 @@ export const FR_FR_COPY: UserCopy = {
       emptyFilter: "Aucun reçu dans ce filtre",
       uploadPaused: "ENVOI EN PAUSE",
       analysisPaused: "ANALYSE EN PAUSE",
+      photoMissingTitle: "PHOTO MANQUANTE",
+      photoMissingSubtitle: "Appuyez pour reprendre",
       uploading: "ENVOI EN COURS...",
       tapToRetry: "Appuyez pour réessayer",
       processing: "En cours de traitement",

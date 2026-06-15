@@ -25,6 +25,10 @@ import {
   unionMergeLWW,
 } from "@/lib/client/receiptSync";
 import {
+  applyPhotoMissingState,
+  shouldSkipUploadAttempt,
+} from "@/lib/client/receiptUploadFlow";
+import {
   getBudget,
   isSyncStuck,
   recordWriteFailure,
@@ -260,10 +264,21 @@ export function HomeScreen() {
   }, []);
 
   const uploadPendingInner = async (receipt: StoredReceipt) => {
-    if (isSyncStuck(receipt)) return;
+    if (shouldSkipUploadAttempt(receipt)) return;
 
-    const photo = await loadPhoto(receipt.id);
-    if (!photo) return;
+    let photo: Blob | null = null;
+    try {
+      photo = await loadPhoto(receipt.id);
+    } catch {
+      photo = null;
+    }
+    if (!photo) {
+      const marked = applyPhotoMissingState(receipt);
+      await saveReceipt(marked);
+      setReceipts((prev) => prev.map((r) => (r.id === marked.id ? marked : r)));
+      setSyncStuckIds((prev) => new Set(prev).add(marked.id));
+      return;
+    }
 
     try {
       const uploaded = await uploadReceipt(photo, receipt.timestamp);
@@ -273,6 +288,7 @@ export function HomeScreen() {
         hasRemoteImage: true,
         pendingUpload: false,
         writeBudgetRemaining: getBudget(receipt),
+        photoMissing: undefined,
       };
       setReceipts((prev) => {
         const next = [updated, ...prev.filter((r) => r.id !== receipt.id)];
@@ -299,9 +315,14 @@ export function HomeScreen() {
 
   const flushPendingUploads = useCallback(async () => {
     await ensureConvertedDemoUploadReady();
+    try {
+      await ensureGhostSession();
+    } catch {
+      return;
+    }
     const stored = await loadAllReceipts();
     const pending = stored.filter(
-      (r) => r.pendingUpload && !isSyncStuck(r),
+      (r) => r.pendingUpload && !shouldSkipUploadAttempt(r),
     );
     for (const receipt of pending) {
       try {
@@ -792,8 +813,9 @@ export function HomeScreen() {
           ...apiReceiptToLocal(uploaded),
           hasRemoteImage: true,
           pendingUpload: false,
-          writeBudgetRemaining: getBudget(processingReceipt),
-        };
+        writeBudgetRemaining: getBudget(processingReceipt),
+        photoMissing: undefined,
+      };
         setReceipts((prev) => {
           const next = [updated, ...prev.filter((r) => r.id !== id)];
           refreshTaxSaved(top100ByUpdatedAt(next));

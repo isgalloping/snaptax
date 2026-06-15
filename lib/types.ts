@@ -34,6 +34,8 @@ export interface Receipt {
   taxSeasonDate?: Date;
   subtitle?: string;
   pendingUpload?: boolean;
+  /** Local photo blob unavailable; user must resnap. */
+  photoMissing?: boolean;
   isOnboardingDemo?: boolean;
 }
 

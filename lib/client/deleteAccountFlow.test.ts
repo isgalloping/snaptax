@@ -4,13 +4,32 @@ import {
   DeleteAccountOfflineError,
   deleteAccountAndLocalData,
   isDeleteAccountOfflineError,
+  resolveDeleteUsesUserApi,
 } from "./deleteAccountFlow.ts";
+
+describe("resolveDeleteUsesUserApi", () => {
+  it("returns true when session has user", async () => {
+    const result = await resolveDeleteUsesUserApi(async () => ({
+      user: { id: "u1", email: "a@b.com" },
+      ghostId: "g1",
+    }));
+    assert.equal(result, true);
+  });
+
+  it("returns false when session has no user", async () => {
+    const result = await resolveDeleteUsesUserApi(async () => ({
+      user: null,
+      ghostId: "g1",
+    }));
+    assert.equal(result, false);
+  });
+});
 
 describe("deleteAccountAndLocalData", () => {
   it("throws DeleteAccountOfflineError when offline", async () => {
     await assert.rejects(
       () =>
-        deleteAccountAndLocalData(false, {
+        deleteAccountAndLocalData({
           isOnline: () => false,
         }),
       (err: unknown) => {
@@ -21,15 +40,18 @@ describe("deleteAccountAndLocalData", () => {
     );
   });
 
-  it("calls delete API before clearing local data when online (ghost)", async () => {
+  it("calls ghost API path when session has no user", async () => {
     const order: string[] = [];
+    let apiPath: boolean | null = null;
 
-    await deleteAccountAndLocalData(false, {
+    await deleteAccountAndLocalData({
       isOnline: () => true,
+      fetchAuthMe: async () => ({ user: null, ghostId: "g1" }),
       ensureGhostSession: async () => {
         order.push("ghost");
       },
-      deleteAccountApi: async () => {
+      deleteAccountApi: async (useUserApi) => {
+        apiPath = useUserApi;
         order.push("api");
       },
       clearLocalAppData: async () => {
@@ -37,18 +59,25 @@ describe("deleteAccountAndLocalData", () => {
       },
     });
 
+    assert.equal(apiPath, false);
     assert.deepEqual(order, ["ghost", "api", "local"]);
   });
 
-  it("skips ensureGhostSession when signed in", async () => {
+  it("calls user API path when session has user and skips ghost ensure", async () => {
     const order: string[] = [];
+    let apiPath: boolean | null = null;
 
-    await deleteAccountAndLocalData(true, {
+    await deleteAccountAndLocalData({
       isOnline: () => true,
+      fetchAuthMe: async () => ({
+        user: { id: "u1", email: "a@b.com" },
+        ghostId: "g1",
+      }),
       ensureGhostSession: async () => {
         order.push("ghost");
       },
-      deleteAccountApi: async () => {
+      deleteAccountApi: async (useUserApi) => {
+        apiPath = useUserApi;
         order.push("api");
       },
       clearLocalAppData: async () => {
@@ -56,6 +85,7 @@ describe("deleteAccountAndLocalData", () => {
       },
     });
 
+    assert.equal(apiPath, true);
     assert.deepEqual(order, ["api", "local"]);
   });
 
@@ -64,8 +94,12 @@ describe("deleteAccountAndLocalData", () => {
 
     await assert.rejects(
       () =>
-        deleteAccountAndLocalData(true, {
+        deleteAccountAndLocalData({
           isOnline: () => true,
+          fetchAuthMe: async () => ({
+            user: { id: "u1", email: "a@b.com" },
+            ghostId: null,
+          }),
           deleteAccountApi: async () => {
             throw new Error("DELETE_ACCOUNT_FAILED");
           },

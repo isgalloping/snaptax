@@ -1,4 +1,8 @@
-import { deleteAccountApi } from "@/lib/client/authApi";
+import {
+  deleteAccountApi,
+  fetchAuthMe,
+  type AuthMeResponse,
+} from "@/lib/client/authApi";
 import { ensureGhostSession } from "@/lib/client/ghostClient";
 import { clearLocalAppData } from "@/lib/storage/clearLocalData";
 
@@ -13,18 +17,26 @@ export class DeleteAccountOfflineError extends Error {
 
 export type DeleteAccountFlowDeps = {
   isOnline?: () => boolean;
+  fetchAuthMe?: () => Promise<AuthMeResponse>;
   ensureGhostSession?: () => Promise<void>;
-  deleteAccountApi?: (isSignedIn: boolean) => Promise<void>;
+  deleteAccountApi?: (useUserApi: boolean) => Promise<void>;
   clearLocalAppData?: () => Promise<void>;
 };
 
+export async function resolveDeleteUsesUserApi(
+  fetchMe: () => Promise<AuthMeResponse> = fetchAuthMe,
+): Promise<boolean> {
+  const me = await fetchMe();
+  return me.user != null;
+}
+
 export async function deleteAccountAndLocalData(
-  isSignedIn: boolean,
   deps: DeleteAccountFlowDeps = {},
 ): Promise<void> {
   const isOnline =
     deps.isOnline ??
     (() => typeof navigator !== "undefined" && navigator.onLine);
+  const fetchMe = deps.fetchAuthMe ?? fetchAuthMe;
   const ensureGhost =
     deps.ensureGhostSession ?? (() => ensureGhostSession());
   const deleteApi = deps.deleteAccountApi ?? deleteAccountApi;
@@ -34,11 +46,13 @@ export async function deleteAccountAndLocalData(
     throw new DeleteAccountOfflineError();
   }
 
-  if (!isSignedIn) {
+  const useUserApi = await resolveDeleteUsesUserApi(fetchMe);
+
+  if (!useUserApi) {
     await ensureGhost();
   }
 
-  await deleteApi(isSignedIn);
+  await deleteApi(useUserApi);
   await clearLocal();
 }
 

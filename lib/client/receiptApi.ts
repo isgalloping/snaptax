@@ -95,6 +95,47 @@ export async function fetchReceiptById(id: string): Promise<ApiReceipt> {
   return (await res.json()) as ApiReceipt;
 }
 
+export type UploadCreateResponse = {
+  id: string;
+  status: Receipt["status"];
+  taxAmount?: number;
+  dataRegion?: TaxRegion;
+  processFailed?: boolean;
+};
+
+export function apiReceiptFromUploadResponse(
+  created: UploadCreateResponse,
+  snapAt?: Date,
+): ApiReceipt {
+  const capturedAt = snapAt ?? new Date();
+  const capturedIso = toUtcISOString(capturedAt);
+  const nowIso = toUtcISOString(new Date());
+  return {
+    id: created.id,
+    status: created.status,
+    amount: null,
+    merchant: null,
+    category: null,
+    taxAmount: created.taxAmount ?? 0,
+    dataRegion: created.dataRegion ?? "us",
+    capturedAt: capturedIso,
+    snapAt: snapAt ? capturedIso : null,
+    updatedAt: nowIso,
+    taxSeason: null,
+    taxSeasonDate: null,
+    hasImage: true,
+  };
+}
+
+function isCompleteUploadResponse(
+  created: UploadCreateResponse,
+): created is UploadCreateResponse & {
+  id: string;
+  status: Receipt["status"];
+} {
+  return Boolean(created.id && created.status);
+}
+
 export async function uploadReceipt(
   file: Blob,
   snapAt?: Date,
@@ -115,12 +156,10 @@ export async function uploadReceipt(
     const code = body?.error?.code ?? "UPLOAD_FAILED";
     throw new Error(code);
   }
-  const created = (await res.json()) as {
-    id: string;
-    status: Receipt["status"];
-    taxAmount?: number;
-    dataRegion?: TaxRegion;
-  };
+  const created = (await res.json()) as UploadCreateResponse;
+  if (isCompleteUploadResponse(created)) {
+    return apiReceiptFromUploadResponse(created, snapAt);
+  }
   return fetchReceiptById(created.id);
 }
 

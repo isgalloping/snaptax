@@ -103,6 +103,28 @@ export function ReceiptListCard({
 
   if (receipt.status === "processing") {
     const pending = receipt.pendingUpload === true;
+    if (receipt.photoMissing && pending) {
+      return (
+        <CardShell
+          className="p-3"
+          onClick={() => onResnap(receipt.id)}
+        >
+          <CircularStatusIcon state="paused" />
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-extrabold uppercase text-yellow-400">
+              {receipt.merchant ?? copy.unknownMerchant}
+            </p>
+            <p className="mt-0.5 truncate text-xs text-zinc-400">
+              {listSubtitle(receipt, copy.photoMissingSubtitle)}
+            </p>
+          </div>
+          <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+            {copy.photoMissingTitle}
+          </span>
+          <ChevronRightIcon className="h-5 w-5 shrink-0 text-zinc-500" />
+        </CardShell>
+      );
+    }
     const { state, pill } = resolveVisualState(receipt, syncStuck);
     const title = syncStuck
       ? pending

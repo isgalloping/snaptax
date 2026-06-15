@@ -78,7 +78,7 @@ export function PrivacyDataSection({
     setDeleting(true);
     setError(null);
     try {
-      await deleteAccountAndLocalData(isSignedIn);
+      await deleteAccountAndLocalData();
       setShowDeleteConfirm(false);
       (onAccountDeleted ?? onLocalDataCleared)?.();
     } catch (err) {

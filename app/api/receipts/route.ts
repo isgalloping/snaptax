@@ -118,6 +118,12 @@ export const POST = withRequestLog(
         industry = user?.industry ?? null;
       }
 
+      await put(pathname, bytes, {
+        access: "private",
+        contentType: mime,
+        ...blobCommandOptions(),
+      });
+
       await prisma.snaptaxReceipt.create({
         data: {
           id: receiptId,
@@ -133,12 +139,6 @@ export const POST = withRequestLog(
           capturedAt: utcNow(),
           snapAt,
         },
-      });
-
-      await put(pathname, bytes, {
-        access: "private",
-        contentType: mime,
-        ...blobCommandOptions(),
       });
 
       try {

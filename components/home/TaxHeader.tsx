@@ -21,6 +21,8 @@ interface TaxHeaderProps {
   onSyncClick?: () => void;
   syncing?: boolean;
   syncDisabled?: boolean;
+  exportBusy?: boolean;
+  exportError?: string | null;
   showSettings?: boolean;
   displayTaxSaved?: number | null;
   ahaCoachActive?: boolean;
@@ -40,6 +42,8 @@ export function TaxHeader({
   onSyncClick,
   syncing = false,
   syncDisabled = false,
+  exportBusy = false,
+  exportError = null,
   showSettings = true,
   displayTaxSaved,
   ahaCoachActive = false,
@@ -116,14 +120,18 @@ export function TaxHeader({
               <button
                 type="button"
                 onClick={onExportClick}
+                disabled={exportBusy}
                 className={`${actionBtn} ${
                   ahaCoachActive
                     ? "relative border-yellow-400 ring-2 ring-black/70"
                     : "border-yellow-500/60"
                 }`}
                 aria-label={copy.exportTaxPack}
+                aria-busy={exportBusy}
               >
-                <DownloadIcon className="h-5 w-5 text-yellow-400" />
+                <DownloadIcon
+                  className={`h-5 w-5 text-yellow-400 ${exportBusy ? "animate-pulse" : ""}`}
+                />
               </button>
             </div>
           )}
@@ -162,6 +170,14 @@ export function TaxHeader({
           )}
         </div>
       </div>
+      {exportError && (
+        <p
+          className="relative z-10 px-4 pb-2 text-center text-xs font-bold text-red-400"
+          role="alert"
+        >
+          {exportError}
+        </p>
+      )}
     </header>
   );
 }

@@ -209,6 +209,9 @@ export type UserCopy = {
     payButton: string;
     paymentUnavailable: string;
     paymentFailed: string;
+    confirmingPayment: string;
+    confirmingPaymentHint: string;
+    openingExport: string;
     back: string;
   };
   auth: {

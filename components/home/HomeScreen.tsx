@@ -911,6 +911,8 @@ export function HomeScreen() {
         onSyncClick={handleManualListSync}
         syncing={listSyncing}
         syncDisabled={!isOnline}
+        exportBusy={taxExport.paywallExporting || taxExport.preparingExport}
+        exportError={taxExport.exportError}
       />
 
       <div className="relative shrink-0 px-4 py-2">

@@ -5,6 +5,8 @@ import { initializePaddle, Paddle } from "@paddle/paddle-js";
 import { useUserCopy } from "@/components/i18n/I18nProvider";
 import { apiFetch } from "@/lib/client/ghostClient";
 
+type PaywallPhase = "offer" | "confirming";
+
 interface PaywallSheetProps {
   seasonLabel: string;
   userId: string;
@@ -19,10 +21,13 @@ export function PaywallSheet({
   onPaid,
 }: PaywallSheetProps) {
   const copy = useUserCopy().paywall;
+  const [phase, setPhase] = useState<PaywallPhase>("offer");
   const [paying, setPaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const paddleRef = useRef<Paddle | null>(null);
   const onPaidRef = useRef(onPaid);
+  const checkoutCompletedRef = useRef(false);
+
   useEffect(() => {
     onPaidRef.current = onPaid;
   });
@@ -35,9 +40,21 @@ export function PaywallSheet({
       environment: token.startsWith("test_") ? "sandbox" : "production",
       token,
       eventCallback: (event) => {
-        if (event.name === "checkout.completed") {
-          void onPaidRef.current();
+        if (event.name !== "checkout.completed" || checkoutCompletedRef.current) {
+          return;
         }
+        checkoutCompletedRef.current = true;
+        setPhase("confirming");
+        setError(null);
+        void (async () => {
+          try {
+            await onPaidRef.current();
+          } catch {
+            checkoutCompletedRef.current = false;
+            setPhase("offer");
+            setError(copy.paymentFailed);
+          }
+        })();
       },
     }).then((instance) => {
       paddleRef.current = instance ?? null;
@@ -86,6 +103,24 @@ export function PaywallSheet({
       setPaying(false);
     }
   };
+
+  if (phase === "confirming") {
+    return (
+      <div className="fixed inset-0 z-50 flex items-end bg-black/70">
+        <div className="w-full rounded-t-3xl border-t-4 border-yellow-500 bg-zinc-900 p-6 pb-10">
+          <p className="text-lg font-black uppercase tracking-wider text-white">
+            {copy.confirmingPayment}
+          </p>
+          <p className="mt-4 text-sm leading-relaxed text-zinc-300">
+            {copy.confirmingPaymentHint}
+          </p>
+          <p className="mt-6 text-center text-sm font-bold text-zinc-400" aria-live="polite">
+            {copy.openingExport}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-end bg-black/70">

@@ -233,6 +233,10 @@ export const EN_US_COPY: UserCopy = {
       payButton: "Pay $49 with Paddle",
       paymentUnavailable: "Payment unavailable. Paddle is not configured.",
       paymentFailed: "Payment failed. Please try again.",
+      confirmingPayment: "Confirming payment…",
+      confirmingPaymentHint:
+        "Your payment was received. We are unlocking your tax season export.",
+      openingExport: "Opening export…",
       back: "< BACK",
     },
     auth: {

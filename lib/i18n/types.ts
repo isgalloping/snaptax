@@ -250,6 +250,12 @@ export type UserCopy = {
       notSignedIn: string;
       backupHint: string;
       googleCta: string;
+      signOut: string;
+      signOutTitle: string;
+      signOutWarning: string;
+      signOutRequiresOnline: string;
+      signOutFailed: string;
+      signingOut: string;
     };
     language: {
       title: string;

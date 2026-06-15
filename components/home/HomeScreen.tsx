@@ -856,6 +856,7 @@ export function HomeScreen() {
         currentSeason={auth.currentSeason}
         onUserSignedIn={auth.applyGoogleSignIn}
         onPostLoginSync={handlePostLoginSync}
+        onSignOut={auth.signOut}
         onRequestExport={taxExport.requestExport}
         exportBusy={taxExport.paywallExporting}
         exportError={taxExport.exportError}

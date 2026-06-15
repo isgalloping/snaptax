@@ -294,6 +294,14 @@ export const FR_FR_COPY: UserCopy = {
       backupHint:
         "Connectez-vous avec Google pour sauvegarder vos reçus avant de changer de téléphone.",
       googleCta: "Continuer avec Google",
+      signOut: "Se déconnecter",
+      signOutTitle: "Se déconnecter ?",
+      signOutWarning:
+        "Vos reçus restent sauvegardés dans le cloud. Les copies locales restent sur cet appareil.",
+      signOutRequiresOnline:
+        "Connectez-vous à Internet pour vous déconnecter.",
+      signOutFailed: "Impossible de se déconnecter. Réessayez.",
+      signingOut: "Déconnexion…",
     },
     language: {
       title: "Langue",

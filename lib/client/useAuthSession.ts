@@ -12,9 +12,9 @@ import {
   fetchAuthMe,
   fetchSeasonPaid,
   signInWithGoogleApi,
-  signOutApi,
   type GoogleAuthResponse,
 } from "@/lib/client/authApi";
+import { signOutAndResetSession } from "@/lib/client/signOutFlow";
 import { currentTaxSeason } from "@/lib/tax/season";
 
 function seasonKey(): string {
@@ -93,8 +93,10 @@ export function useAuthSession() {
   }, [applyGoogleSignIn]);
 
   const signOut = useCallback(async () => {
-    await signOutApi();
+    await signOutAndResetSession();
     setGoogleUser(null);
+    setSeasonPaidState(false);
+    setSeasonPaid(seasonKey(), false);
   }, []);
 
   const markSeasonPaid = useCallback(() => {

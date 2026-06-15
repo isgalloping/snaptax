@@ -19,6 +19,9 @@ import { GoogleSignInSheet, type GoogleSignInMode } from "@/components/auth/Goog
 import { useI18n } from "@/components/i18n/I18nProvider";
 import { SyncInstructionsSheet } from "@/components/auth/SyncInstructionsSheet";
 import { PrivacyDataSection } from "@/components/settings/PrivacyDataSection";
+import {
+  isSignOutOfflineError,
+} from "@/lib/client/signOutFlow";
 import { SUPPORTED_LOCALES, type Locale } from "@/lib/i18n";
 
 interface SettingsScreenProps {
@@ -34,6 +37,7 @@ interface SettingsScreenProps {
   isSignedIn: boolean;
   onUserSignedIn?: (result: GoogleAuthResponse) => void;
   onPostLoginSync?: (taxRecalcQueued: number) => Promise<void>;
+  onSignOut?: () => Promise<void>;
   onRequestExport: () => void;
   exportBusy?: boolean;
   exportError?: string | null;
@@ -57,6 +61,7 @@ export function SettingsScreen({
   isSignedIn,
   onUserSignedIn,
   onPostLoginSync,
+  onSignOut,
   onRequestExport,
   exportBusy = false,
   exportError = null,
@@ -68,9 +73,26 @@ export function SettingsScreen({
   const { locale, setLocale, copy } = useI18n();
   const [googleSheet, setGoogleSheet] = useState<GoogleSignInMode | null>(null);
   const [showSyncHelp, setShowSyncHelp] = useState(false);
+  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+  const [signOutError, setSignOutError] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [pendingAfterSignIn, setPendingAfterSignIn] = useState<"sync" | null>(null);
+  const [isOnline, setIsOnline] = useState(
+    () => typeof navigator !== "undefined" && navigator.onLine,
+  );
   const firstVisitHandled = useRef(false);
+
+  useEffect(() => {
+    const syncOnline = () =>
+      setIsOnline(typeof navigator !== "undefined" && navigator.onLine);
+    window.addEventListener("online", syncOnline);
+    window.addEventListener("offline", syncOnline);
+    return () => {
+      window.removeEventListener("online", syncOnline);
+      window.removeEventListener("offline", syncOnline);
+    };
+  }, []);
 
   useEffect(() => {
     if (firstVisitHandled.current) return;
@@ -105,7 +127,27 @@ export function SettingsScreen({
   };
 
   const clearError = () => setErrorMessage(null);
-  const displayError = errorMessage ?? exportError;
+  const displayError = errorMessage ?? exportError ?? signOutError;
+  const accountCopy = copy.settings.account;
+  const offline = !isOnline;
+
+  const handleSignOut = async () => {
+    if (!onSignOut) return;
+    setSigningOut(true);
+    setSignOutError(null);
+    try {
+      await onSignOut();
+      setShowSignOutConfirm(false);
+    } catch (err) {
+      if (isSignOutOfflineError(err)) {
+        setSignOutError(accountCopy.signOutRequiresOnline);
+      } else {
+        setSignOutError(accountCopy.signOutFailed);
+      }
+    } finally {
+      setSigningOut(false);
+    }
+  };
 
   const handleGoogleSuccess = async (result: { taxRecalcQueued: number }) => {
     await onPostLoginSync?.(result.taxRecalcQueued);
@@ -172,6 +214,14 @@ export function SettingsScreen({
             clearError();
             setGoogleSheet("soft");
           }}
+          onSignOut={
+            isSignedIn
+              ? () => {
+                  setSignOutError(null);
+                  setShowSignOutConfirm(true);
+                }
+              : undefined
+          }
         />
 
         <section className="mb-8">
@@ -300,6 +350,47 @@ export function SettingsScreen({
           email={googleUser.email}
           onClose={() => setShowSyncHelp(false)}
         />
+      )}
+
+      {showSignOutConfirm && (
+        <div className="fixed inset-0 z-50 flex items-end bg-black/70">
+          <div className="w-full rounded-t-3xl border-t-4 border-zinc-600 bg-zinc-900 p-6 pb-10">
+            <p className="text-lg font-black uppercase tracking-wider text-white">
+              {accountCopy.signOutTitle}
+            </p>
+            <p className="mt-4 text-sm leading-relaxed text-zinc-300">
+              {accountCopy.signOutWarning}
+            </p>
+            {offline && (
+              <p className="mt-4 text-sm font-bold text-yellow-400" role="alert">
+                {accountCopy.signOutRequiresOnline}
+              </p>
+            )}
+            {signOutError && (
+              <p className="mt-4 text-sm font-bold text-red-500" role="alert">
+                {signOutError}
+              </p>
+            )}
+            <button
+              type="button"
+              disabled={signingOut || offline}
+              onClick={() => void handleSignOut()}
+              className="mt-6 w-full min-h-16 rounded-xl border-2 border-zinc-600 bg-zinc-800 py-4 text-lg font-black uppercase tracking-wider text-white transition-transform active:scale-95 disabled:opacity-60"
+            >
+              {signingOut ? accountCopy.signingOut : accountCopy.signOut}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setShowSignOutConfirm(false);
+                setSignOutError(null);
+              }}
+              className="mt-3 w-full min-h-16 py-3 text-sm font-bold text-zinc-400 transition-transform active:scale-95"
+            >
+              {copy.settings.privacyData.cancel}
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

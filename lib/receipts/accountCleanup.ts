@@ -78,11 +78,11 @@ export async function deleteUserAccount(userId: string): Promise<void> {
     module: "api.user",
     success: true,
     durationMs: 0,
+    userId,
+    ghostId: binding?.ghostId ?? null,
     meta: {
-      event: "account_deleted",
-      userId,
+      reason: "account_deleted",
       receiptCount: receipts.length,
-      boundGhostId: binding?.ghostId ?? null,
     },
   });
 }

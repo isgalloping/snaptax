@@ -103,11 +103,11 @@ export const POST = withRequestLog("api.auth", async (request, _context) => {
           module: "api.auth",
           success: true,
           durationMs: 0,
+          userId: user.id,
+          ghostId,
           meta: {
             reason: "ghost_rebind",
             previousGhostId: userBinding.ghostId,
-            ghostId,
-            userId: user.id,
           },
         });
         await prisma.snaptaxGhostAccount.update({

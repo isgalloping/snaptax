@@ -127,15 +127,6 @@ export function apiReceiptFromUploadResponse(
   };
 }
 
-function isCompleteUploadResponse(
-  created: UploadCreateResponse,
-): created is UploadCreateResponse & {
-  id: string;
-  status: Receipt["status"];
-} {
-  return Boolean(created.id && created.status);
-}
-
 export async function uploadReceipt(
   file: Blob,
   snapAt?: Date,
@@ -157,10 +148,10 @@ export async function uploadReceipt(
     throw new Error(code);
   }
   const created = (await res.json()) as UploadCreateResponse;
-  if (isCompleteUploadResponse(created)) {
-    return apiReceiptFromUploadResponse(created, snapAt);
+  if (!created.id || !created.status) {
+    throw new Error("UPLOAD_FAILED");
   }
-  return fetchReceiptById(created.id);
+  return apiReceiptFromUploadResponse(created, snapAt);
 }
 
 export type ProcessTriggerResult =

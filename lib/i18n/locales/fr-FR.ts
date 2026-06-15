@@ -589,6 +589,8 @@ export const FR_FR_COPY: UserCopy = {
     deductionsLabel: "Déductions fiscales estimées : {amount}",
     receiptsLabel: "{count} reçus enregistrés",
     noReceiptsYear: "Aucun reçu pour cette année",
+    noDeductibleReceipts:
+      "Pas encore de reçus déductibles. Photographiez vos reçus professionnels !",
     continue: "Continuer →",
     back: "← Retour",
     generate: "Générer →",

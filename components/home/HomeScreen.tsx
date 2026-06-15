@@ -529,6 +529,7 @@ export function HomeScreen() {
       },
     });
     setReceipts(merged);
+    return merged;
   }, [syncFromServer]);
 
   const taxExport = useTaxExportGate({

@@ -578,6 +578,8 @@ export const EN_US_COPY: UserCopy = {
       deductionsLabel: "Est. Tax Deductions: {amount}",
       receiptsLabel: "{count} Receipts Captured",
       noReceiptsYear: "No receipts for this year",
+      noDeductibleReceipts:
+        "No tax-deductible receipts yet. Snap some business receipts first!",
       continue: "Continue →",
       back: "← Back",
       generate: "Generate →",

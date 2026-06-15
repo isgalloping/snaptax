@@ -402,6 +402,7 @@ export type UserCopy = {
     deductionsLabel: string;
     receiptsLabel: string;
     noReceiptsYear: string;
+    noDeductibleReceipts: string;
     continue: string;
     back: string;
     generate: string;

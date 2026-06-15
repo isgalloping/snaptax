@@ -588,6 +588,8 @@ export const DE_DE_COPY: UserCopy = {
     deductionsLabel: "Geschätzte Steuerabzüge: {amount}",
     receiptsLabel: "{count} Belege erfasst",
     noReceiptsYear: "Keine Belege für dieses Jahr",
+    noDeductibleReceipts:
+      "Noch keine absetzbaren Belege. Fotografieren Sie Geschäftsbelege!",
     continue: "Weiter →",
     back: "← Zurück",
     generate: "Erstellen →",

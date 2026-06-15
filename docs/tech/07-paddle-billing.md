@@ -58,10 +58,13 @@ sequenceDiagram
 verifyPaddleSignature(req)
 validate amount/status/currency
 grant = resolve intentId → checkout_intents.userId (or legacy userId warn)
-upsert season_entitlements
+// 过期 intent 仍发放权益（intent_expired_but_granted warn）
+grantPaddleSeasonEntitlement(userId + taxSeason) // 同季重复购买 update 不 500
 mark intent consumed
 return 200
 ```
+
+**客户端支付后：** `pollEntitlementReady` 最长 30s；超时则撤销乐观 `seasonPaid`，提示用户稍后重试 Export。
 
 ## 7.6 权益检查
 
@@ -74,7 +77,7 @@ const entitlement = await prisma.snaptaxSeasonEntitlement.findUnique({
 const paid = !!entitlement;
 ```
 
-当前 tax_season：服务器按 UTC 日期计算（1–4 月 → 当年，否则前一年报税季逻辑可配置）。
+当前 tax_season：服务器按 UTC 日期计算（1–4 月 → 当年；5–12 月 → 次年，见 `lib/tax/season.ts`）。
 
 ## 7.7 环境变量
 

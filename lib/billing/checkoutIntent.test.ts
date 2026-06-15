@@ -1,9 +1,18 @@
-import { describe, it } from "node:test";
 import assert from "node:assert/strict";
+import { describe, it } from "node:test";
 import {
   CHECKOUT_INTENT_TTL_MS,
+  evaluateIntentGrant,
   isCheckoutIntentExpired,
-} from "./checkoutIntent";
+} from "./checkoutIntent.ts";
+
+const baseIntent = {
+  id: "intent-1",
+  userId: "user-1",
+  taxSeason: "2026",
+  status: "pending",
+  expiresAt: new Date("2026-06-13T12:00:00.000Z"),
+};
 
 describe("checkoutIntent helpers", () => {
   it("defines 15 minute TTL", () => {
@@ -18,5 +27,55 @@ describe("checkoutIntent helpers", () => {
       isCheckoutIntentExpired(new Date("2026-06-13T12:00:01.000Z"), now),
       false,
     );
+  });
+});
+
+describe("evaluateIntentGrant", () => {
+  const now = new Date("2026-06-13T12:00:00.000Z");
+
+  it("grants pending intents before expiry", () => {
+    const result = evaluateIntentGrant(
+      {
+        ...baseIntent,
+        expiresAt: new Date("2026-06-13T12:00:01.000Z"),
+      },
+      now,
+    );
+    assert.deepEqual(result, { ok: true, intentExpiredAtGrant: false });
+  });
+
+  it("grants expired pending intents with late-payment flag", () => {
+    const result = evaluateIntentGrant(
+      {
+        ...baseIntent,
+        expiresAt: new Date("2026-06-13T11:59:59.000Z"),
+      },
+      now,
+    );
+    assert.deepEqual(result, { ok: true, intentExpiredAtGrant: true });
+  });
+
+  it("grants expired intents already marked expired", () => {
+    const result = evaluateIntentGrant(
+      {
+        ...baseIntent,
+        status: "expired",
+        expiresAt: new Date("2026-06-13T11:59:59.000Z"),
+      },
+      now,
+    );
+    assert.deepEqual(result, { ok: true, intentExpiredAtGrant: true });
+  });
+
+  it("rejects consumed intents", () => {
+    const result = evaluateIntentGrant(
+      {
+        ...baseIntent,
+        status: "consumed",
+        expiresAt: new Date("2026-06-13T12:00:01.000Z"),
+      },
+      now,
+    );
+    assert.deepEqual(result, { ok: false, reason: "intent_not_pending" });
   });
 });

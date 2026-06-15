@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { verifyPaddleWebhookSignature } from "@/lib/server/paddleWebhook";
 import {
   validatePaddleTransaction,
@@ -9,10 +8,10 @@ import {
   markCheckoutIntentConsumed,
   resolveWebhookGrantTarget,
 } from "@/lib/billing/checkoutIntent";
+import { grantPaddleSeasonEntitlement } from "@/lib/billing/grantSeasonEntitlement";
 import { currentTaxSeason } from "@/lib/tax/season";
 import { withRequestLog } from "@/lib/server/log/withRequestLog";
 import { logEvent } from "@/lib/server/log/logEvent";
-import { utcNow } from "@/lib/time/utc";
 
 export const POST = withRequestLog("api.webhook", async (request, _context) => {
   const rawBody = await request.text();
@@ -102,26 +101,48 @@ export const POST = withRequestLog("api.webhook", async (request, _context) => {
     });
   }
 
+  if (grant.intentExpiredAtGrant) {
+    logEvent({
+      ts: new Date().toISOString(),
+      level: "warn",
+      module: "biz.paddle",
+      success: true,
+      durationMs: 0,
+      meta: {
+        reason: "intent_expired_but_granted",
+        transactionId: validated.transactionId,
+        intentId: grant.intentId ?? null,
+      },
+    });
+  }
+
   const taxSeason =
     grant.taxSeason && grant.taxSeason.length > 0
       ? grant.taxSeason
       : currentTaxSeason();
 
-  await prisma.snaptaxSeasonEntitlement.upsert({
-    where: { transactionId: validated.transactionId },
-    create: {
-      userId: grant.userId,
-      taxSeason,
-      transactionId: validated.transactionId,
-      paidAt: utcNow(),
-      amount: validated.amountUsd,
-      channelCode: "paddle",
-    },
-    update: {
-      paidAt: utcNow(),
-      amount: validated.amountUsd,
-    },
+  const entitlement = await grantPaddleSeasonEntitlement({
+    userId: grant.userId,
+    taxSeason,
+    transactionId: validated.transactionId,
+    amountUsd: validated.amountUsd,
   });
+
+  if (entitlement.duplicateSeason) {
+    logEvent({
+      ts: new Date().toISOString(),
+      level: "warn",
+      module: "biz.paddle",
+      success: true,
+      durationMs: 0,
+      meta: {
+        reason: "duplicate_season_purchase",
+        transactionId: validated.transactionId,
+        existingTransactionId: entitlement.transactionId,
+        taxSeason,
+      },
+    });
+  }
 
   if (grant.intentId) {
     await markCheckoutIntentConsumed(grant.intentId, validated.transactionId);
@@ -137,6 +158,7 @@ export const POST = withRequestLog("api.webhook", async (request, _context) => {
       transactionId: validated.transactionId,
       taxSeason,
       intentId: grant.intentId ?? null,
+      entitlementCreated: entitlement.created,
     },
   });
 

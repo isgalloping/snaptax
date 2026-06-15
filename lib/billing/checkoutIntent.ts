@@ -41,6 +41,41 @@ export async function createOrReuseCheckoutIntent(
   return { intentId: created.id, expiresAt: created.expiresAt };
 }
 
+export type CheckoutIntentRecord = {
+  id: string;
+  userId: string;
+  taxSeason: string;
+  status: string;
+  expiresAt: Date;
+};
+
+export type IntentGrantEvaluation =
+  | { ok: true; intentExpiredAtGrant: boolean }
+  | { ok: false; reason: string };
+
+export function evaluateIntentGrant(
+  intent: CheckoutIntentRecord,
+  now: Date,
+): IntentGrantEvaluation {
+  if (intent.status === "consumed") {
+    return { ok: false, reason: "intent_not_pending" };
+  }
+
+  const expired = intent.expiresAt.getTime() <= now.getTime();
+  if (expired) {
+    if (intent.status === "pending" || intent.status === "expired") {
+      return { ok: true, intentExpiredAtGrant: true };
+    }
+    return { ok: false, reason: "intent_expired" };
+  }
+
+  if (intent.status !== "pending") {
+    return { ok: false, reason: "intent_not_pending" };
+  }
+
+  return { ok: true, intentExpiredAtGrant: false };
+}
+
 export type WebhookGrantResolution =
   | {
       ok: true;
@@ -48,6 +83,7 @@ export type WebhookGrantResolution =
       taxSeason: string;
       intentId?: string;
       legacyUserIdPath?: boolean;
+      intentExpiredAtGrant?: boolean;
     }
   | { ok: false; reason: string };
 
@@ -67,18 +103,16 @@ export async function resolveWebhookGrantTarget(customData: {
     }
 
     const now = utcNow();
-    if (intent.expiresAt <= now) {
-      if (intent.status === "pending") {
-        await prisma.snaptaxCheckoutIntent.update({
-          where: { id: intent.id },
-          data: { status: "expired" },
-        });
-      }
-      return { ok: false, reason: "intent_expired" };
+    const evaluation = evaluateIntentGrant(intent, now);
+    if (!evaluation.ok) {
+      return { ok: false, reason: evaluation.reason };
     }
 
-    if (intent.status !== "pending") {
-      return { ok: false, reason: "intent_not_pending" };
+    if (evaluation.intentExpiredAtGrant && intent.status === "pending") {
+      await prisma.snaptaxCheckoutIntent.update({
+        where: { id: intent.id },
+        data: { status: "expired" },
+      });
     }
 
     return {
@@ -86,6 +120,7 @@ export async function resolveWebhookGrantTarget(customData: {
       userId: intent.userId,
       taxSeason: intent.taxSeason,
       intentId: intent.id,
+      intentExpiredAtGrant: evaluation.intentExpiredAtGrant,
     };
   }
 

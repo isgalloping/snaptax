@@ -31,6 +31,8 @@ export type LogMeta = {
   headerRegion?: string;
   reason?: string;
   previousGhostId?: string;
+  existingTransactionId?: string;
+  entitlementCreated?: boolean;
   pathnameCount?: number;
   receiptCount?: number;
   verifyBypass?: boolean;

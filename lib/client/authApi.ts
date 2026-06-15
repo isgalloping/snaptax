@@ -1,6 +1,7 @@
 "use client";
 
 import { apiFetch, ensureGhostSession } from "@/lib/client/ghostClient";
+import { GoogleAuthError } from "@/lib/client/googleAuthErrors";
 import { clientTimeZone } from "@/lib/time/timeZone";
 import { requestGoogleCredential } from "@/lib/client/googleAuth";
 import {
@@ -39,21 +40,37 @@ export async function fetchAuthMe(): Promise<AuthMeResponse> {
   return (await res.json()) as AuthMeResponse;
 }
 
+async function parseGoogleAuthError(res: Response): Promise<GoogleAuthError> {
+  try {
+    const body = (await res.json()) as {
+      error?: { code?: string; message?: string };
+    };
+    const code = body.error?.code ?? "GOOGLE_AUTH_FAILED";
+    return new GoogleAuthError(code);
+  } catch {
+    return new GoogleAuthError("GOOGLE_AUTH_FAILED");
+  }
+}
+
 export async function signInWithGoogleCredential(
   credential: string,
+  options?: { ghostRetried?: boolean },
 ): Promise<GoogleAuthResponse> {
-  await ensureGhostSession();
   const res = await apiFetch("/api/auth/google", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ credential }),
   });
-  if (!res.ok) {
-    const body = (await res.json().catch(() => null)) as {
-      error?: { code?: string };
-    } | null;
-    throw new Error(body?.error?.code ?? "GOOGLE_AUTH_FAILED");
+
+  if (res.status === 401 && !options?.ghostRetried) {
+    await ensureGhostSession();
+    return signInWithGoogleCredential(credential, { ghostRetried: true });
   }
+
+  if (!res.ok) {
+    throw await parseGoogleAuthError(res);
+  }
+
   const data = (await res.json()) as GoogleAuthResponse;
   saveGoogleUser({
     email: data.user.email,
@@ -63,7 +80,6 @@ export async function signInWithGoogleCredential(
 }
 
 export async function signInWithGoogleApi(): Promise<GoogleAuthResponse> {
-  await ensureGhostSession();
   const credential = await requestGoogleCredential();
   return signInWithGoogleCredential(credential);
 }
@@ -180,11 +196,11 @@ export async function pollEntitlementReady(
   return false;
 }
 
-export async function deleteAccountApi(isSignedIn: boolean): Promise<void> {
-  const path = isSignedIn ? "/api/users/me" : "/api/ghost/data";
+export async function deleteAccountApi(useUserApi: boolean): Promise<void> {
+  const path = useUserApi ? "/api/users/me" : "/api/ghost/data";
   const res = await apiFetch(path, { method: "DELETE" });
   if (!res.ok && res.status !== 204) throw new Error("DELETE_ACCOUNT_FAILED");
-  if (isSignedIn) saveGoogleUser(null);
+  if (useUserApi) saveGoogleUser(null);
 }
 
 export function markSeasonPaidLocal(season: string): void {

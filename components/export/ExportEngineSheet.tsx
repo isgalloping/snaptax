@@ -26,6 +26,7 @@ type Step = 1 | 2 | 3 | 4;
 interface ExportEngineSheetProps {
   receipts: Receipt[];
   onClose: () => void;
+  onPreExportPrepare?: () => Promise<void>;
   onExported?: () => void | Promise<void>;
   onPaymentRequired?: () => void;
   onReceiptUpdated?: (receipt: Receipt) => void;
@@ -37,6 +38,7 @@ const FAST_RAMP_MS = 300;
 export function ExportEngineSheet({
   receipts,
   onClose,
+  onPreExportPrepare,
   onExported,
   onPaymentRequired,
   onReceiptUpdated,
@@ -189,6 +191,9 @@ export function ExportEngineSheet({
     setStep(4);
     startProgressRamp(format, yearReceipts.length);
     try {
+      if (onPreExportPrepare) {
+        await onPreExportPrepare();
+      }
       const result = await exportTaxPack({
         taxYear: String(taxYear),
         format,
@@ -202,7 +207,9 @@ export function ExportEngineSheet({
       setProgress(0);
       setProgressLabel("");
       if (err instanceof Error) {
-        if (err.message === "NO_RECEIPTS") {
+        if (err.message === "EXPORT_OFFLINE") {
+          setErrorMessage(copy.settings.export.offline);
+        } else if (err.message === "NO_RECEIPTS") {
           setErrorMessage(copy.settings.export.noReceipts);
         } else if (err.message === "PAYMENT_REQUIRED") {
           onClose();

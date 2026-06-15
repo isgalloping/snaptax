@@ -95,6 +95,7 @@ export const EN_US_COPY: UserCopy = {
         check2: "10 Receipts in 10 Sec",
         check3: "No Signup Needed",
         cta: "Let's Go! ⚡",
+        ctaCountdown: "Let's Go! ({seconds})",
         ctaAria: "Start onboarding",
         ariaStatus: "Loading Snap1099",
       },
@@ -153,6 +154,8 @@ export const EN_US_COPY: UserCopy = {
         emptyFilter: "No receipts in this filter",
         uploadPaused: "UPLOAD PAUSED",
         analysisPaused: "ANALYSIS PAUSED",
+        photoMissingTitle: "PHOTO MISSING",
+        photoMissingSubtitle: "Tap to resnap",
         uploading: "UPLOADING...",
         tapToRetry: "Tap to retry",
         processing: "Processing",
@@ -247,10 +250,21 @@ export const EN_US_COPY: UserCopy = {
           body: "To sync across phone, tablet, or computer, sign in with Google.",
         },
         signingIn: "Signing in…",
+        preparingGoogle: "Loading Google sign-in…",
         continueWithGoogle: "Continue with Google",
         notNow: "Not now",
         back: "< BACK",
         signInFailed: "Sign-in failed. Please try again.",
+        signInUnauthorized:
+          "Session expired. Refresh the page and try again.",
+        signInGhostBound:
+          "This device is already linked to another Google account.",
+        signInServerError: "Service temporarily unavailable. Try again soon.",
+        signInConfig: "Google sign-in is not configured on this build.",
+        ghostRegisterFailed:
+          "Could not start your device session. Check your connection.",
+        syncAfterSignInFailed:
+          "Signed in, but sync is still catching up. Your receipts are safe on this device.",
         onboardingSignup: {
           title: "Secure your tax assets",
           body: "You just saved your first $28.50! Create your secure local vault now to lock and backup your tax assets permanently.",

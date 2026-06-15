@@ -179,11 +179,13 @@ export function ReceiptDetailSheet({
       : "—";
 
   const processingTitle =
-    receipt.pendingUpload && syncStuck
-      ? copy.uploadPaused
-      : syncStuck
-        ? copy.analysisPaused
-        : copy.calculating;
+    receipt.photoMissing && receipt.pendingUpload
+      ? copy.photoMissing
+      : receipt.pendingUpload && syncStuck
+        ? copy.uploadPaused
+        : syncStuck
+          ? copy.analysisPaused
+          : copy.calculating;
 
   const stepperPhase =
     hero.kind === "done"
@@ -247,7 +249,7 @@ export function ReceiptDetailSheet({
                   <div className="mx-auto mt-6 max-w-sm rounded-xl bg-zinc-900 px-4 py-3 text-sm font-bold text-zinc-300">
                     {copy.dateCapturedLong.replace("{date}", dateCapturedLong)}
                   </div>
-                  {syncStuck && onRetrySync && (
+                  {syncStuck && onRetrySync && !receipt.photoMissing && (
                     <button
                       type="button"
                       onClick={() => onRetrySync(receipt.id)}
@@ -256,6 +258,18 @@ export function ReceiptDetailSheet({
                       {receipt.pendingUpload
                         ? copy.retryUpload
                         : copy.retryAnalysis}
+                    </button>
+                  )}
+                  {receipt.photoMissing && receipt.pendingUpload && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onClose();
+                        onResnap(receipt.id);
+                      }}
+                      className="mt-6 min-h-14 w-full rounded-xl border-2 border-yellow-500 bg-zinc-900 py-3 text-base font-black uppercase text-yellow-400 active:scale-95"
+                    >
+                      {copy.resnap}
                     </button>
                   )}
                 </>

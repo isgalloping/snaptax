@@ -76,6 +76,7 @@ export type UserCopy = {
       check2: string;
       check3: string;
       cta: string;
+      ctaCountdown: string;
       ctaAria: string;
       ariaStatus: string;
     };
@@ -132,6 +133,8 @@ export type UserCopy = {
       emptyFilter: string;
       uploadPaused: string;
       analysisPaused: string;
+      photoMissingTitle: string;
+      photoMissingSubtitle: string;
       uploading: string;
       tapToRetry: string;
       processing: string;
@@ -214,10 +217,17 @@ export type UserCopy = {
       hardExport: { title: string; body: string };
       hardSync: { title: string; body: string };
       signingIn: string;
+      preparingGoogle: string;
       continueWithGoogle: string;
       notNow: string;
       back: string;
       signInFailed: string;
+      signInUnauthorized: string;
+      signInGhostBound: string;
+      signInServerError: string;
+      signInConfig: string;
+      ghostRegisterFailed: string;
+      syncAfterSignInFailed: string;
       onboardingSignup: {
         title: string;
         body: string;

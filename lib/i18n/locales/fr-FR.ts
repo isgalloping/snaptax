@@ -96,6 +96,7 @@ export const FR_FR_COPY: UserCopy = {
       check2: "10 reçus en 10 sec",
       check3: "Pas d'inscription requise",
       cta: "C'est parti ! ⚡",
+      ctaCountdown: "C'est parti ! ({seconds})",
       ctaAria: "Commencer l'introduction",
       ariaStatus: "Chargement de Snap1099",
     },
@@ -157,6 +158,8 @@ export const FR_FR_COPY: UserCopy = {
       emptyFilter: "Aucun reçu dans ce filtre",
       uploadPaused: "ENVOI EN PAUSE",
       analysisPaused: "ANALYSE EN PAUSE",
+      photoMissingTitle: "PHOTO MANQUANTE",
+      photoMissingSubtitle: "Appuyez pour reprendre",
       uploading: "ENVOI EN COURS...",
       tapToRetry: "Appuyez pour réessayer",
       processing: "En cours de traitement",
@@ -251,10 +254,23 @@ export const FR_FR_COPY: UserCopy = {
         body: "Pour synchroniser entre téléphone, tablette ou ordinateur, connectez-vous avec Google.",
       },
       signingIn: "Connexion…",
+      preparingGoogle: "Chargement de la connexion Google…",
       continueWithGoogle: "Continuer avec Google",
       notNow: "Pas maintenant",
       back: "< RETOUR",
       signInFailed: "Échec de la connexion. Veuillez réessayer.",
+      signInUnauthorized:
+        "Session expirée. Actualisez la page et réessayez.",
+      signInGhostBound:
+        "Cet appareil est déjà lié à un autre compte Google.",
+      signInServerError:
+        "Service temporairement indisponible. Réessayez bientôt.",
+      signInConfig:
+        "La connexion Google n'est pas configurée sur cette version.",
+      ghostRegisterFailed:
+        "Impossible de démarrer la session appareil. Vérifiez la connexion.",
+      syncAfterSignInFailed:
+        "Connecté, mais la synchronisation suit. Vos reçus sont en sécurité sur cet appareil.",
       onboardingSignup: {
         title: "Sécurisez vos économies fiscales",
         body: "Vous venez d'économiser vos premiers 28,50 $ ! Créez votre coffre-fort local sécurisé pour verrouiller et sauvegarder vos économies fiscales de façon permanente.",

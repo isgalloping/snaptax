@@ -1,5 +1,9 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import {
+  beginHeroLandingSession,
+  endHeroLandingSession,
+} from "./heroLandingSession.ts";
 import { resolveExit } from "./landingTiming.ts";
 
 describe("resolveExit by landing variant", () => {
@@ -16,5 +20,17 @@ describe("resolveExit by landing variant", () => {
   it("none exits when chunk is ready", () => {
     assert.equal(resolveExit(0, true, "none"), "full-home");
     assert.equal(resolveExit(0, false, "none"), null);
+  });
+
+  it("blocks all poll exits while hero session is active", () => {
+    endHeroLandingSession();
+    beginHeroLandingSession();
+    try {
+      assert.equal(resolveExit(0, true, "none"), null);
+      assert.equal(resolveExit(5000, true, "hero"), null);
+      assert.equal(resolveExit(5000, false, "hero"), null);
+    } finally {
+      endHeroLandingSession();
+    }
   });
 });

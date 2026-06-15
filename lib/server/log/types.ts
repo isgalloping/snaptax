@@ -30,6 +30,9 @@ export type LogMeta = {
   dataRegion?: string;
   headerRegion?: string;
   reason?: string;
+  previousGhostId?: string;
+  pathnameCount?: number;
+  receiptCount?: number;
   verifyBypass?: boolean;
   mockAi?: boolean;
   bypassPay?: boolean;

@@ -9,21 +9,26 @@ import { ensureGhostSession } from "@/lib/client/ghostClient";
 import { ensureTaxRegionCandidate } from "@/lib/client/taxRegion";
 import {
   apiReceiptToLocal,
-  deleteReceiptRemote,
-  fetchReceiptList,
   triggerReceiptProcess,
   uploadReceipt,
   type ApiReceipt,
 } from "@/lib/client/receiptApi";
-import { pollTaxRecalc } from "@/lib/client/authApi";
 import {
-  persistMergedReceipts,
-  remoteReceiptsToLocal,
+  deleteReceiptLocalAndRemote,
+  flushPendingDeletes,
+} from "@/lib/client/receiptDeleteFlow";
+import { pollTaxRecalc } from "@/lib/client/authApi";
+import { prepareExportSync } from "@/lib/client/exportPrepareFlow";
+import { mergeServerReceiptsIntoLocal } from "@/lib/client/receiptSyncOrchestrator";
+import {
   STARTUP_UNFILED_LIMIT,
   top100ByUpdatedAt,
   UI_RECEIPT_LIMIT,
-  unionMergeLWW,
 } from "@/lib/client/receiptSync";
+import {
+  applyPhotoMissingState,
+  shouldSkipUploadAttempt,
+} from "@/lib/client/receiptUploadFlow";
 import {
   getBudget,
   isSyncStuck,
@@ -99,6 +104,7 @@ export function HomeScreen() {
   const watcherRef = useRef<ProcessingReceiptWatcher | null>(null);
   const queueRef = useRef<ProcessingQueue | null>(null);
   const flushPendingUploadsRef = useRef<() => Promise<void>>(async () => {});
+  const flushPendingDeletesRef = useRef<() => Promise<void>>(async () => {});
   const uploadPendingInnerRef = useRef<
     (receipt: StoredReceipt) => Promise<void>
   >(async () => {});
@@ -188,13 +194,9 @@ export function HomeScreen() {
         return local;
       }
       try {
-        const { receipts: remote, taxSavedEstimate } = await fetchReceiptList();
-        const fullMerged = unionMergeLWW(
+        const { visible, taxSavedEstimate } = await mergeServerReceiptsIntoLocal(
           local,
-          remoteReceiptsToLocal(remote),
         );
-        await persistMergedReceipts(fullMerged, local);
-        const visible = await loadTopByUpdatedAt(UI_RECEIPT_LIMIT);
         if (applyMode === "immediate") {
           pendingMergeRef.current = null;
           applyMergeNow(visible, taxSavedEstimate);
@@ -260,10 +262,21 @@ export function HomeScreen() {
   }, []);
 
   const uploadPendingInner = async (receipt: StoredReceipt) => {
-    if (isSyncStuck(receipt)) return;
+    if (shouldSkipUploadAttempt(receipt)) return;
 
-    const photo = await loadPhoto(receipt.id);
-    if (!photo) return;
+    let photo: Blob | null = null;
+    try {
+      photo = await loadPhoto(receipt.id);
+    } catch {
+      photo = null;
+    }
+    if (!photo) {
+      const marked = applyPhotoMissingState(receipt);
+      await saveReceipt(marked);
+      setReceipts((prev) => prev.map((r) => (r.id === marked.id ? marked : r)));
+      setSyncStuckIds((prev) => new Set(prev).add(marked.id));
+      return;
+    }
 
     try {
       const uploaded = await uploadReceipt(photo, receipt.timestamp);
@@ -273,6 +286,7 @@ export function HomeScreen() {
         hasRemoteImage: true,
         pendingUpload: false,
         writeBudgetRemaining: getBudget(receipt),
+        photoMissing: undefined,
       };
       setReceipts((prev) => {
         const next = [updated, ...prev.filter((r) => r.id !== receipt.id)];
@@ -299,9 +313,14 @@ export function HomeScreen() {
 
   const flushPendingUploads = useCallback(async () => {
     await ensureConvertedDemoUploadReady();
+    try {
+      await ensureGhostSession();
+    } catch {
+      return;
+    }
     const stored = await loadAllReceipts();
     const pending = stored.filter(
-      (r) => r.pendingUpload && !isSyncStuck(r),
+      (r) => r.pendingUpload && !shouldSkipUploadAttempt(r),
     );
     for (const receipt of pending) {
       try {
@@ -313,6 +332,12 @@ export function HomeScreen() {
   }, []);
 
   flushPendingUploadsRef.current = flushPendingUploads;
+
+  const flushPendingDeletesCallback = useCallback(async () => {
+    await flushPendingDeletes();
+  }, []);
+
+  flushPendingDeletesRef.current = flushPendingDeletesCallback;
 
   const runDeferredStartup = useCallback(
     (cancelled: () => boolean) => {
@@ -327,6 +352,8 @@ export function HomeScreen() {
           }
           if (cancelled()) return;
           await flushPendingUploadsRef.current();
+          if (cancelled()) return;
+          await flushPendingDeletesRef.current();
           if (cancelled()) return;
           const storedAfter = await loadAllReceipts();
           const mergedAfter = await syncFromServer(storedAfter, "defer");
@@ -468,6 +495,7 @@ export function HomeScreen() {
         return;
       }
       await flushPendingUploadsRef.current();
+      await flushPendingDeletesRef.current();
       const stored = await loadAllReceipts();
       const merged = await syncFromServer(stored, "immediate");
       const stuck = stuckIdsFromReceipts(merged as StoredReceipt[]);
@@ -490,6 +518,19 @@ export function HomeScreen() {
     await syncFromServer(stored, "immediate");
   }, [syncFromServer]);
 
+  const handlePreExportPrepare = useCallback(async () => {
+    const merged = await prepareExportSync({
+      flushPendingUploads: () => flushPendingUploadsRef.current(),
+      flushPendingDeletes: () => flushPendingDeletesRef.current(),
+      loadAllReceipts,
+      syncFromServer: (local) => syncFromServer(local, "immediate"),
+      ensureGhostSession: async () => {
+        await ensureGhostSession();
+      },
+    });
+    setReceipts(merged);
+  }, [syncFromServer]);
+
   const taxExport = useTaxExportGate({
     receipts,
     googleUser: auth.googleUser,
@@ -499,6 +540,7 @@ export function HomeScreen() {
     onPostLoginSync: handlePostLoginSync,
     onSeasonPaid: auth.markSeasonPaid,
     refreshSeasonPaid: auth.refreshSeasonPaid,
+    onPreExportPrepare: handlePreExportPrepare,
     onPostExportSync: handlePostExportSync,
     onReceiptUpdated: (updated) => {
       void applyReceiptUpdate(updated as StoredReceipt);
@@ -527,6 +569,7 @@ export function HomeScreen() {
     const retryPending = () => {
       if (!navigator.onLine || document.visibilityState === "hidden") return;
       void flushPendingUploadsRef.current();
+      void flushPendingDeletesRef.current();
     };
 
     const intervalId = window.setInterval(retryPending, 60_000);
@@ -706,18 +749,6 @@ export function HomeScreen() {
     );
   }, [refreshListFromLocal, refreshTaxSaved]);
 
-  const handleReviewDelete = useCallback(async (id: string) => {
-    await deleteStoredReceipt(id);
-    watcherRef.current?.unwatch(id);
-    queueRef.current?.onSettled(id);
-    setSyncStuckIds((prev) => {
-      if (!prev.has(id)) return prev;
-      const next = new Set(prev);
-      next.delete(id);
-      return next;
-    });
-  }, []);
-
   const handleDeleteReceipt = useCallback(
     async (id: string) => {
       const existing = receiptsRef.current.find((r) => r.id === id);
@@ -733,15 +764,9 @@ export function HomeScreen() {
         next.delete(id);
         return next;
       });
-      await deleteStoredReceipt(id);
-      if (navigator.onLine) {
-        try {
-          await ensureGhostSession();
-          await deleteReceiptRemote(id);
-        } catch {
-          // Local row already removed; remote may reconcile on next sync
-        }
-      }
+
+      await deleteReceiptLocalAndRemote(id);
+
       const visible = await loadTopByUpdatedAt(UI_RECEIPT_LIMIT);
       setReceipts(visible);
       refreshTaxSaved(visible);
@@ -792,8 +817,9 @@ export function HomeScreen() {
           ...apiReceiptToLocal(uploaded),
           hasRemoteImage: true,
           pendingUpload: false,
-          writeBudgetRemaining: getBudget(processingReceipt),
-        };
+        writeBudgetRemaining: getBudget(processingReceipt),
+        photoMissing: undefined,
+      };
         setReceipts((prev) => {
           const next = [updated, ...prev.filter((r) => r.id !== id)];
           refreshTaxSaved(top100ByUpdatedAt(next));
@@ -858,7 +884,7 @@ export function HomeScreen() {
         onPostLoginSync={handlePostLoginSync}
         onSignOut={auth.signOut}
         onRequestExport={taxExport.requestExport}
-        exportBusy={taxExport.paywallExporting}
+        exportBusy={taxExport.paywallExporting || taxExport.preparingExport}
         exportError={taxExport.exportError}
         isSignedIn={auth.isSignedIn}
         requestSoftGoogleSheet={requestSoftGoogleSheet}
@@ -897,7 +923,7 @@ export function HomeScreen() {
             onBatchShot={handleBatchShot}
             onBatchDone={handleBatchDone}
             onBatchClose={handleBatchClose}
-            onReviewDelete={handleReviewDelete}
+            onReviewDelete={handleDeleteReceipt}
             resnapId={resnapId}
             onCameraOpenChange={setCameraOpen}
             onSyncClick={handleManualListSync}

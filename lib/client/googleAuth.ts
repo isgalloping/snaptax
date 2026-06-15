@@ -4,66 +4,25 @@ const GIS_SRC = "https://accounts.google.com/gsi/client";
 
 let scriptPromise: Promise<void> | null = null;
 
-function gisReady(): boolean {
-  return Boolean(window.google?.accounts?.id);
-}
-
-function waitForGisReady(timeoutMs = 10_000): Promise<void> {
-  if (gisReady()) return Promise.resolve();
-
-  return new Promise((resolve, reject) => {
-    const started = Date.now();
-    const tick = () => {
-      if (gisReady()) {
-        resolve();
-        return;
-      }
-      if (Date.now() - started >= timeoutMs) {
-        reject(new Error("GIS_NOT_READY"));
-        return;
-      }
-      window.setTimeout(tick, 50);
-    };
-    tick();
-  });
-}
-
 export function loadGoogleIdentityScript(): Promise<void> {
   if (typeof window === "undefined") return Promise.resolve();
-  if (gisReady()) return Promise.resolve();
+  if (window.google?.accounts?.id) return Promise.resolve();
   if (scriptPromise) return scriptPromise;
 
   scriptPromise = new Promise((resolve, reject) => {
-    const finishReady = () => {
-      void waitForGisReady().then(resolve).catch(reject);
-    };
-
     const existing = document.querySelector(`script[src="${GIS_SRC}"]`);
     if (existing) {
-      if (gisReady()) {
-        resolve();
-        return;
-      }
-      existing.addEventListener("load", finishReady, { once: true });
-      existing.addEventListener(
-        "error",
-        () => reject(new Error("GIS_LOAD_FAILED")),
-        { once: true },
-      );
-      queueMicrotask(finishReady);
+      existing.addEventListener("load", () => resolve());
+      existing.addEventListener("error", () => reject(new Error("GIS_LOAD_FAILED")));
       return;
     }
-
     const script = document.createElement("script");
     script.src = GIS_SRC;
     script.async = true;
     script.defer = true;
-    script.onload = finishReady;
+    script.onload = () => resolve();
     script.onerror = () => reject(new Error("GIS_LOAD_FAILED"));
     document.head.appendChild(script);
-  }).catch((error) => {
-    scriptPromise = null;
-    throw error;
   });
 
   return scriptPromise;
@@ -73,32 +32,34 @@ export function getGoogleClientId(): string {
   return process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? "";
 }
 
-async function waitForContainerWidth(container: HTMLElement): Promise<number> {
-  for (let i = 0; i < 20; i++) {
-    const width = container.clientWidth;
-    if (width > 0) return width;
-    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-  }
-  return container.clientWidth || 320;
-}
-
 export type GoogleSignInMount = {
   cleanup: () => void;
 };
 
-async function waitForRenderedButton(
-  container: HTMLElement,
-  timeoutMs = 5_000,
-): Promise<void> {
-  for (let elapsed = 0; elapsed < timeoutMs; elapsed += 50) {
-    const hasRenderedChild =
-      container.querySelector('[role="button"]') != null ||
-      container.querySelector("iframe") != null ||
-      container.childElementCount > 0;
-    if (hasRenderedChild && container.offsetHeight > 0) return;
-    await new Promise<void>((resolve) => window.setTimeout(resolve, 50));
-  }
-  throw new Error("GIS_BUTTON_FAILED");
+let gisInitializedForClient: string | null = null;
+type GisCredentialHandler = {
+  onCredential: (credential: string) => void;
+  onError?: (error: Error) => void;
+};
+let activeGisHandler: GisCredentialHandler | null = null;
+
+function ensureGisInitialized(clientId: string): void {
+  if (gisInitializedForClient === clientId) return;
+  if (!window.google?.accounts?.id) throw new Error("GIS_NOT_READY");
+
+  window.google.accounts.id.initialize({
+    client_id: clientId,
+    callback: (response) => {
+      if (response.credential) {
+        activeGisHandler?.onCredential(response.credential);
+      } else {
+        activeGisHandler?.onError?.(new Error("GOOGLE_SIGN_IN_CANCELLED"));
+      }
+    },
+    auto_select: false,
+    cancel_on_tap_outside: true,
+  });
+  gisInitializedForClient = clientId;
 }
 
 export async function mountGoogleSignInButton(
@@ -111,27 +72,13 @@ export async function mountGoogleSignInButton(
   await loadGoogleIdentityScript();
   const clientId = getGoogleClientId();
   if (!clientId) throw new Error("GOOGLE_CLIENT_ID missing");
-  if (!gisReady()) throw new Error("GIS_NOT_READY");
+  if (!window.google?.accounts?.id) throw new Error("GIS_NOT_READY");
 
-  window.google!.accounts.id.cancel();
-  container.replaceChildren();
+  activeGisHandler = callbacks;
+  ensureGisInitialized(clientId);
 
-  window.google!.accounts.id.initialize({
-    client_id: clientId,
-    callback: (response) => {
-      if (response.credential) {
-        callbacks.onCredential(response.credential);
-      } else {
-        callbacks.onError?.(new Error("GOOGLE_SIGN_IN_CANCELLED"));
-      }
-    },
-    auto_select: false,
-    cancel_on_tap_outside: true,
-    use_fedcm_for_button: false,
-  });
-
-  const width = Math.min(400, Math.max(240, await waitForContainerWidth(container)));
-  window.google!.accounts.id.renderButton(container, {
+  const width = Math.min(400, Math.max(240, container.clientWidth || 320));
+  window.google.accounts.id.renderButton(container, {
     type: "standard",
     theme: "outline",
     size: "large",
@@ -140,12 +87,12 @@ export async function mountGoogleSignInButton(
     shape: "rectangular",
   });
 
-  await waitForRenderedButton(container);
-
   return {
     cleanup: () => {
-      window.google?.accounts.id.cancel();
       container.replaceChildren();
+      if (activeGisHandler === callbacks) {
+        activeGisHandler = null;
+      }
     },
   };
 }
@@ -155,7 +102,7 @@ export async function requestGoogleCredential(): Promise<string> {
   await loadGoogleIdentityScript();
   const clientId = getGoogleClientId();
   if (!clientId) throw new Error("GOOGLE_CLIENT_ID missing");
-  if (!gisReady()) throw new Error("GIS_NOT_READY");
+  if (!window.google?.accounts?.id) throw new Error("GIS_NOT_READY");
 
   return new Promise((resolve, reject) => {
     let settled = false;
@@ -197,25 +144,12 @@ export async function requestGoogleCredential(): Promise<string> {
   });
 }
 
+/** @deprecated Use mapGoogleAuthErrorMessage from googleAuthErrors.ts */
 export function mapGoogleAuthError(
   error: unknown,
   signInFailedMessage: string,
 ): string | null {
   const message = error instanceof Error ? error.message : "";
   if (message === "GOOGLE_SIGN_IN_CANCELLED") return null;
-  if (
-    message === "GOOGLE_CLIENT_ID missing" ||
-    message === "GIS_LOAD_FAILED" ||
-    message === "GIS_NOT_READY" ||
-    message === "GIS_BUTTON_FAILED" ||
-    message === "GOOGLE_SIGN_IN_TIMEOUT" ||
-    message === "ghost register failed" ||
-    message === "GOOGLE_AUTH_FAILED" ||
-    message === "UNAUTHORIZED" ||
-    message === "INVALID_GOOGLE_TOKEN" ||
-    message === "GHOST_ALREADY_BOUND"
-  ) {
-    return signInFailedMessage;
-  }
   return signInFailedMessage;
 }

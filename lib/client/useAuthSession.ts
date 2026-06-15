@@ -110,7 +110,7 @@ export function useAuthSession() {
     const season = seasonKey();
     const paid = await fetchSeasonPaid(season);
     setSeasonPaidState(paid);
-    if (paid) setSeasonPaid(season, true);
+    setSeasonPaid(season, paid);
   }, [googleUser]);
 
   const resetAfterAccountDelete = useCallback(() => {

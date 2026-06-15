@@ -152,21 +152,14 @@ export function useTaxExportGate({
           onClose={() => setShowPaywall(false)}
           onPaid={async () => {
             onSeasonPaid();
-            setShowPaywall(false);
             setPaywallExporting(true);
             try {
-              const ready = await pollEntitlementReady(currentSeason, 30_000);
-              if (!ready) {
-                setSeasonPaid(currentSeason, false);
-                await refreshSeasonPaid?.();
-                setErrorMessage(copy.settings.export.paymentConfirmed);
-                return;
-              }
+              await pollEntitlementReady(currentSeason, 30_000);
+              setShowPaywall(false);
               await openExportAfterPrepare();
               await refreshSeasonPaid?.();
             } catch {
-              setSeasonPaid(currentSeason, false);
-              await refreshSeasonPaid?.();
+              setShowPaywall(false);
               setErrorMessage(copy.settings.export.failedAfterPayment);
             } finally {
               setPaywallExporting(false);

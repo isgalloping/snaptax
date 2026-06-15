@@ -237,6 +237,10 @@ export const FR_FR_COPY: UserCopy = {
     payButton: "Payer 49 $ avec Paddle",
     paymentUnavailable: "Paiement indisponible. Paddle n'est pas configuré.",
     paymentFailed: "Échec du paiement. Veuillez réessayer.",
+    confirmingPayment: "Confirmation du paiement…",
+    confirmingPaymentHint:
+      "Votre paiement a été reçu. Nous débloquons votre export pour la saison fiscale.",
+    openingExport: "Ouverture de l'export…",
     back: "< RETOUR",
   },
   auth: {

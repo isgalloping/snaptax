@@ -64,7 +64,7 @@ mark intent consumed
 return 200
 ```
 
-**客户端支付后：** `pollEntitlementReady` 最长 30s；超时则撤销乐观 `seasonPaid`，提示用户稍后重试 Export。
+**客户端支付后：** Paywall 显示「Confirming payment…」；`pollEntitlementReady` 最长 30s 后**无论是否 ready 均打开 ExportEngineSheet**（402 时 Export 内重开 Paywall）。Poll 超时**不撤销**乐观 `seasonPaid`。
 
 ## 7.6 权益检查
 

@@ -341,9 +341,17 @@ export const FR_FR_COPY: UserCopy = {
         general: "1099 général",
       },
     },
-    multiDevice: {
-      title: "Multi-appareils",
-      button: "Voir sur tous les appareils",
+    share: {
+      title: "Partager",
+      hint: "Parlez-en à un collègue 1099",
+      whatsapp: "WhatsApp",
+      facebook: "Facebook",
+      more: "Plus",
+      message:
+        "J'utilise Snap1099 pour photographier mes reçus et exporter un dossier fiscal prêt pour l'IRS. Essayez :",
+      shareTitle: "Snap1099 — Reçus vers dossier fiscal IRS",
+      linkCopied: "Lien copié",
+      shareFailed: "Partage impossible. Lien copié à la place.",
     },
     privacyData: {
       title: "Confidentialité et données",

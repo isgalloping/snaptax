@@ -332,9 +332,17 @@ export const EN_US_COPY: UserCopy = {
           general: "General 1099",
         },
       },
-      multiDevice: {
-        title: "Multi-Device",
-        button: "View on All Devices",
+      share: {
+        title: "Share",
+        hint: "Tell a fellow 1099 contractor",
+        whatsapp: "WhatsApp",
+        facebook: "Facebook",
+        more: "More",
+        message:
+          "I use Snap1099 to snap receipts and export an IRS-ready tax pack. Try it:",
+        shareTitle: "Snap1099 — Receipts to IRS tax pack",
+        linkCopied: "Link copied",
+        shareFailed: "Could not share. Link copied instead.",
       },
       privacyData: {
         title: "Privacy & Data",

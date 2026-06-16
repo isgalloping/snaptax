@@ -72,3 +72,30 @@ test("unionMergeLWW retains local-only rows", () => {
   assert.equal(merged.length, 1);
   assert.equal(merged[0]?.id, "local-only");
 });
+
+test("unionMergeLWW backfills extraction when local updatedAt is newer", () => {
+  const local = [
+    stored("a", "2026-06-07T14:00:00.000Z", {
+      merchant: undefined,
+      category: undefined,
+      amount: undefined,
+    }),
+  ];
+  const remote = [
+    {
+      id: "a",
+      status: "done" as const,
+      timestamp: new Date("2026-06-07T08:00:00.000Z"),
+      updatedAt: new Date("2026-06-07T12:00:00.000Z"),
+      merchant: "Home Depot",
+      category: "OTHER",
+      amount: 14.75,
+    },
+  ];
+  const merged = unionMergeLWW(local, remote);
+  const row = merged.find((r) => r.id === "a");
+  assert.equal(row?.merchant, "Home Depot");
+  assert.equal(row?.category, "OTHER");
+  assert.equal(row?.amount, 14.75);
+  assert.equal(row?.updatedAt?.toISOString(), "2026-06-07T14:00:00.000Z");
+});

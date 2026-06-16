@@ -15,6 +15,7 @@ import {
   irsScheduleLineBadge,
   resolveReceiptImage,
 } from "@/lib/receipts/receiptDetail";
+import { peekCachedReceiptImageUrl } from "@/lib/client/receiptImageCache";
 import { clientTimeZone } from "@/lib/time/timeZone";
 import { useUserCopy } from "@/components/i18n/I18nProvider";
 import { ReceiptImageZoomViewer } from "@/components/receipts/ReceiptImageZoomViewer";
@@ -61,7 +62,9 @@ export function ReceiptDetailSheet({
 }: ReceiptDetailSheetProps) {
   const copy = useUserCopy().receiptDetail;
   const [receipt, setReceipt] = useState(initialReceipt);
-  const [imageSrc, setImageSrc] = useState<string | null>(null);
+  const [imageSrc, setImageSrc] = useState<string | null>(() =>
+    peekCachedReceiptImageUrl(initialReceipt.id),
+  );
   const [imageMissing, setImageMissing] = useState(false);
   const [imageOffline, setImageOffline] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
@@ -69,6 +72,8 @@ export function ReceiptDetailSheet({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const dragStartY = useRef<number | null>(null);
   const revokeRef = useRef<(() => void) | undefined>(undefined);
+  const onReceiptUpdateRef = useRef(onReceiptUpdate);
+  onReceiptUpdateRef.current = onReceiptUpdate;
 
   const hero = buildReceiptDetailHero(receipt, copy.hero);
   const region = receipt.dataRegion ?? "us";
@@ -98,13 +103,19 @@ export function ReceiptDetailSheet({
       .then((remote) => {
         const updated = apiReceiptToLocal(remote);
         setReceipt((prev) => ({ ...prev, ...updated }));
-        onReceiptUpdate?.(updated);
+        onReceiptUpdateRef.current?.(updated);
       })
       .catch(() => {});
-  }, [receipt.id, receipt.status, onReceiptUpdate]);
+  }, [receipt.id, receipt.status]);
 
   useEffect(() => {
     let cancelled = false;
+    const cached = peekCachedReceiptImageUrl(receipt.id);
+    if (cached) {
+      setImageSrc((prev) => prev ?? cached);
+      setImageMissing(false);
+      setImageOffline(false);
+    }
     void resolveReceiptImage(receipt).then((resolved) => {
       if (cancelled) {
         if (resolved.kind === "local") resolved.revoke?.();
@@ -128,7 +139,7 @@ export function ReceiptDetailSheet({
       revokeRef.current?.();
       revokeRef.current = undefined;
     };
-  }, [receipt]);
+  }, [receipt.id, receipt.hasRemoteImage]);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     dragStartY.current = e.touches[0]?.clientY ?? null;

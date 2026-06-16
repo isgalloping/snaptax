@@ -122,7 +122,25 @@ html.landing-done #landing-ssr-layer {
   animation-name: snap-coach-heartbeat-export;
 }
 
+@keyframes export-empty-tip-fade {
+  0%,
+  55% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.animate-export-empty-tip {
+  animation: export-empty-tip-fade 5s ease-out forwards;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .animate-export-empty-tip {
+    animation: none;
+  }
+
   .snap-focus-ring__pulse {
     animation: none !important;
     opacity: 1;

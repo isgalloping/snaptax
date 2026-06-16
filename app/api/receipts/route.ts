@@ -166,15 +166,12 @@ export const POST = withRequestLog(
           canMockAi: verify.canMockAi,
         });
 
-        return NextResponse.json(
-          {
-            id: receiptId,
-            status: result.status,
-            taxAmount: result.taxAmount,
-            dataRegion,
-          },
-          { status: 201 },
-        );
+        const processed = await prisma.snaptaxReceipt.findUnique({
+          where: { id: receiptId },
+        });
+        if (!processed) throw new Error("NOT_FOUND");
+
+        return NextResponse.json(serializeReceipt(processed), { status: 201 });
       } catch {
         return NextResponse.json(
           {

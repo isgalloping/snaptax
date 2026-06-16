@@ -109,9 +109,14 @@
 
 ```
 OPENAI_API_KEY=
-OPENAI_MODEL=gpt-4o
+OPENAI_BASE_URL=          # optional; e.g. https://maxapi.pro/v1 for OpenAI-compatible gateways
+OPENAI_MODEL=gpt-4o-mini  # production via Max API Pro: gpt-5.4-mini (use console slug)
+OPENAI_TIMEOUT_MS=120000
+OPENAI_MAX_RETRIES=2
 RECEIPT_CONFIDENCE_THRESHOLD=0.7
 ```
+
+**Max API Pro ([maxapi.pro](https://maxapi.pro)):** set `OPENAI_BASE_URL`, gateway API key, and `OPENAI_MODEL=gpt-5.4-mini`. Prompts, Zod, and tax math unchanged.
 
 ## 6.8 成本监控
 

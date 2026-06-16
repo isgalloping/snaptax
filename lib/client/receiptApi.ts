@@ -111,7 +111,30 @@ export type UploadCreateResponse = {
   taxAmount?: number;
   dataRegion?: TaxRegion;
   processFailed?: boolean;
+  amount?: number | null;
+  merchant?: string | null;
+  category?: string | null;
+  deductible?: boolean;
+  currency?: string | null;
+  capturedAt?: string;
+  snapAt?: string | null;
+  updatedAt?: string;
+  taxSeason?: string | null;
+  taxSeasonDate?: string | null;
+  hasImage?: boolean;
 };
+
+function isFullApiReceipt(body: unknown): body is ApiReceipt {
+  if (!body || typeof body !== "object") return false;
+  const row = body as Record<string, unknown>;
+  return (
+    typeof row.id === "string" &&
+    typeof row.status === "string" &&
+    typeof row.capturedAt === "string" &&
+    typeof row.updatedAt === "string" &&
+    typeof row.taxAmount === "number"
+  );
+}
 
 export function apiReceiptFromUploadResponse(
   created: UploadCreateResponse,
@@ -123,17 +146,19 @@ export function apiReceiptFromUploadResponse(
   return {
     id: created.id,
     status: created.status,
-    amount: null,
-    merchant: null,
-    category: null,
+    amount: created.amount ?? null,
+    merchant: created.merchant ?? null,
+    category: created.category ?? null,
     taxAmount: created.taxAmount ?? 0,
     dataRegion: created.dataRegion ?? "us",
-    capturedAt: capturedIso,
-    snapAt: snapAt ? capturedIso : null,
-    updatedAt: nowIso,
-    taxSeason: null,
-    taxSeasonDate: null,
-    hasImage: true,
+    deductible: created.deductible,
+    currency: created.currency ?? null,
+    capturedAt: created.capturedAt ?? capturedIso,
+    snapAt: created.snapAt ?? (snapAt ? capturedIso : null),
+    updatedAt: created.updatedAt ?? nowIso,
+    taxSeason: created.taxSeason ?? null,
+    taxSeasonDate: created.taxSeasonDate ?? null,
+    hasImage: created.hasImage ?? true,
   };
 }
 
@@ -157,11 +182,24 @@ export async function uploadReceipt(
     const code = body?.error?.code ?? "UPLOAD_FAILED";
     throw new Error(code);
   }
-  const created = (await res.json()) as UploadCreateResponse;
-  if (!created.id || !created.status) {
+  const created = (await res.json()) as UploadCreateResponse | ApiReceipt;
+  if (!created.id || !("status" in created) || !created.status) {
     throw new Error("UPLOAD_FAILED");
   }
-  return apiReceiptFromUploadResponse(created, snapAt);
+
+  let receipt = isFullApiReceipt(created)
+    ? created
+    : apiReceiptFromUploadResponse(created, snapAt);
+
+  if (
+    (receipt.status === "done" || receipt.status === "blurry") &&
+    !receipt.merchant?.trim() &&
+    isPersistedReceiptId(receipt.id)
+  ) {
+    receipt = await fetchReceiptById(receipt.id);
+  }
+
+  return receipt;
 }
 
 export type ProcessTriggerResult =

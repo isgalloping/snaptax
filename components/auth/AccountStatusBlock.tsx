@@ -7,6 +7,7 @@ interface AccountStatusBlockProps {
   googleUser: GoogleUser | null;
   seasonPaid: boolean;
   seasonLabel: string;
+  authHydrated?: boolean;
   onSignIn: () => void;
   onSignOut?: () => void;
 }
@@ -15,6 +16,7 @@ export function AccountStatusBlock({
   googleUser,
   seasonPaid,
   seasonLabel,
+  authHydrated = true,
   onSignIn,
   onSignOut,
 }: AccountStatusBlockProps) {
@@ -25,7 +27,9 @@ export function AccountStatusBlock({
       <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-400">
         {copy.title}
       </h2>
-      {googleUser ? (
+      {!authHydrated ? (
+        <div className="mt-2 min-h-[4.5rem]" aria-busy="true" aria-live="polite" />
+      ) : googleUser ? (
         <>
           <p className="mt-2 text-sm font-bold text-green-400">
             {copy.signedInPrefix} · {googleUser.email} · {copy.cloudBackupOn}

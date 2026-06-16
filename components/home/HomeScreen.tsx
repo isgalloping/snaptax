@@ -913,6 +913,7 @@ export function HomeScreen() {
         exportEmptyTipKey={taxExport.exportEmptyTipKey}
         onExportEmptyTipDismiss={taxExport.clearExportEmptyTip}
         isSignedIn={auth.isSignedIn}
+        authHydrated={auth.hydrated}
         requestSoftGoogleSheet={requestSoftGoogleSheet}
         onSoftGoogleSheetConsumed={() => setRequestSoftGoogleSheet(false)}
         onSoftGuideDismiss={handleSoftGuideDismiss}

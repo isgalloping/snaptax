@@ -36,6 +36,7 @@ interface SettingsScreenProps {
   seasonPaid: boolean;
   currentSeason: string;
   isSignedIn: boolean;
+  authHydrated?: boolean;
   onUserSignedIn?: (result: GoogleAuthResponse) => void;
   onPostLoginSync?: (taxRecalcQueued: number) => Promise<void>;
   onSignOut?: () => Promise<void>;
@@ -63,6 +64,7 @@ export function SettingsScreen({
   seasonPaid,
   currentSeason,
   isSignedIn,
+  authHydrated = true,
   onUserSignedIn,
   onPostLoginSync,
   onSignOut,
@@ -157,11 +159,22 @@ export function SettingsScreen({
   };
 
   const handleGoogleSuccess = async (result: { taxRecalcQueued: number }) => {
+    const showSyncAfter = pendingAfterSignIn === "sync";
+    const closingSoftSheet = googleSheet === "soft";
+    if (!closingSoftSheet) {
+      setGoogleSheet(null);
+    }
+    setPendingAfterSignIn(null);
     await onPostLoginSync?.(result.taxRecalcQueued);
-    setGoogleSheet(null);
-    if (pendingAfterSignIn === "sync") {
+    if (showSyncAfter) {
       setShowSyncHelp(true);
-      setPendingAfterSignIn(null);
+    }
+  };
+
+  const handleUserSignedIn = (result: GoogleAuthResponse) => {
+    onUserSignedIn?.(result);
+    if (googleSheet === "soft") {
+      setGoogleSheet(null);
     }
   };
 
@@ -217,6 +230,7 @@ export function SettingsScreen({
           googleUser={googleUser}
           seasonPaid={seasonPaid}
           seasonLabel={currentSeason}
+          authHydrated={authHydrated}
           onSignIn={() => {
             clearError();
             setGoogleSheet("soft");
@@ -351,7 +365,7 @@ export function SettingsScreen({
             setPendingAfterSignIn(null);
           }}
           onSoftDismiss={googleSheet === "soft" ? handleSoftDismiss : undefined}
-          onUserSignedIn={onUserSignedIn}
+          onUserSignedIn={handleUserSignedIn}
           onSuccess={handleGoogleSuccess}
           onFailure={(msg) => {
             setErrorMessage(msg);

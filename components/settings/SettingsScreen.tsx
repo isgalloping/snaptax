@@ -1,9 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import type { Industry } from "@/lib/types";
-import { INDUSTRIES } from "@/lib/types";
 import type { GoogleUser } from "@/lib/client/authStorage";
 import type { GoogleAuthResponse } from "@/lib/client/authApi";
 import { saveIndustry } from "@/lib/client/authStorage";
@@ -17,13 +15,10 @@ import {
 import { AccountStatusBlock } from "@/components/auth/AccountStatusBlock";
 import { GoogleSignInSheet, type GoogleSignInMode } from "@/components/auth/GoogleSignInSheet";
 import { useI18n } from "@/components/i18n/I18nProvider";
-import { PrivacyDataSection } from "@/components/settings/PrivacyDataSection";
+import { SettingsPreferencesSection } from "@/components/settings/SettingsPreferencesSection";
 import { ShareAppSection } from "@/components/settings/ShareAppSection";
-import { ExportEmptyTip } from "@/components/export/ExportEmptyTip";
-import {
-  isSignOutOfflineError,
-} from "@/lib/client/signOutFlow";
-import { SUPPORTED_LOCALES, type Locale } from "@/lib/i18n";
+import { TaxExportSection } from "@/components/settings/TaxExportSection";
+import { isSignOutOfflineError } from "@/lib/client/signOutFlow";
 
 interface SettingsScreenProps {
   industry: Industry | null;
@@ -46,11 +41,9 @@ interface SettingsScreenProps {
   exportEmptyTip?: string | null;
   exportEmptyTipKey?: number;
   onExportEmptyTipDismiss?: () => void;
-  /** Open soft Google sheet immediately (e.g. from TaxHeader nudge). */
   requestSoftGoogleSheet?: boolean;
   onSoftGoogleSheetConsumed?: () => void;
   onSoftGuideDismiss?: () => void;
-  /** Skip first-visit soft Google sheet (Aha onboarding path). */
   skipSoftGoogleSheet?: boolean;
 }
 
@@ -79,7 +72,7 @@ export function SettingsScreen({
   onSoftGuideDismiss,
   skipSoftGoogleSheet = false,
 }: SettingsScreenProps) {
-  const { locale, setLocale, copy } = useI18n();
+  const { copy } = useI18n();
   const [googleSheet, setGoogleSheet] = useState<GoogleSignInMode | null>(null);
   const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
@@ -183,12 +176,6 @@ export function SettingsScreen({
     }
   };
 
-  const languageLabels: Record<Locale, string> = {
-    "en-US": copy.settings.language.english,
-    "fr-FR": copy.settings.language.french,
-    "de-DE": copy.settings.language.german,
-  };
-
   return (
     <div className="flex h-full flex-col bg-black text-white">
       <header className="flex items-center border-b-4 border-yellow-500 bg-zinc-900 p-4">
@@ -224,99 +211,24 @@ export function SettingsScreen({
           }
         />
 
-        <section className="mb-8">
-          <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-zinc-400">
-            {copy.settings.language.title}
-          </h2>
-          <div className="grid grid-cols-3 gap-3">
-            {SUPPORTED_LOCALES.map((item) => (
-              <button
-                key={item}
-                type="button"
-                onClick={() => setLocale(item)}
-                aria-pressed={locale === item}
-                className={`min-h-16 rounded-xl border-2 p-4 text-center text-sm font-bold transition-transform active:scale-95 ${
-                  locale === item
-                    ? "border-yellow-500 bg-yellow-950 text-yellow-400"
-                    : "border-zinc-600 bg-zinc-800 text-white"
-                }`}
-              >
-                {languageLabels[item]}
-              </button>
-            ))}
-          </div>
-        </section>
-
-        <section className="mb-8">
-          <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-zinc-400">
-            {copy.settings.industry.title}
-          </h2>
-          <div className="grid grid-cols-2 gap-3">
-            {INDUSTRIES.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => void handleIndustryChange(item.id)}
-                className={`min-h-16 rounded-xl border-2 p-4 text-left text-sm font-bold transition-transform active:scale-95 ${
-                  industry === item.id
-                    ? "border-yellow-500 bg-yellow-950 text-yellow-400"
-                    : "border-zinc-600 bg-zinc-800 text-white"
-                }`}
-              >
-                {copy.settings.industry.labels[item.id]}
-              </button>
-            ))}
-          </div>
-        </section>
+        <TaxExportSection
+          currentSeason={currentSeason}
+          seasonPaid={seasonPaid}
+          exportBusy={exportBusy}
+          exportEmptyTip={exportEmptyTip}
+          exportEmptyTipKey={exportEmptyTipKey}
+          onExportEmptyTipDismiss={onExportEmptyTipDismiss}
+          onRequestExport={onRequestExport}
+        />
 
         <ShareAppSection />
 
-        <section className="mb-8">
-          <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-zinc-400">
-            {copy.settings.help.title}
-          </h2>
-          <Link
-            href="/help"
-            className="block w-full min-h-16 rounded-xl border-2 border-zinc-600 bg-zinc-800 p-4 text-left transition-transform active:scale-95"
-          >
-            <span className="text-sm font-bold text-white">
-              {copy.settings.help.button}
-            </span>
-            <span className="mt-1 block text-xs leading-relaxed text-zinc-400">
-              {copy.settings.help.hint}
-            </span>
-          </Link>
-        </section>
-
-        <PrivacyDataSection
+        <SettingsPreferencesSection
+          industry={industry}
+          onIndustryChange={(value) => void handleIndustryChange(value)}
           isSignedIn={isSignedIn}
           onAccountDeleted={onAccountDeleted ?? onLocalDataCleared}
         />
-
-        <section>
-          <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-zinc-400">
-            {copy.settings.export.title}
-          </h2>
-          {exportEmptyTip && onExportEmptyTipDismiss && (
-            <ExportEmptyTip
-              key={exportEmptyTipKey}
-              message={exportEmptyTip}
-              onDismiss={onExportEmptyTipDismiss}
-            />
-          )}
-          <button
-            type="button"
-            disabled={exportBusy}
-            onClick={onRequestExport}
-            className="w-full min-h-16 rounded-xl border-4 border-white bg-yellow-500 py-4 text-lg font-black uppercase tracking-wider text-black transition-transform active:scale-95 disabled:opacity-60"
-          >
-            {exportBusy
-              ? copy.settings.export.exporting
-              : seasonPaid
-                ? copy.settings.export.buttonPaid
-                : copy.settings.export.button}
-          </button>
-        </section>
 
         {displayError && (
           <p className="mt-4 text-center text-sm font-bold text-red-500" role="alert">

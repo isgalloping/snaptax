@@ -24,7 +24,7 @@ export function AccountStatusBlock({
   const copy = useUserCopy().settings.account;
 
   return (
-    <section className="mb-8 rounded-xl border-2 border-zinc-600 bg-zinc-800 p-4">
+    <section className="mb-6 rounded-xl border-2 border-zinc-600 bg-zinc-800 p-4">
       <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-400">
         {copy.title}
       </h2>

@@ -374,9 +374,13 @@ export const FR_FR_COPY: UserCopy = {
       deletePermanently: "Supprimer définitivement",
       cancel: "Annuler",
     },
+    preferences: {
+      title: "Langue et secteur",
+    },
     export: {
-      title: "Export saison fiscale",
+      title: "Export fiscal",
       button: "Exporter le pack fiscal IRS",
+      buttonLocked: "Exporter pack IRS {season} (49 $)",
       buttonPaid: "Exporter à nouveau",
       exporting: "Export en cours…",
       shareText: "Votre export de dépenses prêt pour l'IRS",

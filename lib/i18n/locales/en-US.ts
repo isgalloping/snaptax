@@ -365,9 +365,13 @@ export const EN_US_COPY: UserCopy = {
         deletePermanently: "Delete permanently",
         cancel: "Cancel",
       },
+      preferences: {
+        title: "Language & Your Industry",
+      },
       export: {
-        title: "Tax Season Export",
+        title: "Tax Export",
         button: "Export IRS Tax Pack",
+        buttonLocked: "Export {season} IRS Tax Pack ($49)",
         buttonPaid: "Export Again",
         exporting: "Exporting…",
         shareText: "Your IRS-ready expense export",

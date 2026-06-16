@@ -373,9 +373,13 @@ export const DE_DE_COPY: UserCopy = {
       deletePermanently: "Dauerhaft löschen",
       cancel: "Abbrechen",
     },
+    preferences: {
+      title: "Sprache & Branche",
+    },
     export: {
-      title: "Steuersaison-Export",
+      title: "Steuerexport",
       button: "IRS-Steuerpaket exportieren",
+      buttonLocked: "IRS-Steuerpaket {season} exportieren (49 $)",
       buttonPaid: "Erneut exportieren",
       exporting: "Export läuft…",
       shareText: "Ihr IRS-fertiger Ausgabenexport",

@@ -115,9 +115,7 @@ export function GoogleSignInSheet({
           try {
             await onSuccessRef.current({ taxRecalcQueued: result.taxRecalcQueued });
           } catch {
-            if (!cancelled) {
-              setInlineWarning(authCopy.syncAfterSignInFailed);
-            }
+            // Post-login sync is best-effort; Account shows signed-in state without extra prompts.
           }
         } catch (error) {
           if (!cancelled) handleAuthError(error);

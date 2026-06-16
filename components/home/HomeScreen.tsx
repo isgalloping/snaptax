@@ -888,6 +888,7 @@ export function HomeScreen() {
         exportBusy={taxExport.paywallExporting || taxExport.preparingExport}
         exportError={taxExport.exportError}
         isSignedIn={auth.isSignedIn}
+        authHydrated={auth.hydrated}
         requestSoftGoogleSheet={requestSoftGoogleSheet}
         onSoftGoogleSheetConsumed={() => setRequestSoftGoogleSheet(false)}
         onSoftGuideDismiss={handleSoftGuideDismiss}

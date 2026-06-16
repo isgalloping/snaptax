@@ -2,6 +2,7 @@
 
 import { useUserCopy } from "@/components/i18n/I18nProvider";
 import type { GoogleUser } from "@/lib/client/authStorage";
+import { maskEmailForDisplay } from "@/lib/client/maskEmail";
 
 interface AccountStatusBlockProps {
   googleUser: GoogleUser | null;
@@ -32,7 +33,7 @@ export function AccountStatusBlock({
       ) : googleUser ? (
         <>
           <p className="mt-2 text-sm font-bold text-green-400">
-            {copy.signedInPrefix} · {googleUser.email} · {copy.cloudBackupOn}
+            {maskEmailForDisplay(googleUser.email)}
           </p>
           {seasonPaid && (
             <p className="mt-2 text-sm font-bold text-yellow-400">

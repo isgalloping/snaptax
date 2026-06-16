@@ -366,7 +366,7 @@ export const EN_US_COPY: UserCopy = {
         cancel: "Cancel",
       },
       preferences: {
-        title: "Language & Your Industry",
+        title: "Preferences",
       },
       export: {
         title: "Tax Export",

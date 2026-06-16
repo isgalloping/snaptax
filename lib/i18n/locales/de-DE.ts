@@ -374,7 +374,7 @@ export const DE_DE_COPY: UserCopy = {
       cancel: "Abbrechen",
     },
     preferences: {
-      title: "Sprache & Branche",
+      title: "Einstellungen",
     },
     export: {
       title: "Steuerexport",

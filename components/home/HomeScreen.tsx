@@ -9,10 +9,12 @@ import { ensureGhostSession } from "@/lib/client/ghostClient";
 import { ensureTaxRegionCandidate } from "@/lib/client/taxRegion";
 import {
   apiReceiptToLocal,
+  isDuplicateReceiptError,
   triggerReceiptProcess,
   uploadReceipt,
   type ApiReceipt,
 } from "@/lib/client/receiptApi";
+import { reconcileDuplicateReceipt } from "@/lib/client/reconcileDuplicateReceipt";
 import {
   deleteReceiptLocalAndRemote,
   flushPendingDeletes,
@@ -76,6 +78,7 @@ import {
   writeOnboardFlag,
 } from "@/lib/onboarding/onboardingStorage";
 import { visibleReceiptsForOnboarding } from "@/lib/onboarding/onboardingReceipts";
+import { useI18n } from "@/components/i18n/I18nProvider";
 
 type View = "home" | "settings";
 
@@ -91,6 +94,7 @@ function stuckIdsFromReceipts(receipts: StoredReceipt[]): Set<string> {
 
 export function HomeScreen() {
   const auth = useAuthSession();
+  const { copy } = useI18n();
   const isOnline = useIsOnline();
   const [view, setView] = useState<View>("home");
   const [receipts, setReceipts] = useState<Receipt[]>([]);
@@ -103,6 +107,7 @@ export function HomeScreen() {
   const [appHidden, setAppHidden] = useState(false);
   const [listSyncing, setListSyncing] = useState(false);
   const [syncStuckIds, setSyncStuckIds] = useState<Set<string>>(() => new Set());
+  const [receiptNotice, setReceiptNotice] = useState<string | null>(null);
   const watcherRef = useRef<ProcessingReceiptWatcher | null>(null);
   const queueRef = useRef<ProcessingQueue | null>(null);
   const flushPendingUploadsRef = useRef<() => Promise<void>>(async () => {});
@@ -110,6 +115,7 @@ export function HomeScreen() {
   const uploadPendingInnerRef = useRef<
     (receipt: StoredReceipt) => Promise<void>
   >(async () => {});
+  const uploadInFlightRef = useRef(new Set<string>());
   const receiptsRef = useRef<Receipt[]>([]);
   const cameraOpenRef = useRef(false);
   const pendingMergeRef = useRef<{
@@ -263,8 +269,68 @@ export function HomeScreen() {
     queueRef.current?.enqueue(id);
   }, []);
 
+  useEffect(() => {
+    if (!receiptNotice) return;
+    const timer = window.setTimeout(() => setReceiptNotice(null), 4000);
+    return () => window.clearTimeout(timer);
+  }, [receiptNotice]);
+
+  const persistUploadedReceipt = useCallback(
+    async (prior: StoredReceipt, uploaded: ApiReceipt) => {
+      const updated: StoredReceipt = {
+        ...apiReceiptToLocal(uploaded),
+        hasRemoteImage: true,
+        pendingUpload: false,
+        writeBudgetRemaining: getBudget(prior),
+        photoMissing: undefined,
+      };
+      setReceipts((prev) => {
+        const next = top100ByUpdatedAt([
+          updated,
+          ...prev.filter((r) => r.id !== prior.id),
+        ]);
+        refreshTaxSaved(next);
+        return next;
+      });
+      await saveReceipt(updated);
+      return updated;
+    },
+    [refreshTaxSaved],
+  );
+
+  const handleDuplicateUpload = useCallback(
+    async (
+      localId: string,
+      existingReceiptId: string,
+      prior?: StoredReceipt,
+    ) => {
+      const updated = await reconcileDuplicateReceipt(
+        localId,
+        existingReceiptId,
+        prior,
+      );
+      setReceipts((prev) => {
+        const next = top100ByUpdatedAt([
+          updated,
+          ...prev.filter(
+            (r) => r.id !== localId && r.id !== existingReceiptId,
+          ),
+        ]);
+        refreshTaxSaved(next);
+        return next;
+      });
+      setReceiptNotice(copy.home.receiptList.duplicateReceipt);
+      if (updated.status === "processing") {
+        queueRef.current?.enqueue(updated.id);
+      }
+      return updated;
+    },
+    [copy.home.receiptList.duplicateReceipt, refreshTaxSaved],
+  );
+
   const uploadPendingInner = async (receipt: StoredReceipt) => {
     if (shouldSkipUploadAttempt(receipt)) return;
+    if (uploadInFlightRef.current.has(receipt.id)) return;
 
     let photo: Blob | null = null;
     try {
@@ -280,27 +346,18 @@ export function HomeScreen() {
       return;
     }
 
+    uploadInFlightRef.current.add(receipt.id);
     try {
-      const uploaded = await uploadReceipt(photo, receipt.timestamp);
-      await deleteStoredReceipt(receipt.id);
-      const updated: StoredReceipt = {
-        ...apiReceiptToLocal(uploaded),
-        hasRemoteImage: true,
-        pendingUpload: false,
-        writeBudgetRemaining: getBudget(receipt),
-        photoMissing: undefined,
-      };
-      setReceipts((prev) => {
-        const next = [updated, ...prev.filter((r) => r.id !== receipt.id)];
-        refreshTaxSaved(top100ByUpdatedAt(next));
-        return top100ByUpdatedAt(next);
-      });
-      await saveReceipt(updated);
-
+      const uploaded = await uploadReceipt(photo, receipt.id, receipt.timestamp);
+      const updated = await persistUploadedReceipt(receipt, uploaded);
       if (updated.status === "processing") {
         queueRef.current?.enqueue(updated.id);
       }
-    } catch {
+    } catch (err) {
+      if (isDuplicateReceiptError(err)) {
+        await handleDuplicateUpload(receipt.id, err.existingReceiptId, receipt);
+        return;
+      }
       const failed = recordWriteFailure(receipt);
       await saveReceipt(failed);
       setReceipts((prev) => prev.map((r) => (r.id === failed.id ? failed : r)));
@@ -308,6 +365,8 @@ export function HomeScreen() {
         setSyncStuckIds((prev) => new Set(prev).add(failed.id));
       }
       throw failed;
+    } finally {
+      uploadInFlightRef.current.delete(receipt.id);
     }
   };
 
@@ -802,9 +861,26 @@ export function HomeScreen() {
       const replaceId = resnapId;
       setResnapId(null);
 
+      const id = replaceId ?? crypto.randomUUID();
+      const snapAt = utcNow();
+      const processingReceipt: StoredReceipt = withFreshBudget({
+        id,
+        status: "processing",
+        merchant: "Scanning",
+        timestamp: snapAt,
+        updatedAt: snapAt,
+        pendingUpload: !navigator.onLine,
+        photoMissing: undefined,
+      });
+
+      setReceipts((prev) => {
+        const without = replaceId ? prev.filter((r) => r.id !== replaceId) : prev;
+        return top100ByUpdatedAt([processingReceipt, ...without]);
+      });
+      await savePhoto(id, file);
+      await saveReceipt(processingReceipt);
+
       if (replaceId) {
-        setReceipts((prev) => prev.filter((r) => r.id !== replaceId));
-        await deleteStoredReceipt(replaceId);
         watcherRef.current?.unwatch(replaceId);
         queueRef.current?.onSettled(replaceId);
         setSyncStuckIds((prev) => {
@@ -815,40 +891,14 @@ export function HomeScreen() {
         });
       }
 
-      const id = crypto.randomUUID();
-      const snapAt = utcNow();
-      const processingReceipt: StoredReceipt = withFreshBudget({
-        id,
-        status: "processing",
-        merchant: "Scanning",
-        timestamp: snapAt,
-        updatedAt: snapAt,
-        pendingUpload: !navigator.onLine,
-      });
-
-      setReceipts((prev) => top100ByUpdatedAt([processingReceipt, ...prev]));
-      await savePhoto(id, file);
-      await saveReceipt(processingReceipt);
-
       if (!navigator.onLine) return;
 
+      if (uploadInFlightRef.current.has(id)) return;
+      uploadInFlightRef.current.add(id);
       try {
         await ensureGhostSession();
-        const uploaded = await uploadReceipt(file, snapAt);
-        await deleteStoredReceipt(id);
-        const updated: StoredReceipt = {
-          ...apiReceiptToLocal(uploaded),
-          hasRemoteImage: true,
-          pendingUpload: false,
-        writeBudgetRemaining: getBudget(processingReceipt),
-        photoMissing: undefined,
-      };
-        setReceipts((prev) => {
-          const next = [updated, ...prev.filter((r) => r.id !== id)];
-          refreshTaxSaved(top100ByUpdatedAt(next));
-          return top100ByUpdatedAt(next);
-        });
-        await saveReceipt(updated);
+        const uploaded = await uploadReceipt(file, id, snapAt);
+        const updated = await persistUploadedReceipt(processingReceipt, uploaded);
 
         if (updated.status === "done" && updated.taxAmount != null) {
           pulseTaxAnimating();
@@ -857,7 +907,11 @@ export function HomeScreen() {
         if (updated.status === "processing") {
           enqueueReceipt(updated.id);
         }
-      } catch {
+      } catch (err) {
+        if (isDuplicateReceiptError(err)) {
+          await handleDuplicateUpload(id, err.existingReceiptId, processingReceipt);
+          return;
+        }
         const failed = recordWriteFailure(processingReceipt);
         await saveReceipt({ ...failed, pendingUpload: true });
         setReceipts((prev) =>
@@ -866,9 +920,17 @@ export function HomeScreen() {
         if (isSyncStuck(failed)) {
           setSyncStuckIds((prev) => new Set(prev).add(id));
         }
+      } finally {
+        uploadInFlightRef.current.delete(id);
       }
     },
-    [resnapId, enqueueReceipt, refreshTaxSaved, pulseTaxAnimating],
+    [
+      resnapId,
+      enqueueReceipt,
+      pulseTaxAnimating,
+      persistUploadedReceipt,
+      handleDuplicateUpload,
+    ],
   );
 
   const handleResnap = useCallback((id: string) => {
@@ -963,6 +1025,15 @@ export function HomeScreen() {
           />
         </div>
       </div>
+
+      {receiptNotice && (
+        <p
+          className="mx-4 mb-2 rounded-xl border-2 border-yellow-500 bg-yellow-950 px-4 py-3 text-center text-sm font-bold text-yellow-400"
+          role="status"
+        >
+          {receiptNotice}
+        </p>
+      )}
 
       <div className="flex min-h-0 flex-1 flex-col">
         <ReceiptList

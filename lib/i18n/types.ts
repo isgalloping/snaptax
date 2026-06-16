@@ -142,6 +142,7 @@ export type UserCopy = {
       needAction: string;
       resnap: string;
       unknownMerchant: string;
+      duplicateReceipt: string;
       status: {
         analyzing: string;
         uploading: string;

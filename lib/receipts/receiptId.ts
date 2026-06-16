@@ -12,3 +12,13 @@ export function assertPersistedReceiptId(id: string): void {
     throw new Error("NOT_FOUND");
   }
 }
+
+export function parseClientReceiptId(raw: FormDataEntryValue | null): string {
+  if (typeof raw !== "string" || !raw.trim()) {
+    throw new Error("MISSING_CLIENT_RECEIPT_ID");
+  }
+  if (!isPersistedReceiptId(raw)) {
+    throw new Error("INVALID_CLIENT_RECEIPT_ID");
+  }
+  return raw;
+}

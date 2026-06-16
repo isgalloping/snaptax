@@ -1,4 +1,3 @@
-import { randomUUID } from "crypto";
 import { put } from "@vercel/blob";
 import { NextRequest, NextResponse } from "next/server";
 import { parseTaxRegionHeader } from "@/lib/api/taxRegion";
@@ -11,20 +10,16 @@ import {
 import { apiError, mapErrorToResponse, rateLimitError } from "@/lib/api/errors";
 import { getActor } from "@/lib/auth/getActor";
 import { prisma } from "@/lib/prisma";
-import { processReceiptTax } from "@/lib/receipts/processReceiptTax";
 import { receiptWhereForActor } from "@/lib/receipts/ownership";
 import { serializeReceipt } from "@/lib/receipts/serialize";
 import { unfiledReceiptWhere } from "@/lib/receipts/filedStatus";
+import { parseClientReceiptId } from "@/lib/receipts/receiptId";
+import { handleReceiptUploadPost } from "@/lib/receipts/receiptUploadService";
 import {
   assertValidReceiptImage,
-  mimeForKind,
 } from "@/lib/receipts/uploadValidation";
 import { withRequestLog } from "@/lib/server/log/withRequestLog";
-import { blobCommandOptions } from "@/lib/server/blob";
-import { parseUtcISOString, utcNow } from "@/lib/time/utc";
-import { resolveVerifyContext } from "@/lib/verify/context";
-import { logEvent } from "@/lib/server/log/logEvent";
-import { baseLogEntry } from "@/lib/server/log/context";
+import { parseUtcISOString } from "@/lib/time/utc";
 
 export const maxDuration = 60;
 
@@ -77,13 +72,6 @@ export const POST = withRequestLog(
         if (!ghostLimit.ok) {
           return rateLimitError(ghostLimit.retryAfterSec);
         }
-        const maxUnbound = Number(process.env.RECEIPT_GHOST_MAX_UNBOUND ?? 50);
-        const count = await prisma.snaptaxReceipt.count({
-          where: { ghostId: actor.ghostId, userId: null },
-        });
-        if (count >= maxUnbound) {
-          throw new Error("GHOST_RECEIPT_LIMIT");
-        }
       } else {
         const userLimit = await checkUserReceiptLimit(actor.userId);
         if (!userLimit.ok) {
@@ -96,12 +84,33 @@ export const POST = withRequestLog(
       if (!(file instanceof File)) {
         return apiError("INVALID_FILE_TYPE", "Missing file", 400);
       }
+
+      let clientReceiptId: string;
+      try {
+        clientReceiptId = parseClientReceiptId(form.get("clientReceiptId"));
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "INVALID_CLIENT_RECEIPT_ID";
+        return mapErrorToResponse(new Error(message));
+      }
+
+      const existing = await prisma.snaptaxReceipt.findUnique({
+        where: { id: clientReceiptId },
+      });
+      if (!existing) {
+        if (actor.kind === "ghost") {
+          const maxUnbound = Number(process.env.RECEIPT_GHOST_MAX_UNBOUND ?? 50);
+          const count = await prisma.snaptaxReceipt.count({
+            where: { ghostId: actor.ghostId, userId: null },
+          });
+          if (count >= maxUnbound) {
+            throw new Error("GHOST_RECEIPT_LIMIT");
+          }
+        }
+      }
+
       const bytes = Buffer.from(await file.arrayBuffer());
       const kind = assertValidReceiptImage(bytes);
-      const mime = mimeForKind(kind);
       const dataRegion = parseTaxRegionHeader(request);
-      const receiptId = randomUUID();
-      const pathname = `receipts/${receiptId}.${kind === "jpeg" ? "jpg" : "png"}`;
 
       const snapAtRaw = form.get("snapAt");
       const snapAt =
@@ -118,72 +127,16 @@ export const POST = withRequestLog(
         industry = user?.industry ?? null;
       }
 
-      await put(pathname, bytes, {
-        access: "private",
-        contentType: mime,
-        ...blobCommandOptions(),
+      return await handleReceiptUploadPost({
+        request,
+        actor,
+        clientReceiptId,
+        bytes,
+        kind,
+        dataRegion,
+        snapAt,
+        industry,
       });
-
-      await prisma.snaptaxReceipt.create({
-        data: {
-          id: receiptId,
-          userId: actor.kind === "user" ? actor.userId : null,
-          ghostId:
-            actor.kind === "ghost"
-              ? actor.ghostId
-              : (actor.ghostId ?? null),
-          imageUrl: pathname,
-          status: "processing",
-          dataRegion,
-          taxAmount: 0,
-          capturedAt: utcNow(),
-          snapAt,
-        },
-      });
-
-      try {
-        const verify = await resolveVerifyContext(actor);
-        if (verify.canBypass) {
-          logEvent({
-            ...baseLogEntry("biz.verify", request, actor),
-            level: "info",
-            success: true,
-            durationMs: 0,
-            meta: {
-              verifyBypass: true,
-              mockAi: verify.canMockAi,
-              bypassPay: verify.canBypassPay,
-            },
-          });
-        }
-
-        const result = await processReceiptTax({
-          receiptId,
-          dataRegion,
-          imageBuffer: bytes,
-          mime,
-          industry,
-          canMockAi: verify.canMockAi,
-        });
-
-        const processed = await prisma.snaptaxReceipt.findUnique({
-          where: { id: receiptId },
-        });
-        if (!processed) throw new Error("NOT_FOUND");
-
-        return NextResponse.json(serializeReceipt(processed), { status: 201 });
-      } catch {
-        return NextResponse.json(
-          {
-            id: receiptId,
-            status: "processing",
-            taxAmount: 0,
-            dataRegion,
-            processFailed: true,
-          },
-          { status: 201 },
-        );
-      }
     } catch (err) {
       return mapErrorToResponse(err);
     }

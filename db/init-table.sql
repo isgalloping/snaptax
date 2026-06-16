@@ -67,6 +67,8 @@ CREATE TABLE snaptax_receipts (
   processed_at  TIMESTAMPTZ(3),
   tax_season    VARCHAR(255),
   tax_season_date TIMESTAMPTZ(3),
+  content_sha256 VARCHAR(64) NOT NULL,
+  image_fingerprint VARCHAR(16) NOT NULL,
   created_at    TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at    TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -95,6 +97,14 @@ CREATE INDEX snaptax_receipts_ghost_unfiled_updated_idx
   ON snaptax_receipts (ghost_id, updated_at DESC)
   WHERE (tax_season IS NULL OR tax_season = '' OR tax_season_date IS NULL)
     AND ghost_id IS NOT NULL;
+
+CREATE UNIQUE INDEX snaptax_receipts_ghost_content_sha256_uidx
+  ON snaptax_receipts (ghost_id, content_sha256)
+  WHERE user_id IS NULL AND ghost_id IS NOT NULL;
+
+CREATE UNIQUE INDEX snaptax_receipts_user_content_sha256_uidx
+  ON snaptax_receipts (user_id, content_sha256)
+  WHERE user_id IS NOT NULL;
 
 -- ---------------------------------------------------------------------------
 -- snaptax_season_entitlements
@@ -176,6 +186,8 @@ COMMENT ON COLUMN snaptax_receipts.snap_at IS '拍照时间，可与 captured_at
 COMMENT ON COLUMN snaptax_receipts.processed_at IS 'AI 处理完成时间；status=processing 时为 NULL；TIMESTAMPTZ UTC';
 COMMENT ON COLUMN snaptax_receipts.tax_season IS '已报税季标识（如 2026）；与 tax_season_date 同时有值表示已报税';
 COMMENT ON COLUMN snaptax_receipts.tax_season_date IS '标记已报税时间（TIMESTAMPTZ UTC）；与 tax_season 同时有值表示已报税';
+COMMENT ON COLUMN snaptax_receipts.content_sha256 IS '原始图片字节 SHA-256；同 actor 精确去重';
+COMMENT ON COLUMN snaptax_receipts.image_fingerprint IS 'dHash 感知指纹（16 hex）；同 actor 相似小票去重';
 COMMENT ON COLUMN snaptax_receipts.created_at IS '服务端记录创建时间（TIMESTAMPTZ UTC）';
 COMMENT ON COLUMN snaptax_receipts.updated_at IS '服务端记录最后更新时间（TIMESTAMPTZ UTC）';
 

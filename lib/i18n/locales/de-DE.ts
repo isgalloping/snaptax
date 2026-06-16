@@ -167,6 +167,7 @@ export const DE_DE_COPY: UserCopy = {
       needAction: "Aktion erforderlich",
       resnap: "Erneut fotografieren",
       unknownMerchant: "Unbekannter Händler",
+      duplicateReceipt: "Dieser Beleg ist bereits in Ihrer Liste.",
       status: {
         analyzing: "ANALYSE",
         uploading: "UPLOAD",

@@ -163,6 +163,7 @@ export const EN_US_COPY: UserCopy = {
         needAction: "Need Action",
         resnap: "Resnap",
         unknownMerchant: "Unknown merchant",
+        duplicateReceipt: "This receipt is already in your list.",
         status: {
           analyzing: "ANALYZING",
           uploading: "UPLOADING",

@@ -19,6 +19,7 @@ import { GoogleSignInSheet, type GoogleSignInMode } from "@/components/auth/Goog
 import { useI18n } from "@/components/i18n/I18nProvider";
 import { SyncInstructionsSheet } from "@/components/auth/SyncInstructionsSheet";
 import { PrivacyDataSection } from "@/components/settings/PrivacyDataSection";
+import { ExportEmptyTip } from "@/components/export/ExportEmptyTip";
 import {
   isSignOutOfflineError,
 } from "@/lib/client/signOutFlow";
@@ -41,6 +42,9 @@ interface SettingsScreenProps {
   onRequestExport: () => void;
   exportBusy?: boolean;
   exportError?: string | null;
+  exportEmptyTip?: string | null;
+  exportEmptyTipKey?: number;
+  onExportEmptyTipDismiss?: () => void;
   /** Open soft Google sheet immediately (e.g. from TaxHeader nudge). */
   requestSoftGoogleSheet?: boolean;
   onSoftGoogleSheetConsumed?: () => void;
@@ -65,6 +69,9 @@ export function SettingsScreen({
   onRequestExport,
   exportBusy = false,
   exportError = null,
+  exportEmptyTip = null,
+  exportEmptyTipKey = 0,
+  onExportEmptyTipDismiss,
   requestSoftGoogleSheet = false,
   onSoftGoogleSheetConsumed,
   onSoftGuideDismiss,
@@ -308,6 +315,13 @@ export function SettingsScreen({
           <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-zinc-400">
             {copy.settings.export.title}
           </h2>
+          {exportEmptyTip && onExportEmptyTipDismiss && (
+            <ExportEmptyTip
+              key={exportEmptyTipKey}
+              message={exportEmptyTip}
+              onDismiss={onExportEmptyTipDismiss}
+            />
+          )}
           <button
             type="button"
             disabled={exportBusy}

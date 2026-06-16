@@ -19,6 +19,8 @@ import {
 } from "@/lib/client/receiptDeleteFlow";
 import { pollTaxRecalc } from "@/lib/client/authApi";
 import { prepareExportSync } from "@/lib/client/exportPrepareFlow";
+import { prefetchReceiptImageUrl } from "@/lib/client/receiptImageCache";
+import { isPersistedReceiptId } from "@/lib/receipts/receiptId";
 import { mergeServerReceiptsIntoLocal } from "@/lib/client/receiptSyncOrchestrator";
 import {
   STARTUP_UNFILED_LIMIT,
@@ -645,6 +647,26 @@ export function HomeScreen() {
     [receipts, onboardingStatus],
   );
 
+  const handleDetailReceiptUpdate = useCallback(
+    (updated: Receipt) => {
+      void applyReceiptUpdate(updated as StoredReceipt);
+      setSelectedReceipt((prev) =>
+        prev?.id === updated.id ? { ...prev, ...updated } : prev,
+      );
+      if (updated.status !== "processing") {
+        watcherRef.current?.unwatch(updated.id);
+        queueRef.current?.onSettled(updated.id);
+        setSyncStuckIds((prev) => {
+          if (!prev.has(updated.id)) return prev;
+          const next = new Set(prev);
+          next.delete(updated.id);
+          return next;
+        });
+      }
+    },
+    [applyReceiptUpdate],
+  );
+
   const handleExportClick = useCallback(() => {
     if (onboardingStatus === "stage_3" || onboardingStatus === "stage_aha") {
       void (async () => {
@@ -887,6 +909,9 @@ export function HomeScreen() {
         onRequestExport={taxExport.requestExport}
         exportBusy={taxExport.paywallExporting || taxExport.preparingExport}
         exportError={taxExport.exportError}
+        exportEmptyTip={taxExport.exportEmptyTip}
+        exportEmptyTipKey={taxExport.exportEmptyTipKey}
+        onExportEmptyTipDismiss={taxExport.clearExportEmptyTip}
         isSignedIn={auth.isSignedIn}
         requestSoftGoogleSheet={requestSoftGoogleSheet}
         onSoftGoogleSheetConsumed={() => setRequestSoftGoogleSheet(false)}
@@ -944,7 +969,12 @@ export function HomeScreen() {
           syncStuckIds={syncStuckIds}
           ahaCoachActive={ahaCoachActive}
           onAhaCoachDismiss={dismissAhaCoach}
-          onSelect={(receipt) => setSelectedReceipt(receipt)}
+          onSelect={(receipt) => {
+            if (isPersistedReceiptId(receipt.id)) {
+              prefetchReceiptImageUrl(receipt.id);
+            }
+            setSelectedReceipt(receipt);
+          }}
           onResnap={handleResnap}
           onRetrySync={handleRetrySync}
           onSyncClick={handleManualListSync}
@@ -963,30 +993,14 @@ export function HomeScreen() {
 
       {selectedReceipt && (
         <ReceiptDetailSheet
+          key={selectedReceipt.id}
           receipt={selectedReceipt}
           syncStuck={syncStuckIds.has(selectedReceipt.id)}
           onClose={() => setSelectedReceipt(null)}
           onResnap={handleResnap}
           onDeleteReceipt={handleDeleteReceipt}
           onRetrySync={handleRetrySync}
-          onReceiptUpdate={(updated) => {
-            setReceipts((prev) =>
-              prev.map((r) => (r.id === updated.id ? { ...r, ...updated } : r)),
-            );
-            setSelectedReceipt((prev) =>
-              prev?.id === updated.id ? { ...prev, ...updated } : prev,
-            );
-            if (updated.status !== "processing") {
-              watcherRef.current?.unwatch(updated.id);
-              queueRef.current?.onSettled(updated.id);
-              setSyncStuckIds((prev) => {
-                if (!prev.has(updated.id)) return prev;
-                const next = new Set(prev);
-                next.delete(updated.id);
-                return next;
-              });
-            }
-          }}
+          onReceiptUpdate={handleDetailReceiptUpdate}
         />
       )}
 

@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 import { apiReceiptFromUploadResponse } from "./receiptApi.ts";
 
 describe("apiReceiptFromUploadResponse", () => {
-  it("maps 201 upload body without requiring GET", () => {
+  it("maps slim 201 upload body without requiring GET", () => {
     const snapAt = new Date("2026-06-14T12:00:00.000Z");
     const receipt = apiReceiptFromUploadResponse(
       {
@@ -23,5 +23,25 @@ describe("apiReceiptFromUploadResponse", () => {
     assert.equal(receipt.hasImage, true);
     assert.equal(receipt.snapAt, "2026-06-14T12:00:00.000Z");
     assert.equal(receipt.merchant, null);
+  });
+
+  it("maps full 201 upload body with merchant and category", () => {
+    const receipt = apiReceiptFromUploadResponse({
+      id: "server-id",
+      status: "done",
+      taxAmount: 2.95,
+      dataRegion: "us",
+      merchant: "Home Depot",
+      category: "OTHER",
+      amount: 14.75,
+      capturedAt: "2026-06-16T12:00:00.000Z",
+      updatedAt: "2026-06-16T12:00:05.000Z",
+      hasImage: true,
+    });
+
+    assert.equal(receipt.merchant, "Home Depot");
+    assert.equal(receipt.category, "OTHER");
+    assert.equal(receipt.amount, 14.75);
+    assert.equal(receipt.updatedAt, "2026-06-16T12:00:05.000Z");
   });
 });

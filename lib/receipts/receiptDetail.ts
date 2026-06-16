@@ -1,7 +1,8 @@
 import type { Receipt } from "@/lib/types";
 import type { UserCopy } from "@/lib/i18n";
 import { formatCurrencyForRegion } from "@/lib/format";
-import { fetchReceiptImageUrl } from "@/lib/client/receiptApi";
+import { fetchReceiptImageUrlCached } from "@/lib/client/receiptImageCache";
+import { isPersistedReceiptId } from "@/lib/receipts/receiptId";
 import { loadPhoto } from "@/lib/storage/receiptDb";
 import { irsScheduleLineBadge } from "@/lib/tax/irsScheduleLabel";
 
@@ -70,26 +71,79 @@ export function formatPartialMerchant(
   );
 }
 
+function firstResolvedImage(
+  tasks: Array<() => Promise<ResolvedReceiptImage | null>>,
+): Promise<ResolvedReceiptImage | null> {
+  if (tasks.length === 0) return Promise.resolve(null);
+  return new Promise((resolve) => {
+    let pending = tasks.length;
+    let settled = false;
+    for (const run of tasks) {
+      void run()
+        .then((result) => {
+          if (settled) return;
+          if (result && (result.kind === "local" || result.kind === "remote")) {
+            settled = true;
+            resolve(result);
+            return;
+          }
+          pending -= 1;
+          if (pending === 0) resolve(null);
+        })
+        .catch(() => {
+          pending -= 1;
+          if (!settled && pending === 0) resolve(null);
+        });
+    }
+  });
+}
+
 export async function resolveReceiptImage(
   receipt: Receipt,
 ): Promise<ResolvedReceiptImage> {
-  if (receipt.hasRemoteImage) {
-    if (typeof navigator !== "undefined" && !navigator.onLine) {
-      return { kind: "offline-placeholder" };
-    }
+  const persisted = isPersistedReceiptId(receipt.id);
+  const online = typeof navigator === "undefined" || navigator.onLine;
+
+  const tryRemote = async (): Promise<ResolvedReceiptImage | null> => {
+    if (!persisted) return null;
+    if (!online) return { kind: "offline-placeholder" };
     try {
-      const { url, expiresAt } = await fetchReceiptImageUrl(receipt.id);
+      const { url, expiresAt } = await fetchReceiptImageUrlCached(receipt.id);
       return { kind: "remote", src: url, expiresAt };
     } catch {
-      return { kind: "missing" };
+      return null;
     }
+  };
+
+  const tryLocal = async (): Promise<ResolvedReceiptImage | null> => {
+    const blob = await loadPhoto(receipt.id);
+    if (!blob) return null;
+    const src = URL.createObjectURL(blob);
+    return { kind: "local", src, revoke: () => URL.revokeObjectURL(src) };
+  };
+
+  if (!online) {
+    const local = await tryLocal();
+    if (local) return local;
+    return { kind: "offline-placeholder" };
   }
 
-  const blob = await loadPhoto(receipt.id);
-  if (!blob) return { kind: "missing" };
+  const preferRemoteFirst =
+    receipt.hasRemoteImage ||
+    (persisted &&
+      (receipt.status === "done" || receipt.status === "blurry"));
 
-  const src = URL.createObjectURL(blob);
-  return { kind: "local", src, revoke: () => URL.revokeObjectURL(src) };
+  if (preferRemoteFirst) {
+    const winner = await firstResolvedImage([tryRemote, tryLocal]);
+    if (winner) return winner;
+    return { kind: "missing" };
+  }
+
+  const local = await tryLocal();
+  if (local) return local;
+  const remote = await tryRemote();
+  if (remote) return remote;
+  return { kind: "missing" };
 }
 
 export { irsScheduleLineBadge };

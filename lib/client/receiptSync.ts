@@ -31,6 +31,35 @@ function isRemoteNewer(
   return remoteUpdatedAt.getTime() > localUpdatedAt.getTime();
 }
 
+function backfillExtractionFromRemote(
+  local: StoredReceipt,
+  remote: StoredReceipt,
+): StoredReceipt {
+  if (remote.status !== "done" && remote.status !== "blurry") {
+    return local;
+  }
+
+  const patch: Partial<StoredReceipt> = {};
+  if (!local.merchant?.trim() && remote.merchant?.trim()) {
+    patch.merchant = remote.merchant;
+  }
+  if (local.amount == null && remote.amount != null) {
+    patch.amount = remote.amount;
+  }
+  if (!local.category?.trim() && remote.category?.trim()) {
+    patch.category = remote.category;
+  }
+  if (!local.currency && remote.currency) {
+    patch.currency = remote.currency;
+  }
+  if (local.deductible === undefined && remote.deductible !== undefined) {
+    patch.deductible = remote.deductible;
+  }
+
+  if (Object.keys(patch).length === 0) return local;
+  return { ...local, ...patch };
+}
+
 export function unionMergeLWW(
   local: StoredReceipt[],
   remote: Receipt[],
@@ -66,6 +95,11 @@ export function unionMergeLWW(
     const remoteUpdatedAt = remoteRow.updatedAt ?? remoteRow.timestamp;
     if (isRemoteNewer(remoteUpdatedAt, localUpdatedAt)) {
       byId.set(remoteRow.id, remoteStored);
+    } else {
+      byId.set(
+        remoteRow.id,
+        backfillExtractionFromRemote(existing, remoteStored),
+      );
     }
   }
 

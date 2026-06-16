@@ -14,6 +14,7 @@ import {
 
 import {
   getOpenAiApiKey,
+  getOpenAiBaseUrl,
   getOpenAiModel,
   getOpenAiMaxRetries,
   getOpenAiTimeoutMs,
@@ -22,8 +23,10 @@ import {
 function openaiClient(): OpenAI {
   const key = getOpenAiApiKey();
   if (!key) throw new Error("OPENAI_API_KEY missing");
+  const baseURL = getOpenAiBaseUrl();
   return new OpenAI({
     apiKey: key,
+    ...(baseURL ? { baseURL } : {}),
     timeout: getOpenAiTimeoutMs(),
     maxRetries: getOpenAiMaxRetries(),
   });

@@ -50,10 +50,20 @@ export function useTaxExportGate({
   const [showPaywall, setShowPaywall] = useState(false);
   const [showExportSheet, setShowExportSheet] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [exportEmptyTip, setExportEmptyTip] = useState<string | null>(null);
+  const [exportEmptyTipKey, setExportEmptyTipKey] = useState(0);
   const [paywallExporting, setPaywallExporting] = useState(false);
   const [preparingExport, setPreparingExport] = useState(false);
 
   const clearError = () => setErrorMessage(null);
+
+  const clearExportEmptyTip = () => setExportEmptyTip(null);
+
+  const showExportEmptyTip = (message: string) => {
+    setErrorMessage(null);
+    setExportEmptyTip(message);
+    setExportEmptyTipKey((key) => key + 1);
+  };
 
   const openExportEngine = () => {
     clearError();
@@ -69,7 +79,7 @@ export function useTaxExportGate({
     const list = prepared !== undefined ? prepared : exportableReceipts;
     const exportable = list.filter((r) => !r.isOnboardingDemo);
     if (!hasExportableReceipts(exportable)) {
-      setErrorMessage(copy.exportEngine.noDeductibleReceipts);
+      showExportEmptyTip(copy.exportEngine.noDeductibleReceipts);
       return true;
     }
     return false;
@@ -108,6 +118,7 @@ export function useTaxExportGate({
 
   const runExportGate = async () => {
     clearError();
+    clearExportEmptyTip();
     if (!googleUser) {
       setGoogleSheet("hard-export");
       return;
@@ -189,6 +200,9 @@ export function useTaxExportGate({
   return {
     requestExport: () => void runExportGate(),
     exportError: errorMessage,
+    exportEmptyTip,
+    exportEmptyTipKey,
+    clearExportEmptyTip,
     paywallExporting,
     preparingExport,
     overlays,

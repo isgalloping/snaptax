@@ -47,6 +47,13 @@ export function getOpenAiApiKey(): string {
   return firstDefined(process.env.OPENAI_API_KEY, process.env.OPENAI_SECRET_KEY);
 }
 
+/** OpenAI-compatible gateway base URL (e.g. https://maxapi.pro/v1). Empty = official OpenAI. */
+export function getOpenAiBaseUrl(): string | undefined {
+  const raw = firstDefined(process.env.OPENAI_BASE_URL);
+  if (!raw) return undefined;
+  return raw.replace(/\/+$/, "");
+}
+
 export function getOpenAiModel(): string {
   return firstDefined(
     process.env.OPENAI_MODEL,

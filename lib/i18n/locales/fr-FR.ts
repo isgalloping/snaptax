@@ -167,6 +167,7 @@ export const FR_FR_COPY: UserCopy = {
       needAction: "Action requise",
       resnap: "Reprendre",
       unknownMerchant: "Commerçant inconnu",
+      duplicateReceipt: "Ce reçu est déjà dans votre liste.",
       status: {
         analyzing: "ANALYSE",
         uploading: "ENVOI",

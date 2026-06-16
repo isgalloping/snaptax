@@ -25,6 +25,8 @@ function baseReceipt(
     processedAt: null,
     taxSeason: null,
     taxSeasonDate: null,
+    contentSha256: "abc123",
+    imageFingerprint: "0000000000000000",
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,

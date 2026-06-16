@@ -124,6 +124,24 @@ export type UploadCreateResponse = {
   hasImage?: boolean;
 };
 
+export class DuplicateReceiptError extends Error {
+  readonly code = "DUPLICATE_RECEIPT" as const;
+
+  constructor(
+    readonly existingReceiptId: string,
+    readonly matchType: "exact" | "similar",
+  ) {
+    super("DUPLICATE_RECEIPT");
+    this.name = "DuplicateReceiptError";
+  }
+}
+
+export function isDuplicateReceiptError(
+  err: unknown,
+): err is DuplicateReceiptError {
+  return err instanceof DuplicateReceiptError;
+}
+
 function isFullApiReceipt(body: unknown): body is ApiReceipt {
   if (!body || typeof body !== "object") return false;
   const row = body as Record<string, unknown>;
@@ -164,10 +182,15 @@ export function apiReceiptFromUploadResponse(
 
 export async function uploadReceipt(
   file: Blob,
+  clientReceiptId: string,
   snapAt?: Date,
 ): Promise<ApiReceipt> {
+  if (!isPersistedReceiptId(clientReceiptId)) {
+    throw new Error("INVALID_CLIENT_RECEIPT_ID");
+  }
   const form = new FormData();
   form.append("file", file);
+  form.append("clientReceiptId", clientReceiptId);
   if (snapAt) {
     form.append("snapAt", toUtcISOString(snapAt));
   }
@@ -175,6 +198,22 @@ export async function uploadReceipt(
     method: "POST",
     body: form,
   });
+  if (res.status === 409) {
+    const body = (await res.json().catch(() => null)) as {
+      error?: { code?: string };
+      existingReceiptId?: string;
+      matchType?: "exact" | "similar";
+    } | null;
+    if (
+      body?.error?.code === "DUPLICATE_RECEIPT" &&
+      body.existingReceiptId
+    ) {
+      throw new DuplicateReceiptError(
+        body.existingReceiptId,
+        body.matchType ?? "exact",
+      );
+    }
+  }
   if (!res.ok) {
     const body = (await res.json().catch(() => null)) as {
       error?: { code?: string };

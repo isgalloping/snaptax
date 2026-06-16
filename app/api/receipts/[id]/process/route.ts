@@ -33,7 +33,7 @@ export const POST = withRequestLog(
       if (!receipt) throw new Error("NOT_FOUND");
       assertReceiptAccess(receipt, actor);
 
-      if (receipt.status === "done") {
+      if (receipt.status === "done" || receipt.status === "blurry") {
         return NextResponse.json({
           id: receipt.id,
           status: receipt.status,

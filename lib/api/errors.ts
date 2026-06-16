@@ -54,6 +54,24 @@ export function resolveApiError(err: unknown): ResolvedApiError {
         clientMessage: "Only JPEG and PNG are allowed",
         status: 415,
       };
+    case "MISSING_CLIENT_RECEIPT_ID":
+      return {
+        code: "MISSING_CLIENT_RECEIPT_ID",
+        clientMessage: "clientReceiptId is required",
+        status: 400,
+      };
+    case "INVALID_CLIENT_RECEIPT_ID":
+      return {
+        code: "INVALID_CLIENT_RECEIPT_ID",
+        clientMessage: "clientReceiptId must be a UUID",
+        status: 400,
+      };
+    case "DUPLICATE_RECEIPT":
+      return {
+        code: "DUPLICATE_RECEIPT",
+        clientMessage: "This receipt is already in your list",
+        status: 409,
+      };
     case "INVALID_INDUSTRY":
       return {
         code: "INVALID_INDUSTRY",

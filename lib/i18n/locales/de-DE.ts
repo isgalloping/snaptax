@@ -340,9 +340,17 @@ export const DE_DE_COPY: UserCopy = {
         general: "Allgemein 1099",
       },
     },
-    multiDevice: {
-      title: "Mehrere Geräte",
-      button: "Auf allen Geräten anzeigen",
+    share: {
+      title: "Teilen",
+      hint: "Empfehlen Sie es einem 1099-Kollegen",
+      whatsapp: "WhatsApp",
+      facebook: "Facebook",
+      more: "Mehr",
+      message:
+        "Ich nutze Snap1099 für Belege und einen IRS-fertigen Steuerexport. Probieren Sie es:",
+      shareTitle: "Snap1099 — Belege zum IRS-Steuerpaket",
+      linkCopied: "Link kopiert",
+      shareFailed: "Teilen fehlgeschlagen. Link stattdessen kopiert.",
     },
     privacyData: {
       title: "Datenschutz und Daten",

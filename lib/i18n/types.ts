@@ -281,9 +281,16 @@ export type UserCopy = {
       title: string;
       labels: Record<Industry, string>;
     };
-    multiDevice: {
+    share: {
       title: string;
-      button: string;
+      hint: string;
+      whatsapp: string;
+      facebook: string;
+      more: string;
+      message: string;
+      shareTitle: string;
+      linkCopied: string;
+      shareFailed: string;
     };
     privacyData: {
       title: string;

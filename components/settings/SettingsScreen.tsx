@@ -17,8 +17,8 @@ import {
 import { AccountStatusBlock } from "@/components/auth/AccountStatusBlock";
 import { GoogleSignInSheet, type GoogleSignInMode } from "@/components/auth/GoogleSignInSheet";
 import { useI18n } from "@/components/i18n/I18nProvider";
-import { SyncInstructionsSheet } from "@/components/auth/SyncInstructionsSheet";
 import { PrivacyDataSection } from "@/components/settings/PrivacyDataSection";
+import { ShareAppSection } from "@/components/settings/ShareAppSection";
 import { ExportEmptyTip } from "@/components/export/ExportEmptyTip";
 import {
   isSignOutOfflineError,
@@ -81,12 +81,10 @@ export function SettingsScreen({
 }: SettingsScreenProps) {
   const { locale, setLocale, copy } = useI18n();
   const [googleSheet, setGoogleSheet] = useState<GoogleSignInMode | null>(null);
-  const [showSyncHelp, setShowSyncHelp] = useState(false);
   const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [signOutError, setSignOutError] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [pendingAfterSignIn, setPendingAfterSignIn] = useState<"sync" | null>(null);
   const [isOnline, setIsOnline] = useState(
     () => typeof navigator !== "undefined" && navigator.onLine,
   );
@@ -159,16 +157,11 @@ export function SettingsScreen({
   };
 
   const handleGoogleSuccess = async (result: { taxRecalcQueued: number }) => {
-    const showSyncAfter = pendingAfterSignIn === "sync";
     const closingSoftSheet = googleSheet === "soft";
     if (!closingSoftSheet) {
       setGoogleSheet(null);
     }
-    setPendingAfterSignIn(null);
     await onPostLoginSync?.(result.taxRecalcQueued);
-    if (showSyncAfter) {
-      setShowSyncHelp(true);
-    }
   };
 
   const handleUserSignedIn = (result: GoogleAuthResponse) => {
@@ -176,20 +169,6 @@ export function SettingsScreen({
     if (googleSheet === "soft") {
       setGoogleSheet(null);
     }
-  };
-
-  const requireGoogle = (mode: GoogleSignInMode, after: "sync") => {
-    clearError();
-    if (googleUser) {
-      setShowSyncHelp(true);
-      return;
-    }
-    setPendingAfterSignIn(after);
-    setGoogleSheet(mode);
-  };
-
-  const handleViewAllDevices = () => {
-    requireGoogle("hard-sync", "sync");
   };
 
   const handleIndustryChange = async (value: Industry) => {
@@ -290,18 +269,7 @@ export function SettingsScreen({
           </div>
         </section>
 
-        <section className="mb-8">
-          <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-zinc-400">
-            {copy.settings.multiDevice.title}
-          </h2>
-          <button
-            type="button"
-            onClick={handleViewAllDevices}
-            className="w-full min-h-16 rounded-xl border-2 border-zinc-600 bg-zinc-800 p-4 text-left text-sm font-bold text-white transition-transform active:scale-95"
-          >
-            {copy.settings.multiDevice.button}
-          </button>
-        </section>
+        <ShareAppSection />
 
         <section className="mb-8">
           <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-zinc-400">
@@ -362,7 +330,6 @@ export function SettingsScreen({
           mode={googleSheet}
           onClose={() => {
             setGoogleSheet(null);
-            setPendingAfterSignIn(null);
           }}
           onSoftDismiss={googleSheet === "soft" ? handleSoftDismiss : undefined}
           onUserSignedIn={handleUserSignedIn}
@@ -370,13 +337,6 @@ export function SettingsScreen({
           onFailure={(msg) => {
             setErrorMessage(msg);
           }}
-        />
-      )}
-
-      {showSyncHelp && googleUser && (
-        <SyncInstructionsSheet
-          email={googleUser.email}
-          onClose={() => setShowSyncHelp(false)}
         />
       )}
 

@@ -309,9 +309,13 @@ export type UserCopy = {
       deletePermanently: string;
       cancel: string;
     };
+    preferences: {
+      title: string;
+    };
     export: {
       title: string;
       button: string;
+      buttonLocked: string;
       buttonPaid: string;
       exporting: string;
       shareText: string;

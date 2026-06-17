@@ -12,34 +12,45 @@ const URGENCY_TEXT: Record<TaxDeadlineInfo["urgency"], string> = {
 
 interface TaxDeadlineWidgetProps {
   data: TaxDeadlineInfo;
-  onViewDetails: () => void;
+  focus: "side" | "center";
 }
 
-export function TaxDeadlineWidget({ data, onViewDetails }: TaxDeadlineWidgetProps) {
+export function TaxDeadlineWidget({ data, focus }: TaxDeadlineWidgetProps) {
   const copy = useUserCopy().home.widgets.deadline;
   const visual = homeVisual.widgets.deadline;
   const urgencyClass = URGENCY_TEXT[data.urgency];
-  const slide = homeVisual.widgetCarousel.slide;
+  const centered = focus === "center";
 
   return (
-    <button
-      type="button"
-      onClick={onViewDetails}
-      className={`${slide} flex flex-col ${visual.bg} ${visual.border} text-left transition-transform active:scale-[0.98]`}
-      role="listitem"
+    <div
+      className={`flex h-full w-full flex-col rounded-2xl border p-2.5 text-left ${visual.bg} ${visual.border} ${
+        centered ? "p-3" : ""
+      }`}
     >
-      <p className={`text-[9px] font-bold uppercase tracking-wider leading-none ${visual.accent}`}>
+      <p
+        className={`font-bold uppercase tracking-wider leading-none ${visual.accent} ${
+          centered ? "text-[9px]" : "text-[8px]"
+        }`}
+      >
         {copy.label}
       </p>
-      <p className="mt-1 truncate text-[10px] font-medium text-zinc-400">
-        {data.quarterLabel}
-      </p>
-      <p className={`mt-auto text-xl font-black leading-tight ${urgencyClass}`}>
+      {centered && (
+        <p className="mt-1 truncate text-[10px] font-medium text-zinc-400">
+          {data.quarterLabel}
+        </p>
+      )}
+      <p
+        className={`mt-auto font-black leading-tight ${urgencyClass} ${
+          centered ? "text-2xl" : "text-lg"
+        }`}
+      >
         {copy.daysShort.replace("{days}", String(data.daysLeft))}
       </p>
-      <span className="mt-0.5 text-[9px] font-bold text-zinc-300 underline decoration-zinc-600 underline-offset-2">
-        {copy.viewDetails} &gt;
-      </span>
-    </button>
+      {centered && (
+        <span className="mt-0.5 text-[9px] font-bold text-zinc-300 underline decoration-zinc-600 underline-offset-2">
+          {copy.viewDetails} &gt;
+        </span>
+      )}
+    </div>
   );
 }

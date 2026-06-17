@@ -7,13 +7,13 @@ import { homeVisual } from "@/lib/ui/homeVisual";
 
 interface MissingDeductionsWidgetProps {
   data: MissingDeductionsResult;
-  onReview: () => void;
+  focus: "side" | "center";
 }
 
-export function MissingDeductionsWidget({ data, onReview }: MissingDeductionsWidgetProps) {
+export function MissingDeductionsWidget({ data, focus }: MissingDeductionsWidgetProps) {
   const copy = useUserCopy().home.widgets.missing;
   const visual = homeVisual.widgets.missing;
-  const slide = homeVisual.widgetCarousel.slide;
+  const centered = focus === "center";
 
   if (data.missing.length === 0) {
     return null;
@@ -25,21 +25,38 @@ export function MissingDeductionsWidget({ data, onReview }: MissingDeductionsWid
   );
 
   return (
-    <button
-      type="button"
-      onClick={onReview}
-      className={`${slide} flex flex-col ${visual.bg} ${visual.border} text-left transition-transform active:scale-[0.98]`}
-      role="listitem"
+    <div
+      className={`flex h-full w-full flex-col rounded-2xl border p-2.5 text-left ${visual.bg} ${visual.border} ${
+        centered ? "p-3" : ""
+      }`}
     >
-      <p className={`text-[9px] font-bold uppercase tracking-wider leading-none ${visual.accent}`}>
+      <p
+        className={`font-bold uppercase tracking-wider leading-none ${visual.accent} ${
+          centered ? "text-[9px]" : "text-[8px]"
+        }`}
+      >
         {copy.label}
       </p>
-      <p className="mt-auto line-clamp-2 text-lg font-black leading-tight text-white">
+      <p
+        className={`mt-auto font-black leading-tight text-white ${
+          centered ? "text-xl" : "text-base"
+        }`}
+      >
         {amountLabel}
       </p>
-      <span className="mt-0.5 text-[9px] font-bold text-zinc-300 underline decoration-zinc-600 underline-offset-2">
-        {copy.review} &gt;
-      </span>
-    </button>
+      {centered && data.previewLabels[0] && (
+        <p className="mt-1 truncate text-[10px] text-zinc-300">
+          <span className="text-green-400" aria-hidden>
+            •{" "}
+          </span>
+          {data.previewLabels[0]}
+        </p>
+      )}
+      {centered && (
+        <span className="mt-0.5 text-[9px] font-bold text-zinc-300 underline decoration-zinc-600 underline-offset-2">
+          {copy.review} &gt;
+        </span>
+      )}
+    </div>
   );
 }

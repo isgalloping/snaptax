@@ -65,6 +65,16 @@ export const homeVisual = {
     iconGap: "mr-[0.2875rem]",
     countGap: "ml-[0.2875rem]",
   },
+  widgetCover: {
+    shell: "shrink-0 touch-pan-x pb-1 pt-0.5",
+    track: "flex h-[118px] items-end justify-center gap-1.5 px-2",
+    slotSide: "min-w-0 max-w-[31%] flex-[0.88] transition-all duration-300 ease-out",
+    slotCenter: "min-w-0 max-w-[36%] flex-[1.12] transition-all duration-300 ease-out",
+    cardBase:
+      "block overflow-hidden rounded-2xl text-left transition-all duration-300 ease-out active:scale-[0.98]",
+    cardSide: "h-[92px] origin-bottom",
+    cardCenter: "h-[112px] origin-bottom",
+  },
   widgetCarousel: {
     slide:
       "snap-start shrink-0 w-[38vw] min-w-[132px] max-w-[160px] h-[104px] rounded-2xl border p-3",

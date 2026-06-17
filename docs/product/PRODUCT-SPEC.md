@@ -114,9 +114,10 @@ Privacy Policy · Terms · **Data storage（美国）** · legal@snap1099.com ·
 ```
 主界面 (Home)
 ├── 固定区（不滚动）
-│   ├── TaxHeader：Est. Tax Saved + Export / Sync / Filter / Settings
-│   ├── TrustBar：紧凑隐私条（Hero 下缘衔接）+ Learn more → privacy-trust overlay
-│   ├── SnapButton：全宽黄 SNAP RECEIPT（合规脚注仅在相机界面）
+│   ├── TaxHeader
+│   ├── WidgetInsightsRail：Cover Flow 三卡同屏（Hero 下蓝框区）+ 左右滑焦点切换
+│   ├── TrustBar → SnapButton（略下移便于拇指）
+│   ├── CPA Ready（条件显示，Snap 下方）
 ├── 滚动区（flex-1 min-h-0 overflow-y-auto）
 │   ├── WidgetStack：横滑洞察卡片（Deadline / Missing / Progress）+ 条件 CPA Ready
 │   │   ├── Tax Deadline（紫）→ deadline-detail overlay

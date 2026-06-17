@@ -118,7 +118,7 @@ Privacy Policy · Terms · **Data storage（美国）** · legal@snap1099.com ·
 │   ├── TrustBar：紧凑隐私条（Hero 下缘衔接）+ Learn more → privacy-trust overlay
 │   ├── SnapButton：全宽黄 SNAP RECEIPT（合规脚注仅在相机界面）
 ├── 滚动区（flex-1 min-h-0 overflow-y-auto）
-│   ├── WidgetStack（4 张洞察卡片）
+│   ├── WidgetStack：横滑洞察卡片（Deadline / Missing / Progress）+ 条件 CPA Ready
 │   │   ├── Tax Deadline（紫）→ deadline-detail overlay
 │   │   ├── Missing Deductions（绿）→ missing-deductions → item overlay
 │   │   ├── Tax Year Progress（蓝）

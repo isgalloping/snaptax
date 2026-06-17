@@ -178,19 +178,22 @@ export const EN_US_COPY: UserCopy = {
       },
       widgets: {
         deadline: {
-          label: "Next Tax Deadline",
+          label: "Next Deadline",
           dueInDays: "Due in {days} Days",
+          daysShort: "{days} Days",
           projectedPayment: "Projected Payment: {amount}",
           viewDetails: "View Details",
         },
         missing: {
           label: "You May Be Missing",
           amountInDeductions: "{amount} in deductions",
+          amountShort: "{amount} in deductions",
           review: "Review",
         },
         progress: {
           label: "{year} Tax Year",
           percentComplete: "{pct}% of this tax year completed",
+          percentShort: "{pct}% completed",
           projectedSavings: "Projected Savings: {amount}",
         },
         cpa: {
@@ -227,6 +230,12 @@ export const EN_US_COPY: UserCopy = {
         income: "Income",
         expenses: "Expenses",
         netProfit: "Net Profit",
+        taxYearTitle: "{year} Tax Year",
+        yearComplete: "Complete",
+        percentOfYear: "{pct}% of this tax year completed",
+        daysElapsed: "Days elapsed",
+        daysElapsedValue: "{elapsed} of {total}",
+        projectedSavingsLabel: "Projected Savings",
         missingTitle: "Potential Deductions",
         startTracking: "Start Tracking",
       },

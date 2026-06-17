@@ -7,10 +7,13 @@ import { DeadlineDetailOverlay } from "./DeadlineDetailOverlay";
 import { MissingDeductionsOverlay } from "./MissingDeductionsOverlay";
 import { MissingDeductionItemOverlay } from "./MissingDeductionItemOverlay";
 
+import { TaxYearDetailOverlay } from "./TaxYearDetailOverlay";
+
 export type HomeOverlay =
   | null
   | "privacy-trust"
   | "deadline-detail"
+  | "tax-year-detail"
   | "missing-deductions"
   | { type: "missing-deduction-item"; hintId: string };
 
@@ -36,6 +39,12 @@ export function HomeOverlayHost({
 
   if (overlay === "deadline-detail") {
     return <DeadlineDetailOverlay data={widgetsData.deadline} onBack={onClose} />;
+  }
+
+  if (overlay === "tax-year-detail") {
+    return (
+      <TaxYearDetailOverlay data={widgetsData.progress} onBack={onClose} />
+    );
   }
 
   if (overlay === "missing-deductions") {

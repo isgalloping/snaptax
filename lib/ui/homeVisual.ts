@@ -66,14 +66,17 @@ export const homeVisual = {
     countGap: "ml-[0.2875rem]",
   },
   widgetCover: {
-    shell: "shrink-0 touch-pan-x pb-1 pt-0.5",
-    track: "flex h-[118px] items-end justify-center gap-1.5 px-2",
-    slotSide: "min-w-0 max-w-[31%] flex-[0.88] transition-all duration-300 ease-out",
-    slotCenter: "min-w-0 max-w-[36%] flex-[1.12] transition-all duration-300 ease-out",
-    cardBase:
-      "block overflow-hidden rounded-2xl text-left transition-all duration-300 ease-out active:scale-[0.98]",
-    cardSide: "h-[92px] origin-bottom",
-    cardCenter: "h-[112px] origin-bottom",
+    shell: "widget-cover-shell shrink-0 touch-pan-x pb-1 pt-0.5",
+    viewport:
+      "widget-cover-viewport relative mx-auto h-[118px] w-full overflow-hidden [perspective:900px]",
+    track: "widget-cover-track flex h-full items-end gap-1.5 px-2",
+    slide: "widget-cover-slide shrink-0 origin-bottom",
+    slideButton:
+      "widget-cover-slide-btn block w-full overflow-hidden rounded-2xl text-left active:scale-[0.98]",
+    slideMotion:
+      "widget-cover-slide-motion transition-[transform,opacity,height] duration-[400ms] ease-[cubic-bezier(0.34,1.15,0.64,1)]",
+    trackMotion:
+      "widget-cover-track-motion transition-transform duration-[400ms] ease-[cubic-bezier(0.34,1.15,0.64,1)]",
   },
   widgetCarousel: {
     slide:

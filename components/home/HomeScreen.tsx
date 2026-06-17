@@ -57,6 +57,14 @@ import {
 import { TaxHeader } from "./TaxHeader";
 import { SnapButton, type SnapButtonHandle } from "./SnapButton";
 import { ReceiptList } from "./ReceiptList";
+import { TrustBar } from "./TrustBar";
+import { HomeScrollRegion } from "./HomeScrollRegion";
+import { WidgetStack } from "./widgets/WidgetStack";
+import {
+  HomeOverlayHost,
+  type HomeOverlay,
+} from "./overlays/HomeOverlayHost";
+import { computeHomeWidgets } from "@/lib/home/computeHomeWidgets";
 import { sumDoneExpenses } from "@/lib/receipts/receiptStats";
 import { SettingsScreen } from "@/components/settings/SettingsScreen";
 import { useTaxExportGate } from "@/components/export/useTaxExportGate";
@@ -108,6 +116,9 @@ export function HomeScreen() {
   const [listSyncing, setListSyncing] = useState(false);
   const [syncStuckIds, setSyncStuckIds] = useState<Set<string>>(() => new Set());
   const [receiptNotice, setReceiptNotice] = useState<string | null>(null);
+  const [homeOverlay, setHomeOverlay] = useState<HomeOverlay>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const filterBarRef = useRef<HTMLDivElement>(null);
   const watcherRef = useRef<ProcessingReceiptWatcher | null>(null);
   const queueRef = useRef<ProcessingQueue | null>(null);
   const flushPendingUploadsRef = useRef<() => Promise<void>>(async () => {});
@@ -650,9 +661,10 @@ export function HomeScreen() {
       cameraOpen ||
       selectedReceipt != null ||
       view === "settings" ||
-      appHidden;
+      appHidden ||
+      homeOverlay != null;
     watcherRef.current?.setPaused(shouldPause);
-  }, [cameraOpen, selectedReceipt, view, appHidden]);
+  }, [cameraOpen, selectedReceipt, view, appHidden, homeOverlay]);
 
   const refreshListFromLocal = useCallback(async () => {
     const visible = await loadTopByUpdatedAt(UI_RECEIPT_LIMIT);
@@ -705,6 +717,29 @@ export function HomeScreen() {
     () => visibleReceiptsForOnboarding(receipts, onboardingStatus),
     [receipts, onboardingStatus],
   );
+
+  const widgetsData = useMemo(
+    () =>
+      computeHomeWidgets(
+        displayReceipts,
+        displayTaxSaved ?? taxSaved,
+        industry,
+      ),
+    [displayReceipts, displayTaxSaved, taxSaved, industry],
+  );
+
+  const handleFilterClick = useCallback(() => {
+    filterBarRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    filterBarRef.current?.classList.add("ring-2", "ring-yellow-400");
+    window.setTimeout(() => {
+      filterBarRef.current?.classList.remove("ring-2", "ring-yellow-400");
+    }, 1200);
+  }, []);
+
+  const handleStartTracking = useCallback(() => {
+    setHomeOverlay(null);
+    scrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
 
   const handleDetailReceiptUpdate = useCallback(
     (updated: Receipt) => {
@@ -986,7 +1021,7 @@ export function HomeScreen() {
   }
 
   return (
-    <div className="flex h-full flex-col overflow-hidden bg-black font-sans text-white select-none">
+    <div className="relative flex h-full flex-col overflow-hidden bg-black font-sans text-white select-none">
       <TaxHeader
         taxSaved={taxSaved}
         displayTaxSaved={displayTaxSaved}
@@ -997,6 +1032,7 @@ export function HomeScreen() {
         onAhaCoachDismiss={dismissAhaCoach}
         onSettingsClick={() => setView("settings")}
         onExportClick={handleExportClick}
+        onFilterClick={handleFilterClick}
         onSyncClick={handleManualListSync}
         syncing={listSyncing}
         syncDisabled={!isOnline}
@@ -1035,10 +1071,23 @@ export function HomeScreen() {
         </p>
       )}
 
-      <div className="flex min-h-0 flex-1 flex-col">
+      <TrustBar onLearnMore={() => setHomeOverlay("privacy-trust")} />
+
+      <HomeScrollRegion
+        ref={scrollRef}
+        header={
+          <WidgetStack
+            data={widgetsData}
+            onDeadlineDetails={() => setHomeOverlay("deadline-detail")}
+            onMissingReview={() => setHomeOverlay("missing-deductions")}
+            onExport={handleExportClick}
+          />
+        }
+      >
         <ReceiptList
           receipts={displayReceipts}
           syncStuckIds={syncStuckIds}
+          filterBarRef={filterBarRef}
           ahaCoachActive={ahaCoachActive}
           onAhaCoachDismiss={dismissAhaCoach}
           onSelect={(receipt) => {
@@ -1053,7 +1102,18 @@ export function HomeScreen() {
           syncing={listSyncing}
           syncDisabled={!isOnline}
         />
-      </div>
+      </HomeScrollRegion>
+
+      {homeOverlay && (
+        <HomeOverlayHost
+          overlay={homeOverlay}
+          widgetsData={widgetsData}
+          industry={industry}
+          onClose={() => setHomeOverlay(null)}
+          onNavigate={setHomeOverlay}
+          onStartTracking={handleStartTracking}
+        />
+      )}
 
       {orchestratorProps && (
         <OnboardingOrchestrator {...orchestratorProps} />

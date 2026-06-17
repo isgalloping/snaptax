@@ -113,6 +113,7 @@ export type UserCopy = {
       installApp: string;
       syncReceipts: string;
       settings: string;
+      filterReceipts: string;
     };
     snapButton: {
       title: string;
@@ -148,6 +149,47 @@ export type UserCopy = {
         uploading: string;
         paused: string;
       };
+    };
+    trustBar: {
+      message: string;
+      learnMore: string;
+    };
+    widgets: {
+      deadline: {
+        label: string;
+        dueInDays: string;
+        projectedPayment: string;
+        viewDetails: string;
+      };
+      missing: {
+        label: string;
+        amountInDeductions: string;
+        review: string;
+      };
+      progress: {
+        label: string;
+        percentComplete: string;
+        projectedSavings: string;
+      };
+      cpa: {
+        label: string;
+        receiptsOrganized: string;
+        export: string;
+        subcopy: string;
+      };
+    };
+    overlays: {
+      back: string;
+      gotIt: string;
+      privacyTitle: string;
+      privacyPoints: { title: string; body: string }[];
+      deadlineTitle: string;
+      daysLeft: string;
+      income: string;
+      expenses: string;
+      netProfit: string;
+      missingTitle: string;
+      startTracking: string;
     };
   };
   receiptDetail: {

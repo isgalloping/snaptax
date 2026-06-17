@@ -65,6 +65,33 @@ export const homeVisual = {
     iconGap: "mr-[0.2875rem]",
     countGap: "ml-[0.2875rem]",
   },
+  trustBar: {
+    bg: "#1A1A1A",
+    border: "#2A2A2A",
+    radius: "rounded-2xl",
+  },
+  widgets: {
+    deadline: {
+      bg: "bg-violet-950/80",
+      border: "border-violet-700/60",
+      accent: "text-violet-300",
+    },
+    missing: {
+      bg: "bg-green-950/80",
+      border: "border-green-700/60",
+      accent: "text-green-300",
+    },
+    progress: {
+      bg: "bg-blue-950/80",
+      border: "border-blue-700/60",
+      accent: "text-blue-300",
+    },
+    cpa: {
+      bg: "bg-orange-950/80",
+      border: "border-orange-700/60",
+      accent: "text-orange-300",
+    },
+  },
 } as const;
 
 export type ReceiptVisualState =

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode, type RefObject } from "react";
 import type { Receipt } from "@/lib/types";
 import { countByStatus } from "@/lib/receipts/receiptStats";
 import { useUserCopy } from "@/components/i18n/I18nProvider";
@@ -20,6 +20,7 @@ interface ReceiptListProps {
   syncDisabled?: boolean;
   ahaCoachActive?: boolean;
   onAhaCoachDismiss?: () => void;
+  filterBarRef?: RefObject<HTMLDivElement | null>;
 }
 
 function filterReceipts(
@@ -46,6 +47,7 @@ export function ReceiptList({
   syncDisabled = false,
   ahaCoachActive = false,
   onAhaCoachDismiss,
+  filterBarRef,
 }: ReceiptListProps) {
   const copy = useUserCopy().home.receiptList;
   const [filter, setFilter] = useState<ReceiptFilter>("all");
@@ -56,13 +58,15 @@ export function ReceiptList({
   );
 
   return (
-    <footer className="flex min-h-0 flex-1 flex-col rounded-t-3xl border-t-2 border-zinc-800 bg-zinc-900 px-4 pb-4 pt-3">
-      <ReceiptFilterBar
-        counts={counts}
-        active={filter}
-        stuckCount={syncStuckIds.size}
-        onChange={setFilter}
-      />
+    <div className="rounded-t-3xl border-t-2 border-zinc-800 bg-zinc-900 px-4 pb-4 pt-3">
+      <div ref={filterBarRef} className="scroll-mt-2 rounded-xl transition-shadow">
+        <ReceiptFilterBar
+          counts={counts}
+          active={filter}
+          stuckCount={syncStuckIds.size}
+          onChange={setFilter}
+        />
+      </div>
 
       <div className="mb-2 flex items-center justify-between gap-2">
         <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-500">
@@ -83,7 +87,7 @@ export function ReceiptList({
         )}
       </div>
 
-      <div className="min-h-0 flex-1 space-y-1.5 overflow-y-auto pr-1">
+      <div className="space-y-1.5 pr-1">
         {listHeader}
         {visible.length === 0 ? (
           <p className="py-4 text-center text-sm text-zinc-500">
@@ -106,6 +110,6 @@ export function ReceiptList({
           ))
         )}
       </div>
-    </footer>
+    </div>
   );
 }

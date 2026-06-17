@@ -1080,6 +1080,7 @@ export function HomeScreen() {
             data={widgetsData}
             onDeadlineDetails={() => setHomeOverlay("deadline-detail")}
             onMissingReview={() => setHomeOverlay("missing-deductions")}
+            onProgressDetails={() => setHomeOverlay("tax-year-detail")}
             onExport={handleExportClick}
           />
         }

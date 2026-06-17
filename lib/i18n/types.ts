@@ -158,17 +158,20 @@ export type UserCopy = {
       deadline: {
         label: string;
         dueInDays: string;
+        daysShort: string;
         projectedPayment: string;
         viewDetails: string;
       };
       missing: {
         label: string;
         amountInDeductions: string;
+        amountShort: string;
         review: string;
       };
       progress: {
         label: string;
         percentComplete: string;
+        percentShort: string;
         projectedSavings: string;
       };
       cpa: {
@@ -188,6 +191,12 @@ export type UserCopy = {
       income: string;
       expenses: string;
       netProfit: string;
+      taxYearTitle: string;
+      yearComplete: string;
+      percentOfYear: string;
+      daysElapsed: string;
+      daysElapsedValue: string;
+      projectedSavingsLabel: string;
       missingTitle: string;
       startTracking: string;
     };

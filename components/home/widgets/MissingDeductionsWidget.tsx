@@ -13,45 +13,33 @@ interface MissingDeductionsWidgetProps {
 export function MissingDeductionsWidget({ data, onReview }: MissingDeductionsWidgetProps) {
   const copy = useUserCopy().home.widgets.missing;
   const visual = homeVisual.widgets.missing;
+  const slide = homeVisual.widgetCarousel.slide;
 
   if (data.missing.length === 0) {
     return null;
   }
 
-  const amountLabel = copy.amountInDeductions.replace(
+  const amountLabel = copy.amountShort.replace(
     "{amount}",
     formatCurrency(data.totalTaxEstimate),
   );
 
   return (
-    <div
-      className={`rounded-2xl border p-4 ${visual.bg} ${visual.border}`}
+    <button
+      type="button"
+      onClick={onReview}
+      className={`${slide} flex flex-col ${visual.bg} ${visual.border} text-left transition-transform active:scale-[0.98]`}
+      role="listitem"
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <p className={`text-[10px] font-bold uppercase tracking-wider ${visual.accent}`}>
-            {copy.label}
-          </p>
-          <p className="mt-1 text-2xl font-black text-white">{amountLabel}</p>
-          <ul className="mt-2 space-y-0.5 text-sm text-zinc-300">
-            {data.previewLabels.map((label) => (
-              <li key={label} className="flex items-center gap-2">
-                <span className="text-green-400" aria-hidden>
-                  •
-                </span>
-                {label}
-              </li>
-            ))}
-          </ul>
-        </div>
-        <button
-          type="button"
-          onClick={onReview}
-          className="shrink-0 min-h-11 px-2 text-xs font-bold text-white underline decoration-zinc-500 underline-offset-2 transition-transform active:scale-95"
-        >
-          {copy.review}
-        </button>
-      </div>
-    </div>
+      <p className={`text-[9px] font-bold uppercase tracking-wider leading-none ${visual.accent}`}>
+        {copy.label}
+      </p>
+      <p className="mt-auto line-clamp-2 text-lg font-black leading-tight text-white">
+        {amountLabel}
+      </p>
+      <span className="mt-0.5 text-[9px] font-bold text-zinc-300 underline decoration-zinc-600 underline-offset-2">
+        {copy.review} &gt;
+      </span>
+    </button>
   );
 }

@@ -2,10 +2,7 @@
 
 import { useUserCopy } from "@/components/i18n/I18nProvider";
 import type { TaxDeadlineInfo } from "@/lib/home/computeTaxDeadline";
-import { formatCurrency } from "@/lib/format";
 import { homeVisual } from "@/lib/ui/homeVisual";
-
-const EMPTY_AMOUNT = "$—";
 
 const URGENCY_TEXT: Record<TaxDeadlineInfo["urgency"], string> = {
   safe: "text-green-400",
@@ -22,34 +19,27 @@ export function TaxDeadlineWidget({ data, onViewDetails }: TaxDeadlineWidgetProp
   const copy = useUserCopy().home.widgets.deadline;
   const visual = homeVisual.widgets.deadline;
   const urgencyClass = URGENCY_TEXT[data.urgency];
-  const paymentLabel =
-    data.projectedPayment != null
-      ? copy.projectedPayment.replace("{amount}", formatCurrency(data.projectedPayment))
-      : copy.projectedPayment.replace("{amount}", EMPTY_AMOUNT);
+  const slide = homeVisual.widgetCarousel.slide;
 
   return (
-    <div
-      className={`rounded-2xl border p-4 ${visual.bg} ${visual.border}`}
+    <button
+      type="button"
+      onClick={onViewDetails}
+      className={`${slide} flex flex-col ${visual.bg} ${visual.border} text-left transition-transform active:scale-[0.98]`}
+      role="listitem"
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <p className={`text-[10px] font-bold uppercase tracking-wider ${visual.accent}`}>
-            {copy.label}
-          </p>
-          <p className={`mt-1 text-2xl font-black ${urgencyClass}`}>
-            {copy.dueInDays.replace("{days}", String(data.daysLeft))}
-          </p>
-          <p className="mt-1 text-xs font-medium text-zinc-300">{data.quarterLabel}</p>
-          <p className="mt-2 text-sm font-semibold text-zinc-200">{paymentLabel}</p>
-        </div>
-        <button
-          type="button"
-          onClick={onViewDetails}
-          className="shrink-0 min-h-11 px-2 text-xs font-bold text-white underline decoration-zinc-500 underline-offset-2 transition-transform active:scale-95"
-        >
-          {copy.viewDetails}
-        </button>
-      </div>
-    </div>
+      <p className={`text-[9px] font-bold uppercase tracking-wider leading-none ${visual.accent}`}>
+        {copy.label}
+      </p>
+      <p className="mt-1 truncate text-[10px] font-medium text-zinc-400">
+        {data.quarterLabel}
+      </p>
+      <p className={`mt-auto text-xl font-black leading-tight ${urgencyClass}`}>
+        {copy.daysShort.replace("{days}", String(data.daysLeft))}
+      </p>
+      <span className="mt-0.5 text-[9px] font-bold text-zinc-300 underline decoration-zinc-600 underline-offset-2">
+        {copy.viewDetails} &gt;
+      </span>
+    </button>
   );
 }

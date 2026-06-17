@@ -65,6 +65,12 @@ export const homeVisual = {
     iconGap: "mr-[0.2875rem]",
     countGap: "ml-[0.2875rem]",
   },
+  widgetCarousel: {
+    slide:
+      "snap-start shrink-0 w-[38vw] min-w-[132px] max-w-[160px] h-[104px] rounded-2xl border p-3",
+    track:
+      "flex touch-pan-x gap-2.5 overflow-x-auto overscroll-x-contain scroll-smooth snap-x snap-mandatory px-4 pt-3 pb-1",
+  },
   trustBar: {
     /** Hairline under hero fade — no boxed card */
     divider: "rgba(39, 39, 42, 0.4)",

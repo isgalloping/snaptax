@@ -4,7 +4,7 @@ import { useUserCopy } from "@/components/i18n/I18nProvider";
 import { homeVisual } from "@/lib/ui/homeVisual";
 
 interface TrustBarProps {
-  onLearnMore: () => void;
+  onLearnMore?: () => void;
 }
 
 export function TrustBar({ onLearnMore }: TrustBarProps) {
@@ -12,24 +12,32 @@ export function TrustBar({ onLearnMore }: TrustBarProps) {
   const { trustBar } = homeVisual;
 
   return (
-    <div className="shrink-0 px-4 pb-2">
-      <div
-        className={`flex items-center gap-3 ${trustBar.radius} border px-3 py-2.5`}
-        style={{ backgroundColor: trustBar.bg, borderColor: trustBar.border }}
-      >
-        <span className="text-lg text-green-400" aria-hidden>
+    <div
+      className="shrink-0 -mt-px border-t px-4 pb-1 pt-1"
+      style={{
+        borderColor: trustBar.divider,
+        background: trustBar.heroFade,
+      }}
+    >
+      <div className="flex min-h-11 items-center gap-2">
+        <span
+          className="shrink-0 text-sm leading-none text-green-400/90"
+          aria-hidden
+        >
           🛡
         </span>
-        <p className="min-w-0 flex-1 text-xs font-medium leading-snug text-zinc-200">
+        <p className="min-w-0 flex-1 line-clamp-2 text-[10px] font-medium leading-[1.2] text-zinc-400">
           {copy.message}
         </p>
-        <button
-          type="button"
-          onClick={onLearnMore}
-          className="shrink-0 min-h-11 px-2 text-xs font-bold text-green-400 transition-transform active:scale-95"
-        >
-          {copy.learnMore} &gt;
-        </button>
+        {onLearnMore ? (
+          <button
+            type="button"
+            onClick={onLearnMore}
+            className="-mr-1 flex shrink-0 items-center self-stretch px-2 text-[10px] font-bold text-green-400/90 transition-transform active:scale-95"
+          >
+            {copy.learnMore} &gt;
+          </button>
+        ) : null}
       </div>
     </div>
   );

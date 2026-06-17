@@ -1,7 +1,7 @@
 # Widget Cover Flow Animation — Design
 
 **Date:** 2026-06-18  
-**Status:** Approved (design)  
+**Status:** Implemented  
 **Scope:** Animate the Home `WidgetInsightsRail` three-card Cover Flow — iOS-style rotation with drag-follow, `prefers-reduced-motion` support. No new routes, no widget data changes, no new npm dependencies.
 
 **References:** `components/home/widgets/WidgetCoverCarousel.tsx` · `lib/ui/homeVisual.ts` · `docs/product/PRODUCT-SPEC.md` §3 (WidgetInsightsRail)
@@ -81,8 +81,8 @@ Properties transitioned: `transform`, `opacity` on slides; `transform` on track.
 
 Child widgets (`TaxDeadlineWidget`, `MissingDeductionsWidget`, `TaxYearProgressWidget`) keep `focus: "side" | "center"`:
 
-- `|offset| < 0.35` → `"side"` (compact type, no ProgressArc, no extra CTA line)
-- else → `"center"` (full layout)
+- `|offset| < 0.35` → `"center"` (full layout, ProgressArc, CTA lines)
+- else → `"side"` (compact type)
 
 Parent passes focus derived from live offset to avoid mid-transition flicker.
 

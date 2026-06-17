@@ -95,6 +95,27 @@ export function SettingsPreferencesSection({
 
           <div>
             <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-zinc-500">
+              {copy.settings.notifications.title}
+            </h3>
+            <div className="flex min-h-14 items-center justify-between rounded-xl border-2 border-zinc-700 bg-zinc-800/50 px-4 opacity-60">
+              <span className="text-sm font-bold text-zinc-400">
+                {copy.settings.notifications.comingSoon}
+              </span>
+              <button
+                type="button"
+                disabled
+                role="switch"
+                aria-checked={false}
+                className="relative h-8 w-14 rounded-full bg-zinc-700"
+                aria-label={copy.settings.notifications.comingSoon}
+              >
+                <span className="absolute left-1 top-1 h-6 w-6 rounded-full bg-zinc-500" />
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-zinc-500">
               {copy.settings.help.title}
             </h3>
             <Link

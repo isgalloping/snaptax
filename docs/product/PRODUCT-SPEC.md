@@ -114,28 +114,37 @@ Privacy Policy · Terms · **Data storage（美国）** · legal@snap1099.com ·
 ```
 主界面 (Home)
 ├── 固定区（不滚动）
-│   ├── TaxHeader
+│   ├── TaxHeader：Est. Tax Saved + Export / Sync / Filter / Settings
 │   ├── WidgetInsightsRail：Cover Flow 三卡同屏（Hero 下蓝框区）+ 左右滑焦点切换
-│   ├── TrustBar → SnapButton（略下移便于拇指）
-│   ├── CPA Ready（条件显示，Snap 下方）
-├── 滚动区（flex-1 min-h-0 overflow-y-auto）
-│   ├── WidgetStack：横滑洞察卡片（Deadline / Missing / Progress）+ 条件 CPA Ready
 │   │   ├── Tax Deadline（紫）→ deadline-detail overlay
 │   │   ├── Missing Deductions（绿）→ missing-deductions → item overlay
-│   │   ├── Tax Year Progress（蓝）
-│   │   └── CPA Ready（橙）→ 现有 Excel Export 门控
+│   │   └── Tax Year Progress（蓝）
+│   ├── TrustBar：紧凑隐私条（Hero 下缘衔接）+ Learn more → privacy-trust overlay
+│   ├── SnapButton：全宽黄 SNAP RECEIPT（合规脚注仅在相机界面；略下移便于拇指）
+│   └── CPA Ready（橙，条件显示，Snap 下方）→ 现有 Excel Export 门控
+├── 滚动区（flex-1 min-h-0 overflow-y-auto）
 │   └── 小票区：ReceiptFilterBar（ALL · READY · PROCESSING · Blurry · Stuck ⚠️）+ ReceiptList
 └── HomeOverlayHost（viewState 全屏 overlay，非新路由）
     ├── deadline-detail · missing-deductions · missing-deduction-item · privacy-trust
     └── `< BACK` 或 **Got it** 关闭；`view === "settings"` 仍为唯一第二逻辑页
 
 设置/导出 (Settings)
-├── 账户状态区（Continue with Google · 换机备份说明）
-├── 行业六选一
-├── Privacy & Data（含 US storage 说明）
-├── View on All Devices
-└── Export IRS Tax Pack
+├── [1] 账户区（未登录施压 headline + Continue with Google；已登录 Avatar 首字母 + 姓名 + Paid）
+├── [2] 税务资产总览（Est. Tax Saved · Receipts Tracked · Total Deductions；数据来自 HomeScreen）
+├── [3] 通栏 Export IRS Tax Pack ($49)（无 section 标题；全宽黄 CTA）
+├── [4] Share & Referral（1 Year Free 文案 · 灰卡片 · 无后端计数/权益）
+├── [5] Preferences ▾（默认折叠：Language · Industry · Notifications coming soon · Help · Privacy & Data · Delete Account）
+└── [6] Sign out（页底全宽按钮，仅已登录；已从账户区移出）
 ```
+
+**Settings Export 门控（与 Home 区分）：**
+
+| 入口 | Ghost（未登录） | 已登录未付费 | 已登录已付费 |
+|------|----------------|-------------|-------------|
+| **Settings Export** | **D 方案快车道**：`downloadOnboardingSampleCsv` 样例 CSV；**不弹** Google Sheet / Paywall | 现有 `useTaxExportGate` → Paywall | Export Again |
+| **Home Export**（TaxHeader · CPA Ready） | **不变** — 仍走完整 export 门控（硬拦截 Google / Paywall） | 同上 | 同上 |
+
+> 设计：[2026-06-17-settings-redesign-design.md](../superpowers/specs/2026-06-17-settings-redesign-design.md) · PRD：`docs/prd/settings.md`
 
 ### 3.1 连拍相机与 Post-Review
 

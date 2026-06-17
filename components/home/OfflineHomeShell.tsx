@@ -157,7 +157,7 @@ export function OfflineHomeShell() {
         showSettings={false}
       />
 
-      <div className="relative shrink-0 px-4 py-2">
+      <div className="relative shrink-0 px-4 pt-0 pb-1.5">
         {onboardingStatus === "stage_1" && <SnapTooltip />}
         <div className="relative w-full">
           {onboardingStatus === "stage_1" && <SnapFocusRing />}

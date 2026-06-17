@@ -15,7 +15,6 @@ import {
   type CameraPhase,
 } from "@/components/camera/CameraOverlay";
 import { useUserCopy } from "@/components/i18n/I18nProvider";
-import { ComplianceFootnote } from "@/components/legal/ComplianceFootnote";
 import { LegalSheet } from "@/components/legal/LegalSheet";
 import {
   isReviewComplete,
@@ -305,12 +304,6 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
             </div>
             <ChevronRightIcon className="h-6 w-6 shrink-0" />
           </button>
-
-          <ComplianceFootnote
-            className="mt-1.5 text-[10px] leading-tight"
-            onOpenTerms={() => setLegalDoc("terms")}
-            onOpenPrivacy={() => setLegalDoc("privacy")}
-          />
 
           <input
             ref={inputRef}

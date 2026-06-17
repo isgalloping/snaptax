@@ -41,6 +41,8 @@ test("getUserCopy returns localized core UI copy", () => {
   assert.equal(german.home.snapButton.title, "Beleg fotografieren");
   assert.equal(french.legal.compliance.terms, "Conditions");
   assert.equal(german.settings.account.title, "Konto");
+  assert.ok(french.home.trustBar.message.includes("privés"));
+  assert.ok(german.home.trustBar.learnMore.length > 0);
 });
 
 test("getUserCopy includes localized help sections", () => {

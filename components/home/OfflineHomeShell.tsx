@@ -30,6 +30,7 @@ import { SnapTooltip } from "@/components/onboarding/SnapTooltip";
 import { useOnboardingFlow } from "@/components/onboarding/useOnboardingFlow";
 import { visibleReceiptsForOnboarding } from "@/lib/onboarding/onboardingReceipts";
 import { TaxHeader } from "./TaxHeader";
+import { TrustBar } from "./TrustBar";
 import { SnapButton } from "./SnapButton";
 import { ReceiptList } from "./ReceiptList";
 import { logStartupMarks } from "@/lib/landing/startupMetrics";
@@ -157,7 +158,9 @@ export function OfflineHomeShell() {
         showSettings={false}
       />
 
-      <div className="relative shrink-0 px-4 py-2">
+      <TrustBar />
+
+      <div className="relative shrink-0 px-4 pt-0 pb-1.5">
         {onboardingStatus === "stage_1" && <SnapTooltip />}
         <div className="relative w-full">
           {onboardingStatus === "stage_1" && <SnapFocusRing />}

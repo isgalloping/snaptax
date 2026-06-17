@@ -66,9 +66,11 @@ export const homeVisual = {
     countGap: "ml-[0.2875rem]",
   },
   trustBar: {
-    bg: "#1A1A1A",
-    border: "#2A2A2A",
-    radius: "rounded-2xl",
+    /** Hairline under hero fade — no boxed card */
+    divider: "rgba(39, 39, 42, 0.4)",
+    /** Soft continuation from hero black fade into snap zone */
+    heroFade:
+      "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,1) 55%)",
   },
   widgets: {
     deadline: {

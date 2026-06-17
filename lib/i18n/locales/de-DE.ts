@@ -177,8 +177,8 @@ export const DE_DE_COPY: UserCopy = {
     },
     trustBar: {
       message:
-        "Your receipts stay private. Never shared with IRS. Stored securely in the U.S.",
-      learnMore: "Learn more",
+        "Ihre Belege bleiben privat. Nie an die IRS weitergegeben. Sicher in den USA gespeichert.",
+      learnMore: "Mehr erfahren",
     },
     widgets: {
       deadline: {

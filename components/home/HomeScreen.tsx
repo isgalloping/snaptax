@@ -1040,7 +1040,9 @@ export function HomeScreen() {
         exportError={taxExport.exportError}
       />
 
-      <div className="relative shrink-0 px-4 py-2">
+      <TrustBar onLearnMore={() => setHomeOverlay("privacy-trust")} />
+
+      <div className="relative shrink-0 px-4 pt-0 pb-1.5">
         {onboardingStatus === "stage_1" && <SnapTooltip />}
         <div className="relative w-full">
           {onboardingStatus === "stage_1" && <SnapFocusRing />}
@@ -1070,8 +1072,6 @@ export function HomeScreen() {
           {receiptNotice}
         </p>
       )}
-
-      <TrustBar onLearnMore={() => setHomeOverlay("privacy-trust")} />
 
       <HomeScrollRegion
         ref={scrollRef}

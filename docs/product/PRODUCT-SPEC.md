@@ -64,8 +64,8 @@
 
 | 触点 | 文案/行为 |
 |------|-----------|
-| **Snap 脚注（常驻）** | `By snapping, you agree to our Terms & Privacy Policy. Online processing stores data in the United States.` |
-| **Trust Bar（常驻）** | 单行隐私 reassurance 条（`Your receipts stay private…`）；**Learn more** → 全屏 Trust overlay（4 条信任点 + **Got it**），非居中 Modal、非首张票阻挡卡片 |
+| **相机界面脚注（snap 时）** | `By snapping, you agree to our Terms & Privacy Policy. Online processing stores data in the United States.`（`CameraOverlay` 底部；首页 Snap 按钮下与 Trust Bar 内均不重复） |
+| **Trust Bar（常驻）** | 单行隐私 reassurance 条（`Your receipts stay private…` + 🛡）；**Learn more** → 全屏 Trust overlay（4 条信任点 + **Got it**），非居中 Modal、非首张票阻挡卡片 |
 | **Terms / Privacy 链接** | Bottom Sheet 或 `/privacy` `/terms` |
 | **Settings → Data storage** | 固定：`Processed and stored in the United States. See Privacy Policy for international transfers.` |
 | **Privacy Policy §4** | 国际传输与美国存储完整表述（canonical：`docs/legal/privacy.md`） |
@@ -115,8 +115,8 @@ Privacy Policy · Terms · **Data storage（美国）** · legal@snap1099.com ·
 主界面 (Home)
 ├── 固定区（不滚动）
 │   ├── TaxHeader：Est. Tax Saved + Export / Sync / Filter / Settings
-│   ├── SnapButton：全宽黄 SNAP RECEIPT + 合规脚注
-│   └── TrustBar：单行隐私条 + Learn more → privacy-trust overlay
+│   ├── TrustBar：紧凑隐私条（Hero 下缘衔接）+ Learn more → privacy-trust overlay
+│   ├── SnapButton：全宽黄 SNAP RECEIPT（合规脚注仅在相机界面）
 ├── 滚动区（flex-1 min-h-0 overflow-y-auto）
 │   ├── WidgetStack（4 张洞察卡片）
 │   │   ├── Tax Deadline（紫）→ deadline-detail overlay

@@ -12,12 +12,16 @@ import {
   SETTINGS_VISITED_KEY,
   writeOnboardFlag,
 } from "@/lib/onboarding/onboardingStorage";
-import { AccountStatusBlock } from "@/components/auth/AccountStatusBlock";
 import { GoogleSignInSheet, type GoogleSignInMode } from "@/components/auth/GoogleSignInSheet";
 import { useI18n } from "@/components/i18n/I18nProvider";
+import { SettingsAccountBlock } from "@/components/settings/SettingsAccountBlock";
 import { SettingsPreferencesSection } from "@/components/settings/SettingsPreferencesSection";
 import { ShareAppSection } from "@/components/settings/ShareAppSection";
 import { TaxExportSection } from "@/components/settings/TaxExportSection";
+import {
+  TaxOverviewPanel,
+  type SettingsTaxStats,
+} from "@/components/settings/TaxOverviewPanel";
 import { isSignOutOfflineError } from "@/lib/client/signOutFlow";
 
 interface SettingsScreenProps {
@@ -35,6 +39,7 @@ interface SettingsScreenProps {
   onUserSignedIn?: (result: GoogleAuthResponse) => void;
   onPostLoginSync?: (taxRecalcQueued: number) => Promise<void>;
   onSignOut?: () => Promise<void>;
+  taxStats: SettingsTaxStats;
   onRequestExport: () => void;
   exportBusy?: boolean;
   exportError?: string | null;
@@ -61,6 +66,7 @@ export function SettingsScreen({
   onUserSignedIn,
   onPostLoginSync,
   onSignOut,
+  taxStats,
   onRequestExport,
   exportBusy = false,
   exportError = null,
@@ -192,7 +198,7 @@ export function SettingsScreen({
       </header>
 
       <div className="flex-1 overflow-y-auto p-6">
-        <AccountStatusBlock
+        <SettingsAccountBlock
           googleUser={googleUser}
           seasonPaid={seasonPaid}
           seasonLabel={currentSeason}
@@ -201,15 +207,9 @@ export function SettingsScreen({
             clearError();
             setGoogleSheet("soft");
           }}
-          onSignOut={
-            isSignedIn
-              ? () => {
-                  setSignOutError(null);
-                  setShowSignOutConfirm(true);
-                }
-              : undefined
-          }
         />
+
+        <TaxOverviewPanel {...taxStats} />
 
         <TaxExportSection
           currentSeason={currentSeason}
@@ -229,6 +229,19 @@ export function SettingsScreen({
           isSignedIn={isSignedIn}
           onAccountDeleted={onAccountDeleted ?? onLocalDataCleared}
         />
+
+        {isSignedIn && onSignOut && (
+          <button
+            type="button"
+            onClick={() => {
+              setSignOutError(null);
+              setShowSignOutConfirm(true);
+            }}
+            className="mt-2 mb-8 w-full min-h-16 rounded-xl border-2 border-zinc-600 bg-zinc-900 py-3 text-sm font-black uppercase tracking-wider text-white transition-transform active:scale-95"
+          >
+            {accountCopy.signOut}
+          </button>
+        )}
 
         {displayError && (
           <p className="mt-4 text-center text-sm font-bold text-red-500" role="alert">

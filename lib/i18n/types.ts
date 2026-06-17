@@ -332,9 +332,18 @@ export type UserCopy = {
       title: string;
       labels: Record<Industry, string>;
     };
-    share: {
+    taxOverview: {
+      taxSaved: string;
+      receiptsTracked: string;
+      totalDeductions: string;
+    };
+    notifications: {
       title: string;
-      hint: string;
+      comingSoon: string;
+    };
+    share: {
+      cta: string;
+      footnote: string;
       whatsapp: string;
       facebook: string;
       more: string;

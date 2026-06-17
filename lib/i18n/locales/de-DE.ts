@@ -409,9 +409,18 @@ export const DE_DE_COPY: UserCopy = {
         general: "Allgemein 1099",
       },
     },
+    taxOverview: {
+      taxSaved: "Est. Tax Saved",
+      receiptsTracked: "Receipts Tracked",
+      totalDeductions: "Total Deductions",
+    },
+    notifications: {
+      title: "Notifications",
+      comingSoon: "Coming soon",
+    },
     share: {
-      title: "Teilen",
-      hint: "Empfehlen Sie es einem 1099-Kollegen",
+      cta: "Tell a fellow 1099 contractor to get 1 Year Free",
+      footnote: "Share with 3 friends — reward program coming soon",
       whatsapp: "WhatsApp",
       facebook: "Facebook",
       more: "Mehr",

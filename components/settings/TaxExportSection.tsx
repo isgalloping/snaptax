@@ -48,9 +48,6 @@ export function TaxExportSection({
 
   return (
     <section className="mb-6">
-      <h2 className="mb-4 text-xs font-bold uppercase tracking-wider text-zinc-400">
-        {copy.title}
-      </h2>
       {exportEmptyTip && onExportEmptyTipDismiss && (
         <ExportEmptyTip
           key={exportEmptyTipKey}

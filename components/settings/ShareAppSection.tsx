@@ -10,6 +10,7 @@ import {
   openExternalShare,
   shareAppViaNative,
 } from "@/lib/client/shareApp";
+import { settingsVisual } from "@/lib/ui/settingsVisual";
 
 function WhatsAppIcon() {
   return (
@@ -50,8 +51,7 @@ function MoreShareIcon() {
   );
 }
 
-const shareTileClass =
-  "flex min-h-14 flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-zinc-600 bg-zinc-800 p-2 text-[11px] font-bold text-zinc-300 transition-transform active:scale-95";
+const shareTileClass = `flex min-h-14 flex-col items-center justify-center gap-1.5 border-0 ${settingsVisual.shareTile} text-[11px] font-bold text-zinc-300 transition-transform active:scale-95`;
 
 export function ShareAppSection() {
   const copy = useUserCopy().settings.share;
@@ -91,11 +91,8 @@ export function ShareAppSection() {
   };
 
   return (
-    <section className="mb-6">
-      <h2 className="mb-1 text-xs font-bold uppercase tracking-wider text-zinc-400">
-        {copy.title}
-      </h2>
-      <p className="mb-3 text-sm text-zinc-400">{copy.hint}</p>
+    <section className={`mb-6 ${settingsVisual.referralCard}`}>
+      <p className="mb-4 text-sm font-bold text-white">{copy.cta}</p>
       <div className="grid grid-cols-3 gap-2">
         <button type="button" onClick={handleWhatsApp} className={shareTileClass}>
           <WhatsAppIcon />
@@ -110,6 +107,7 @@ export function ShareAppSection() {
           {copy.more}
         </button>
       </div>
+      <p className="mt-3 text-xs text-zinc-500">{copy.footnote}</p>
       {notice && (
         <p className="mt-3 text-center text-sm font-bold text-yellow-400" role="status">
           {notice}

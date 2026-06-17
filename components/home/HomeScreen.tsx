@@ -67,6 +67,7 @@ import {
 import { computeHomeWidgets } from "@/lib/home/computeHomeWidgets";
 import { sumDoneExpenses } from "@/lib/receipts/receiptStats";
 import { SettingsScreen } from "@/components/settings/SettingsScreen";
+import type { SettingsTaxStats } from "@/components/settings/TaxOverviewPanel";
 import { useTaxExportGate } from "@/components/export/useTaxExportGate";
 import { ReceiptDetailSheet } from "@/components/receipts/ReceiptDetailSheet";
 import { logStartupMarks } from "@/lib/landing/startupMetrics";
@@ -86,6 +87,8 @@ import {
   writeOnboardFlag,
 } from "@/lib/onboarding/onboardingStorage";
 import { visibleReceiptsForOnboarding } from "@/lib/onboarding/onboardingReceipts";
+import { taxYearDeductions } from "@/lib/tax/taxYearStats";
+import { clientTimeZone } from "@/lib/time/timeZone";
 import { useI18n } from "@/components/i18n/I18nProvider";
 
 type View = "home" | "settings";
@@ -718,6 +721,20 @@ export function HomeScreen() {
     [receipts, onboardingStatus],
   );
 
+  const settingsTaxStats = useMemo((): SettingsTaxStats => {
+    const year = Number(
+      new Intl.DateTimeFormat("en-US", {
+        timeZone: clientTimeZone(),
+        year: "numeric",
+      }).format(new Date()),
+    );
+    return {
+      taxSaved: displayTaxSaved ?? taxSaved,
+      receiptCount: displayReceipts.length,
+      totalDeductions: taxYearDeductions(displayReceipts, year, clientTimeZone()),
+    };
+  }, [displayReceipts, displayTaxSaved, taxSaved]);
+
   const widgetsData = useMemo(
     () =>
       computeHomeWidgets(
@@ -778,6 +795,20 @@ export function HomeScreen() {
     completeAhaCoach,
     taxExport,
   ]);
+
+  const handleSettingsExport = useCallback(() => {
+    if (!auth.isSignedIn) {
+      void (async () => {
+        const demo = await ensureOnboardingDemoDone();
+        downloadOnboardingSampleCsv(demo);
+        if (onboardingStatus === "stage_3" || onboardingStatus === "stage_aha") {
+          await completeAhaCoach();
+        }
+      })();
+      return;
+    }
+    taxExport.requestExport();
+  }, [auth.isSignedIn, onboardingStatus, completeAhaCoach, taxExport]);
 
   setTaxAnimatingRef.current = setTaxAnimating;
 
@@ -1003,7 +1034,8 @@ export function HomeScreen() {
         onUserSignedIn={auth.applyGoogleSignIn}
         onPostLoginSync={handlePostLoginSync}
         onSignOut={auth.signOut}
-        onRequestExport={taxExport.requestExport}
+        taxStats={settingsTaxStats}
+        onRequestExport={handleSettingsExport}
         exportBusy={taxExport.paywallExporting || taxExport.preparingExport}
         exportError={taxExport.exportError}
         exportEmptyTip={taxExport.exportEmptyTip}

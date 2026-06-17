@@ -56,21 +56,21 @@ export function ReceiptFilterBar({
           </button>
         );
       })}
-      <button
-        type="button"
-        onClick={() => onChange("stuck")}
-        className={`${pillBase} ${
-          active === "stuck"
-            ? "bg-yellow-500/20 text-yellow-400 ring-2 ring-yellow-500"
-            : "border border-zinc-700 bg-zinc-800/80 text-zinc-300"
-        }`}
-        aria-label={`${copy.filters.stuckAria}${stuckCount > 0 ? ` (${stuckCount})` : ""}`}
-      >
-        ⚠️
-        {stuckCount > 0 && (
+      {stuckCount > 0 && (
+        <button
+          type="button"
+          onClick={() => onChange("stuck")}
+          className={`${pillBase} ${
+            active === "stuck"
+              ? "bg-yellow-500/20 text-yellow-400 ring-2 ring-yellow-500"
+              : "border border-zinc-700 bg-zinc-800/80 text-zinc-300"
+          }`}
+          aria-label={`${copy.filters.stuckAria} (${stuckCount})`}
+        >
+          ⚠️
           <span className={`${countGap} tabular-nums`}>({stuckCount})</span>
-        )}
-      </button>
+        </button>
+      )}
     </div>
   );
 }

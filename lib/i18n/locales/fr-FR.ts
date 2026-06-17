@@ -138,6 +138,7 @@ export const FR_FR_COPY: UserCopy = {
       installApp: "Installer l'application",
       syncReceipts: "Synchroniser les reçus",
       settings: "Paramètres",
+      filterReceipts: "Filter receipts",
     },
     snapButton: {
       title: "Photographier un reçu",
@@ -173,6 +174,65 @@ export const FR_FR_COPY: UserCopy = {
         uploading: "ENVOI",
         paused: "EN PAUSE",
       },
+    },
+    trustBar: {
+      message:
+        "Your receipts stay private. Never shared with IRS. Stored securely in the U.S.",
+      learnMore: "Learn more",
+    },
+    widgets: {
+      deadline: {
+        label: "Next Tax Deadline",
+        dueInDays: "Due in {days} Days",
+        projectedPayment: "Projected Payment: {amount}",
+        viewDetails: "View Details",
+      },
+      missing: {
+        label: "You May Be Missing",
+        amountInDeductions: "{amount} in deductions",
+        review: "Review",
+      },
+      progress: {
+        label: "{year} Tax Year",
+        percentComplete: "{pct}% of this tax year completed",
+        projectedSavings: "Projected Savings: {amount}",
+      },
+      cpa: {
+        label: "CPA Ready",
+        receiptsOrganized: "{count} receipts organized",
+        export: "Export",
+        subcopy: "Excel tax pack",
+      },
+    },
+    overlays: {
+      back: "< BACK",
+      gotIt: "Got it",
+      privacyTitle: "Your Privacy & Security",
+      privacyPoints: [
+        {
+          title: "100% Private",
+          body: "Only you can see your receipts. Never shared with the IRS or anyone else.",
+        },
+        {
+          title: "Secure in the U.S.",
+          body: "Your data is encrypted and stored in secure U.S. data centers.",
+        },
+        {
+          title: "We Don't Sell Data",
+          body: "No ads. No tracking. We never sell your information.",
+        },
+        {
+          title: "You're in Control",
+          body: "Delete your data anytime from Settings.",
+        },
+      ],
+      deadlineTitle: "Deadline Details",
+      daysLeft: "{days} Days Left",
+      income: "Income",
+      expenses: "Expenses",
+      netProfit: "Net Profit",
+      missingTitle: "Potential Deductions",
+      startTracking: "Start Tracking",
     },
   },
   receiptDetail: {

@@ -4,6 +4,7 @@ import { useUserCopy } from "@/components/i18n/I18nProvider";
 import { formatCurrency } from "@/lib/format";
 import { homeVisual } from "@/lib/ui/homeVisual";
 import { ReceiptIcon } from "@/components/icons/ReceiptIcon";
+import { FilterIcon } from "@/components/icons/FilterIcon";
 import { SlidersIcon } from "@/components/icons/SlidersIcon";
 import { RefreshIcon } from "@/components/icons/RefreshIcon";
 import { DownloadIcon } from "@/components/icons/DownloadIcon";
@@ -18,6 +19,7 @@ interface TaxHeaderProps {
   animating: boolean;
   onSettingsClick: () => void;
   onExportClick?: () => void;
+  onFilterClick?: () => void;
   onSyncClick?: () => void;
   syncing?: boolean;
   syncDisabled?: boolean;
@@ -39,6 +41,7 @@ export function TaxHeader({
   animating,
   onSettingsClick,
   onExportClick,
+  onFilterClick,
   onSyncClick,
   syncing = false,
   syncDisabled = false,
@@ -156,6 +159,16 @@ export function TaxHeader({
               <RefreshIcon
                 className={`h-5 w-5 text-white ${syncing ? "animate-spin" : ""}`}
               />
+            </button>
+          )}
+          {onFilterClick && (
+            <button
+              type="button"
+              onClick={onFilterClick}
+              className={actionBtn}
+              aria-label={copy.filterReceipts}
+            >
+              <FilterIcon className="h-5 w-5 text-white" />
             </button>
           )}
           {showSettings && (

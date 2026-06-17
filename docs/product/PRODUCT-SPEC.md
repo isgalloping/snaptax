@@ -31,7 +31,7 @@
 | 反馈 | 按钮 `active:scale-95` |
 | 核心流程零 Modal | 拍照链路禁止「是否确定/是否清晰」弹窗；错误用底部非阻塞红字 |
 | **合规 Sheet 例外** | Terms/Privacy/US 告知、Delete Account、Google/Paddle — **仅 Bottom Sheet** |
-| 布局 | **仅 2 逻辑页**；主界面三段式单屏，禁止全局滚动 |
+| 布局 | **仅 2 逻辑页**；主界面 **固定 chrome**（TaxHeader + Snap + TrustBar）+ **可滚动内容区**（WidgetStack + 小票列表）；禁止整页 `body` 滚动，快门区始终可见 |
 
 ### 2.2 离线优先（PWA）
 
@@ -65,6 +65,7 @@
 | 触点 | 文案/行为 |
 |------|-----------|
 | **Snap 脚注（常驻）** | `By snapping, you agree to our Terms & Privacy Policy. Online processing stores data in the United States.` |
+| **Trust Bar（常驻）** | 单行隐私 reassurance 条（`Your receipts stay private…`）；**Learn more** → 全屏 Trust overlay（4 条信任点 + **Got it**），非居中 Modal、非首张票阻挡卡片 |
 | **Terms / Privacy 链接** | Bottom Sheet 或 `/privacy` `/terms` |
 | **Settings → Data storage** | 固定：`Processed and stored in the United States. See Privacy Policy for international transfers.` |
 | **Privacy Policy §4** | 国际传输与美国存储完整表述（canonical：`docs/legal/privacy.md`） |
@@ -112,9 +113,20 @@ Privacy Policy · Terms · **Data storage（美国）** · legal@snap1099.com ·
 
 ```
 主界面 (Home)
-├── 顶栏（hero 渐变 ~120px–22vh）：Tax Saved + 副标题（小票 icon）+ 刷新/设置
-├── 快门区：140px 三列（相机 · SNAP RECEIPT + 副标题 · chevron）+ 合规脚注
-└── 底栏（flex-1）：四态筛选 + stuck ⚠️ + PULL TO REFRESH + 圆形徽章卡片（Analyzing 蓝 / Paused 黄）
+├── 固定区（不滚动）
+│   ├── TaxHeader：Est. Tax Saved + Export / Sync / Filter / Settings
+│   ├── SnapButton：全宽黄 SNAP RECEIPT + 合规脚注
+│   └── TrustBar：单行隐私条 + Learn more → privacy-trust overlay
+├── 滚动区（flex-1 min-h-0 overflow-y-auto）
+│   ├── WidgetStack（4 张洞察卡片）
+│   │   ├── Tax Deadline（紫）→ deadline-detail overlay
+│   │   ├── Missing Deductions（绿）→ missing-deductions → item overlay
+│   │   ├── Tax Year Progress（蓝）
+│   │   └── CPA Ready（橙）→ 现有 Excel Export 门控
+│   └── 小票区：ReceiptFilterBar（ALL · READY · PROCESSING · Blurry · Stuck ⚠️）+ ReceiptList
+└── HomeOverlayHost（viewState 全屏 overlay，非新路由）
+    ├── deadline-detail · missing-deductions · missing-deduction-item · privacy-trust
+    └── `< BACK` 或 **Got it** 关闭；`view === "settings"` 仍为唯一第二逻辑页
 
 设置/导出 (Settings)
 ├── 账户状态区（Continue with Google · 换机备份说明）

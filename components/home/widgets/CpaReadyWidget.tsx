@@ -11,31 +11,24 @@ interface CpaReadyWidgetProps {
 export function CpaReadyWidget({ count, onExport }: CpaReadyWidgetProps) {
   const copy = useUserCopy().home.widgets.cpa;
   const visual = homeVisual.widgets.cpa;
+  const card = homeVisual.widgetPager.cardBase;
 
   return (
-    <div
-      className={`rounded-2xl border p-4 ${visual.bg} ${visual.border}`}
+    <button
+      type="button"
+      onClick={onExport}
+      className={`${card} flex flex-col ${visual.bg} ${visual.border} text-left transition-transform active:scale-[0.98]`}
+      role="listitem"
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <p className={`text-[10px] font-bold uppercase tracking-wider ${visual.accent}`}>
-            {copy.label}
-          </p>
-          <p className="mt-1 text-2xl font-black text-white">
-            {copy.receiptsOrganized.replace("{count}", String(count))}
-          </p>
-        </div>
-        <div className="flex shrink-0 flex-col items-end gap-1">
-          <button
-            type="button"
-            onClick={onExport}
-            className="min-h-11 rounded-xl border-2 border-orange-500 bg-orange-600 px-4 text-sm font-black uppercase tracking-wide text-white transition-transform active:scale-95"
-          >
-            {copy.export}
-          </button>
-          <p className="text-[10px] font-medium text-zinc-400">{copy.subcopy}</p>
-        </div>
-      </div>
-    </div>
+      <p className={`text-[9px] font-bold uppercase tracking-wider leading-none ${visual.accent}`}>
+        {copy.label}
+      </p>
+      <p className="mt-1 line-clamp-2 text-sm font-black leading-tight text-white">
+        {copy.receiptsOrganized.replace("{count}", String(count))}
+      </p>
+      <span className="mt-auto text-[9px] font-bold text-zinc-300 underline decoration-zinc-600 underline-offset-2">
+        {copy.export} &gt;
+      </span>
+    </button>
   );
 }

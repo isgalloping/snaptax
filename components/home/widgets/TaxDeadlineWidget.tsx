@@ -12,45 +12,34 @@ const URGENCY_TEXT: Record<TaxDeadlineInfo["urgency"], string> = {
 
 interface TaxDeadlineWidgetProps {
   data: TaxDeadlineInfo;
-  focus: "side" | "center";
+  onViewDetails: () => void;
 }
 
-export function TaxDeadlineWidget({ data, focus }: TaxDeadlineWidgetProps) {
+export function TaxDeadlineWidget({ data, onViewDetails }: TaxDeadlineWidgetProps) {
   const copy = useUserCopy().home.widgets.deadline;
   const visual = homeVisual.widgets.deadline;
   const urgencyClass = URGENCY_TEXT[data.urgency];
-  const centered = focus === "center";
+  const card = homeVisual.widgetPager.cardBase;
 
   return (
-    <div
-      className={`flex h-full w-full flex-col rounded-2xl border p-2.5 text-left ${visual.bg} ${visual.border} ${
-        centered ? "p-3" : ""
-      }`}
+    <button
+      type="button"
+      onClick={onViewDetails}
+      className={`${card} flex flex-col ${visual.bg} ${visual.border} text-left transition-transform active:scale-[0.98]`}
+      role="listitem"
     >
-      <p
-        className={`font-bold uppercase tracking-wider leading-none ${visual.accent} ${
-          centered ? "text-[9px]" : "text-[8px]"
-        }`}
-      >
+      <p className={`text-[9px] font-bold uppercase tracking-wider leading-none ${visual.accent}`}>
         {copy.label}
       </p>
-      {centered && (
-        <p className="mt-1 truncate text-[10px] font-medium text-zinc-400">
-          {data.quarterLabel}
-        </p>
-      )}
-      <p
-        className={`mt-auto font-black leading-tight ${urgencyClass} ${
-          centered ? "text-2xl" : "text-lg"
-        }`}
-      >
+      <p className="mt-1 truncate text-[10px] font-medium text-zinc-400">
+        {data.quarterLabel}
+      </p>
+      <p className={`mt-auto text-xl font-black leading-tight ${urgencyClass}`}>
         {copy.daysShort.replace("{days}", String(data.daysLeft))}
       </p>
-      {centered && (
-        <span className="mt-0.5 text-[9px] font-bold text-zinc-300 underline decoration-zinc-600 underline-offset-2">
-          {copy.viewDetails} &gt;
-        </span>
-      )}
-    </div>
+      <span className="mt-0.5 text-[9px] font-bold text-zinc-300 underline decoration-zinc-600 underline-offset-2">
+        {copy.viewDetails} &gt;
+      </span>
+    </button>
   );
 }

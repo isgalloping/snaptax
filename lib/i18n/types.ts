@@ -15,6 +15,9 @@ export type UserCopy = {
     manualSheetTitle: string;
     manualSheetLead: string;
     manualGotIt: string;
+    installWebApkLead: string;
+    launchFromHomeHint: string;
+    launchFromHomeGotIt: string;
     manualSteps: {
       chromiumAndroid: string[];
       chromiumDesktop: string[];

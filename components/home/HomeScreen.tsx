@@ -64,6 +64,8 @@ import {
   HomeOverlayHost,
   type HomeOverlay,
 } from "./overlays/HomeOverlayHost";
+import type { SettingsViewState } from "@/components/settings/settingsViewState";
+import { useAppNavigation } from "@/lib/client/useAppNavigation";
 import { computeHomeWidgets } from "@/lib/home/computeHomeWidgets";
 import { sumDoneExpenses } from "@/lib/receipts/receiptStats";
 import {
@@ -126,6 +128,8 @@ export function HomeScreen() {
   const [syncStuckIds, setSyncStuckIds] = useState<Set<string>>(() => new Set());
   const [receiptNotice, setReceiptNotice] = useState<string | null>(null);
   const [homeOverlay, setHomeOverlay] = useState<HomeOverlay>(null);
+  const [settingsViewState, setSettingsViewState] =
+    useState<SettingsViewState>("main");
   const scrollRef = useRef<HTMLDivElement>(null);
   const filterBarRef = useRef<HTMLDivElement>(null);
   const watcherRef = useRef<ProcessingReceiptWatcher | null>(null);
@@ -149,6 +153,57 @@ export function HomeScreen() {
     setTaxAnimatingRef.current(true);
     window.setTimeout(() => setTaxAnimatingRef.current(false), 600);
   }, []);
+
+  const applyPopTarget = useCallback(
+    (target: {
+      view: "home" | "settings";
+      homeOverlay: HomeOverlay;
+      settingsPage: SettingsViewState;
+    }) => {
+      setView(target.view);
+      setHomeOverlay(target.homeOverlay);
+      setSettingsViewState(target.settingsPage);
+    },
+    [],
+  );
+
+  const {
+    navigateBack,
+    pushOverlay,
+    openSettings,
+    pushSettingsPage,
+    replaceSettingsPage,
+  } = useAppNavigation({ onPopTarget: applyPopTarget });
+
+  const showOverlay = useCallback(
+    (overlay: NonNullable<HomeOverlay>) => {
+      setHomeOverlay(overlay);
+      pushOverlay(overlay);
+    },
+    [pushOverlay],
+  );
+
+  const handleOpenSettings = useCallback(() => {
+    setView("settings");
+    setSettingsViewState("main");
+    openSettings();
+  }, [openSettings]);
+
+  const handleSettingsViewStateChange = useCallback(
+    (page: SettingsViewState) => {
+      setSettingsViewState(page);
+      pushSettingsPage(page);
+    },
+    [pushSettingsPage],
+  );
+
+  const handleSettingsReplacePage = useCallback(
+    (page: SettingsViewState) => {
+      setSettingsViewState(page);
+      replaceSettingsPage(page);
+    },
+    [replaceSettingsPage],
+  );
 
   useEffect(() => {
     receiptsRef.current = receipts;
@@ -757,9 +812,9 @@ export function HomeScreen() {
   );
 
   const handleStartTracking = useCallback(() => {
-    setHomeOverlay(null);
+    navigateBack();
     scrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
-  }, []);
+  }, [navigateBack]);
 
   const handleDetailReceiptUpdate = useCallback(
     (updated: Receipt) => {
@@ -1014,7 +1069,10 @@ export function HomeScreen() {
       <SettingsScreen
         industry={industry}
         onIndustryChange={handleIndustryChange}
-        onBack={() => setView("home")}
+        viewState={settingsViewState}
+        onViewStateChange={handleSettingsViewStateChange}
+        onReplaceSettingsPage={handleSettingsReplacePage}
+        onNavigateBack={navigateBack}
         onAccountDeleted={() => {
           void (async () => {
             setReceipts([]);
@@ -1070,7 +1128,7 @@ export function HomeScreen() {
         animating={taxAnimating}
         ahaCoachActive={ahaCoachActive}
         onAhaCoachDismiss={dismissAhaCoach}
-        onSettingsClick={() => setView("settings")}
+        onSettingsClick={handleOpenSettings}
         onExportClick={handleExportClick}
         exportBusy={taxExport.paywallExporting || taxExport.preparingExport}
         exportError={taxExport.exportError}
@@ -1090,7 +1148,7 @@ export function HomeScreen() {
             resnapId={resnapId}
             onCameraOpenChange={setCameraOpen}
             onSyncClick={handleManualListSync}
-            onSettingsClick={() => setView("settings")}
+            onSettingsClick={handleOpenSettings}
             syncing={listSyncing}
             syncDisabled={!isOnline}
             onSnapIntent={handleSnapIntent}
@@ -1098,7 +1156,7 @@ export function HomeScreen() {
         </div>
       </div>
 
-      <InlinePrivacyNote onLearnMore={() => setHomeOverlay("privacy-trust")} />
+      <InlinePrivacyNote onLearnMore={() => showOverlay("privacy-trust")} />
 
       {receiptNotice && (
         <p
@@ -1112,9 +1170,9 @@ export function HomeScreen() {
       <WidgetStack
         data={widgetsData}
         actionCount={actionCount}
-        onDeadlineDetails={() => setHomeOverlay("deadline-detail")}
-        onMissingReview={() => setHomeOverlay("missing-deductions")}
-        onProgressDetails={() => setHomeOverlay("tax-year-detail")}
+        onDeadlineDetails={() => showOverlay("deadline-detail")}
+        onMissingReview={() => showOverlay("missing-deductions")}
+        onProgressDetails={() => showOverlay("tax-year-detail")}
         onExport={handleExportClick}
         onNeedActionResnap={handleNeedActionResnap}
       />
@@ -1147,8 +1205,11 @@ export function HomeScreen() {
           overlay={homeOverlay}
           widgetsData={widgetsData}
           industry={industry}
-          onClose={() => setHomeOverlay(null)}
-          onNavigate={setHomeOverlay}
+          onClose={navigateBack}
+          onNavigate={(overlay) => {
+            setHomeOverlay(overlay);
+            pushOverlay(overlay);
+          }}
           onStartTracking={handleStartTracking}
         />
       )}

@@ -40,11 +40,15 @@ import {
   isSampleExportDone,
   markSampleExportDone,
 } from "@/lib/settings/exportSampleState";
+import { isLeavingExportCompleted } from "@/lib/client/appNavigationHistory";
 
 interface SettingsScreenProps {
   industry: Industry | null;
   onIndustryChange: (industry: Industry) => void;
-  onBack: () => void;
+  viewState: SettingsViewState;
+  onViewStateChange: (state: SettingsViewState) => void;
+  onReplaceSettingsPage: (state: SettingsViewState) => void;
+  onNavigateBack: () => void;
   onAccountDeleted?: () => void;
   /** @deprecated use onAccountDeleted */
   onLocalDataCleared?: () => void;
@@ -75,7 +79,10 @@ interface SettingsScreenProps {
 export function SettingsScreen({
   industry,
   onIndustryChange,
-  onBack,
+  viewState,
+  onViewStateChange,
+  onReplaceSettingsPage,
+  onNavigateBack,
   onAccountDeleted,
   onLocalDataCleared,
   googleUser,
@@ -102,7 +109,7 @@ export function SettingsScreen({
   onSampleExportAhaComplete,
 }: SettingsScreenProps) {
   const { copy } = useI18n();
-  const [viewState, setViewState] = useState<SettingsViewState>("main");
+  const prevViewStateRef = useRef(viewState);
   const [googleSheet, setGoogleSheet] = useState<GoogleSignInMode | null>(null);
   const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
@@ -120,6 +127,15 @@ export function SettingsScreen({
     setShowSampleReady(isSampleExportDone());
     setShowExportBlocked(isExportBlockedBannerActive());
   }, [exportBlockedTick]);
+
+  useEffect(() => {
+    const prev = prevViewStateRef.current;
+    if (isLeavingExportCompleted(prev, viewState)) {
+      markSampleExportDone();
+      setShowSampleReady(true);
+    }
+    prevViewStateRef.current = viewState;
+  }, [viewState]);
 
   useEffect(() => {
     const syncOnline = () =>
@@ -214,25 +230,17 @@ export function SettingsScreen({
     }
   };
 
-  const goToMain = useCallback(() => setViewState("main"), []);
+  const goToMain = useCallback(() => {
+    onNavigateBack();
+  }, [onNavigateBack]);
 
   const handleHeaderBack = () => {
-    if (viewState === "main") {
-      onBack();
-      return;
-    }
-    if (viewState === "export-completed") {
-      markSampleExportDone();
-      setShowSampleReady(true);
-      setViewState("main");
-      return;
-    }
-    setViewState("main");
+    onNavigateBack();
   };
 
   const handleExportRequest = () => {
     if (!isSignedIn) {
-      setViewState("sample-export");
+      onViewStateChange("sample-export");
       return;
     }
     onRequestExport();
@@ -246,16 +254,14 @@ export function SettingsScreen({
       if (onboardingAha) {
         await onSampleExportAhaComplete?.();
       }
-      setViewState("export-completed");
+      onReplaceSettingsPage("export-completed");
     } finally {
       setSampleDownloading(false);
     }
   };
 
   const handleViewStatus = () => {
-    markSampleExportDone();
-    setShowSampleReady(true);
-    setViewState("main");
+    onNavigateBack();
   };
 
   const handleDownloadAgain = async () => {
@@ -438,7 +444,7 @@ export function SettingsScreen({
 
         <SettingsPreferencesList
           industry={industry}
-          onNavigate={setViewState}
+          onNavigate={onViewStateChange}
         />
 
         {isSignedIn && onSignOut && (

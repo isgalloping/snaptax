@@ -1069,7 +1069,7 @@ export function HomeScreen() {
 
       <TrustBar onLearnMore={() => setHomeOverlay("privacy-trust")} />
 
-      <div className="relative shrink-0 px-4 pt-0 pb-1.5">
+      <div className="relative shrink-0 px-4 pb-1.5 pt-0">
         {onboardingStatus === "stage_1" && <SnapTooltip />}
         <div className="relative w-full">
           {onboardingStatus === "stage_1" && <SnapFocusRing />}

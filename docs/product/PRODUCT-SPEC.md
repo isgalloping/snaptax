@@ -261,6 +261,7 @@ Next.js 16 · React 19 · Tailwind 4 · Serwist · **PostgreSQL（美国）** ·
 | DB DDL + Prisma + UTC | ✅ | ✅ |
 | 分区域省税 US/EU + R1 | ✅ | ✅（`SUM(tax_amount)` + `X-Tax-Region`） |
 | 行业六选一 | ✅ | ✅（登录 API 回填；Ghost `localStorage`） |
+| Home WidgetPager（Snap 下固定分页） | ✅ | ✅（等宽 3 卡/页，>3 左滑 + 分页点） |
 
 **Dev 限制（非产品偏离）：** 无 Upstash 时速率限制放行；无 Paddle env 时 Paywall 显示错误而非假付费。
 

@@ -28,7 +28,7 @@ export function ReceiptCaptureActions({
     className: string,
     icon: ReactNode,
     onClick: () => void,
-    dimensionClass = size,
+    dimensionClass: string = size,
   ) => (
     <div className="flex flex-col items-center gap-1">
       <button

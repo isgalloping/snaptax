@@ -1209,7 +1209,9 @@ export function HomeScreen() {
           onClose={navigateBack}
           onNavigate={(overlay) => {
             setHomeOverlay(overlay);
-            pushOverlay(overlay);
+            if (overlay != null) {
+              pushOverlay(overlay);
+            }
           }}
           onStartTracking={handleStartTracking}
         />

@@ -90,7 +90,7 @@ export function homeOverlayNavToKey(overlay: HomeOverlayNav): SnapNavKey {
       hintId: overlay.hintId,
     };
   }
-  return { kind: "overlay", overlayId: overlay };
+  return { kind: "overlay", overlayId: overlay as string };
 }
 
 export function isLeavingExportCompleted(

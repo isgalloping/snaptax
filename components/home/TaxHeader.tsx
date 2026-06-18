@@ -2,6 +2,7 @@
 
 import { useUserCopy } from "@/components/i18n/I18nProvider";
 import { formatCurrency } from "@/lib/format";
+import { homeVisual } from "@/lib/ui/homeVisual";
 import { ReceiptIcon } from "@/components/icons/ReceiptIcon";
 import { FilterIcon } from "@/components/icons/FilterIcon";
 import { SlidersIcon } from "@/components/icons/SlidersIcon";
@@ -62,8 +63,23 @@ export function TaxHeader({
       : `${receiptCount} ${copy.receiptPlural}`;
 
   return (
-    <header className="relative shrink-0 bg-black">
-      <div className="flex items-center justify-between px-4 py-3">
+    <header className="relative shrink-0 overflow-hidden">
+      <div
+        className="absolute inset-0 bg-cover bg-[85%_center] bg-no-repeat"
+        style={{ backgroundImage: `url(${homeVisual.heroImage})` }}
+        aria-hidden
+      />
+      <div
+        className="absolute inset-0"
+        style={{ background: homeVisual.heroOverlay }}
+        aria-hidden
+      />
+      <div
+        className="absolute inset-0"
+        style={{ background: homeVisual.heroTint }}
+        aria-hidden
+      />
+      <div className="relative z-10 flex items-center justify-between px-4 py-3">
         <div className="min-w-0 flex-1 pr-3">
           <div
             className={`relative w-fit max-w-full ${ahaCoachActive ? "cursor-pointer rounded-xl px-2.5 py-2" : ""}`}
@@ -169,7 +185,7 @@ export function TaxHeader({
       </div>
       {exportError && (
         <p
-          className="px-4 pb-2 text-center text-xs font-bold text-red-400"
+          className="relative z-10 px-4 pb-2 text-center text-xs font-bold text-red-400"
           role="alert"
         >
           {exportError}

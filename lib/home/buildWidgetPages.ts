@@ -1,17 +1,36 @@
 import type { HomeWidgetsData } from "./computeHomeWidgets";
 
-export type WidgetPageKey = "deadline" | "missing" | "progress" | "cpa";
+export type WidgetPageKey =
+  | "deadline"
+  | "missing"
+  | "progress"
+  | "cpa"
+  | "needAction";
+
+/** Tax season → CPA Ready; off-season with blurry receipts → Need Action. */
+export function resolveFourthWidgetKey(
+  data: HomeWidgetsData,
+  blurryCount: number,
+): WidgetPageKey | null {
+  if (data.showCpaReady) return "cpa";
+  if (blurryCount > 0) return "needAction";
+  return null;
+}
 
 /** Visible widgets; deadline stays center when a page has three cards. */
-export function buildWidgetPageKeys(data: HomeWidgetsData): WidgetPageKey[] {
+export function buildWidgetPageKeys(
+  data: HomeWidgetsData,
+  blurryCount = 0,
+): WidgetPageKey[] {
   const keys: WidgetPageKey[] = [];
   if (data.missing.missing.length > 0) {
     keys.push("missing");
   }
   keys.push("deadline");
   keys.push("progress");
-  if (data.showCpaReady) {
-    keys.push("cpa");
+  const fourth = resolveFourthWidgetKey(data, blurryCount);
+  if (fourth) {
+    keys.push(fourth);
   }
   return keys;
 }
@@ -25,8 +44,11 @@ export function chunkPages<T>(keys: T[], maxPerPage = 3): T[][] {
   return pages;
 }
 
-export function buildWidgetPages(data: HomeWidgetsData): WidgetPageKey[][] {
-  return chunkPages(buildWidgetPageKeys(data));
+export function buildWidgetPages(
+  data: HomeWidgetsData,
+  blurryCount = 0,
+): WidgetPageKey[][] {
+  return chunkPages(buildWidgetPageKeys(data, blurryCount));
 }
 
 export function pageColumnFlexClass(count: number): string {

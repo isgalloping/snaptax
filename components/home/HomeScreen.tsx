@@ -65,7 +65,7 @@ import {
   type HomeOverlay,
 } from "./overlays/HomeOverlayHost";
 import { computeHomeWidgets } from "@/lib/home/computeHomeWidgets";
-import { sumDoneExpenses } from "@/lib/receipts/receiptStats";
+import { sumDoneExpenses, countByStatus } from "@/lib/receipts/receiptStats";
 import { SettingsScreen } from "@/components/settings/SettingsScreen";
 import type { SettingsTaxStats } from "@/components/settings/TaxOverviewPanel";
 import { useTaxExportGate } from "@/components/export/useTaxExportGate";
@@ -745,6 +745,11 @@ export function HomeScreen() {
     [displayReceipts, displayTaxSaved, taxSaved, industry],
   );
 
+  const blurryCount = useMemo(
+    () => countByStatus(displayReceipts).blurry,
+    [displayReceipts],
+  );
+
   const handleStartTracking = useCallback(() => {
     setHomeOverlay(null);
     scrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
@@ -987,6 +992,11 @@ export function HomeScreen() {
     snapButtonRef.current?.openCamera();
   }, []);
 
+  const handleNeedActionResnap = useCallback(() => {
+    const blurry = displayReceipts.find((r) => r.status === "blurry");
+    if (blurry) handleResnap(blurry.id);
+  }, [displayReceipts, handleResnap]);
+
   if (view === "settings") {
     return (
       <>
@@ -1090,10 +1100,12 @@ export function HomeScreen() {
 
       <WidgetStack
         data={widgetsData}
+        blurryCount={blurryCount}
         onDeadlineDetails={() => setHomeOverlay("deadline-detail")}
         onMissingReview={() => setHomeOverlay("missing-deductions")}
         onProgressDetails={() => setHomeOverlay("tax-year-detail")}
         onExport={handleExportClick}
+        onNeedActionResnap={handleNeedActionResnap}
       />
 
       <HomeScrollRegion ref={scrollRef}>

@@ -207,6 +207,11 @@ export const DE_DE_COPY: UserCopy = {
         export: "Export",
         subcopy: "Excel tax pack",
       },
+      needAction: {
+        label: "Need Action",
+        blurryCount: "{count} receipt(s) blurry",
+        resnap: "RESNAP NOW",
+      },
     },
     overlays: {
       back: "< BACK",

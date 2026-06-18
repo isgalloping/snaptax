@@ -12,19 +12,23 @@ import { TaxDeadlineWidget } from "./TaxDeadlineWidget";
 import { MissingDeductionsWidget } from "./MissingDeductionsWidget";
 import { TaxYearProgressWidget } from "./TaxYearProgressWidget";
 import { CpaReadyWidget } from "./CpaReadyWidget";
+import { NeedActionWidget } from "./NeedActionWidget";
 
 interface WidgetPagerProps {
   data: HomeWidgetsData;
+  blurryCount: number;
   onDeadlineDetails: () => void;
   onMissingReview: () => void;
   onProgressDetails: () => void;
   onExport: () => void;
+  onNeedActionResnap: () => void;
 }
 
 function renderWidget(
   key: WidgetPageKey,
   data: HomeWidgetsData,
-  handlers: Omit<WidgetPagerProps, "data">,
+  blurryCount: number,
+  handlers: Omit<WidgetPagerProps, "data" | "blurryCount">,
 ) {
   switch (key) {
     case "deadline":
@@ -44,19 +48,26 @@ function renderWidget(
       );
     case "cpa":
       return <CpaReadyWidget count={data.cpaReadyCount} onExport={handlers.onExport} />;
+    case "needAction":
+      return (
+        <NeedActionWidget blurryCount={blurryCount} onResnap={handlers.onNeedActionResnap} />
+      );
   }
 }
 
 export function WidgetPager({
   data,
+  blurryCount,
   onDeadlineDetails,
   onMissingReview,
   onProgressDetails,
   onExport,
+  onNeedActionResnap,
 }: WidgetPagerProps) {
-  const pages = buildWidgetPages(data);
+  const pages = buildWidgetPages(data, blurryCount);
   const paginated = pages.length > 1;
   const viewportRef = useRef<HTMLDivElement>(null);
+  const touchStartX = useRef(0);
   const [activePage, setActivePage] = useState(0);
   const pager = homeVisual.widgetPager;
 
@@ -66,6 +77,16 @@ export function WidgetPager({
     const index = Math.round(viewport.scrollLeft / viewport.clientWidth);
     setActivePage(Math.min(Math.max(index, 0), pages.length - 1));
   }, [pages.length]);
+
+  const scrollToPage = useCallback(
+    (pageIndex: number) => {
+      const viewport = viewportRef.current;
+      if (!viewport) return;
+      viewport.scrollTo({ left: viewport.clientWidth * pageIndex, behavior: "auto" });
+      setActivePage(pageIndex);
+    },
+    [],
+  );
 
   useEffect(() => {
     if (!paginated) return;
@@ -80,11 +101,29 @@ export function WidgetPager({
     };
   }, [paginated, syncActivePage]);
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0]?.clientX ?? 0;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!paginated || pages.length < 2) return;
+    const endX = e.changedTouches[0]?.clientX ?? touchStartX.current;
+    const dx = endX - touchStartX.current;
+    if (Math.abs(dx) < 40) return;
+
+    if (dx < 0 && activePage >= pages.length - 1) {
+      scrollToPage(0);
+    } else if (dx > 0 && activePage <= 0) {
+      scrollToPage(pages.length - 1);
+    }
+  };
+
   const handlers = {
     onDeadlineDetails,
     onMissingReview,
     onProgressDetails,
     onExport,
+    onNeedActionResnap,
   };
 
   return (
@@ -94,12 +133,14 @@ export function WidgetPager({
         className={paginated ? pager.viewportPaginated : pager.viewport}
         role="list"
         aria-label="Tax insights"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
       >
         {pages.map((pageKeys, pageIndex) => (
           <div key={pageIndex} className={pager.page} aria-label={`Widget page ${pageIndex + 1}`}>
             {pageKeys.map((key) => (
               <div key={key} className={pageColumnFlexClass(pageKeys.length)}>
-                {renderWidget(key, data, handlers)}
+                {renderWidget(key, data, blurryCount, handlers)}
               </div>
             ))}
           </div>

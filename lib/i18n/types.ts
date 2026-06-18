@@ -181,6 +181,11 @@ export type UserCopy = {
         export: string;
         subcopy: string;
       };
+      needAction: {
+        label: string;
+        blurryCount: string;
+        resnap: string;
+      };
     };
     overlays: {
       back: string;

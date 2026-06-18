@@ -5,6 +5,7 @@ import {
   buildWidgetPages,
   chunkPages,
   pageColumnFlexClass,
+  resolveFourthWidgetKey,
 } from "./buildWidgetPages.ts";
 import type { HomeWidgetsData } from "./computeHomeWidgets.ts";
 
@@ -62,6 +63,31 @@ describe("buildWidgetPageKeys", () => {
 
   it("omits missing when empty", () => {
     assert.deepEqual(buildWidgetPageKeys(mockData()), ["deadline", "progress"]);
+  });
+
+  it("tax season prefers cpa over needAction when blurry", () => {
+    const data = mockData({ showCpaReady: true });
+    assert.equal(resolveFourthWidgetKey(data, 3), "cpa");
+    assert.deepEqual(buildWidgetPageKeys(data, 3), [
+      "deadline",
+      "progress",
+      "cpa",
+    ]);
+  });
+
+  it("off season with blurry shows needAction", () => {
+    const data = mockData({ showCpaReady: false });
+    assert.equal(resolveFourthWidgetKey(data, 2), "needAction");
+    assert.deepEqual(buildWidgetPageKeys(data, 2), [
+      "deadline",
+      "progress",
+      "needAction",
+    ]);
+  });
+
+  it("off season without blurry omits fourth slot", () => {
+    const data = mockData({ showCpaReady: false });
+    assert.equal(resolveFourthWidgetKey(data, 0), null);
   });
 });
 

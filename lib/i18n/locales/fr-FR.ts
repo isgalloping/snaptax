@@ -484,14 +484,9 @@ export const FR_FR_COPY: UserCopy = {
         },
       ],
     },
-    share: {
-      cta: "Tell a fellow 1099 contractor to get 1 Year Free",
-      footnote: "Share with 3 friends — reward program coming soon",
-      learnHow: "Learn how it works",
-      learnSheetTitle: "Refer a fellow contractor",
-      learnSheetBody:
-        "Share Snap1099 with other 1099 workers. When our referral program launches, you'll earn 1 year free for every 3 friends who export their tax pack.",
-      whatsapp: "WhatsApp",
+      share: {
+        sectionLabel: "Share Snap1099",
+        whatsapp: "WhatsApp",
       facebook: "Facebook",
       more: "Plus",
       message:

@@ -128,7 +128,7 @@ Privacy Policy · Terms · **Data storage（美国）** · legal@snap1099.com ·
 ├── [1] 账户区（未登录施压 headline + Continue with Google；已登录 Avatar 首字母 + 姓名 + Paid）
 ├── [2] 税务资产总览（Est. Tax Saved · Receipts Tracked · Total Deductions；数据来自 HomeScreen）
 ├── [3] 通栏 Export IRS Tax Pack ($49)（无 section 标题；全宽黄 CTA）
-├── [4] Share & Referral（1 Year Free 文案 · 灰卡片 · 无后端计数/权益）
+├── [4] Share（WhatsApp · Facebook · More 三格；无 referral 文案/Sheet）
 ├── [5] Preferences 列表（Language · Industry · Notifications · Privacy & Security Center → viewState 子页）
 └── [6] Sign out（页底全宽按钮，仅已登录；已从账户区移出）
 ```

@@ -65,6 +65,17 @@ export const homeVisual = {
     iconGap: "mr-[0.2875rem]",
     countGap: "ml-[0.2875rem]",
   },
+  widgetCover: {
+    shell: "widget-cover-shell shrink-0 touch-pan-x pb-1 pt-0.5",
+    viewport:
+      "widget-cover-viewport relative mx-auto h-[118px] w-full overflow-hidden [perspective:900px]",
+    track: "widget-cover-track relative h-full w-full",
+    slideWrapper: "widget-cover-slide absolute bottom-0 origin-bottom",
+    slideButton:
+      "widget-cover-slide-btn block h-full w-full overflow-hidden rounded-2xl text-left active:scale-[0.98]",
+    slideMotion:
+      "widget-cover-slide-motion transition-[transform,opacity,height] duration-[400ms] ease-[cubic-bezier(0.34,1.15,0.64,1)]",
+  },
   widgetCarousel: {
     slide:
       "snap-start shrink-0 w-[38vw] min-w-[132px] max-w-[160px] h-[104px] rounded-2xl border p-3",

@@ -59,7 +59,7 @@ import { SnapButton, type SnapButtonHandle } from "./SnapButton";
 import { ReceiptList } from "./ReceiptList";
 import { TrustBar } from "./TrustBar";
 import { HomeScrollRegion } from "./HomeScrollRegion";
-import { WidgetStack } from "./widgets/WidgetStack";
+import { WidgetCpaBelowSnap, WidgetInsightsRail } from "./widgets/WidgetStack";
 import {
   HomeOverlayHost,
   type HomeOverlay,
@@ -1072,9 +1072,16 @@ export function HomeScreen() {
         exportError={taxExport.exportError}
       />
 
+      <WidgetInsightsRail
+        data={widgetsData}
+        onDeadlineDetails={() => setHomeOverlay("deadline-detail")}
+        onMissingReview={() => setHomeOverlay("missing-deductions")}
+        onProgressDetails={() => setHomeOverlay("tax-year-detail")}
+      />
+
       <TrustBar onLearnMore={() => setHomeOverlay("privacy-trust")} />
 
-      <div className="relative shrink-0 px-4 pt-0 pb-1.5">
+      <div className="relative mt-1.5 shrink-0 px-4 pb-2 pt-1">
         {onboardingStatus === "stage_1" && <SnapTooltip />}
         <div className="relative w-full">
           {onboardingStatus === "stage_1" && <SnapFocusRing />}
@@ -1096,6 +1103,8 @@ export function HomeScreen() {
         </div>
       </div>
 
+      <WidgetCpaBelowSnap data={widgetsData} onExport={handleExportClick} />
+
       {receiptNotice && (
         <p
           className="mx-4 mb-2 rounded-xl border-2 border-yellow-500 bg-yellow-950 px-4 py-3 text-center text-sm font-bold text-yellow-400"
@@ -1105,18 +1114,7 @@ export function HomeScreen() {
         </p>
       )}
 
-      <HomeScrollRegion
-        ref={scrollRef}
-        header={
-          <WidgetStack
-            data={widgetsData}
-            onDeadlineDetails={() => setHomeOverlay("deadline-detail")}
-            onMissingReview={() => setHomeOverlay("missing-deductions")}
-            onProgressDetails={() => setHomeOverlay("tax-year-detail")}
-            onExport={handleExportClick}
-          />
-        }
-      >
+      <HomeScrollRegion ref={scrollRef}>
         <ReceiptList
           receipts={displayReceipts}
           syncStuckIds={syncStuckIds}

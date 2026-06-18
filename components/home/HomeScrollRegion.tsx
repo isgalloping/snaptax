@@ -3,7 +3,7 @@
 import { forwardRef, type ReactNode } from "react";
 
 interface HomeScrollRegionProps {
-  header: ReactNode;
+  header?: ReactNode;
   children: ReactNode;
 }
 

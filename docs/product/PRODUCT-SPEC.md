@@ -115,14 +115,14 @@ Privacy Policy · Terms · **Data storage（美国）** · legal@snap1099.com ·
 主界面 (Home)
 ├── 固定区（不滚动）
 │   ├── TaxHeader：Est. Tax Saved + Export / Sync / Filter / Settings
-│   ├── TrustBar：紧凑隐私条（Hero 下缘衔接）+ Learn more → privacy-trust overlay
-│   ├── SnapButton：全宽黄 SNAP RECEIPT（合规脚注仅在相机界面）
-├── 滚动区（flex-1 min-h-0 overflow-y-auto）
-│   ├── WidgetStack：横滑洞察卡片（Deadline / Missing / Progress）+ 条件 CPA Ready
+│   ├── WidgetInsightsRail：Cover Flow 三卡同屏（Hero 下蓝框区）+ 左右滑焦点切换
 │   │   ├── Tax Deadline（紫）→ deadline-detail overlay
 │   │   ├── Missing Deductions（绿）→ missing-deductions → item overlay
-│   │   ├── Tax Year Progress（蓝）
-│   │   └── CPA Ready（橙）→ 现有 Excel Export 门控
+│   │   └── Tax Year Progress（蓝）
+│   ├── TrustBar：紧凑隐私条（Hero 下缘衔接）+ Learn more → privacy-trust overlay
+│   ├── SnapButton：全宽黄 SNAP RECEIPT（合规脚注仅在相机界面；略下移便于拇指）
+│   └── CPA Ready（橙，条件显示，Snap 下方）→ 现有 Excel Export 门控
+├── 滚动区（flex-1 min-h-0 overflow-y-auto）
 │   └── 小票区：ReceiptFilterBar（ALL · READY · PROCESSING · Blurry · Stuck ⚠️）+ ReceiptList
 └── HomeOverlayHost（viewState 全屏 overlay，非新路由）
     ├── deadline-detail · missing-deductions · missing-deduction-item · privacy-trust
@@ -265,6 +265,7 @@ Next.js 16 · React 19 · Tailwind 4 · Serwist · **PostgreSQL（美国）** ·
 | DB DDL + Prisma + UTC | ✅ | ✅ |
 | 分区域省税 US/EU + R1 | ✅ | ✅（`SUM(tax_amount)` + `X-Tax-Region`） |
 | 行业六选一 | ✅ | ✅（登录 API 回填；Ghost `localStorage`） |
+| Home WidgetInsightsRail Cover Flow 动画 | ✅ | ✅（单轨道 + 跟手拖动 + reduced motion） |
 
 **Dev 限制（非产品偏离）：** 无 Upstash 时速率限制放行；无 Paddle env 时 Paywall 显示错误而非假付费。
 

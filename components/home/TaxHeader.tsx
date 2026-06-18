@@ -7,7 +7,6 @@ import { ReceiptIcon } from "@/components/icons/ReceiptIcon";
 import { SlidersIcon } from "@/components/icons/SlidersIcon";
 import { DownloadIcon } from "@/components/icons/DownloadIcon";
 import { InstallIcon } from "@/components/icons/InstallIcon";
-import { TaxShieldIcon } from "@/components/icons/TaxShieldIcon";
 import { usePwaInstallOptional } from "@/components/pwa/pwaInstallContext";
 import { CoachPulseOverlay } from "@/components/onboarding/CoachPulseOverlay";
 
@@ -56,8 +55,23 @@ export function TaxHeader({
 
   return (
     <header className={heroCard.shell}>
-      <div className="flex items-center justify-between gap-2 px-4 py-3">
-        <div className="min-w-0 flex-1">
+      <div
+        className={`absolute inset-0 ${heroCard.image}`}
+        style={{ backgroundImage: `url(${homeVisual.heroImage})` }}
+        aria-hidden
+      />
+      <div
+        className="absolute inset-0"
+        style={{ background: homeVisual.heroOverlay }}
+        aria-hidden
+      />
+      <div
+        className="absolute inset-0"
+        style={{ background: homeVisual.heroTint }}
+        aria-hidden
+      />
+      <div className="relative z-10 flex items-center justify-between gap-2 px-4 py-3">
+        <div className="min-w-0 flex-1 pr-2">
           <div
             className={`relative w-fit max-w-full ${ahaCoachActive ? "cursor-pointer rounded-xl px-2.5 py-2" : ""}`}
             role={ahaCoachActive ? "button" : undefined}
@@ -94,8 +108,6 @@ export function TaxHeader({
           </div>
         </div>
 
-        <TaxShieldIcon className={`h-12 w-12 shrink-0 ${heroCard.shield}`} />
-
         <div className="flex shrink-0 items-center gap-2">
           {onExportClick && (
             <div className="relative">
@@ -116,7 +128,7 @@ export function TaxHeader({
                   className={`h-5 w-5 text-yellow-400 ${exportBusy ? "animate-pulse" : ""}`}
                 />
                 <span className="mt-0.5 text-[9px] font-bold leading-none text-yellow-400/90">
-                  CPA/IRS
+                  CPA /IRS
                 </span>
               </button>
             </div>
@@ -144,7 +156,10 @@ export function TaxHeader({
         </div>
       </div>
       {exportError && (
-        <p className="px-4 pb-2 text-center text-xs font-bold text-red-400" role="alert">
+        <p
+          className="relative z-10 px-4 pb-2 text-center text-xs font-bold text-red-400"
+          role="alert"
+        >
           {exportError}
         </p>
       )}

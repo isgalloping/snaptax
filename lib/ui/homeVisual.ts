@@ -1,14 +1,11 @@
 export const homeVisual = {
   heroCard: {
-    shell: "mx-4 mt-2 shrink-0 rounded-2xl border border-zinc-800 bg-zinc-900",
-    shield: "text-yellow-400",
+    shell: "relative mx-4 mt-2 shrink-0 overflow-hidden rounded-2xl border border-zinc-800",
+    image: "bg-cover bg-[85%_center] bg-no-repeat",
   },
-  /** @deprecated v2 black-card hero — remove when no longer referenced */
   heroImage: "/photo/hero.png",
-  /** @deprecated v2 black-card hero */
   heroOverlay:
     "linear-gradient(90deg, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.35) 42%, rgba(0,0,0,0.05) 72%, transparent 100%), linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.45) 55%, #000 100%)",
-  /** @deprecated v2 black-card hero */
   heroTint:
     "linear-gradient(180deg, rgba(234,179,8,0.18) 0%, rgba(0,0,0,0.55) 48%, #000 100%)",
   /** @deprecated alias — use heroTint */
@@ -19,6 +16,7 @@ export const homeVisual = {
     uploading: "text-yellow-400",
     paused: "text-yellow-500",
     done: "text-green-400",
+    doneMuted: "text-zinc-500",
   },
   snap: {
     height: "h-[140px]",

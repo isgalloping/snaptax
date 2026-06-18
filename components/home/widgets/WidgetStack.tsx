@@ -5,7 +5,7 @@ import { WidgetPager } from "./WidgetPager";
 
 interface WidgetStackProps {
   data: HomeWidgetsData;
-  blurryCount: number;
+  actionCount: number;
   onDeadlineDetails: () => void;
   onMissingReview: () => void;
   onProgressDetails: () => void;

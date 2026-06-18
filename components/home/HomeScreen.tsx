@@ -65,7 +65,12 @@ import {
   type HomeOverlay,
 } from "./overlays/HomeOverlayHost";
 import { computeHomeWidgets } from "@/lib/home/computeHomeWidgets";
-import { sumDoneExpenses, countByStatus } from "@/lib/receipts/receiptStats";
+import { sumDoneExpenses } from "@/lib/receipts/receiptStats";
+import {
+  filterReceiptsByBucket,
+  countReceiptBuckets,
+  type ReceiptListFilter,
+} from "@/lib/receipts/receiptBucket";
 import { SettingsScreen } from "@/components/settings/SettingsScreen";
 import type { SettingsTaxStats } from "@/components/settings/TaxOverviewPanel";
 import { useTaxExportGate } from "@/components/export/useTaxExportGate";
@@ -117,6 +122,7 @@ export function HomeScreen() {
   const [cameraOpen, setCameraOpen] = useState(false);
   const [appHidden, setAppHidden] = useState(false);
   const [listSyncing, setListSyncing] = useState(false);
+  const [listFilter, setListFilter] = useState<ReceiptListFilter>("all");
   const [syncStuckIds, setSyncStuckIds] = useState<Set<string>>(() => new Set());
   const [receiptNotice, setReceiptNotice] = useState<string | null>(null);
   const [homeOverlay, setHomeOverlay] = useState<HomeOverlay>(null);
@@ -745,9 +751,9 @@ export function HomeScreen() {
     [displayReceipts, displayTaxSaved, taxSaved, industry],
   );
 
-  const blurryCount = useMemo(
-    () => countByStatus(displayReceipts).blurry,
-    [displayReceipts],
+  const actionCount = useMemo(
+    () => countReceiptBuckets(displayReceipts, syncStuckIds).action,
+    [displayReceipts, syncStuckIds],
   );
 
   const handleStartTracking = useCallback(() => {
@@ -993,9 +999,14 @@ export function HomeScreen() {
   }, []);
 
   const handleNeedActionResnap = useCallback(() => {
-    const blurry = displayReceipts.find((r) => r.status === "blurry");
-    if (blurry) handleResnap(blurry.id);
-  }, [displayReceipts, handleResnap]);
+    setListFilter("action");
+    const actionReceipt = filterReceiptsByBucket(
+      displayReceipts,
+      "action",
+      syncStuckIds,
+    )[0];
+    if (actionReceipt) handleResnap(actionReceipt.id);
+  }, [displayReceipts, syncStuckIds, handleResnap]);
 
   if (view === "settings") {
     return (
@@ -1100,7 +1111,7 @@ export function HomeScreen() {
 
       <WidgetStack
         data={widgetsData}
-        blurryCount={blurryCount}
+        actionCount={actionCount}
         onDeadlineDetails={() => setHomeOverlay("deadline-detail")}
         onMissingReview={() => setHomeOverlay("missing-deductions")}
         onProgressDetails={() => setHomeOverlay("tax-year-detail")}
@@ -1112,6 +1123,8 @@ export function HomeScreen() {
         <ReceiptList
           receipts={displayReceipts}
           syncStuckIds={syncStuckIds}
+          filter={listFilter}
+          onFilterChange={setListFilter}
           filterBarRef={filterBarRef}
           ahaCoachActive={ahaCoachActive}
           onAhaCoachDismiss={dismissAhaCoach}

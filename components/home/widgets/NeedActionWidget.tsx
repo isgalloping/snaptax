@@ -4,11 +4,11 @@ import { useUserCopy } from "@/components/i18n/I18nProvider";
 import { homeVisual } from "@/lib/ui/homeVisual";
 
 interface NeedActionWidgetProps {
-  blurryCount: number;
+  actionCount: number;
   onResnap: () => void;
 }
 
-export function NeedActionWidget({ blurryCount, onResnap }: NeedActionWidgetProps) {
+export function NeedActionWidget({ actionCount, onResnap }: NeedActionWidgetProps) {
   const copy = useUserCopy().home.widgets.needAction;
   const visual = homeVisual.widgets.needAction;
   const card = homeVisual.widgetPager.cardBase;
@@ -24,7 +24,7 @@ export function NeedActionWidget({ blurryCount, onResnap }: NeedActionWidgetProp
         {copy.label}
       </p>
       <p className="mt-1 line-clamp-2 text-sm font-black leading-tight text-white">
-        {copy.blurryCount.replace("{count}", String(blurryCount))}
+        {copy.actionCount.replace("{count}", String(actionCount))}
       </p>
       <span className="mt-auto text-[9px] font-bold text-red-300 underline decoration-red-600/60 underline-offset-2">
         {copy.resnap} &gt;

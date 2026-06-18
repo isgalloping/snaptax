@@ -36,6 +36,21 @@ function confidenceThreshold(): number {
   return Number(process.env.RECEIPT_CONFIDENCE_THRESHOLD ?? 0.7);
 }
 
+export function actionThreshold(): number {
+  return Number(process.env.RECEIPT_ACTION_THRESHOLD ?? 0.5);
+}
+
+export type VisionConfidenceTier = "action" | "review" | "ready";
+
+export function visionConfidenceTier(
+  confidence: number,
+  amount: number,
+): VisionConfidenceTier {
+  if (confidence < actionThreshold() || amount <= 0) return "action";
+  if (confidence < confidenceThreshold()) return "review";
+  return "ready";
+}
+
 function isOpenAiTimeout(err: unknown): boolean {
   if (err instanceof OpenAI.APIConnectionTimeoutError) return true;
   if (err instanceof OpenAI.APIConnectionError) {
@@ -124,7 +139,8 @@ export async function processReceiptVision(
     const fields = EuReceiptAiSchema.safeParse(parsed);
     if (!fields.success) return blurryFallback(dataRegion, model, { zod: true });
     const f = fields.data;
-    if (f.confidence < confidenceThreshold() || f.amount <= 0) {
+    const tier = visionConfidenceTier(f.confidence, f.amount);
+    if (tier === "action") {
       return blurryFallback(dataRegion, model, { lowConfidence: true, fields: f });
     }
     const computedVat = computeEuVatAmount(f);
@@ -151,7 +167,8 @@ export async function processReceiptVision(
   const fields = UsReceiptAiSchema.safeParse(parsed);
   if (!fields.success) return blurryFallback(dataRegion, model, { zod: true });
   const f = fields.data;
-  if (f.confidence < confidenceThreshold() || f.amount <= 0) {
+  const tier = visionConfidenceTier(f.confidence, f.amount);
+  if (tier === "action") {
     return blurryFallback(dataRegion, model, { lowConfidence: true, fields: f });
   }
   const taxAmount = computeTaxAmount("us", f);

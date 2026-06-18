@@ -15,6 +15,7 @@ import {
   irsScheduleLineBadge,
   resolveReceiptImage,
 } from "@/lib/receipts/receiptDetail";
+import { receiptCategoryDisplayLabel } from "@/lib/receipts/receiptCategoryDisplay";
 import { peekCachedReceiptImageUrl } from "@/lib/client/receiptImageCache";
 import { clientTimeZone } from "@/lib/time/timeZone";
 import { useUserCopy } from "@/components/i18n/I18nProvider";
@@ -306,7 +307,7 @@ export function ReceiptDetailSheet({
                   <p
                     id="receipt-detail-title"
                     className={`text-4xl font-black tracking-tight ${
-                      hero.muted ? "text-zinc-400" : "text-green-400"
+                      hero.muted ? "text-zinc-500" : "text-green-400"
                     }`}
                   >
                     {hero.savedLabel}
@@ -345,7 +346,9 @@ export function ReceiptDetailSheet({
                 <DetailRow label={copy.totalAmount} value={totalLabel} />
                 <div className="flex items-start justify-between gap-4 border-b border-zinc-800 py-3">
                   <span className="text-sm font-bold text-zinc-400">{copy.category}</span>
-                  <CategoryBadge category={receipt.category ?? "OTHER"} />
+                  <CategoryBadge
+                    category={receiptCategoryDisplayLabel(receipt.category)}
+                  />
                 </div>
                 <DetailRow
                   label={copy.irsLine}

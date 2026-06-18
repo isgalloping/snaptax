@@ -64,6 +64,7 @@ model SnaptaxReceipt {
   taxAmount    Decimal   @default(0) @map("tax_amount") @db.Decimal(10, 2)
   dataRegion   String    @default("us") @map("data_region") @db.VarChar(8)
   aiRaw        Json?     @map("ai_raw")
+  aiConfidence Float?    @map("ai_confidence")
   capturedAt   DateTime  @map("captured_at") @db.Timestamptz(3)
   snapAt       DateTime? @map("snap_at") @db.Timestamptz(3)
   processedAt  DateTime? @map("processed_at") @db.Timestamptz(3)

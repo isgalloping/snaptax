@@ -131,7 +131,7 @@ export const EN_US_COPY: UserCopy = {
         receiptPlural: "receipts",
         tracked: "tracked",
         exportTaxPack: "Export tax pack",
-        cpaIrsReady: "CPA/IRS Ready",
+        cpaIrsReady: "CPA /IRS Ready",
         installApp: "Install app",
         syncReceipts: "Sync receipts",
         settings: "Settings",
@@ -145,13 +145,13 @@ export const EN_US_COPY: UserCopy = {
       receiptList: {
         filters: {
           all: "ALL",
-          done: "READY",
+          ready: "READY",
+          review: "REVIEW",
+          action: "ACTION",
           processing: "PROCESSING",
-          blurry: "BLURRY",
-          stuckAria: "Stuck receipts",
         },
-        title: "All Local Receipts",
-        refresh: "Pull to refresh",
+        recentReceipts: "Recent Receipts",
+        pullToRefresh: "Pull to refresh",
         emptyFirst: "Snap your first receipt to get started",
         emptyFilter: "No receipts in this filter",
         uploadPaused: "UPLOAD PAUSED",
@@ -173,8 +173,7 @@ export const EN_US_COPY: UserCopy = {
         },
       },
       trustBar: {
-        message:
-          "Your receipts stay private. Never shared with IRS. Stored securely in the U.S.",
+        message: "IRS never sees your receipts.",
         learnMore: "Learn more",
       },
       widgets: {
@@ -198,14 +197,14 @@ export const EN_US_COPY: UserCopy = {
           projectedSavings: "Projected Savings: {amount}",
         },
         cpa: {
-          label: "CPA Ready",
+          label: "CPA /IRS Ready",
           receiptsOrganized: "{count} receipts organized",
           export: "Export",
           subcopy: "Excel tax pack",
         },
         needAction: {
           label: "Need Action",
-          blurryCount: "{count} receipt(s) blurry",
+          actionCount: "{count} receipt(s) need action",
           resnap: "RESNAP NOW",
         },
       },

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Receipt } from "@/lib/types";
+import type { ReceiptListFilter } from "@/lib/receipts/receiptBucket";
 import { useAuthSession } from "@/lib/client/useAuthSession";
 import {
   STARTUP_UNFILED_LIMIT,
@@ -50,6 +51,7 @@ export function OfflineHomeShell() {
   const [receipts, setReceipts] = useState<Receipt[]>([]);
   const [taxSaved, setTaxSaved] = useState<number | null>(null);
   const [syncStuckIds, setSyncStuckIds] = useState<Set<string>>(() => new Set());
+  const [listFilter, setListFilter] = useState<ReceiptListFilter>("all");
 
   const refreshListFromLocal = useCallback(async () => {
     const visible = await loadTopByUpdatedAt(UI_RECEIPT_LIMIT);
@@ -180,6 +182,8 @@ export function OfflineHomeShell() {
         <ReceiptList
           receipts={displayReceipts}
           syncStuckIds={syncStuckIds}
+          filter={listFilter}
+          onFilterChange={setListFilter}
           ahaCoachActive={ahaCoachActive}
           onAhaCoachDismiss={dismissAhaCoach}
           onSelect={() => {}}

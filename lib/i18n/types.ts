@@ -124,13 +124,13 @@ export type UserCopy = {
     receiptList: {
       filters: {
         all: string;
-        done: string;
+        ready: string;
+        review: string;
+        action: string;
         processing: string;
-        blurry: string;
-        stuckAria: string;
       };
-      title: string;
-      refresh: string;
+      recentReceipts: string;
+      pullToRefresh: string;
       emptyFirst: string;
       emptyFilter: string;
       uploadPaused: string;
@@ -183,7 +183,7 @@ export type UserCopy = {
       };
       needAction: {
         label: string;
-        blurryCount: string;
+        actionCount: string;
         resnap: string;
       };
     };

@@ -81,6 +81,7 @@ snaptax_receipts *───1 image (image_url → Vercel Blob)
 | **tax_amount** | NUMERIC(10,2) | 估算省税；**仅 OpenAI 路径写入**；顶栏 SUM |
 | **data_region** | varchar(8) | 税法辖区快照 `us` \| `eu`（与物理驻留解耦） |
 | ai_raw | JSONB | OpenAI 原始响应 + ratio/VAT 等 |
+| ai_confidence | DOUBLE PRECISION? | OpenAI Vision 置信度 0–1；0.5–0.69 → REVIEW 桶 |
 | captured_at | TIMESTAMPTZ(3) | 上传时间 |
 | snap_at | TIMESTAMPTZ(3)? | 拍照时间 |
 | processed_at | TIMESTAMPTZ(3)? | AI 完成时间 |

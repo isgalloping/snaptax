@@ -16,7 +16,7 @@ import { NeedActionWidget } from "./NeedActionWidget";
 
 interface WidgetPagerProps {
   data: HomeWidgetsData;
-  blurryCount: number;
+  actionCount: number;
   onDeadlineDetails: () => void;
   onMissingReview: () => void;
   onProgressDetails: () => void;
@@ -27,8 +27,8 @@ interface WidgetPagerProps {
 function renderWidget(
   key: WidgetPageKey,
   data: HomeWidgetsData,
-  blurryCount: number,
-  handlers: Omit<WidgetPagerProps, "data" | "blurryCount">,
+  actionCount: number,
+  handlers: Omit<WidgetPagerProps, "data" | "actionCount">,
 ) {
   switch (key) {
     case "deadline":
@@ -50,21 +50,21 @@ function renderWidget(
       return <CpaReadyWidget count={data.cpaReadyCount} onExport={handlers.onExport} />;
     case "needAction":
       return (
-        <NeedActionWidget blurryCount={blurryCount} onResnap={handlers.onNeedActionResnap} />
+        <NeedActionWidget actionCount={actionCount} onResnap={handlers.onNeedActionResnap} />
       );
   }
 }
 
 export function WidgetPager({
   data,
-  blurryCount,
+  actionCount,
   onDeadlineDetails,
   onMissingReview,
   onProgressDetails,
   onExport,
   onNeedActionResnap,
 }: WidgetPagerProps) {
-  const pages = buildWidgetPages(data, blurryCount);
+  const pages = buildWidgetPages(data, actionCount);
   const paginated = pages.length > 1;
   const viewportRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef(0);
@@ -140,7 +140,7 @@ export function WidgetPager({
           <div key={pageIndex} className={pager.page} aria-label={`Widget page ${pageIndex + 1}`}>
             {pageKeys.map((key) => (
               <div key={key} className={pageColumnFlexClass(pageKeys.length)}>
-                {renderWidget(key, data, blurryCount, handlers)}
+                {renderWidget(key, data, actionCount, handlers)}
               </div>
             ))}
           </div>

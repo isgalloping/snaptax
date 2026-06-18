@@ -1,7 +1,7 @@
 "use client";
 
 import { BatchCountBadge } from "@/components/camera/BatchCountBadge";
-import { CameraShutterControl } from "@/components/camera/CameraShutterControl";
+import { CameraShutterColumn } from "@/components/camera/CameraShutterFooter";
 import { FlashDoneButton } from "@/components/camera/FlashDoneButton";
 import { FooterActionTile } from "@/components/camera/FooterActionTile";
 import { ReviewDoneButton } from "@/components/camera/ReviewDoneButton";
@@ -52,16 +52,11 @@ export function CameraLiveFooter({
         <div
           className={`flex flex-col items-center justify-center gap-1 ${rowMin}`}
         >
-          <CameraShutterControl
+          <CameraShutterColumn
             ready={ready}
             capturing={capturing}
-            onClick={onShutter}
-            showLabel={false}
-            size="hero"
+            onShutter={onShutter}
           />
-          <span className="text-[9px] font-bold uppercase tracking-wide text-white">
-            Take Photo
-          </span>
         </div>
 
         <div className={rowMin}>

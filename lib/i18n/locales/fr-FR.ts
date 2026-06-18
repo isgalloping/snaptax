@@ -135,7 +135,7 @@ export const FR_FR_COPY: UserCopy = {
       receiptPlural: "reçus",
       tracked: "enregistrés",
       exportTaxPack: "Exporter le dossier fiscal",
-      cpaIrsReady: "CPA/IRS Ready",
+      cpaIrsReady: "CPA /IRS Ready",
       installApp: "Installer l'application",
       syncReceipts: "Synchroniser les reçus",
       settings: "Paramètres",
@@ -149,13 +149,13 @@ export const FR_FR_COPY: UserCopy = {
     receiptList: {
       filters: {
         all: "TOUS",
-        done: "PRÊTS",
+        ready: "PRÊTS",
+        review: "À VÉRIFIER",
+        action: "ACTION",
         processing: "EN COURS",
-        blurry: "FLOUS",
-        stuckAria: "Reçus bloqués",
       },
-      title: "Tous les reçus locaux",
-      refresh: "Tirez pour actualiser",
+      recentReceipts: "Reçus récents",
+      pullToRefresh: "Tirez pour actualiser",
       emptyFirst: "Photographiez votre premier reçu pour commencer",
       emptyFilter: "Aucun reçu dans ce filtre",
       uploadPaused: "ENVOI EN PAUSE",
@@ -177,8 +177,7 @@ export const FR_FR_COPY: UserCopy = {
       },
     },
     trustBar: {
-      message:
-        "Vos reçus restent privés. Jamais partagés avec l'IRS. Stockés en toute sécurité aux États-Unis.",
+      message: "L'IRS ne voit jamais vos reçus.",
       learnMore: "En savoir plus",
     },
     widgets: {
@@ -202,14 +201,14 @@ export const FR_FR_COPY: UserCopy = {
         projectedSavings: "Économies projetées : {amount}",
       },
       cpa: {
-        label: "CPA Ready",
+        label: "CPA /IRS Ready",
         receiptsOrganized: "{count} receipts organized",
         export: "Export",
         subcopy: "Excel tax pack",
       },
       needAction: {
         label: "Need Action",
-        blurryCount: "{count} receipt(s) blurry",
+        actionCount: "{count} reçu(s) à traiter",
         resnap: "RESNAP NOW",
       },
     },

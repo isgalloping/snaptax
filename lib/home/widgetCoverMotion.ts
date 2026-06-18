@@ -1,3 +1,5 @@
+import { adjacentIndex, wrapIndex } from "./widgetCarouselSlots";
+
 const SIDE_SCALE = 0.88;
 const SIDE_OPACITY = 0.55;
 const SIDE_TRANSLATE_Y_PX = 4;
@@ -6,6 +8,7 @@ const CENTER_HEIGHT_PX = 112;
 const SIDE_HEIGHT_PX = 92;
 
 export const COVER_FLOW_DURATION_MS = 400;
+const VISIBLE_OFFSET_MAX = 1.2;
 
 function clamp01(value: number): number {
   return Math.min(1, Math.max(0, Math.abs(value)));
@@ -49,7 +52,7 @@ export function buildSlidePlacements(
     const other = 1 - center;
     const placements: SlidePlacement[] = [];
     const add = (slideIndex: number, offset: number, key: string) => {
-      if (Math.abs(offset) <= 1.05) {
+      if (Math.abs(offset) <= VISIBLE_OFFSET_MAX) {
         placements.push({ slideIndex, offset, key });
       }
     };
@@ -58,10 +61,27 @@ export function buildSlidePlacements(
     add(other, -1 + t, `o-l-${other}`);
     return placements;
   }
+  if (count === 3) {
+    const k = Math.floor(displayIndex);
+    const t = displayIndex - k;
+    const active = wrapIndex(k, count);
+    const left = adjacentIndex(active, -1, count);
+    const right = adjacentIndex(active, 1, count);
+    const placements: SlidePlacement[] = [];
+    const add = (slideIndex: number, offset: number, key: string) => {
+      if (Math.abs(offset) <= VISIBLE_OFFSET_MAX) {
+        placements.push({ slideIndex, offset, key });
+      }
+    };
+    add(active, -t, `c-${active}`);
+    add(left, -1 - t, `l-${left}`);
+    add(right, 1 - t, `r-${right}`);
+    return placements;
+  }
   const placements: SlidePlacement[] = [];
   for (let i = 0; i < count; i++) {
     const offset = circularOffset(i, displayIndex, count);
-    if (Math.abs(offset) <= 1.05) {
+    if (Math.abs(offset) <= VISIBLE_OFFSET_MAX) {
       placements.push({ slideIndex: i, offset, key: String(i) });
     }
   }
@@ -145,7 +165,12 @@ export function slideOffsetFromCenter(params: {
   return (slideCenterInViewport - params.viewportWidthPx / 2) / stride;
 }
 
-/** Ease-out with slight overshoot — approximates cubic-bezier(0.34, 1.15, 0.64, 1). */
+/** Ease-out cubic — no overshoot; used for displayIndex interpolation. */
+export function easeOutCubic(t: number): number {
+  return 1 - (1 - t) ** 3;
+}
+
+/** @deprecated Use easeOutCubic for index; retained for visual spring experiments. */
 export function coverFlowEase(t: number): number {
   const c1 = 1.15;
   const c3 = c1 + 1;

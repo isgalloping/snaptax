@@ -47,10 +47,22 @@ describe("widgetCoverMotion", () => {
     assert.ok(Math.abs(circularOffset(1, 0.5, 3) - 0.5) < 0.001);
   });
 
+  it("buildSlidePlacements keeps three peeks when displayIndex overshoots", () => {
+    const stuck = buildSlidePlacements(1.08, 3);
+    assert.equal(stuck.length, 3);
+    const offsets = stuck.map((p) => p.offset).sort((a, b) => a - b);
+    assert.ok(offsets[0]! < -0.9);
+    assert.ok(Math.abs(offsets[1]!) < 0.2);
+    assert.ok(offsets[2]! > 0.8);
+  });
+
   it("buildSlidePlacements fills three peeks at rest", () => {
     const atZero = buildSlidePlacements(0, 3);
     assert.equal(atZero.length, 3);
-    const offsets = atZero.map((p) => p.offset).sort((a, b) => a - b);
+    const offsets = atZero
+      .map((p) => p.offset)
+      .map((v) => (Object.is(v, -0) ? 0 : v))
+      .sort((a, b) => a - b);
     assert.deepEqual(offsets, [-1, 0, 1]);
   });
 

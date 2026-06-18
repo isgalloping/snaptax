@@ -19,8 +19,8 @@ import {
 import {
   buildSlidePlacements,
   COVER_FLOW_DURATION_MS,
-  coverFlowEase,
   coverFlowTransform,
+  easeOutCubic,
   focusFromOffset,
   resolveAnimationTarget,
 } from "@/lib/home/widgetCoverMotion";
@@ -55,6 +55,7 @@ export function WidgetCoverCarousel({
   const touchStartDisplayIndex = useRef(0);
   const isDraggingRef = useRef(false);
   const displayIndexRef = useRef(0);
+  const committedIndexRef = useRef(0);
   const animationFrameRef = useRef<number | null>(null);
 
   const showMissing = data.missing.missing.length > 0;
@@ -81,6 +82,10 @@ export function WidgetCoverCarousel({
   useEffect(() => {
     displayIndexRef.current = displayIndex;
   }, [displayIndex]);
+
+  useEffect(() => {
+    committedIndexRef.current = committedIndex;
+  }, [committedIndex]);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -113,6 +118,7 @@ export function WidgetCoverCarousel({
       animationFrameRef.current = null;
     }
     setIsAnimating(false);
+    setDisplayIndex(committedIndexRef.current);
   }, []);
 
   const animateDisplayTo = useCallback(
@@ -151,7 +157,7 @@ export function WidgetCoverCarousel({
 
       const frame = (now: number) => {
         const t = Math.min(1, (now - start) / COVER_FLOW_DURATION_MS);
-        const eased = coverFlowEase(t);
+        const eased = easeOutCubic(t);
         setDisplayIndex(from + (endDisplay - from) * eased);
         if (t < 1) {
           animationFrameRef.current = requestAnimationFrame(frame);

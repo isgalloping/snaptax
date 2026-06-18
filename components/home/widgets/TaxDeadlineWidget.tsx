@@ -19,13 +19,13 @@ export function TaxDeadlineWidget({ data, onViewDetails }: TaxDeadlineWidgetProp
   const copy = useUserCopy().home.widgets.deadline;
   const visual = homeVisual.widgets.deadline;
   const urgencyClass = URGENCY_TEXT[data.urgency];
-  const slide = homeVisual.widgetCarousel.slide;
+  const card = homeVisual.widgetPager.cardBase;
 
   return (
     <button
       type="button"
       onClick={onViewDetails}
-      className={`${slide} flex flex-col ${visual.bg} ${visual.border} text-left transition-transform active:scale-[0.98]`}
+      className={`${card} flex flex-col ${visual.bg} ${visual.border} text-left transition-transform active:scale-[0.98]`}
       role="listitem"
     >
       <p className={`text-[9px] font-bold uppercase tracking-wider leading-none ${visual.accent}`}>

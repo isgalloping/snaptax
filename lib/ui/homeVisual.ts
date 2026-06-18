@@ -65,11 +65,23 @@ export const homeVisual = {
     iconGap: "mr-[0.2875rem]",
     countGap: "ml-[0.2875rem]",
   },
+  /** @deprecated use widgetPager — per-card horizontal carousel */
   widgetCarousel: {
     slide:
       "snap-start shrink-0 w-[38vw] min-w-[132px] max-w-[160px] h-[104px] rounded-2xl border p-3",
     track:
       "flex touch-pan-x gap-2.5 overflow-x-auto overscroll-x-contain scroll-smooth snap-x snap-mandatory px-4 pt-3 pb-1",
+  },
+  widgetPager: {
+    container: "shrink-0 px-4 pb-2 pt-1",
+    viewport: "overflow-x-hidden",
+    viewportPaginated:
+      "flex touch-pan-x overflow-x-auto overscroll-x-contain snap-x snap-mandatory",
+    page: "flex w-full shrink-0 snap-start gap-2",
+    cardBase: "h-[104px] w-full rounded-2xl border p-3",
+    dots: "mt-2 flex items-center justify-center gap-1.5",
+    dot: "h-1.5 w-1.5 rounded-full bg-zinc-600",
+    dotActive: "bg-yellow-500",
   },
   trustBar: {
     /** Hairline under hero fade — no boxed card */

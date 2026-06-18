@@ -1100,18 +1100,15 @@ export function HomeScreen() {
         </p>
       )}
 
-      <HomeScrollRegion
-        ref={scrollRef}
-        header={
-          <WidgetStack
-            data={widgetsData}
-            onDeadlineDetails={() => setHomeOverlay("deadline-detail")}
-            onMissingReview={() => setHomeOverlay("missing-deductions")}
-            onProgressDetails={() => setHomeOverlay("tax-year-detail")}
-            onExport={handleExportClick}
-          />
-        }
-      >
+      <WidgetStack
+        data={widgetsData}
+        onDeadlineDetails={() => setHomeOverlay("deadline-detail")}
+        onMissingReview={() => setHomeOverlay("missing-deductions")}
+        onProgressDetails={() => setHomeOverlay("tax-year-detail")}
+        onExport={handleExportClick}
+      />
+
+      <HomeScrollRegion ref={scrollRef}>
         <ReceiptList
           receipts={displayReceipts}
           syncStuckIds={syncStuckIds}

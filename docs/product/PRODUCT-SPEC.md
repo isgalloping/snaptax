@@ -31,7 +31,7 @@
 | 反馈 | 按钮 `active:scale-95` |
 | 核心流程零 Modal | 拍照链路禁止「是否确定/是否清晰」弹窗；错误用底部非阻塞红字 |
 | **合规 Sheet 例外** | Terms/Privacy/US 告知、Delete Account、Google/Paddle — **仅 Bottom Sheet** |
-| 布局 | **仅 2 逻辑页**；主界面 **固定 chrome**（TaxHeader + Snap + TrustBar）+ **可滚动内容区**（WidgetStack + 小票列表）；禁止整页 `body` 滚动，快门区始终可见 |
+| 布局 | **仅 2 逻辑页**；主界面 **固定 chrome**（TaxHeader + TrustBar + Snap + WidgetPager）+ **可滚动内容区**（小票列表）；禁止整页 `body` 滚动，快门区始终可见 |
 
 ### 2.2 离线优先（PWA）
 
@@ -117,12 +117,8 @@ Privacy Policy · Terms · **Data storage（美国）** · legal@snap1099.com ·
 │   ├── TaxHeader：Est. Tax Saved + Export / Sync / Filter / Settings
 │   ├── TrustBar：紧凑隐私条（Hero 下缘衔接）+ Learn more → privacy-trust overlay
 │   ├── SnapButton：全宽黄 SNAP RECEIPT（合规脚注仅在相机界面）
+│   └── WidgetPager：固定于 Snap 下；每屏最多 3 张等宽卡片，>3 时分页左滑
 ├── 滚动区（flex-1 min-h-0 overflow-y-auto）
-│   ├── WidgetStack：横滑洞察卡片（Deadline / Missing / Progress）+ 条件 CPA Ready
-│   │   ├── Tax Deadline（紫）→ deadline-detail overlay
-│   │   ├── Missing Deductions（绿）→ missing-deductions → item overlay
-│   │   ├── Tax Year Progress（蓝）
-│   │   └── CPA Ready（橙）→ 现有 Excel Export 门控
 │   └── 小票区：ReceiptFilterBar（ALL · READY · PROCESSING · Blurry · Stuck ⚠️）+ ReceiptList
 └── HomeOverlayHost（viewState 全屏 overlay，非新路由）
     ├── deadline-detail · missing-deductions · missing-deduction-item · privacy-trust

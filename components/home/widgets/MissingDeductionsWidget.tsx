@@ -13,7 +13,7 @@ interface MissingDeductionsWidgetProps {
 export function MissingDeductionsWidget({ data, onReview }: MissingDeductionsWidgetProps) {
   const copy = useUserCopy().home.widgets.missing;
   const visual = homeVisual.widgets.missing;
-  const slide = homeVisual.widgetCarousel.slide;
+  const card = homeVisual.widgetPager.cardBase;
 
   if (data.missing.length === 0) {
     return null;
@@ -28,7 +28,7 @@ export function MissingDeductionsWidget({ data, onReview }: MissingDeductionsWid
     <button
       type="button"
       onClick={onReview}
-      className={`${slide} flex flex-col ${visual.bg} ${visual.border} text-left transition-transform active:scale-[0.98]`}
+      className={`${card} flex flex-col ${visual.bg} ${visual.border} text-left transition-transform active:scale-[0.98]`}
       role="listitem"
     >
       <p className={`text-[9px] font-bold uppercase tracking-wider leading-none ${visual.accent}`}>

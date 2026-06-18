@@ -12,13 +12,13 @@ interface TaxYearProgressWidgetProps {
 export function TaxYearProgressWidget({ data, onOpenDetails }: TaxYearProgressWidgetProps) {
   const copy = useUserCopy().home.widgets.progress;
   const visual = homeVisual.widgets.progress;
-  const slide = homeVisual.widgetCarousel.slide;
+  const card = homeVisual.widgetPager.cardBase;
 
   return (
     <button
       type="button"
       onClick={onOpenDetails}
-      className={`${slide} flex flex-col ${visual.bg} ${visual.border} text-left transition-transform active:scale-[0.98]`}
+      className={`${card} flex flex-col ${visual.bg} ${visual.border} text-left transition-transform active:scale-[0.98]`}
       role="listitem"
     >
       <p className={`text-[9px] font-bold uppercase tracking-wider leading-none ${visual.accent}`}>

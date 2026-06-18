@@ -11,13 +11,41 @@ interface PaywallSheetProps {
   seasonLabel: string;
   userId: string;
   onClose: () => void;
+  onDismissWithoutPay?: () => void;
   onPaid: () => void | Promise<void>;
+}
+
+function BalanceScaleIllustration() {
+  return (
+    <div
+      className="mx-auto my-6 flex max-w-xs items-end justify-center gap-4"
+      aria-hidden
+    >
+      <div className="flex flex-col items-center gap-2">
+        <div className="flex h-14 w-14 items-center justify-center rounded-lg border-2 border-zinc-600 bg-zinc-800 text-2xl">
+          📄
+        </div>
+        <span className="h-1 w-16 rounded bg-zinc-600" />
+      </div>
+      <div className="flex flex-col items-center">
+        <div className="h-16 w-1 rounded bg-yellow-500" />
+        <div className="h-3 w-3 rotate-45 border-2 border-yellow-500 bg-zinc-900" />
+      </div>
+      <div className="flex flex-col items-center gap-2">
+        <div className="flex h-14 w-14 items-center justify-center rounded-lg border-2 border-green-600 bg-green-950/50 text-2xl">
+          🛡️
+        </div>
+        <span className="h-1 w-16 rounded bg-zinc-600" />
+      </div>
+    </div>
+  );
 }
 
 export function PaywallSheet({
   seasonLabel,
   userId,
   onClose,
+  onDismissWithoutPay,
   onPaid,
 }: PaywallSheetProps) {
   const copy = useUserCopy().paywall;
@@ -59,7 +87,7 @@ export function PaywallSheet({
     }).then((instance) => {
       paddleRef.current = instance ?? null;
     });
-  }, []);
+  }, [copy.paymentFailed]);
 
   const handlePay = async () => {
     setPaying(true);
@@ -104,6 +132,11 @@ export function PaywallSheet({
     }
   };
 
+  const handleDismiss = () => {
+    onDismissWithoutPay?.();
+    onClose();
+  };
+
   if (phase === "confirming") {
     return (
       <div className="fixed inset-0 z-50 flex items-end bg-black/70">
@@ -124,24 +157,35 @@ export function PaywallSheet({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end bg-black/70">
-      <div className="w-full rounded-t-3xl border-t-4 border-yellow-500 bg-zinc-900 p-6 pb-10">
-        <p className="text-4xl font-black text-white">$49.00</p>
-        <p className="mt-1 text-sm text-zinc-400">
+      <div className="max-h-[90vh] w-full overflow-y-auto rounded-t-3xl border-t-4 border-yellow-500 bg-zinc-900 p-6 pb-10">
+        <BalanceScaleIllustration />
+        <p className="text-center text-xl font-black uppercase tracking-wider text-white">
+          {copy.unlockTitle}
+        </p>
+        <p className="mt-2 text-center text-sm text-zinc-400">
           {copy.oneTimeSeason.replace("{season}", seasonLabel)}
         </p>
-        <p className="mt-4 text-base leading-relaxed text-zinc-300">
-          {copy.description}
-        </p>
-        <p className="mt-4 text-sm font-bold text-yellow-400">
-          {copy.backupWarning}
-        </p>
+
+        <ul className="mt-6 space-y-3">
+          {copy.features.map((feature) => (
+            <li key={feature} className="flex items-start gap-3 text-sm text-zinc-300">
+              <span className="mt-0.5 font-black text-green-400" aria-hidden>
+                ✓
+              </span>
+              <span>{feature}</span>
+            </li>
+          ))}
+        </ul>
+
+        <p className="mt-6 text-sm font-bold text-yellow-400">{copy.backupWarning}</p>
+
         <button
           type="button"
           disabled={paying}
           onClick={() => void handlePay()}
-          className="mt-6 w-full min-h-16 rounded-xl bg-white py-4 text-lg font-black text-black transition-transform active:scale-95 disabled:opacity-60"
+          className="mt-6 w-full min-h-16 rounded-xl border-4 border-white bg-yellow-500 py-4 text-lg font-black uppercase tracking-wider text-black transition-transform active:scale-95 disabled:opacity-60"
         >
-          {paying ? copy.openingPaddle : copy.payButton}
+          {paying ? copy.openingPaddle : copy.unlockNow}
         </button>
         {error && (
           <p className="mt-3 text-center text-sm font-bold text-red-500" role="alert">
@@ -150,10 +194,10 @@ export function PaywallSheet({
         )}
         <button
           type="button"
-          onClick={onClose}
+          onClick={handleDismiss}
           className="mt-3 w-full min-h-16 py-3 text-sm font-bold text-zinc-400 transition-transform active:scale-95"
         >
-          {copy.back}
+          {copy.maybeLater}
         </button>
       </div>
     </div>

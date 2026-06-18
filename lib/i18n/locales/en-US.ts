@@ -294,6 +294,16 @@ export const EN_US_COPY: UserCopy = {
       },
     },
     paywall: {
+      unlockTitle: "Unlock Your Full Tax Pack — $49",
+      maybeLater: "Maybe later",
+      unlockNow: "Unlock now — $49",
+      features: [
+        "Export unlimited receipts",
+        "CPA-ready Excel tax pack",
+        "All tax categories & reports",
+        "Deduction finder insights",
+        "Secure & IRS compliant",
+      ],
       oneTimeSeason: "One-Time for {season} Tax Season",
       description:
         "Export an IRS-ready Excel file — send to your CPA or import into TurboTax. Saves hours of manual entry.",
@@ -383,6 +393,19 @@ export const EN_US_COPY: UserCopy = {
         signOutRequiresOnline: "Connect to the internet to sign out.",
         signOutFailed: "Could not sign out. Try again.",
         signingOut: "Signing out…",
+        coverageEnds: "Coverage ends {date}",
+      },
+      header: {
+        localeEn: "EN",
+        localeFr: "FR",
+        localeDe: "DE",
+      },
+      preferencesList: {
+        language: "Language",
+        industry: "Your Industry",
+        notifications: "Notification Settings",
+        privacyCenter: "Privacy & Security Center",
+        notificationsOn: "{count} on",
       },
       language: {
         title: "Language",
@@ -409,10 +432,56 @@ export const EN_US_COPY: UserCopy = {
       notifications: {
         title: "Notifications",
         comingSoon: "Coming soon",
+        deadlines: "Quarterly Tax Deadlines",
+        deductions: "New Deduction Opportunities",
+        receipts: "Receipt Processing",
+        marketing: "Marketing Updates",
+        footnoteAlertsSoon:
+          "Alerts coming soon — your choices are saved for when we enable notifications.",
+      },
+      exportFlow: {
+        sampleTitle: "Here's your sample tax export",
+        downloadCsv: "Download CSV",
+        continueGoogle: "Continue with Google",
+        completedTitle: "Export Completed",
+        viewStatus: "View status",
+      },
+      exportBanners: {
+        sampleReady: "Sample export ready",
+        downloadAgain: "Download again",
+        exportBlocked:
+          "Export blocked. Premium license required to download official IRS documents.",
+        dismiss: "Dismiss",
+      },
+      privacyCenter: {
+        title: "Privacy & Security Center",
+        gotIt: "Got it",
+        points: [
+          {
+            title: "100% Private",
+            body: "Only you can see your receipts. Never shared with the IRS or anyone else.",
+          },
+          {
+            title: "Secure in the U.S.",
+            body: "Your data is encrypted and stored in secure U.S. data centers.",
+          },
+          {
+            title: "We Don't Sell Data",
+            body: "No ads. No tracking. We never sell your information.",
+          },
+          {
+            title: "You're in Control",
+            body: "Delete your data anytime from Settings.",
+          },
+        ],
       },
       share: {
         cta: "Tell a fellow 1099 contractor to get 1 Year Free",
         footnote: "Share with 3 friends — reward program coming soon",
+        learnHow: "Learn how it works",
+        learnSheetTitle: "Refer a fellow contractor",
+        learnSheetBody:
+          "Share Snap1099 with other 1099 workers. When our referral program launches, you'll earn 1 year free for every 3 friends who export their tax pack.",
         whatsapp: "WhatsApp",
         facebook: "Facebook",
         more: "More",

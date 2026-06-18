@@ -797,18 +797,8 @@ export function HomeScreen() {
   ]);
 
   const handleSettingsExport = useCallback(() => {
-    if (!auth.isSignedIn) {
-      void (async () => {
-        const demo = await ensureOnboardingDemoDone();
-        downloadOnboardingSampleCsv(demo);
-        if (onboardingStatus === "stage_3" || onboardingStatus === "stage_aha") {
-          await completeAhaCoach();
-        }
-      })();
-      return;
-    }
     taxExport.requestExport();
-  }, [auth.isSignedIn, onboardingStatus, completeAhaCoach, taxExport]);
+  }, [taxExport]);
 
   setTaxAnimatingRef.current = setTaxAnimating;
 
@@ -1036,6 +1026,11 @@ export function HomeScreen() {
         onSignOut={auth.signOut}
         taxStats={settingsTaxStats}
         onRequestExport={handleSettingsExport}
+        exportBlockedTick={taxExport.exportBlockedTick}
+        onboardingAha={
+          onboardingStatus === "stage_3" || onboardingStatus === "stage_aha"
+        }
+        onSampleExportAhaComplete={completeAhaCoach}
         exportBusy={taxExport.paywallExporting || taxExport.preparingExport}
         exportError={taxExport.exportError}
         exportEmptyTip={taxExport.exportEmptyTip}

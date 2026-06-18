@@ -254,6 +254,10 @@ export type UserCopy = {
     };
   };
   paywall: {
+    unlockTitle: string;
+    maybeLater: string;
+    unlockNow: string;
+    features: string[];
     oneTimeSeason: string;
     description: string;
     backupWarning: string;
@@ -321,6 +325,19 @@ export type UserCopy = {
       signOutRequiresOnline: string;
       signOutFailed: string;
       signingOut: string;
+      coverageEnds: string;
+    };
+    header: {
+      localeEn: string;
+      localeFr: string;
+      localeDe: string;
+    };
+    preferencesList: {
+      language: string;
+      industry: string;
+      notifications: string;
+      privacyCenter: string;
+      notificationsOn: string;
     };
     language: {
       title: string;
@@ -340,10 +357,36 @@ export type UserCopy = {
     notifications: {
       title: string;
       comingSoon: string;
+      deadlines: string;
+      deductions: string;
+      receipts: string;
+      marketing: string;
+      footnoteAlertsSoon: string;
+    };
+    exportFlow: {
+      sampleTitle: string;
+      downloadCsv: string;
+      continueGoogle: string;
+      completedTitle: string;
+      viewStatus: string;
+    };
+    exportBanners: {
+      sampleReady: string;
+      downloadAgain: string;
+      exportBlocked: string;
+      dismiss: string;
+    };
+    privacyCenter: {
+      title: string;
+      gotIt: string;
+      points: { title: string; body: string }[];
     };
     share: {
       cta: string;
       footnote: string;
+      learnHow: string;
+      learnSheetTitle: string;
+      learnSheetBody: string;
       whatsapp: string;
       facebook: string;
       more: string;

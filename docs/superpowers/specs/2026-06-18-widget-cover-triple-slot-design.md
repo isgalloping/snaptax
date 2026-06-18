@@ -1,7 +1,7 @@
 # Widget Cover Flow Triple-Slot Layout — Design
 
 **Date:** 2026-06-18  
-**Status:** Approved (design)  
+**Status:** Implemented  
 **Scope:** Fix Home `WidgetInsightsRail` empty left/right gaps on first paint — always show three carousel slots (left peek · center focus · right peek) with cyclic widget rotation. Builds on [`2026-06-18-widget-cover-flow-animation-design.md`](./2026-06-18-widget-cover-flow-animation-design.md).
 
 **References:** `components/home/widgets/WidgetCoverCarousel.tsx` · `lib/home/widgetCarouselSlots.ts` · `lib/home/widgetCoverMotion.ts`

@@ -35,6 +35,11 @@ export function focusFromOffset(offset: number): "side" | "center" {
   return Math.abs(offset) < 0.35 ? "center" : "side";
 }
 
+/** Combine fixed slot role (−1 / 0 / +1) with drag fraction for follow-finger motion. */
+export function slotOffset(baseOffset: number, dragFraction: number): number {
+  return baseOffset + dragFraction;
+}
+
 export function trackTranslateX(params: {
   viewportWidthPx: number;
   slideWidthPx: number;

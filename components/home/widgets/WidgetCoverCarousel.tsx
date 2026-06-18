@@ -12,22 +12,27 @@ import type { HomeWidgetsData } from "@/lib/home/computeHomeWidgets";
 import {
   adjacentIndex,
   buildWidgetSlides,
+  carouselTriple,
   swipeDirection,
   type WidgetSlideId,
 } from "@/lib/home/widgetCarouselSlots";
 import {
   coverFlowTransform,
   focusFromOffset,
-  slideOffsetFromCenter,
-  trackTranslateX,
+  slotOffset,
 } from "@/lib/home/widgetCoverMotion";
 import { homeVisual } from "@/lib/ui/homeVisual";
 import { TaxDeadlineWidget } from "./TaxDeadlineWidget";
 import { MissingDeductionsWidget } from "./MissingDeductionsWidget";
 import { TaxYearProgressWidget } from "./TaxYearProgressWidget";
 
-const GAP_PX = 6;
-const DEFAULT_VIEWPORT_WIDTH = 390;
+type SlotRole = "left" | "center" | "right";
+
+const SLOT_BASE_OFFSET: Record<SlotRole, number> = {
+  left: -1,
+  center: 0,
+  right: 1,
+};
 
 interface WidgetCoverCarouselProps {
   data: HomeWidgetsData;
@@ -59,11 +64,13 @@ export function WidgetCoverCarousel({
   const showMissing = data.missing.missing.length > 0;
   const slides = useMemo(() => buildWidgetSlides(showMissing), [showMissing]);
   const safeIndex = slides.length > 0 ? activeIndex % slides.length : 0;
-  const slideWidthPx =
-    viewportWidth > 0
-      ? Math.min(160, Math.round(viewportWidth * 0.36))
-      : 140;
-  const viewportWidthPx = viewportWidth || DEFAULT_VIEWPORT_WIDTH;
+  const stridePx = viewportWidth > 0 ? viewportWidth * 0.34 : 140;
+  const dragFraction = stridePx > 0 ? dragOffsetPx / stridePx : 0;
+
+  const [leftIdx, centerIdx, rightIdx] = carouselTriple(
+    safeIndex,
+    slides.length,
+  );
 
   useLayoutEffect(() => {
     const el = viewportRef.current;
@@ -121,21 +128,21 @@ export function WidgetCoverCarousel({
     [data],
   );
 
-  const handleSlidePress = useCallback(
-    (index: number, offset: number) => {
+  const handleSlotPress = useCallback(
+    (slot: SlotRole) => {
       if (isAnimating) return;
       if (slides.length <= 1) {
         openDetails(slides[0] ?? "deadline");
         return;
       }
-      if (Math.abs(offset) < 0.35) {
-        openDetails(slides[index]!);
+      if (slot === "center") {
+        openDetails(slides[safeIndex]!);
         return;
       }
-      if (index !== safeIndex) {
-        beginAnimate();
-        setActiveIndex(index);
-      }
+      beginAnimate();
+      setActiveIndex(
+        adjacentIndex(safeIndex, slot === "left" ? -1 : 1, slides.length),
+      );
     },
     [beginAnimate, isAnimating, openDetails, safeIndex, slides],
   );
@@ -198,19 +205,23 @@ export function WidgetCoverCarousel({
     [beginAnimate, safeIndex, slides.length],
   );
 
-  const tx = trackTranslateX({
-    viewportWidthPx,
-    slideWidthPx,
-    gapPx: GAP_PX,
-    activeIndex: safeIndex,
-    dragOffsetPx,
-  });
-
-  const motionActive = isDragging || isAnimating;
-  const trackClass = `${cover.track} ${cover.trackMotion}${
-    motionActive ? " will-change-transform" : ""
-  }`;
   const disableTransition = isDragging || reducedMotion;
+  const motionActive = isDragging || isAnimating;
+
+  const slotClass: Record<SlotRole, string> = {
+    left: cover.slotLeft,
+    center: cover.slotCenter,
+    right: cover.slotRight,
+  };
+
+  const slotEntries: { role: SlotRole; slideIndex: number }[] =
+    slides.length <= 1
+      ? [{ role: "center", slideIndex: centerIdx }]
+      : [
+          { role: "left", slideIndex: leftIdx },
+          { role: "center", slideIndex: centerIdx },
+          { role: "right", slideIndex: rightIdx },
+        ];
 
   return (
     <div
@@ -224,47 +235,41 @@ export function WidgetCoverCarousel({
       aria-label="Tax insights"
     >
       <div ref={viewportRef} className={cover.viewport}>
-        <div
-          className={trackClass}
-          style={{
-            transform: `translateX(${tx}px)`,
-            transition: disableTransition ? "none" : undefined,
-          }}
-          onTransitionEnd={() => setIsAnimating(false)}
-        >
-          {slides.map((id, index) => {
-            const offset = slideOffsetFromCenter({
-              slideIndex: index,
-              slideWidthPx,
-              gapPx: GAP_PX,
-              viewportWidthPx,
-              trackTranslateX: tx,
+        <div className={cover.track}>
+          {slotEntries.map(({ role, slideIndex }) => {
+            const baseOffset = SLOT_BASE_OFFSET[role];
+            const effectiveOffset = slotOffset(baseOffset, dragFraction);
+            const motion = coverFlowTransform(effectiveOffset, {
+              reducedMotion,
             });
-            const motion = coverFlowTransform(offset, { reducedMotion });
-            const focus = focusFromOffset(offset);
-            const isCenter = Math.abs(offset) < 0.35;
+            const focus = focusFromOffset(effectiveOffset);
+            const slideId = slides[slideIndex]!;
 
             return (
               <div
-                key={id}
-                className={`${cover.slide}${disableTransition ? "" : ` ${cover.slideMotion}`}`}
+                key={role}
+                className={`${slides.length <= 1 ? cover.slotSingle : slotClass[role]}${
+                  disableTransition ? "" : ` ${cover.slideMotion}`
+                }${motionActive ? " will-change-transform" : ""}`}
                 style={{
-                  width: slideWidthPx,
                   height: motion.height,
                   opacity: motion.opacity,
                   zIndex: motion.zIndex,
                   transform: motion.transform,
                   transition: disableTransition ? "none" : undefined,
                 }}
+                onTransitionEnd={
+                  role === "center" ? () => setIsAnimating(false) : undefined
+                }
               >
                 <button
                   type="button"
                   className={cover.slideButton}
                   style={{ height: motion.height }}
-                  aria-current={isCenter ? "true" : undefined}
-                  onClick={() => handleSlidePress(index, offset)}
+                  aria-current={role === "center" ? "true" : undefined}
+                  onClick={() => handleSlotPress(role)}
                 >
-                  {renderSlide(id, focus)}
+                  {renderSlide(slideId, focus)}
                 </button>
               </div>
             );

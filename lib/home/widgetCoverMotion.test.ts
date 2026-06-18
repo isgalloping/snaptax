@@ -4,6 +4,7 @@ import {
   coverFlowTransform,
   focusFromOffset,
   slideOffsetFromCenter,
+  slotOffset,
   trackTranslateX,
 } from "./widgetCoverMotion";
 
@@ -33,6 +34,12 @@ describe("widgetCoverMotion", () => {
     const r = coverFlowTransform(-1, { reducedMotion: true });
     assert.match(r.transform, /rotateY\(0deg\)/);
     assert.equal(r.opacity, 0.55);
+  });
+
+  it("slotOffset combines base role with drag fraction", () => {
+    assert.equal(slotOffset(-1, 0.5), -0.5);
+    assert.equal(slotOffset(0, -0.25), -0.25);
+    assert.equal(slotOffset(1, 0), 1);
   });
 
   it("focusFromOffset threshold", () => {

@@ -3,13 +3,20 @@
 import { useUserCopy } from "@/components/i18n/I18nProvider";
 import { homeVisual } from "@/lib/ui/homeVisual";
 
-type PillVariant = "analyzing" | "uploading" | "paused" | "done" | "none";
+type PillVariant =
+  | "analyzing"
+  | "uploading"
+  | "paused"
+  | "done"
+  | "doneMuted"
+  | "none";
 
 const COLOR: Record<Exclude<PillVariant, "none">, string> = {
   analyzing: homeVisual.status.analyzing,
   uploading: homeVisual.status.uploading,
   paused: homeVisual.status.paused,
   done: homeVisual.status.done,
+  doneMuted: homeVisual.status.doneMuted,
 };
 
 export function StatusPill({
@@ -22,9 +29,11 @@ export function StatusPill({
   const label = useUserCopy().home.receiptList.status;
 
   if (variant === "none") return null;
-  if (variant === "done" && doneLabel) {
+  if ((variant === "done" || variant === "doneMuted") && doneLabel) {
     return (
-      <span className={`text-sm font-extrabold ${COLOR.done}`}>{doneLabel}</span>
+      <span className={`text-sm font-extrabold ${COLOR[variant]}`}>
+        {doneLabel}
+      </span>
     );
   }
   const key = variant as keyof typeof label;

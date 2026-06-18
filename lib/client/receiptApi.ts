@@ -14,6 +14,7 @@ export type ApiReceipt = {
   deductible?: boolean;
   currency?: string | null;
   taxAmount: number;
+  aiConfidence?: number | null;
   dataRegion: TaxRegion;
   capturedAt: string;
   snapAt?: string | null;
@@ -37,6 +38,7 @@ export function apiReceiptToLocal(r: ApiReceipt): Receipt {
     merchant: r.merchant ?? undefined,
     category: r.category ?? undefined,
     taxAmount: r.taxAmount,
+    aiConfidence: r.aiConfidence ?? undefined,
     dataRegion: r.dataRegion,
     currency: r.currency ?? undefined,
     deductible: r.deductible,

@@ -1,37 +1,42 @@
 "use client";
 
-import type { ReceiptStatusCounts } from "@/lib/receipts/receiptStats";
+import type { BucketCounts, ReceiptListFilter } from "@/lib/receipts/receiptBucket";
 import { useUserCopy } from "@/components/i18n/I18nProvider";
 import { homeVisual } from "@/lib/ui/homeVisual";
 
-export type ReceiptFilter = "all" | "done" | "processing" | "blurry" | "stuck";
-
 interface ReceiptFilterBarProps {
-  counts: ReceiptStatusCounts;
-  active: ReceiptFilter;
-  stuckCount: number;
-  onChange: (filter: ReceiptFilter) => void;
+  counts: BucketCounts;
+  active: ReceiptListFilter;
+  onChange: (filter: ReceiptListFilter) => void;
 }
 
 const FILTERS: {
-  id: Exclude<ReceiptFilter, "stuck">;
+  id: ReceiptListFilter;
   icon: string;
-  countKey: keyof ReceiptStatusCounts;
+  countKey: keyof BucketCounts;
 }[] = [
   { id: "all", icon: "🧾", countKey: "all" },
-  { id: "done", icon: "✓", countKey: "done" },
+  { id: "ready", icon: "✓", countKey: "ready" },
+  { id: "review", icon: "👀", countKey: "review" },
+  { id: "action", icon: "❌", countKey: "action" },
   { id: "processing", icon: "⚙️", countKey: "processing" },
-  { id: "blurry", icon: "❌", countKey: "blurry" },
 ];
 
-const { padding, fontSize, gap, iconGap, countGap } = homeVisual.filterTab;
+const ACTIVE: Record<ReceiptListFilter, string> = {
+  all: "bg-yellow-500 text-black",
+  ready: "bg-green-600 text-white ring-2 ring-green-500/50",
+  review: "bg-yellow-500/20 text-yellow-400 ring-2 ring-yellow-500",
+  action: "bg-red-600/90 text-white ring-2 ring-red-500/50",
+  processing: "bg-zinc-700 text-zinc-200 ring-2 ring-blue-500/40",
+};
+
+const { padding, fontSize, gap, iconGap } = homeVisual.filterTab;
 
 const pillBase = `shrink-0 rounded-full font-bold transition-colors ${padding} ${fontSize}`;
 
 export function ReceiptFilterBar({
   counts,
   active,
-  stuckCount,
   onChange,
 }: ReceiptFilterBarProps) {
   const copy = useUserCopy().home.receiptList;
@@ -47,7 +52,7 @@ export function ReceiptFilterBar({
             onClick={() => onChange(id)}
             className={`${pillBase} ${
               isActive
-                ? "bg-yellow-500 text-black"
+                ? ACTIVE[id]
                 : "border border-zinc-700 bg-zinc-800/80 text-zinc-300"
             }`}
           >
@@ -56,21 +61,6 @@ export function ReceiptFilterBar({
           </button>
         );
       })}
-      {stuckCount > 0 && (
-        <button
-          type="button"
-          onClick={() => onChange("stuck")}
-          className={`${pillBase} ${
-            active === "stuck"
-              ? "bg-yellow-500/20 text-yellow-400 ring-2 ring-yellow-500"
-              : "border border-zinc-700 bg-zinc-800/80 text-zinc-300"
-          }`}
-          aria-label={`${copy.filters.stuckAria} (${stuckCount})`}
-        >
-          ⚠️
-          <span className={`${countGap} tabular-nums`}>({stuckCount})</span>
-        </button>
-      )}
     </div>
   );
 }

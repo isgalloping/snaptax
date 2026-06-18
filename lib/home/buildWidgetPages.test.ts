@@ -47,50 +47,95 @@ function missingResult() {
 }
 
 describe("buildWidgetPageKeys", () => {
-  it("orders missing, deadline center slot, progress, optional cpa", () => {
-    const withAll = mockData({
-      missing: missingResult(),
-      showCpaReady: true,
-    });
-    assert.deepEqual(buildWidgetPageKeys(withAll), [
+  it("orders deadline and progress by default", () => {
+    assert.deepEqual(buildWidgetPageKeys(mockData()), ["deadline", "progress"]);
+  });
+
+  it("prepends missing when hints exist", () => {
+    assert.deepEqual(buildWidgetPageKeys(mockData({ missing: missingResult() })), [
       "missing",
+      "deadline",
+      "progress",
+    ]);
+  });
+
+  it("places needAction second when action receipts exist", () => {
+    assert.deepEqual(buildWidgetPageKeys(mockData(), 2), [
+      "deadline",
+      "needAction",
+      "progress",
+    ]);
+  });
+
+  it("places needAction second after missing", () => {
+    assert.deepEqual(
+      buildWidgetPageKeys(mockData({ missing: missingResult() }), 1),
+      ["missing", "needAction", "deadline", "progress"],
+    );
+  });
+
+  it("places cpa third when action and tax season", () => {
+    assert.deepEqual(buildWidgetPageKeys(mockData({ showCpaReady: true }), 2), [
+      "deadline",
+      "needAction",
+      "cpa",
+      "progress",
+    ]);
+  });
+
+  it("places missing needAction cpa on tax season with action", () => {
+    assert.deepEqual(
+      buildWidgetPageKeys(
+        mockData({ missing: missingResult(), showCpaReady: true }),
+        1,
+      ),
+      ["missing", "needAction", "cpa", "deadline", "progress"],
+    );
+  });
+
+  it("keeps cpa fourth when no action receipts", () => {
+    assert.deepEqual(buildWidgetPageKeys(mockData({ showCpaReady: true })), [
       "deadline",
       "progress",
       "cpa",
     ]);
   });
 
-  it("omits missing when empty", () => {
-    assert.deepEqual(buildWidgetPageKeys(mockData()), ["deadline", "progress"]);
+  it("keeps cpa fourth with missing and no action", () => {
+    assert.deepEqual(
+      buildWidgetPageKeys(
+        mockData({ missing: missingResult(), showCpaReady: true }),
+      ),
+      ["missing", "deadline", "progress", "cpa"],
+    );
   });
 });
 
 describe("buildWidgetPages", () => {
-  it("splits four widgets into two pages", () => {
-    const pages = buildWidgetPages(
-      mockData({
-        missing: missingResult(),
-        showCpaReady: true,
-      }),
-    );
-    assert.equal(pages.length, 2);
-    assert.deepEqual(pages[0], ["missing", "deadline", "progress"]);
-    assert.deepEqual(pages[1], ["cpa"]);
+  it("puts needAction on first page as second card", () => {
+    const pages = buildWidgetPages(mockData(), 2);
+    assert.deepEqual(pages[0], ["deadline", "needAction", "progress"]);
   });
 
-  it("keeps three widgets on one page", () => {
+  it("puts needAction and cpa on first page when tax season with action", () => {
+    const pages = buildWidgetPages(mockData({ showCpaReady: true }), 1);
+    assert.deepEqual(pages[0], ["deadline", "needAction", "cpa"]);
+    assert.deepEqual(pages[1], ["progress"]);
+  });
+
+  it("splits five widgets across two pages", () => {
     const pages = buildWidgetPages(
-      mockData({
-        missing: missingResult(),
-      }),
+      mockData({ missing: missingResult(), showCpaReady: true }),
+      1,
     );
+    assert.deepEqual(pages[0], ["missing", "needAction", "cpa"]);
+    assert.deepEqual(pages[1], ["deadline", "progress"]);
+  });
+
+  it("keeps three widgets on one page when missing only", () => {
+    const pages = buildWidgetPages(mockData({ missing: missingResult() }));
     assert.equal(pages.length, 1);
     assert.equal(pages[0]?.length, 3);
-  });
-
-  it("uses one page with two keys when missing hidden", () => {
-    const pages = buildWidgetPages(mockData());
-    assert.deepEqual(pages, [["deadline", "progress"]]);
   });
 });
 

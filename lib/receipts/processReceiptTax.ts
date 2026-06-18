@@ -32,6 +32,7 @@ export async function processReceiptTax(params: {
       category: result.category || null,
       deductible: result.deductible,
       taxAmount: result.taxAmount,
+      aiConfidence: result.fields.confidence,
       dataRegion: params.dataRegion,
       aiRaw: result.aiRaw as Prisma.InputJsonValue,
       processedAt: result.status === "done" ? utcNow() : null,

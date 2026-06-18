@@ -135,6 +135,7 @@ export const DE_DE_COPY: UserCopy = {
       receiptPlural: "Belege",
       tracked: "erfasst",
       exportTaxPack: "Steuerpaket exportieren",
+      cpaIrsReady: "CPA /IRS Ready",
       installApp: "App installieren",
       syncReceipts: "Belege synchronisieren",
       settings: "Einstellungen",
@@ -148,13 +149,13 @@ export const DE_DE_COPY: UserCopy = {
     receiptList: {
       filters: {
         all: "ALLE",
-        done: "FERTIG",
+        ready: "BEREIT",
+        review: "PRÜFEN",
+        action: "AKTION",
         processing: "IN BEARBEITUNG",
-        blurry: "UNSCHARF",
-        stuckAria: "Hängende Belege",
       },
-      title: "Alle lokalen Belege",
-      refresh: "Zum Aktualisieren ziehen",
+      recentReceipts: "Neueste Belege",
+      pullToRefresh: "Zum Aktualisieren ziehen",
       emptyFirst: "Fotografieren Sie Ihren ersten Beleg, um zu starten",
       emptyFilter: "Keine Belege in diesem Filter",
       uploadPaused: "UPLOAD PAUSIERT",
@@ -176,8 +177,7 @@ export const DE_DE_COPY: UserCopy = {
       },
     },
     trustBar: {
-      message:
-        "Ihre Belege bleiben privat. Nie an die IRS weitergegeben. Sicher in den USA gespeichert.",
+      message: "Die IRS sieht Ihre Belege nie.",
       learnMore: "Mehr erfahren",
     },
     widgets: {
@@ -201,10 +201,15 @@ export const DE_DE_COPY: UserCopy = {
         projectedSavings: "Prognostizierte Ersparnis: {amount}",
       },
       cpa: {
-        label: "CPA Ready",
+        label: "CPA /IRS Ready",
         receiptsOrganized: "{count} receipts organized",
         export: "Export",
         subcopy: "Excel tax pack",
+      },
+      needAction: {
+        label: "Need Action",
+        actionCount: "{count} Beleg(e) erfordern Aktion",
+        resnap: "RESNAP NOW",
       },
     },
     overlays: {

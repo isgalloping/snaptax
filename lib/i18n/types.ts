@@ -110,6 +110,7 @@ export type UserCopy = {
       receiptPlural: string;
       tracked: string;
       exportTaxPack: string;
+      cpaIrsReady: string;
       installApp: string;
       syncReceipts: string;
       settings: string;
@@ -123,13 +124,13 @@ export type UserCopy = {
     receiptList: {
       filters: {
         all: string;
-        done: string;
+        ready: string;
+        review: string;
+        action: string;
         processing: string;
-        blurry: string;
-        stuckAria: string;
       };
-      title: string;
-      refresh: string;
+      recentReceipts: string;
+      pullToRefresh: string;
       emptyFirst: string;
       emptyFilter: string;
       uploadPaused: string;
@@ -179,6 +180,11 @@ export type UserCopy = {
         receiptsOrganized: string;
         export: string;
         subcopy: string;
+      };
+      needAction: {
+        label: string;
+        actionCount: string;
+        resnap: string;
       };
     };
     overlays: {

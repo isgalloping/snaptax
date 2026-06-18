@@ -1,18 +1,45 @@
 import type { HomeWidgetsData } from "./computeHomeWidgets";
 
-export type WidgetPageKey = "deadline" | "missing" | "progress" | "cpa";
+export type WidgetPageKey =
+  | "deadline"
+  | "missing"
+  | "progress"
+  | "cpa"
+  | "needAction";
 
-/** Visible widgets; deadline stays center when a page has three cards. */
-export function buildWidgetPageKeys(data: HomeWidgetsData): WidgetPageKey[] {
+/** Visible widgets; Need Action #2 and CPA #3 when ACTION + tax season. */
+export function buildWidgetPageKeys(
+  data: HomeWidgetsData,
+  actionCount = 0,
+): WidgetPageKey[] {
+  const hasMissing = data.missing.missing.length > 0;
+  const hasAction = actionCount > 0;
+  const hasCpa = data.showCpaReady;
   const keys: WidgetPageKey[] = [];
-  if (data.missing.missing.length > 0) {
+
+  if (hasMissing) {
     keys.push("missing");
   }
-  keys.push("deadline");
-  keys.push("progress");
-  if (data.showCpaReady) {
-    keys.push("cpa");
+
+  if (hasAction) {
+    if (!hasMissing) {
+      keys.push("deadline");
+    }
+    keys.push("needAction");
+    if (hasCpa) {
+      keys.push("cpa");
+    }
+    if (hasMissing) {
+      keys.push("deadline", "progress");
+    } else {
+      keys.push("progress");
+    }
+  } else if (hasCpa) {
+    keys.push("deadline", "progress", "cpa");
+  } else {
+    keys.push("deadline", "progress");
   }
+
   return keys;
 }
 
@@ -25,8 +52,11 @@ export function chunkPages<T>(keys: T[], maxPerPage = 3): T[][] {
   return pages;
 }
 
-export function buildWidgetPages(data: HomeWidgetsData): WidgetPageKey[][] {
-  return chunkPages(buildWidgetPageKeys(data));
+export function buildWidgetPages(
+  data: HomeWidgetsData,
+  actionCount = 0,
+): WidgetPageKey[][] {
+  return chunkPages(buildWidgetPageKeys(data, actionCount));
 }
 
 export function pageColumnFlexClass(count: number): string {

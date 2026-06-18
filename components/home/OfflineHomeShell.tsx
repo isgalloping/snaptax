@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Receipt } from "@/lib/types";
+import type { ReceiptListFilter } from "@/lib/receipts/receiptBucket";
 import { useAuthSession } from "@/lib/client/useAuthSession";
 import {
   STARTUP_UNFILED_LIMIT,
@@ -30,7 +31,7 @@ import { SnapTooltip } from "@/components/onboarding/SnapTooltip";
 import { useOnboardingFlow } from "@/components/onboarding/useOnboardingFlow";
 import { visibleReceiptsForOnboarding } from "@/lib/onboarding/onboardingReceipts";
 import { TaxHeader } from "./TaxHeader";
-import { TrustBar } from "./TrustBar";
+import { InlinePrivacyNote } from "./InlinePrivacyNote";
 import { SnapButton } from "./SnapButton";
 import { ReceiptList } from "./ReceiptList";
 import { logStartupMarks } from "@/lib/landing/startupMetrics";
@@ -50,6 +51,7 @@ export function OfflineHomeShell() {
   const [receipts, setReceipts] = useState<Receipt[]>([]);
   const [taxSaved, setTaxSaved] = useState<number | null>(null);
   const [syncStuckIds, setSyncStuckIds] = useState<Set<string>>(() => new Set());
+  const [listFilter, setListFilter] = useState<ReceiptListFilter>("all");
 
   const refreshListFromLocal = useCallback(async () => {
     const visible = await loadTopByUpdatedAt(UI_RECEIPT_LIMIT);
@@ -174,12 +176,14 @@ export function OfflineHomeShell() {
         </div>
       </div>
 
-      <TrustBar />
+      <InlinePrivacyNote />
 
       <div className="flex min-h-0 flex-1 flex-col">
         <ReceiptList
           receipts={displayReceipts}
           syncStuckIds={syncStuckIds}
+          filter={listFilter}
+          onFilterChange={setListFilter}
           ahaCoachActive={ahaCoachActive}
           onAhaCoachDismiss={dismissAhaCoach}
           onSelect={() => {}}

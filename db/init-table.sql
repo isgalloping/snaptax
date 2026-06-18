@@ -62,6 +62,7 @@ CREATE TABLE snaptax_receipts (
   tax_amount    NUMERIC(10, 2) NOT NULL DEFAULT 0,
   data_region   VARCHAR(8) NOT NULL DEFAULT 'us',
   ai_raw        JSONB,
+  ai_confidence DOUBLE PRECISION,
   captured_at   TIMESTAMPTZ(3) NOT NULL,
   snap_at       TIMESTAMPTZ(3),
   processed_at  TIMESTAMPTZ(3),
@@ -181,6 +182,7 @@ COMMENT ON COLUMN snaptax_receipts.deductible IS '是否可抵扣，默认 true'
 COMMENT ON COLUMN snaptax_receipts.tax_amount IS '估算省税（US/EU 语义不同）；仅 OpenAI Vision 路径写入';
 COMMENT ON COLUMN snaptax_receipts.data_region IS '税法辖区快照 us|eu；与物理驻留解耦';
 COMMENT ON COLUMN snaptax_receipts.ai_raw IS 'OpenAI Vision 原始 JSON 响应';
+COMMENT ON COLUMN snaptax_receipts.ai_confidence IS 'OpenAI Vision 置信度 0–1；0.5–0.69 为 REVIEW 桶';
 COMMENT ON COLUMN snaptax_receipts.captured_at IS '上传/入库时间（TIMESTAMPTZ UTC）';
 COMMENT ON COLUMN snaptax_receipts.snap_at IS '拍照时间，可与 captured_at 不同（离线延迟上传）；TIMESTAMPTZ UTC';
 COMMENT ON COLUMN snaptax_receipts.processed_at IS 'AI 处理完成时间；status=processing 时为 NULL；TIMESTAMPTZ UTC';

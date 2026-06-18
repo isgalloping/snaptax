@@ -36,6 +36,8 @@ export interface Receipt {
   pendingUpload?: boolean;
   /** Local photo blob unavailable; user must resnap. */
   photoMissing?: boolean;
+  /** OpenAI Vision confidence 0–1; mid tier (0.5–0.69) → REVIEW bucket. */
+  aiConfidence?: number;
   isOnboardingDemo?: boolean;
 }
 

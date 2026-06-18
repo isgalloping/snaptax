@@ -31,7 +31,7 @@
 | 反馈 | 按钮 `active:scale-95` |
 | 核心流程零 Modal | 拍照链路禁止「是否确定/是否清晰」弹窗；错误用底部非阻塞红字 |
 | **合规 Sheet 例外** | Terms/Privacy/US 告知、Delete Account、Google/Paddle — **仅 Bottom Sheet** |
-| 布局 | **仅 2 逻辑页**；主界面 **固定 chrome**（TaxHeader + Snap + TrustBar + WidgetPager）+ **可滚动内容区**（小票列表）；禁止整页 `body` 滚动，快门区始终可见 |
+| 布局 | **仅 2 逻辑页**；主界面 **固定 chrome**（TaxHeader + Snap + InlinePrivacy + WidgetPager）+ **可滚动内容区**（小票列表）；禁止整页 `body` 滚动，快门区始终可见 |
 
 ### 2.2 离线优先（PWA）
 
@@ -114,12 +114,12 @@ Privacy Policy · Terms · **Data storage（美国）** · legal@snap1099.com ·
 ```
 主界面 (Home)
 ├── 固定区（不滚动）
-│   ├── TaxHeader：Est. Tax Saved + Export / Sync / Filter / Settings（Hero 背景，内容自适应高度）
+│   ├── TaxHeader：Est. Tax Saved **photo hero 卡片**（`/photo/hero.png` + overlay）；**CPA/IRS Ready** Export + Settings（无 Sync/Filter / 无盾牌）
 │   ├── SnapButton：全宽黄 SNAP RECEIPT（合规脚注仅在相机界面）
-│   ├── TrustBar：紧凑隐私条 + Learn more → privacy-trust overlay
-│   └── WidgetPager：固定于 Snap 下；每屏最多 3 张等宽卡片，>3 时分页左滑
+│   ├── InlinePrivacy：Snap 下内联隐私条 + Learn more → privacy-trust overlay
+│   └── WidgetPager：Need Action 有 ACTION 小票时固定第 2 位；报税季 + ACTION 时 CPA /IRS Ready 第 3 位
 ├── 滚动区（flex-1 min-h-0 overflow-y-auto）
-│   └── 小票区：ReceiptFilterBar（ALL · READY · PROCESSING · Blurry · Stuck ⚠️）+ ReceiptList
+│   └── 小票区：ReceiptFilterBar（ALL · READY · REVIEW · ACTION · PROCESSING）+ ReceiptList（RECENT RECEIPTS + Pull to refresh）
 └── HomeOverlayHost（viewState 全屏 overlay，非新路由）
     ├── deadline-detail · missing-deductions · missing-deduction-item · privacy-trust
     └── `< BACK` 或 **Got it** 关闭；`view === "settings"` 仍为唯一第二逻辑页
@@ -262,6 +262,7 @@ Next.js 16 · React 19 · Tailwind 4 · Serwist · **PostgreSQL（美国）** ·
 | 分区域省税 US/EU + R1 | ✅ | ✅（`SUM(tax_amount)` + `X-Tax-Region`） |
 | 行业六选一 | ✅ | ✅（登录 API 回填；Ghost `localStorage`） |
 | Home WidgetPager（Snap 下固定分页） | ✅ | ✅（等宽 3 卡/页，>3 左滑 + 分页点） |
+| Home v2 筛选桶 + 列表展示 | ✅ | ✅（ALL/READY/REVIEW/ACTION/PROCESSING；绿/灰 tax；category + Line pill） |
 
 **Dev 限制（非产品偏离）：** 无 Upstash 时速率限制放行；无 Paddle env 时 Paywall 显示错误而非假付费。
 

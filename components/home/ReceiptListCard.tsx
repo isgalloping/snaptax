@@ -3,13 +3,16 @@
 import type { ComponentProps } from "react";
 import type { Receipt } from "@/lib/types";
 import {
-  formatCurrencyForRegion,
   formatLocalDate,
   formatReceiptTime,
 } from "@/lib/format";
 import { clientTimeZone } from "@/lib/time/timeZone";
 import { getReceiptListIcon } from "@/lib/receipts/receiptListIcon";
 import { irsScheduleLineBadge } from "@/lib/tax/irsScheduleLabel";
+import {
+  receiptCategoryDisplayLabel,
+  receiptTaxDisplay,
+} from "@/lib/receipts/receiptCategoryDisplay";
 import type { ReceiptVisualState } from "@/lib/ui/homeVisual";
 import { CircularStatusIcon } from "./CircularStatusIcon";
 import { StatusPill } from "./StatusPill";
@@ -77,7 +80,6 @@ export function ReceiptListCard({
 }: ReceiptListCardProps) {
   const copy = useUserCopy().home.receiptList;
   const region = receipt.dataRegion ?? "us";
-  const currency = receipt.currency ?? (region === "eu" ? "EUR" : "USD");
   const timeZone = clientTimeZone();
   const listDate = formatLocalDate(receipt.timestamp, timeZone, region);
 
@@ -195,13 +197,8 @@ export function ReceiptListCard({
     );
   }
 
-  const tax = receipt.taxAmount ?? 0;
-  const deductible = receipt.deductible !== false && tax > 0;
-  const taxLabel = deductible
-    ? `-${formatCurrencyForRegion(tax, currency, region)}`
-    : formatCurrencyForRegion(0, currency, region);
+  const tax = receiptTaxDisplay(receipt);
   const lineBadge = irsScheduleLineBadge(receipt.category);
-  const categoryLabel = receipt.category ?? "OTHER";
   const categoryEmoji = getReceiptListIcon(receipt).emoji;
   const demoDone = receipt.isOnboardingDemo && receipt.status === "done";
 
@@ -226,15 +223,18 @@ export function ReceiptListCard({
           >
             {demoDone
               ? (receipt.subtitle ?? "COMPLETE")
-              : `${listDate} · ${categoryLabel}`}
+              : `${listDate} · ${receiptCategoryDisplayLabel(receipt.category)}`}
           </p>
-          <span className="shrink-0 rounded bg-zinc-700 px-1.5 py-0.5 text-[10px] font-bold text-zinc-200">
+          <span className="shrink-0 rounded bg-zinc-700/80 px-1.5 py-0.5 text-[10px] font-bold text-zinc-300">
             {lineBadge}
           </span>
         </div>
       </div>
       <div className="flex shrink-0 items-center gap-0.5">
-        <StatusPill variant="done" doneLabel={taxLabel} />
+        <StatusPill
+          variant={tax.variant === "deductible" ? "done" : "doneMuted"}
+          doneLabel={tax.label}
+        />
         <ChevronRightIcon className="h-5 w-5 text-zinc-500" />
       </div>
     </CardShell>

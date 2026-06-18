@@ -57,7 +57,7 @@ import {
 import { TaxHeader } from "./TaxHeader";
 import { SnapButton, type SnapButtonHandle } from "./SnapButton";
 import { ReceiptList } from "./ReceiptList";
-import { TrustBar } from "./TrustBar";
+import { InlinePrivacyNote } from "./InlinePrivacyNote";
 import { HomeScrollRegion } from "./HomeScrollRegion";
 import { WidgetStack } from "./widgets/WidgetStack";
 import {
@@ -66,6 +66,11 @@ import {
 } from "./overlays/HomeOverlayHost";
 import { computeHomeWidgets } from "@/lib/home/computeHomeWidgets";
 import { sumDoneExpenses } from "@/lib/receipts/receiptStats";
+import {
+  filterReceiptsByBucket,
+  countReceiptBuckets,
+  type ReceiptListFilter,
+} from "@/lib/receipts/receiptBucket";
 import { SettingsScreen } from "@/components/settings/SettingsScreen";
 import type { SettingsTaxStats } from "@/components/settings/TaxOverviewPanel";
 import { useTaxExportGate } from "@/components/export/useTaxExportGate";
@@ -117,6 +122,7 @@ export function HomeScreen() {
   const [cameraOpen, setCameraOpen] = useState(false);
   const [appHidden, setAppHidden] = useState(false);
   const [listSyncing, setListSyncing] = useState(false);
+  const [listFilter, setListFilter] = useState<ReceiptListFilter>("all");
   const [syncStuckIds, setSyncStuckIds] = useState<Set<string>>(() => new Set());
   const [receiptNotice, setReceiptNotice] = useState<string | null>(null);
   const [homeOverlay, setHomeOverlay] = useState<HomeOverlay>(null);
@@ -745,13 +751,10 @@ export function HomeScreen() {
     [displayReceipts, displayTaxSaved, taxSaved, industry],
   );
 
-  const handleFilterClick = useCallback(() => {
-    filterBarRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    filterBarRef.current?.classList.add("ring-2", "ring-yellow-400");
-    window.setTimeout(() => {
-      filterBarRef.current?.classList.remove("ring-2", "ring-yellow-400");
-    }, 1200);
-  }, []);
+  const actionCount = useMemo(
+    () => countReceiptBuckets(displayReceipts, syncStuckIds).action,
+    [displayReceipts, syncStuckIds],
+  );
 
   const handleStartTracking = useCallback(() => {
     setHomeOverlay(null);
@@ -995,6 +998,16 @@ export function HomeScreen() {
     snapButtonRef.current?.openCamera();
   }, []);
 
+  const handleNeedActionResnap = useCallback(() => {
+    setListFilter("action");
+    const actionReceipt = filterReceiptsByBucket(
+      displayReceipts,
+      "action",
+      syncStuckIds,
+    )[0];
+    if (actionReceipt) handleResnap(actionReceipt.id);
+  }, [displayReceipts, syncStuckIds, handleResnap]);
+
   if (view === "settings") {
     return (
       <>
@@ -1059,10 +1072,6 @@ export function HomeScreen() {
         onAhaCoachDismiss={dismissAhaCoach}
         onSettingsClick={() => setView("settings")}
         onExportClick={handleExportClick}
-        onFilterClick={handleFilterClick}
-        onSyncClick={handleManualListSync}
-        syncing={listSyncing}
-        syncDisabled={!isOnline}
         exportBusy={taxExport.paywallExporting || taxExport.preparingExport}
         exportError={taxExport.exportError}
       />
@@ -1089,7 +1098,7 @@ export function HomeScreen() {
         </div>
       </div>
 
-      <TrustBar onLearnMore={() => setHomeOverlay("privacy-trust")} />
+      <InlinePrivacyNote onLearnMore={() => setHomeOverlay("privacy-trust")} />
 
       {receiptNotice && (
         <p
@@ -1102,16 +1111,20 @@ export function HomeScreen() {
 
       <WidgetStack
         data={widgetsData}
+        actionCount={actionCount}
         onDeadlineDetails={() => setHomeOverlay("deadline-detail")}
         onMissingReview={() => setHomeOverlay("missing-deductions")}
         onProgressDetails={() => setHomeOverlay("tax-year-detail")}
         onExport={handleExportClick}
+        onNeedActionResnap={handleNeedActionResnap}
       />
 
       <HomeScrollRegion ref={scrollRef}>
         <ReceiptList
           receipts={displayReceipts}
           syncStuckIds={syncStuckIds}
+          filter={listFilter}
+          onFilterChange={setListFilter}
           filterBarRef={filterBarRef}
           ahaCoachActive={ahaCoachActive}
           onAhaCoachDismiss={dismissAhaCoach}

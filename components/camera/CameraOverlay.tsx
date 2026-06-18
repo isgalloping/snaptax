@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { BatchGalleryStrip } from "@/components/camera/BatchGalleryStrip";
 import { CameraLiveFooter } from "@/components/camera/CameraLiveFooter";
-import { CameraShutterControl } from "@/components/camera/CameraShutterControl";
+import { CameraShutterFooter } from "@/components/camera/CameraShutterFooter";
 import { ReceiptReviewControls } from "@/components/camera/ReceiptReviewControls";
 import { ReceiptReviewViewport } from "@/components/camera/ReceiptReviewViewport";
 import { RefreshIcon } from "@/components/icons/RefreshIcon";
@@ -332,13 +332,11 @@ export function CameraOverlay({
           )}
 
           {mode === "single" && (
-            <div className="flex items-end justify-center gap-3 px-6 pb-3 pt-2">
-              <CameraShutterControl
-                ready={ready}
-                capturing={capturing}
-                onClick={() => void handleShutter()}
-              />
-            </div>
+            <CameraShutterFooter
+              ready={ready}
+              capturing={capturing}
+              onShutter={() => void handleShutter()}
+            />
           )}
 
           {showLiveControls && onOpenTerms && onOpenPrivacy && (

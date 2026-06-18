@@ -172,6 +172,7 @@ export const FR_FR_COPY: UserCopy = {
       receiptBlurry: "Reçu flou",
       needAction: "Action requise",
       resnap: "Reprendre",
+      delete: "Supprimer",
       unknownMerchant: "Commerçant inconnu",
       duplicateReceipt: "Ce reçu est déjà dans votre liste.",
       status: {

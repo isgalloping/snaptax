@@ -146,6 +146,7 @@ export type UserCopy = {
       receiptBlurry: string;
       needAction: string;
       resnap: string;
+      delete: string;
       unknownMerchant: string;
       duplicateReceipt: string;
       status: {

@@ -52,6 +52,8 @@ export const homeVisual = {
   },
   reviewControl: {
     size: "h-14 w-14",
+    /** +20% vs size — detail sheet DELETE only */
+    deleteSize: "h-[4.2rem] w-[4.2rem]",
     delete:
       "rounded-full bg-red-600 shadow-[0_0_12px_rgba(220,38,38,0.45)] border border-red-500/60",
     resnap:

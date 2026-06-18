@@ -189,6 +189,7 @@ export function OfflineHomeShell() {
           onSelect={() => {}}
           onResnap={() => {}}
           onRetrySync={() => {}}
+          onDelete={() => {}}
           syncDisabled
         />
       </div>

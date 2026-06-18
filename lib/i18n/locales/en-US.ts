@@ -168,6 +168,7 @@ export const EN_US_COPY: UserCopy = {
         receiptBlurry: "Receipt Blurry",
         needAction: "Need Action",
         resnap: "Resnap",
+        delete: "Delete",
         unknownMerchant: "Unknown merchant",
         duplicateReceipt: "This receipt is already in your list.",
         status: {

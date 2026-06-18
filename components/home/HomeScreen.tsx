@@ -1194,6 +1194,7 @@ export function HomeScreen() {
           }}
           onResnap={handleResnap}
           onRetrySync={handleRetrySync}
+          onDelete={(id) => void handleDeleteReceipt(id)}
           onSyncClick={handleManualListSync}
           syncing={listSyncing}
           syncDisabled={!isOnline}

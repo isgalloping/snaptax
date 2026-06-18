@@ -172,6 +172,7 @@ export const DE_DE_COPY: UserCopy = {
       receiptBlurry: "Beleg unscharf",
       needAction: "Aktion erforderlich",
       resnap: "Erneut fotografieren",
+      delete: "Löschen",
       unknownMerchant: "Unbekannter Händler",
       duplicateReceipt: "Dieser Beleg ist bereits in Ihrer Liste.",
       status: {

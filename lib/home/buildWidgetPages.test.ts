@@ -47,14 +47,14 @@ function missingResult() {
 }
 
 describe("buildWidgetPageKeys", () => {
-  it("orders deadline, optional missing, progress, optional cpa", () => {
+  it("orders missing, deadline center slot, progress, optional cpa", () => {
     const withAll = mockData({
       missing: missingResult(),
       showCpaReady: true,
     });
     assert.deepEqual(buildWidgetPageKeys(withAll), [
-      "deadline",
       "missing",
+      "deadline",
       "progress",
       "cpa",
     ]);
@@ -74,7 +74,7 @@ describe("buildWidgetPages", () => {
       }),
     );
     assert.equal(pages.length, 2);
-    assert.deepEqual(pages[0], ["deadline", "missing", "progress"]);
+    assert.deepEqual(pages[0], ["missing", "deadline", "progress"]);
     assert.deepEqual(pages[1], ["cpa"]);
   });
 

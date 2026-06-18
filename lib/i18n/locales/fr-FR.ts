@@ -189,7 +189,7 @@ export const FR_FR_COPY: UserCopy = {
         viewDetails: "Détails",
       },
       missing: {
-        label: "Déductions manquantes",
+        label: "Trouver plus d'économies",
         amountInDeductions: "{amount} de déductions",
         amountShort: "{amount} de déductions",
         review: "Examiner",

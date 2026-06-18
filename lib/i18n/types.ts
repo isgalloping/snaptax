@@ -110,6 +110,7 @@ export type UserCopy = {
       receiptPlural: string;
       tracked: string;
       exportTaxPack: string;
+      cpaIrsReady: string;
       installApp: string;
       syncReceipts: string;
       settings: string;

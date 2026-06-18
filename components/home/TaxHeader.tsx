@@ -4,11 +4,10 @@ import { useUserCopy } from "@/components/i18n/I18nProvider";
 import { formatCurrency } from "@/lib/format";
 import { homeVisual } from "@/lib/ui/homeVisual";
 import { ReceiptIcon } from "@/components/icons/ReceiptIcon";
-import { FilterIcon } from "@/components/icons/FilterIcon";
 import { SlidersIcon } from "@/components/icons/SlidersIcon";
-import { RefreshIcon } from "@/components/icons/RefreshIcon";
 import { DownloadIcon } from "@/components/icons/DownloadIcon";
 import { InstallIcon } from "@/components/icons/InstallIcon";
+import { TaxShieldIcon } from "@/components/icons/TaxShieldIcon";
 import { usePwaInstallOptional } from "@/components/pwa/pwaInstallContext";
 import { CoachPulseOverlay } from "@/components/onboarding/CoachPulseOverlay";
 
@@ -19,10 +18,6 @@ interface TaxHeaderProps {
   animating: boolean;
   onSettingsClick: () => void;
   onExportClick?: () => void;
-  onFilterClick?: () => void;
-  onSyncClick?: () => void;
-  syncing?: boolean;
-  syncDisabled?: boolean;
   exportBusy?: boolean;
   exportError?: string | null;
   showSettings?: boolean;
@@ -32,7 +27,7 @@ interface TaxHeaderProps {
 }
 
 const actionBtn =
-  "flex h-11 w-11 items-center justify-center rounded-xl border border-zinc-700 bg-black/40 transition-transform active:scale-95 disabled:opacity-40";
+  "flex min-h-11 min-w-11 flex-col items-center justify-center rounded-xl border border-zinc-700 bg-black/40 px-2 transition-transform active:scale-95 disabled:opacity-40";
 
 export function TaxHeader({
   taxSaved,
@@ -41,10 +36,6 @@ export function TaxHeader({
   animating,
   onSettingsClick,
   onExportClick,
-  onFilterClick,
-  onSyncClick,
-  syncing = false,
-  syncDisabled = false,
   exportBusy = false,
   exportError = null,
   showSettings = true,
@@ -56,6 +47,7 @@ export function TaxHeader({
   const copy = useUserCopy().home.taxHeader;
   const showInstallButton = pwaInstall?.mode === "header-button";
   const headerTaxSaved = displayTaxSaved ?? taxSaved;
+  const { heroCard } = homeVisual;
 
   const receiptLabel =
     receiptCount === 1
@@ -63,24 +55,9 @@ export function TaxHeader({
       : `${receiptCount} ${copy.receiptPlural}`;
 
   return (
-    <header className="relative shrink-0 overflow-hidden">
-      <div
-        className="absolute inset-0 bg-cover bg-[85%_center] bg-no-repeat"
-        style={{ backgroundImage: `url(${homeVisual.heroImage})` }}
-        aria-hidden
-      />
-      <div
-        className="absolute inset-0"
-        style={{ background: homeVisual.heroOverlay }}
-        aria-hidden
-      />
-      <div
-        className="absolute inset-0"
-        style={{ background: homeVisual.heroTint }}
-        aria-hidden
-      />
-      <div className="relative z-10 flex items-center justify-between px-4 py-3">
-        <div className="min-w-0 flex-1 pr-3">
+    <header className={heroCard.shell}>
+      <div className="flex items-center justify-between gap-2 px-4 py-3">
+        <div className="min-w-0 flex-1">
           <div
             className={`relative w-fit max-w-full ${ahaCoachActive ? "cursor-pointer rounded-xl px-2.5 py-2" : ""}`}
             role={ahaCoachActive ? "button" : undefined}
@@ -116,6 +93,9 @@ export function TaxHeader({
             </p>
           </div>
         </div>
+
+        <TaxShieldIcon className={`h-12 w-12 shrink-0 ${heroCard.shield}`} />
+
         <div className="flex shrink-0 items-center gap-2">
           {onExportClick && (
             <div className="relative">
@@ -129,12 +109,15 @@ export function TaxHeader({
                     ? "relative border-yellow-400 ring-2 ring-black/70"
                     : "border-yellow-500/60"
                 }`}
-                aria-label={copy.exportTaxPack}
+                aria-label={copy.cpaIrsReady}
                 aria-busy={exportBusy}
               >
                 <DownloadIcon
                   className={`h-5 w-5 text-yellow-400 ${exportBusy ? "animate-pulse" : ""}`}
                 />
+                <span className="mt-0.5 text-[9px] font-bold leading-none text-yellow-400/90">
+                  CPA/IRS
+                </span>
               </button>
             </div>
           )}
@@ -146,29 +129,6 @@ export function TaxHeader({
               aria-label={copy.installApp}
             >
               <InstallIcon className="h-5 w-5 text-yellow-400" />
-            </button>
-          )}
-          {onSyncClick && (
-            <button
-              type="button"
-              onClick={onSyncClick}
-              disabled={syncDisabled || syncing}
-              className={actionBtn}
-              aria-label={copy.syncReceipts}
-            >
-              <RefreshIcon
-                className={`h-5 w-5 text-white ${syncing ? "animate-spin" : ""}`}
-              />
-            </button>
-          )}
-          {onFilterClick && (
-            <button
-              type="button"
-              onClick={onFilterClick}
-              className={actionBtn}
-              aria-label={copy.filterReceipts}
-            >
-              <FilterIcon className="h-5 w-5 text-white" />
             </button>
           )}
           {showSettings && (
@@ -184,10 +144,7 @@ export function TaxHeader({
         </div>
       </div>
       {exportError && (
-        <p
-          className="relative z-10 px-4 pb-2 text-center text-xs font-bold text-red-400"
-          role="alert"
-        >
+        <p className="px-4 pb-2 text-center text-xs font-bold text-red-400" role="alert">
           {exportError}
         </p>
       )}

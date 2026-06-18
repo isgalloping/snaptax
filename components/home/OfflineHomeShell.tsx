@@ -30,7 +30,7 @@ import { SnapTooltip } from "@/components/onboarding/SnapTooltip";
 import { useOnboardingFlow } from "@/components/onboarding/useOnboardingFlow";
 import { visibleReceiptsForOnboarding } from "@/lib/onboarding/onboardingReceipts";
 import { TaxHeader } from "./TaxHeader";
-import { TrustBar } from "./TrustBar";
+import { InlinePrivacyNote } from "./InlinePrivacyNote";
 import { SnapButton } from "./SnapButton";
 import { ReceiptList } from "./ReceiptList";
 import { logStartupMarks } from "@/lib/landing/startupMetrics";
@@ -174,7 +174,7 @@ export function OfflineHomeShell() {
         </div>
       </div>
 
-      <TrustBar />
+      <InlinePrivacyNote />
 
       <div className="flex min-h-0 flex-1 flex-col">
         <ReceiptList

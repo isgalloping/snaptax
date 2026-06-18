@@ -57,7 +57,7 @@ import {
 import { TaxHeader } from "./TaxHeader";
 import { SnapButton, type SnapButtonHandle } from "./SnapButton";
 import { ReceiptList } from "./ReceiptList";
-import { TrustBar } from "./TrustBar";
+import { InlinePrivacyNote } from "./InlinePrivacyNote";
 import { HomeScrollRegion } from "./HomeScrollRegion";
 import { WidgetStack } from "./widgets/WidgetStack";
 import {
@@ -745,14 +745,6 @@ export function HomeScreen() {
     [displayReceipts, displayTaxSaved, taxSaved, industry],
   );
 
-  const handleFilterClick = useCallback(() => {
-    filterBarRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    filterBarRef.current?.classList.add("ring-2", "ring-yellow-400");
-    window.setTimeout(() => {
-      filterBarRef.current?.classList.remove("ring-2", "ring-yellow-400");
-    }, 1200);
-  }, []);
-
   const handleStartTracking = useCallback(() => {
     setHomeOverlay(null);
     scrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
@@ -1059,10 +1051,6 @@ export function HomeScreen() {
         onAhaCoachDismiss={dismissAhaCoach}
         onSettingsClick={() => setView("settings")}
         onExportClick={handleExportClick}
-        onFilterClick={handleFilterClick}
-        onSyncClick={handleManualListSync}
-        syncing={listSyncing}
-        syncDisabled={!isOnline}
         exportBusy={taxExport.paywallExporting || taxExport.preparingExport}
         exportError={taxExport.exportError}
       />
@@ -1089,7 +1077,7 @@ export function HomeScreen() {
         </div>
       </div>
 
-      <TrustBar onLearnMore={() => setHomeOverlay("privacy-trust")} />
+      <InlinePrivacyNote onLearnMore={() => setHomeOverlay("privacy-trust")} />
 
       {receiptNotice && (
         <p

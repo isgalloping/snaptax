@@ -131,6 +131,7 @@ export const EN_US_COPY: UserCopy = {
         receiptPlural: "receipts",
         tracked: "tracked",
         exportTaxPack: "Export tax pack",
+        cpaIrsReady: "CPA/IRS Ready",
         installApp: "Install app",
         syncReceipts: "Sync receipts",
         settings: "Settings",

@@ -135,6 +135,7 @@ export const DE_DE_COPY: UserCopy = {
       receiptPlural: "Belege",
       tracked: "erfasst",
       exportTaxPack: "Steuerpaket exportieren",
+      cpaIrsReady: "CPA/IRS Ready",
       installApp: "App installieren",
       syncReceipts: "Belege synchronisieren",
       settings: "Einstellungen",

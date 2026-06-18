@@ -185,6 +185,12 @@ export const FR_FR_COPY: UserCopy = {
       message: "L'IRS ne voit jamais vos reçus.",
       learnMore: "En savoir plus",
     },
+    exitConfirm: {
+      title: "Quitter Snap1099 ?",
+      body: "Vos reçus restent enregistrés sur cet appareil.",
+      stay: "Rester",
+      exit: "Quitter",
+    },
     widgets: {
       deadline: {
         label: "Prochaine échéance",

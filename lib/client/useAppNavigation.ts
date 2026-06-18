@@ -24,10 +24,13 @@ function overlayToNav(overlay: NonNullable<HomeOverlay>): HomeOverlayNav {
 
 export function useAppNavigation({
   onPopTarget,
+  interceptPopState,
 }: {
   onPopTarget: (target: ReturnType<typeof mapNavKeyToTarget>) => void;
+  interceptPopState?: (event: PopStateEvent) => boolean;
 }) {
   const onPopTargetRef = useRef(onPopTarget);
+  const interceptPopStateRef = useRef(interceptPopState);
   const navigatingRef = useRef(false);
 
   useEffect(() => {
@@ -35,9 +38,14 @@ export function useAppNavigation({
   });
 
   useEffect(() => {
+    interceptPopStateRef.current = interceptPopState;
+  });
+
+  useEffect(() => {
     bootstrapNavTrap();
 
     const onPopState = (event: PopStateEvent) => {
+      if (interceptPopStateRef.current?.(event)) return;
       const key = decodePopStateEvent(event.state);
       if (!key) return;
       navigatingRef.current = true;

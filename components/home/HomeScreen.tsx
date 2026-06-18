@@ -66,6 +66,13 @@ import {
 } from "./overlays/HomeOverlayHost";
 import type { SettingsViewState } from "@/components/settings/settingsViewState";
 import { useAppNavigation } from "@/lib/client/useAppNavigation";
+import {
+  confirmAppExit,
+  restoreHomeNavTrap,
+} from "@/lib/client/appNavigationHistory";
+import { shouldConfirmExitFromPopState } from "@/lib/client/homeExitGuard";
+import { useHomeExitGuard } from "@/lib/client/useHomeExitGuard";
+import { ExitConfirmSheet } from "@/components/home/ExitConfirmSheet";
 import { computeHomeWidgets } from "@/lib/home/computeHomeWidgets";
 import { sumDoneExpenses } from "@/lib/receipts/receiptStats";
 import {
@@ -128,9 +135,11 @@ export function HomeScreen() {
   const [syncStuckIds, setSyncStuckIds] = useState<Set<string>>(() => new Set());
   const [receiptNotice, setReceiptNotice] = useState<string | null>(null);
   const [homeOverlay, setHomeOverlay] = useState<HomeOverlay>(null);
+  const [exitConfirmOpen, setExitConfirmOpen] = useState(false);
   const [settingsViewState, setSettingsViewState] =
     useState<SettingsViewState>("main");
   const scrollRef = useRef<HTMLDivElement>(null);
+  const homeRootRef = useRef<HTMLDivElement>(null);
   const filterBarRef = useRef<HTMLDivElement>(null);
   const watcherRef = useRef<ProcessingReceiptWatcher | null>(null);
   const queueRef = useRef<ProcessingQueue | null>(null);
@@ -167,13 +176,52 @@ export function HomeScreen() {
     [],
   );
 
+  const exitGuardEnabled = useMemo(
+    () =>
+      view === "home" &&
+      homeOverlay == null &&
+      !cameraOpen &&
+      selectedReceipt == null,
+    [view, homeOverlay, cameraOpen, selectedReceipt],
+  );
+
+  const openExitConfirm = useCallback(() => {
+    setExitConfirmOpen(true);
+  }, []);
+
+  const interceptPopState = useCallback(
+    (event: PopStateEvent) => {
+      if (!exitGuardEnabled) return false;
+      if (!shouldConfirmExitFromPopState(event.state, true)) return false;
+      restoreHomeNavTrap();
+      setExitConfirmOpen(true);
+      return true;
+    },
+    [exitGuardEnabled],
+  );
+
   const {
     navigateBack,
     pushOverlay,
     openSettings,
     pushSettingsPage,
     replaceSettingsPage,
-  } = useAppNavigation({ onPopTarget: applyPopTarget });
+  } = useAppNavigation({ onPopTarget: applyPopTarget, interceptPopState });
+
+  useHomeExitGuard({
+    enabled: exitGuardEnabled && !exitConfirmOpen,
+    containerRef: homeRootRef,
+    onEdgeSwipeExit: openExitConfirm,
+  });
+
+  const handleExitConfirmStay = useCallback(() => {
+    setExitConfirmOpen(false);
+  }, []);
+
+  const handleExitConfirmExit = useCallback(() => {
+    setExitConfirmOpen(false);
+    confirmAppExit();
+  }, []);
 
   const showOverlay = useCallback(
     (overlay: NonNullable<HomeOverlay>) => {
@@ -1119,7 +1167,10 @@ export function HomeScreen() {
   }
 
   return (
-    <div className="relative flex h-full flex-col overflow-hidden bg-black font-sans text-white select-none">
+    <div
+      ref={homeRootRef}
+      className="relative flex h-full flex-col overflow-hidden bg-black font-sans text-white select-none"
+    >
       <TaxHeader
         taxSaved={taxSaved}
         displayTaxSaved={displayTaxSaved}
@@ -1239,6 +1290,12 @@ export function HomeScreen() {
       )}
 
       {taxExport.overlays}
+
+      <ExitConfirmSheet
+        open={exitConfirmOpen}
+        onStay={handleExitConfirmStay}
+        onExit={handleExitConfirmExit}
+      />
     </div>
   );
 }

@@ -59,7 +59,7 @@ export function ReceiptCaptureActions({
             copy.delete,
             copy.deleteReceipt,
             deleteCls,
-            <span className="text-2xl text-white" aria-hidden>
+            <span className="text-3xl text-white" aria-hidden>
               🗑
             </span>,
             onDelete,

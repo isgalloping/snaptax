@@ -1,8 +1,11 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  buildSlidePlacements,
+  circularOffset,
   coverFlowTransform,
   focusFromOffset,
+  resolveAnimationTarget,
   slideOffsetFromCenter,
   slotOffset,
   trackTranslateX,
@@ -15,6 +18,7 @@ describe("widgetCoverMotion", () => {
     assert.equal(r.zIndex, 2);
     assert.match(r.transform, /scale\(1\)/);
     assert.match(r.transform, /rotateY\(0deg\)/);
+    assert.match(r.transform, /translateX\(-50%\)/);
     assert.equal(r.height, 112);
   });
 
@@ -34,6 +38,34 @@ describe("widgetCoverMotion", () => {
     const r = coverFlowTransform(-1, { reducedMotion: true });
     assert.match(r.transform, /rotateY\(0deg\)/);
     assert.equal(r.opacity, 0.55);
+  });
+
+  it("circularOffset wraps for three slides", () => {
+    assert.equal(circularOffset(0, 0, 3), 0);
+    assert.equal(circularOffset(2, 0, 3), -1);
+    assert.equal(circularOffset(1, 0, 3), 1);
+    assert.ok(Math.abs(circularOffset(1, 0.5, 3) - 0.5) < 0.001);
+  });
+
+  it("buildSlidePlacements fills three peeks at rest", () => {
+    const atZero = buildSlidePlacements(0, 3);
+    assert.equal(atZero.length, 3);
+    const offsets = atZero.map((p) => p.offset).sort((a, b) => a - b);
+    assert.deepEqual(offsets, [-1, 0, 1]);
+  });
+
+  it("buildSlidePlacements mirrors two slides", () => {
+    const atZero = buildSlidePlacements(0, 2);
+    assert.equal(atZero.length, 3);
+    assert.ok(atZero.some((p) => p.slideIndex === 0 && p.offset === 0));
+    assert.ok(
+      atZero.filter((p) => p.slideIndex === 1).every((p) => Math.abs(p.offset) === 1),
+    );
+  });
+
+  it("resolveAnimationTarget picks shortest wrap path", () => {
+    assert.equal(resolveAnimationTarget(0, 2, 3, -1), -1);
+    assert.equal(resolveAnimationTarget(2, 0, 3, 1), 3);
   });
 
   it("slotOffset combines base role with drag fraction", () => {

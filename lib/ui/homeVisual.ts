@@ -69,15 +69,8 @@ export const homeVisual = {
     shell: "widget-cover-shell shrink-0 touch-pan-x pb-1 pt-0.5",
     viewport:
       "widget-cover-viewport relative mx-auto h-[118px] w-full overflow-hidden [perspective:900px]",
-    track: "widget-cover-track flex h-full w-full items-end justify-center gap-1.5",
-    slotLeft:
-      "widget-cover-slot-left min-w-0 max-w-[31%] flex-[0.88] origin-bottom",
-    slotCenter:
-      "widget-cover-slot-center min-w-0 max-w-[36%] flex-[1.12] origin-bottom",
-    slotRight:
-      "widget-cover-slot-right min-w-0 max-w-[31%] flex-[0.88] origin-bottom",
-    slotSingle:
-      "widget-cover-slot-single min-w-0 max-w-[36%] flex-[1.12] origin-bottom",
+    track: "widget-cover-track relative h-full w-full",
+    slideWrapper: "widget-cover-slide absolute bottom-0 origin-bottom",
     slideButton:
       "widget-cover-slide-btn block h-full w-full overflow-hidden rounded-2xl text-left active:scale-[0.98]",
     slideMotion:

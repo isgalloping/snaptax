@@ -12,27 +12,22 @@ import type { HomeWidgetsData } from "@/lib/home/computeHomeWidgets";
 import {
   adjacentIndex,
   buildWidgetSlides,
-  carouselTriple,
   swipeDirection,
+  wrapIndex,
   type WidgetSlideId,
 } from "@/lib/home/widgetCarouselSlots";
 import {
+  buildSlidePlacements,
+  COVER_FLOW_DURATION_MS,
+  coverFlowEase,
   coverFlowTransform,
   focusFromOffset,
-  slotOffset,
+  resolveAnimationTarget,
 } from "@/lib/home/widgetCoverMotion";
 import { homeVisual } from "@/lib/ui/homeVisual";
 import { TaxDeadlineWidget } from "./TaxDeadlineWidget";
 import { MissingDeductionsWidget } from "./MissingDeductionsWidget";
 import { TaxYearProgressWidget } from "./TaxYearProgressWidget";
-
-type SlotRole = "left" | "center" | "right";
-
-const SLOT_BASE_OFFSET: Record<SlotRole, number> = {
-  left: -1,
-  center: 0,
-  right: 1,
-};
 
 interface WidgetCoverCarouselProps {
   data: HomeWidgetsData;
@@ -50,27 +45,26 @@ export function WidgetCoverCarousel({
   const cover = homeVisual.widgetCover;
   const viewportRef = useRef<HTMLDivElement>(null);
   const [viewportWidth, setViewportWidth] = useState(0);
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [dragOffsetPx, setDragOffsetPx] = useState(0);
+  const [committedIndex, setCommittedIndex] = useState(0);
+  const [displayIndex, setDisplayIndex] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
-  const touchStartDragOffset = useRef(0);
+  const touchStartDisplayIndex = useRef(0);
   const isDraggingRef = useRef(false);
-  const dragOffsetRef = useRef(0);
+  const displayIndexRef = useRef(0);
+  const animationFrameRef = useRef<number | null>(null);
 
   const showMissing = data.missing.missing.length > 0;
   const slides = useMemo(() => buildWidgetSlides(showMissing), [showMissing]);
-  const safeIndex = slides.length > 0 ? activeIndex % slides.length : 0;
+  const slideCount = slides.length;
   const stridePx = viewportWidth > 0 ? viewportWidth * 0.34 : 140;
-  const dragFraction = stridePx > 0 ? dragOffsetPx / stridePx : 0;
-
-  const [leftIdx, centerIdx, rightIdx] = carouselTriple(
-    safeIndex,
-    slides.length,
-  );
+  const slideWidthPx =
+    viewportWidth > 0
+      ? Math.min(160, Math.round(viewportWidth * 0.36))
+      : 140;
 
   useLayoutEffect(() => {
     const el = viewportRef.current;
@@ -85,8 +79,8 @@ export function WidgetCoverCarousel({
   }, []);
 
   useEffect(() => {
-    dragOffsetRef.current = dragOffsetPx;
-  }, [dragOffsetPx]);
+    displayIndexRef.current = displayIndex;
+  }, [displayIndex]);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -97,13 +91,83 @@ export function WidgetCoverCarousel({
   }, []);
 
   useEffect(() => {
-    setActiveIndex((index) => (slides.length > 0 ? index % slides.length : 0));
-  }, [slides.length]);
+    setCommittedIndex((index) =>
+      slideCount > 0 ? index % slideCount : 0,
+    );
+    setDisplayIndex((index) =>
+      slideCount > 0 ? index % slideCount : 0,
+    );
+  }, [slideCount]);
 
-  const beginAnimate = useCallback(() => {
-    if (reducedMotion) return;
-    setIsAnimating(true);
-  }, [reducedMotion]);
+  useEffect(() => {
+    return () => {
+      if (animationFrameRef.current != null) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, []);
+
+  const cancelAnimation = useCallback(() => {
+    if (animationFrameRef.current != null) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+    setIsAnimating(false);
+  }, []);
+
+  const animateDisplayTo = useCallback(
+    (
+      targetCommitted: number,
+      direction?: -1 | 1,
+      onComplete?: () => void,
+    ) => {
+      cancelAnimation();
+      const count = slideCount;
+      if (count <= 1) {
+        setCommittedIndex(0);
+        setDisplayIndex(0);
+        onComplete?.();
+        return;
+      }
+
+      const from = displayIndexRef.current;
+      const wrappedTarget = wrapIndex(targetCommitted, count);
+      const endDisplay = resolveAnimationTarget(
+        from,
+        wrappedTarget,
+        count,
+        direction,
+      );
+
+      if (reducedMotion) {
+        setDisplayIndex(wrappedTarget);
+        setCommittedIndex(wrappedTarget);
+        onComplete?.();
+        return;
+      }
+
+      setIsAnimating(true);
+      const start = performance.now();
+
+      const frame = (now: number) => {
+        const t = Math.min(1, (now - start) / COVER_FLOW_DURATION_MS);
+        const eased = coverFlowEase(t);
+        setDisplayIndex(from + (endDisplay - from) * eased);
+        if (t < 1) {
+          animationFrameRef.current = requestAnimationFrame(frame);
+          return;
+        }
+        animationFrameRef.current = null;
+        setDisplayIndex(wrappedTarget);
+        setCommittedIndex(wrappedTarget);
+        setIsAnimating(false);
+        onComplete?.();
+      };
+
+      animationFrameRef.current = requestAnimationFrame(frame);
+    },
+    [cancelAnimation, reducedMotion, slideCount],
+  );
 
   const openDetails = useCallback(
     (id: WidgetSlideId) => {
@@ -128,36 +192,44 @@ export function WidgetCoverCarousel({
     [data],
   );
 
-  const handleSlotPress = useCallback(
-    (slot: SlotRole) => {
-      if (isAnimating) return;
-      if (slides.length <= 1) {
+  const handleSlidePress = useCallback(
+    (slideIndex: number, offset: number) => {
+      if (isAnimating || isDragging) return;
+      if (slideCount <= 1) {
         openDetails(slides[0] ?? "deadline");
         return;
       }
-      if (slot === "center") {
-        openDetails(slides[safeIndex]!);
+      if (Math.abs(offset) < 0.35) {
+        openDetails(slides[slideIndex]!);
         return;
       }
-      beginAnimate();
-      setActiveIndex(
-        adjacentIndex(safeIndex, slot === "left" ? -1 : 1, slides.length),
-      );
+      const direction = offset < 0 ? -1 : 1;
+      const target = adjacentIndex(committedIndex, direction, slideCount);
+      animateDisplayTo(target, direction);
     },
-    [beginAnimate, isAnimating, openDetails, safeIndex, slides],
+    [
+      animateDisplayTo,
+      committedIndex,
+      isAnimating,
+      isDragging,
+      openDetails,
+      slideCount,
+      slides,
+    ],
   );
 
   const onTouchStart = useCallback((e: React.TouchEvent) => {
+    cancelAnimation();
     touchStartX.current = e.touches[0]?.clientX ?? 0;
     touchStartY.current = e.touches[0]?.clientY ?? 0;
-    touchStartDragOffset.current = dragOffsetRef.current;
+    touchStartDisplayIndex.current = displayIndexRef.current;
     isDraggingRef.current = false;
     setIsDragging(false);
-  }, []);
+  }, [cancelAnimation]);
 
   const onTouchMove = useCallback(
     (e: React.TouchEvent) => {
-      if (slides.length <= 1) return;
+      if (slideCount <= 1) return;
       const x = e.touches[0]?.clientX ?? 0;
       const y = e.touches[0]?.clientY ?? 0;
       const dx = x - touchStartX.current;
@@ -165,32 +237,26 @@ export function WidgetCoverCarousel({
       if (Math.abs(dx) < Math.abs(dy)) return;
       isDraggingRef.current = true;
       setIsDragging(true);
-      setDragOffsetPx(touchStartDragOffset.current + dx);
+      setDisplayIndex(touchStartDisplayIndex.current - dx / stridePx);
     },
-    [slides.length],
+    [slideCount, stridePx],
   );
 
   const onTouchEnd = useCallback(
     (e: React.TouchEvent) => {
-      if (slides.length <= 1) return;
+      if (slideCount <= 1) return;
       const endX = e.changedTouches[0]?.clientX ?? 0;
       const endY = e.changedTouches[0]?.clientY ?? 0;
       const dx = endX - touchStartX.current;
       const dy = endY - touchStartY.current;
 
       if (isDraggingRef.current) {
-        const dragDelta = dragOffsetRef.current - touchStartDragOffset.current;
-        if (Math.abs(dragDelta) < 40) {
-          beginAnimate();
-          setDragOffsetPx(0);
-        } else {
-          const dir = swipeDirection(dragDelta);
-          if (dir != null) {
-            beginAnimate();
-            setActiveIndex(adjacentIndex(safeIndex, dir, slides.length));
-          }
-          setDragOffsetPx(0);
-        }
+        const dir = swipeDirection(dx);
+        const target =
+          dir == null
+            ? committedIndex
+            : adjacentIndex(committedIndex, dir, slideCount);
+        animateDisplayTo(target, dir ?? undefined);
         isDraggingRef.current = false;
         setIsDragging(false);
         return;
@@ -199,29 +265,13 @@ export function WidgetCoverCarousel({
       if (Math.abs(dx) < Math.abs(dy)) return;
       const dir = swipeDirection(dx);
       if (dir == null) return;
-      beginAnimate();
-      setActiveIndex(adjacentIndex(safeIndex, dir, slides.length));
+      animateDisplayTo(adjacentIndex(committedIndex, dir, slideCount), dir);
     },
-    [beginAnimate, safeIndex, slides.length],
+    [animateDisplayTo, committedIndex, slideCount],
   );
 
-  const disableTransition = isDragging || reducedMotion;
+  const placements = buildSlidePlacements(displayIndex, slideCount);
   const motionActive = isDragging || isAnimating;
-
-  const slotClass: Record<SlotRole, string> = {
-    left: cover.slotLeft,
-    center: cover.slotCenter,
-    right: cover.slotRight,
-  };
-
-  const slotEntries: { role: SlotRole; slideIndex: number }[] =
-    slides.length <= 1
-      ? [{ role: "center", slideIndex: centerIdx }]
-      : [
-          { role: "left", slideIndex: leftIdx },
-          { role: "center", slideIndex: centerIdx },
-          { role: "right", slideIndex: rightIdx },
-        ];
 
   return (
     <div
@@ -236,38 +286,34 @@ export function WidgetCoverCarousel({
     >
       <div ref={viewportRef} className={cover.viewport}>
         <div className={cover.track}>
-          {slotEntries.map(({ role, slideIndex }) => {
-            const baseOffset = SLOT_BASE_OFFSET[role];
-            const effectiveOffset = slotOffset(baseOffset, dragFraction);
-            const motion = coverFlowTransform(effectiveOffset, {
-              reducedMotion,
-            });
-            const focus = focusFromOffset(effectiveOffset);
+          {placements.map(({ slideIndex, offset, key }) => {
+            const motion = coverFlowTransform(offset, { reducedMotion });
+            const focus = focusFromOffset(offset);
             const slideId = slides[slideIndex]!;
+            const isCenter = Math.abs(offset) < 0.35;
 
             return (
               <div
-                key={role}
-                className={`${slides.length <= 1 ? cover.slotSingle : slotClass[role]}${
-                  disableTransition ? "" : ` ${cover.slideMotion}`
+                key={key}
+                className={`${cover.slideWrapper}${
+                  isDragging || reducedMotion ? "" : ` ${cover.slideMotion}`
                 }${motionActive ? " will-change-transform" : ""}`}
                 style={{
+                  width: slideWidthPx,
                   height: motion.height,
+                  left: `calc(50% + ${offset * stridePx}px)`,
                   opacity: motion.opacity,
                   zIndex: motion.zIndex,
                   transform: motion.transform,
-                  transition: disableTransition ? "none" : undefined,
+                  transition: isDragging || reducedMotion ? "none" : undefined,
                 }}
-                onTransitionEnd={
-                  role === "center" ? () => setIsAnimating(false) : undefined
-                }
               >
                 <button
                   type="button"
                   className={cover.slideButton}
                   style={{ height: motion.height }}
-                  aria-current={role === "center" ? "true" : undefined}
-                  onClick={() => handleSlotPress(role)}
+                  aria-current={isCenter ? "true" : undefined}
+                  onClick={() => handleSlidePress(slideIndex, offset)}
                 >
                   {renderSlide(slideId, focus)}
                 </button>

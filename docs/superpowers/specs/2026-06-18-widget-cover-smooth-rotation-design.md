@@ -1,7 +1,7 @@
 # Widget Cover Flow Smooth Rotation — Design
 
 **Date:** 2026-06-18  
-**Status:** Approved (design)  
+**Status:** Implemented  
 **Scope:** Fix stiff widget carousel animations on tap, swipe, and drag-release by replacing fixed-slot content swaps with a unified **floating `displayIndex`** model and per-slide circular positioning. Preserves triple-peek layout (no side gutters) from [`2026-06-18-widget-cover-triple-slot-design.md`](./2026-06-18-widget-cover-triple-slot-design.md).
 
 **References:** `components/home/widgets/WidgetCoverCarousel.tsx` · `lib/home/widgetCoverMotion.ts` · `lib/home/widgetCarouselSlots.ts`

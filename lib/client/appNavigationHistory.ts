@@ -1,4 +1,5 @@
 import type { SettingsViewState } from "@/components/settings/settingsViewState";
+import { isStandaloneDisplayMode } from "@/lib/pwa/deferredInstall";
 
 export const SNAP_NAV_STATE_KEY = "snap1099";
 
@@ -120,6 +121,20 @@ export function pushNavScreen(key: SnapNavKey): void {
 export function replaceNavScreen(key: SnapNavKey): void {
   if (typeof window === "undefined") return;
   history.replaceState({ [SNAP_NAV_STATE_KEY]: encodeNavKey(key) }, "");
+}
+
+export function restoreHomeNavTrap(): void {
+  if (typeof window === "undefined") return;
+  history.pushState({ [SNAP_NAV_STATE_KEY]: "home" }, "");
+}
+
+export function confirmAppExit(): void {
+  if (typeof window === "undefined") return;
+  navigateBackScreen();
+  window.setTimeout(() => navigateBackScreen(), 0);
+  if (isStandaloneDisplayMode()) {
+    window.close();
+  }
 }
 
 export function navigateBackScreen(): void {

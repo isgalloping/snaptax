@@ -159,6 +159,12 @@ export type UserCopy = {
       message: string;
       learnMore: string;
     };
+    exitConfirm: {
+      title: string;
+      body: string;
+      stay: string;
+      exit: string;
+    };
     widgets: {
       deadline: {
         label: string;

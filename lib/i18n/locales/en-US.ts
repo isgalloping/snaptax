@@ -181,6 +181,12 @@ export const EN_US_COPY: UserCopy = {
         message: "IRS never sees your receipts.",
         learnMore: "Learn more",
       },
+      exitConfirm: {
+        title: "Leave Snap1099?",
+        body: "Your receipts stay saved on this device.",
+        stay: "Stay",
+        exit: "Exit",
+      },
       widgets: {
         deadline: {
           label: "Next Deadline",

@@ -185,6 +185,12 @@ export const DE_DE_COPY: UserCopy = {
       message: "Die IRS sieht Ihre Belege nie.",
       learnMore: "Mehr erfahren",
     },
+    exitConfirm: {
+      title: "Snap1099 verlassen?",
+      body: "Ihre Belege bleiben auf diesem Gerät gespeichert.",
+      stay: "Bleiben",
+      exit: "Beenden",
+    },
     widgets: {
       deadline: {
         label: "Nächste Frist",

@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { useUserCopy } from "@/components/i18n/I18nProvider";
+import { useSwipeBack } from "@/lib/client/useSwipeBack";
 
 interface OverlayShellProps {
   title: string;
@@ -12,9 +13,13 @@ interface OverlayShellProps {
 
 export function OverlayShell({ title, onBack, children, footer }: OverlayShellProps) {
   const back = useUserCopy().home.overlays.back;
+  const swipeRef = useSwipeBack({ onBack });
 
   return (
-    <div className="absolute inset-0 z-50 flex flex-col bg-black text-white">
+    <div
+      ref={swipeRef}
+      className="absolute inset-0 z-50 flex flex-col bg-black text-white"
+    >
       <header className="flex shrink-0 items-center border-b-4 border-yellow-500 bg-zinc-900 p-4">
         <button
           type="button"

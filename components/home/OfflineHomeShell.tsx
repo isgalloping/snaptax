@@ -158,8 +158,6 @@ export function OfflineHomeShell() {
         showSettings={false}
       />
 
-      <TrustBar />
-
       <div className="relative shrink-0 px-4 pt-0 pb-1.5">
         {onboardingStatus === "stage_1" && <SnapTooltip />}
         <div className="relative w-full">
@@ -175,6 +173,8 @@ export function OfflineHomeShell() {
           />
         </div>
       </div>
+
+      <TrustBar />
 
       <div className="flex min-h-0 flex-1 flex-col">
         <ReceiptList

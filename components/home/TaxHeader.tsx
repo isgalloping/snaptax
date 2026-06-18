@@ -63,7 +63,7 @@ export function TaxHeader({
       : `${receiptCount} ${copy.receiptPlural}`;
 
   return (
-    <header className="relative min-h-[132px] max-h-[24vh] shrink-0 overflow-hidden">
+    <header className="relative shrink-0 overflow-hidden">
       <div
         className="absolute inset-0 bg-cover bg-[85%_center] bg-no-repeat"
         style={{ backgroundImage: `url(${homeVisual.heroImage})` }}

@@ -2,11 +2,13 @@ import type { HomeWidgetsData } from "./computeHomeWidgets";
 
 export type WidgetPageKey = "deadline" | "missing" | "progress" | "cpa";
 
+/** Visible widgets; deadline stays center when a page has three cards. */
 export function buildWidgetPageKeys(data: HomeWidgetsData): WidgetPageKey[] {
-  const keys: WidgetPageKey[] = ["deadline"];
+  const keys: WidgetPageKey[] = [];
   if (data.missing.missing.length > 0) {
     keys.push("missing");
   }
+  keys.push("deadline");
   keys.push("progress");
   if (data.showCpaReady) {
     keys.push("cpa");

@@ -1067,8 +1067,6 @@ export function HomeScreen() {
         exportError={taxExport.exportError}
       />
 
-      <TrustBar onLearnMore={() => setHomeOverlay("privacy-trust")} />
-
       <div className="relative shrink-0 px-4 pb-1.5 pt-0">
         {onboardingStatus === "stage_1" && <SnapTooltip />}
         <div className="relative w-full">
@@ -1090,6 +1088,8 @@ export function HomeScreen() {
           />
         </div>
       </div>
+
+      <TrustBar onLearnMore={() => setHomeOverlay("privacy-trust")} />
 
       {receiptNotice && (
         <p

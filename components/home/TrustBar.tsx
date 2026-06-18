@@ -13,11 +13,8 @@ export function TrustBar({ onLearnMore }: TrustBarProps) {
 
   return (
     <div
-      className="shrink-0 -mt-px border-t px-4 pb-1 pt-1"
-      style={{
-        borderColor: trustBar.divider,
-        background: trustBar.heroFade,
-      }}
+      className="shrink-0 border-t bg-black px-4 pb-1 pt-1"
+      style={{ borderColor: trustBar.divider }}
     >
       <div className="flex min-h-11 items-center gap-2">
         <span

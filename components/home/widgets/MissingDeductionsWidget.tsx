@@ -31,7 +31,7 @@ export function MissingDeductionsWidget({ data, onReview }: MissingDeductionsWid
       className={`${card} flex flex-col ${visual.bg} ${visual.border} text-left transition-transform active:scale-[0.98]`}
       role="listitem"
     >
-      <p className={`text-[9px] font-bold uppercase tracking-wider leading-none ${visual.accent}`}>
+      <p className={`text-xs font-semibold leading-snug ${visual.accent}`}>
         {copy.label}
       </p>
       <p className="mt-auto line-clamp-2 text-lg font-black leading-tight text-white">

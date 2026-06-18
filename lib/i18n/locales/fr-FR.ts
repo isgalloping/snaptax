@@ -18,10 +18,14 @@ export const FR_FR_COPY: UserCopy = {
     manualSheetLead:
       "Votre navigateur ne peut pas installer automatiquement — suivez ces étapes :",
     manualGotIt: "Compris",
+    installWebApkLead:
+      "Utilisez Installer l'application — pas un raccourci favori. Snap1099 s'ouvre en plein écran depuis l'écran d'accueil.",
+    launchFromHomeHint:
+      "Ouvrez Snap1099 depuis l'icône de l'écran d'accueil, pas dans Chrome.",
+    launchFromHomeGotIt: "Compris",
     manualSteps: {
       chromiumAndroid: [
-        "Appuyez sur le menu ⋮ (en haut à droite de Chrome).",
-        'Appuyez sur « Installer l\'application » ou « Ajouter à l\'écran d\'accueil ».',
+        "Appuyez sur ⋮ (en haut à droite de Chrome), puis sur « Installer l'application » (pas un raccourci).",
         "Confirmez — Snap1099 s'ouvre depuis votre écran d'accueil comme une app native.",
       ],
       chromiumDesktop: [
@@ -168,6 +172,7 @@ export const FR_FR_COPY: UserCopy = {
       receiptBlurry: "Reçu flou",
       needAction: "Action requise",
       resnap: "Reprendre",
+      delete: "Supprimer",
       unknownMerchant: "Commerçant inconnu",
       duplicateReceipt: "Ce reçu est déjà dans votre liste.",
       status: {

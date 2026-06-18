@@ -69,6 +69,11 @@ export function InstallManualSheet({ open, onClose }: InstallManualSheetProps) {
         <p className="mt-2 text-sm text-zinc-400">
           {copy.manualSheetLead}
         </p>
+        {getInstallPlatform() === "chromium-android" && (
+          <p className="mt-3 text-sm font-bold text-yellow-400">
+            {copy.installWebApkLead}
+          </p>
+        )}
         <ol className="mt-4 list-decimal space-y-3 pl-5 text-sm font-bold text-zinc-200">
           {steps.map((step) => (
             <li key={step}>{step}</li>

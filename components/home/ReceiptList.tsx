@@ -21,6 +21,7 @@ interface ReceiptListProps {
   onSelect: (receipt: Receipt) => void;
   onResnap: (id: string) => void;
   onRetrySync: (id: string) => void;
+  onDelete: (id: string) => void;
   onSyncClick?: () => void;
   syncing?: boolean;
   syncDisabled?: boolean;
@@ -38,6 +39,7 @@ export function ReceiptList({
   onSelect,
   onResnap,
   onRetrySync,
+  onDelete,
   onSyncClick,
   syncing = false,
   syncDisabled = false,
@@ -104,6 +106,7 @@ export function ReceiptList({
               onSelect={onSelect}
               onResnap={onResnap}
               onRetrySync={onRetrySync}
+              onDelete={onDelete}
             />
           ))
         )}

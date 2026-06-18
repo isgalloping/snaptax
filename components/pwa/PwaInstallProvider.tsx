@@ -29,6 +29,7 @@ import {
 } from "./pwaInstallContext";
 import { InstallManualSheet } from "./InstallManualSheet";
 import { InstallPrompt } from "./InstallPrompt";
+import { LaunchFromHomeHint } from "./LaunchFromHomeHint";
 
 function useInstallUiState(): PwaInstallContextValue {
   const [mode, setMode] = useState<InstallUiMode>("none");
@@ -181,6 +182,7 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
   return (
     <PwaInstallContext.Provider value={value}>
       {children}
+      <LaunchFromHomeHint />
       <InstallPrompt />
       <InstallManualSheet
         open={value.manualSheetOpen}

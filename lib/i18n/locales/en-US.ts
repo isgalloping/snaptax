@@ -17,10 +17,14 @@ export const EN_US_COPY: UserCopy = {
       manualSheetLead:
         "Your browser can't install automatically — follow these steps:",
       manualGotIt: "Got it",
+      installWebApkLead:
+        "Use Install app — not a bookmark shortcut. Snap1099 opens full-screen from your home screen.",
+      launchFromHomeHint:
+        "Open Snap1099 from your home screen icon, not inside Chrome.",
+      launchFromHomeGotIt: "Got it",
       manualSteps: {
         chromiumAndroid: [
-          "Tap the ⋮ menu (top-right of Chrome).",
-          'Tap "Install app" or "Add to Home screen".',
+          'Tap the ⋮ menu (top-right of Chrome), then tap "Install app" (not a shortcut).',
           "Confirm — Snap1099 opens from your home screen like a native app.",
         ],
         chromiumDesktop: [
@@ -164,6 +168,7 @@ export const EN_US_COPY: UserCopy = {
         receiptBlurry: "Receipt Blurry",
         needAction: "Need Action",
         resnap: "Resnap",
+        delete: "Delete",
         unknownMerchant: "Unknown merchant",
         duplicateReceipt: "This receipt is already in your list.",
         status: {

@@ -1,8 +1,10 @@
 # Swipe-Back Navigation — Design
 
 **Date:** 2026-06-18  
-**Status:** Approved (design)  
+**Status:** Superseded by `2026-06-19-app-navigation-history-design.md` for back behavior  
 **Scope:** Bidirectional horizontal swipe to go back in full-screen sub-flows; reuse existing BACK handlers; no navigation stack.
+
+> **Note (2026-06-19):** Swipe gesture rules here remain valid. Back execution must use History sync per `2026-06-19-app-navigation-history-design.md` so system back / edge swipe does not exit the PWA.
 
 ## Summary
 

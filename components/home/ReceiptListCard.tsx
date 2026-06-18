@@ -1,6 +1,6 @@
 "use client";
 
-import type { ComponentProps } from "react";
+import type { ComponentProps, MouseEvent } from "react";
 import type { Receipt } from "@/lib/types";
 import {
   formatLocalDate,
@@ -28,6 +28,7 @@ interface ReceiptListCardProps {
   onSelect: (receipt: Receipt) => void;
   onResnap: (id: string) => void;
   onRetrySync: (id: string) => void;
+  onDelete: (id: string) => void;
 }
 
 function listSubtitle(receipt: Receipt, contextLabel: string): string {
@@ -69,6 +70,24 @@ function CardShell({
   );
 }
 
+function ListDeleteButton({
+  label,
+  onClick,
+}: {
+  label: string;
+  onClick: (event: MouseEvent<HTMLButtonElement>) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="shrink-0 min-h-12 min-w-16 rounded-md bg-red-600 px-2.5 text-[10px] font-black uppercase tracking-wide text-white active:scale-95"
+    >
+      {label}
+    </button>
+  );
+}
+
 export function ReceiptListCard({
   receipt,
   syncStuck = false,
@@ -77,11 +96,17 @@ export function ReceiptListCard({
   onSelect,
   onResnap,
   onRetrySync,
+  onDelete,
 }: ReceiptListCardProps) {
   const copy = useUserCopy().home.receiptList;
   const region = receipt.dataRegion ?? "us";
   const timeZone = clientTimeZone();
   const listDate = formatLocalDate(receipt.timestamp, timeZone, region);
+
+  const handleDelete = (event: MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    onDelete(receipt.id);
+  };
 
   if (receipt.isOnboardingDemo && receipt.status === "processing") {
     return (
@@ -123,6 +148,7 @@ export function ReceiptListCard({
           <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
             {copy.photoMissingTitle}
           </span>
+          <ListDeleteButton label={copy.delete} onClick={handleDelete} />
           <ChevronRightIcon className="h-5 w-5 shrink-0 text-zinc-500" />
         </CardShell>
       );
@@ -152,8 +178,9 @@ export function ReceiptListCard({
             {listSubtitle(receipt, contextLabel)}
           </p>
         </div>
-        <div className="flex shrink-0 items-center gap-0.5">
+        <div className="flex shrink-0 items-center gap-1">
           <StatusPill variant={pill} />
+          <ListDeleteButton label={copy.delete} onClick={handleDelete} />
           <ChevronRightIcon className="h-5 w-5 text-zinc-500" />
         </div>
       </CardShell>
@@ -189,10 +216,11 @@ export function ReceiptListCard({
             e.stopPropagation();
             onResnap(receipt.id);
           }}
-          className="shrink-0 rounded-md bg-red-600 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-white active:scale-95"
+          className="shrink-0 min-h-12 rounded-md bg-red-600 px-2.5 text-[10px] font-black uppercase tracking-wide text-white active:scale-95"
         >
           {copy.resnap}
         </button>
+        <ListDeleteButton label={copy.delete} onClick={handleDelete} />
       </div>
     );
   }

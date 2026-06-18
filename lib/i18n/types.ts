@@ -15,6 +15,9 @@ export type UserCopy = {
     manualSheetTitle: string;
     manualSheetLead: string;
     manualGotIt: string;
+    installWebApkLead: string;
+    launchFromHomeHint: string;
+    launchFromHomeGotIt: string;
     manualSteps: {
       chromiumAndroid: string[];
       chromiumDesktop: string[];
@@ -143,6 +146,7 @@ export type UserCopy = {
       receiptBlurry: string;
       needAction: string;
       resnap: string;
+      delete: string;
       unknownMerchant: string;
       duplicateReceipt: string;
       status: {

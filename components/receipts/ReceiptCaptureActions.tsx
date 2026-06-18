@@ -20,7 +20,7 @@ export function ReceiptCaptureActions({
   onResnap,
 }: ReceiptCaptureActionsProps) {
   const copy = useUserCopy().receiptDetail;
-  const { size, delete: deleteCls, resnap } = homeVisual.reviewControl;
+  const { size, deleteSize, delete: deleteCls, resnap } = homeVisual.reviewControl;
 
   const btn = (
     label: string,
@@ -28,6 +28,7 @@ export function ReceiptCaptureActions({
     className: string,
     icon: ReactNode,
     onClick: () => void,
+    dimensionClass: string = size,
   ) => (
     <div className="flex flex-col items-center gap-1">
       <button
@@ -38,7 +39,7 @@ export function ReceiptCaptureActions({
         }}
         disabled={busy}
         aria-label={ariaLabel}
-        className={`flex ${size} items-center justify-center transition-transform active:scale-95 disabled:opacity-40 ${className}`}
+        className={`flex ${dimensionClass} items-center justify-center transition-transform active:scale-95 disabled:opacity-40 ${className}`}
       >
         {icon}
       </button>
@@ -58,10 +59,11 @@ export function ReceiptCaptureActions({
             copy.delete,
             copy.deleteReceipt,
             deleteCls,
-            <span className="text-xl text-white" aria-hidden>
+            <span className="text-2xl text-white" aria-hidden>
               🗑
             </span>,
             onDelete,
+            deleteSize,
           )}
         {showResnap &&
           onResnap &&

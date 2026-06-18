@@ -18,11 +18,15 @@ export const DE_DE_COPY: UserCopy = {
     manualSheetLead:
       "Ihr Browser kann nicht automatisch installieren — folgen Sie diesen Schritten:",
     manualGotIt: "Verstanden",
+    installWebApkLead:
+      'Wählen Sie „App installieren" — kein Lesezeichen-Shortcut. Snap1099 öffnet sich vollständig vom Startbildschirm.',
+    launchFromHomeHint:
+      "Öffnen Sie Snap1099 über das Startbildschirm-Symbol, nicht in Chrome.",
+    launchFromHomeGotIt: "Verstanden",
     manualSteps: {
       chromiumAndroid: [
-        "Tippen Sie auf das ⋮-Menü (oben rechts in Chrome).",
-        'Tippen Sie auf „App installieren" oder „Zum Startbildschirm hinzufügen".',
-        "Bestätigen — Snap1099 öffnet sich vom Startbildschirm wie eine native App.",
+        'Tippen Sie auf ⋮ (oben rechts in Chrome), dann auf „App installieren" (kein Shortcut).',
+        'Bestätigen — Snap1099 öffnet sich vom Startbildschirm wie eine native App.',
       ],
       chromiumDesktop: [
         "Tippen Sie auf das ⋮-Menü (oben rechts in Chrome oder Edge).",
@@ -168,6 +172,7 @@ export const DE_DE_COPY: UserCopy = {
       receiptBlurry: "Beleg unscharf",
       needAction: "Aktion erforderlich",
       resnap: "Erneut fotografieren",
+      delete: "Löschen",
       unknownMerchant: "Unbekannter Händler",
       duplicateReceipt: "Dieser Beleg ist bereits in Ihrer Liste.",
       status: {

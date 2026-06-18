@@ -2,7 +2,9 @@
 
 import { useUserCopy } from "@/components/i18n/I18nProvider";
 import type { GoogleUser } from "@/lib/client/authStorage";
+import { maskEmailForDisplay } from "@/lib/client/maskEmail";
 import { displayInitials } from "@/lib/user/displayInitials";
+import { seasonCoverageEndLabel } from "@/lib/settings/seasonCoverage";
 
 interface SettingsAccountBlockProps {
   googleUser: GoogleUser | null;
@@ -46,6 +48,8 @@ export function SettingsAccountBlock({
     );
   }
 
+  const coverageDate = seasonCoverageEndLabel(seasonLabel);
+
   return (
     <div className="mb-6 flex items-center gap-4 transition-all duration-300">
       <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-yellow-500 text-lg font-black text-black">
@@ -53,10 +57,18 @@ export function SettingsAccountBlock({
       </div>
       <div className="min-w-0">
         <p className="truncate text-base font-black text-white">{googleUser.name}</p>
+        <p className="truncate text-sm font-bold text-zinc-400">
+          {maskEmailForDisplay(googleUser.email)}
+        </p>
         {seasonPaid && (
-          <p className="text-sm font-bold text-yellow-400">
-            {seasonLabel} {copy.taxSeasonPaid}
-          </p>
+          <>
+            <p className="text-sm font-bold text-yellow-400">
+              {seasonLabel} {copy.taxSeasonPaid}
+            </p>
+            <p className="text-xs font-bold text-zinc-500">
+              {copy.coverageEnds.replace("{date}", coverageDate)}
+            </p>
+          </>
         )}
       </div>
     </div>

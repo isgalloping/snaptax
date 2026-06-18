@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { useUserCopy } from "@/components/i18n/I18nProvider";
+import { ReferralLearnSheet } from "@/components/settings/ReferralLearnSheet";
 import {
   buildAppSharePayload,
   buildFacebookShareUrl,
@@ -11,6 +12,8 @@ import {
   shareAppViaNative,
 } from "@/lib/client/shareApp";
 import { settingsVisual } from "@/lib/ui/settingsVisual";
+
+const AVATAR_INITIALS = ["JD", "MK", "RS"] as const;
 
 function WhatsAppIcon() {
   return (
@@ -56,6 +59,7 @@ const shareTileClass = `flex min-h-14 flex-col items-center justify-center gap-1
 export function ShareAppSection() {
   const copy = useUserCopy().settings.share;
   const [notice, setNotice] = useState<string | null>(null);
+  const [learnOpen, setLearnOpen] = useState(false);
 
   const buildPayload = useCallback(
     () =>
@@ -92,7 +96,27 @@ export function ShareAppSection() {
 
   return (
     <section className={`mb-6 ${settingsVisual.referralCard}`}>
-      <p className="mb-4 text-sm font-bold text-white">{copy.cta}</p>
+      <p className="mb-3 text-sm font-bold text-white">{copy.cta}</p>
+      <div className="mb-4 flex items-center gap-2">
+        {AVATAR_INITIALS.map((initials, index) => (
+          <div
+            key={initials}
+            className={`flex h-10 w-10 items-center justify-center rounded-full border-2 border-zinc-700 bg-zinc-800 text-xs font-black text-zinc-300 ${
+              index > 0 ? "-ml-3" : ""
+            }`}
+            aria-hidden
+          >
+            {initials}
+          </div>
+        ))}
+      </div>
+      <button
+        type="button"
+        onClick={() => setLearnOpen(true)}
+        className="mb-4 text-xs font-bold text-yellow-400 underline transition-transform active:scale-95"
+      >
+        {copy.learnHow}
+      </button>
       <div className="grid grid-cols-3 gap-2">
         <button type="button" onClick={handleWhatsApp} className={shareTileClass}>
           <WhatsAppIcon />
@@ -113,6 +137,7 @@ export function ShareAppSection() {
           {notice}
         </p>
       )}
+      {learnOpen && <ReferralLearnSheet onClose={() => setLearnOpen(false)} />}
     </section>
   );
 }

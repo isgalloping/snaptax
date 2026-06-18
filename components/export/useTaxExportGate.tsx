@@ -17,6 +17,7 @@ import { PaywallSheet } from "@/components/settings/PaywallSheet";
 import { ExportEngineSheet } from "@/components/export/ExportEngineSheet";
 import { useI18n } from "@/components/i18n/I18nProvider";
 import { hasExportableReceipts } from "@/lib/tax/exportGate";
+import { markExportBlockedBanner } from "@/lib/settings/exportSampleState";
 
 interface UseTaxExportGateOptions {
   receipts: Receipt[];
@@ -54,6 +55,7 @@ export function useTaxExportGate({
   const [exportEmptyTipKey, setExportEmptyTipKey] = useState(0);
   const [paywallExporting, setPaywallExporting] = useState(false);
   const [preparingExport, setPreparingExport] = useState(false);
+  const [exportBlockedTick, setExportBlockedTick] = useState(0);
 
   const clearError = () => setErrorMessage(null);
 
@@ -160,6 +162,10 @@ export function useTaxExportGate({
         <PaywallSheet
           seasonLabel={currentSeason}
           userId={googleUser.email}
+          onDismissWithoutPay={() => {
+            markExportBlockedBanner();
+            setExportBlockedTick((tick) => tick + 1);
+          }}
           onClose={() => setShowPaywall(false)}
           onPaid={async () => {
             onSeasonPaid();
@@ -205,6 +211,7 @@ export function useTaxExportGate({
     clearExportEmptyTip,
     paywallExporting,
     preparingExport,
+    exportBlockedTick,
     overlays,
   };
 }

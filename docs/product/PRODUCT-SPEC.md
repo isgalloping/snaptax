@@ -133,7 +133,7 @@ Privacy Policy · Terms · **Data storage（美国）** · legal@snap1099.com ·
 ├── [2] 税务资产总览（Est. Tax Saved · Receipts Tracked · Total Deductions；数据来自 HomeScreen）
 ├── [3] 通栏 Export IRS Tax Pack ($49)（无 section 标题；全宽黄 CTA）
 ├── [4] Share & Referral（1 Year Free 文案 · 灰卡片 · 无后端计数/权益）
-├── [5] Preferences ▾（默认折叠：Language · Industry · Notifications coming soon · Help · Privacy & Data · Delete Account）
+├── [5] Preferences 列表（Language · Industry · Notifications · Privacy & Security Center → viewState 子页）
 └── [6] Sign out（页底全宽按钮，仅已登录；已从账户区移出）
 ```
 
@@ -141,10 +141,10 @@ Privacy Policy · Terms · **Data storage（美国）** · legal@snap1099.com ·
 
 | 入口 | Ghost（未登录） | 已登录未付费 | 已登录已付费 |
 |------|----------------|-------------|-------------|
-| **Settings Export** | **D 方案快车道**：`downloadOnboardingSampleCsv` 样例 CSV；**不弹** Google Sheet / Paywall | 现有 `useTaxExportGate` → Paywall | Export Again |
+| **Settings Export** | **v3 Path A**：样例中间页 → Download CSV → Completed → VIEW STATUS 回主屏 + 绿色状态条 | `useTaxExportGate` → Paywall（天平 UI）；Maybe later → 红色 Export blocked 横幅 | Export Again |
 | **Home Export**（TaxHeader · CPA Ready） | **不变** — 仍走完整 export 门控（硬拦截 Google / Paywall） | 同上 | 同上 |
 
-> 设计：[2026-06-17-settings-redesign-design.md](../superpowers/specs/2026-06-17-settings-redesign-design.md) · PRD：`docs/prd/settings.md`
+> 设计：[2026-06-17-settings-v3-redesign-design.md](../superpowers/specs/2026-06-17-settings-v3-redesign-design.md) · PRD：`docs/prd/settings.md`
 
 ### 3.1 连拍相机与 Post-Review
 

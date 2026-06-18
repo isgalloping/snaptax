@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Industry } from "@/lib/types";
 import type { GoogleUser } from "@/lib/client/authStorage";
 import type { GoogleAuthResponse } from "@/lib/client/authApi";
 import { saveIndustry } from "@/lib/client/authStorage";
 import { apiFetch } from "@/lib/client/ghostClient";
+import { downloadOnboardingSampleCsv } from "@/lib/export/downloadOnboardingSampleCsv";
+import { ensureOnboardingDemoDone } from "@/lib/onboarding/demoReceipt";
 import {
   GOOGLE_SOFT_DISMISSED_KEY,
   readOnboardFlag,
@@ -14,15 +16,30 @@ import {
 } from "@/lib/onboarding/onboardingStorage";
 import { GoogleSignInSheet, type GoogleSignInMode } from "@/components/auth/GoogleSignInSheet";
 import { useI18n } from "@/components/i18n/I18nProvider";
+import { ExportCompletedPage } from "@/components/settings/export/ExportCompletedPage";
+import { SampleExportPage } from "@/components/settings/export/SampleExportPage";
+import { ExportStatusBanner } from "@/components/settings/ExportStatusBanner";
 import { SettingsAccountBlock } from "@/components/settings/SettingsAccountBlock";
-import { SettingsPreferencesSection } from "@/components/settings/SettingsPreferencesSection";
+import { SettingsHeader } from "@/components/settings/SettingsHeader";
+import { SettingsPreferencesList } from "@/components/settings/SettingsPreferencesList";
+import type { SettingsViewState } from "@/components/settings/settingsViewState";
 import { ShareAppSection } from "@/components/settings/ShareAppSection";
 import { TaxExportSection } from "@/components/settings/TaxExportSection";
 import {
   TaxOverviewPanel,
   type SettingsTaxStats,
 } from "@/components/settings/TaxOverviewPanel";
+import { IndustrySubPage } from "@/components/settings/subpages/IndustrySubPage";
+import { LanguageSubPage } from "@/components/settings/subpages/LanguageSubPage";
+import { NotificationsSubPage } from "@/components/settings/subpages/NotificationsSubPage";
+import { PrivacyCenterSubPage } from "@/components/settings/subpages/PrivacyCenterSubPage";
 import { isSignOutOfflineError } from "@/lib/client/signOutFlow";
+import {
+  dismissExportBlockedBanner,
+  isExportBlockedBannerActive,
+  isSampleExportDone,
+  markSampleExportDone,
+} from "@/lib/settings/exportSampleState";
 
 interface SettingsScreenProps {
   industry: Industry | null;
@@ -50,6 +67,9 @@ interface SettingsScreenProps {
   onSoftGoogleSheetConsumed?: () => void;
   onSoftGuideDismiss?: () => void;
   skipSoftGoogleSheet?: boolean;
+  exportBlockedTick?: number;
+  onboardingAha?: boolean;
+  onSampleExportAhaComplete?: () => Promise<void>;
 }
 
 export function SettingsScreen({
@@ -77,8 +97,12 @@ export function SettingsScreen({
   onSoftGoogleSheetConsumed,
   onSoftGuideDismiss,
   skipSoftGoogleSheet = false,
+  exportBlockedTick = 0,
+  onboardingAha = false,
+  onSampleExportAhaComplete,
 }: SettingsScreenProps) {
   const { copy } = useI18n();
+  const [viewState, setViewState] = useState<SettingsViewState>("main");
   const [googleSheet, setGoogleSheet] = useState<GoogleSignInMode | null>(null);
   const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
@@ -87,7 +111,15 @@ export function SettingsScreen({
   const [isOnline, setIsOnline] = useState(
     () => typeof navigator !== "undefined" && navigator.onLine,
   );
+  const [sampleDownloading, setSampleDownloading] = useState(false);
+  const [showSampleReady, setShowSampleReady] = useState(false);
+  const [showExportBlocked, setShowExportBlocked] = useState(false);
   const firstVisitHandled = useRef(false);
+
+  useEffect(() => {
+    setShowSampleReady(isSampleExportDone());
+    setShowExportBlocked(isExportBlockedBannerActive());
+  }, [exportBlockedTick]);
 
   useEffect(() => {
     const syncOnline = () =>
@@ -182,20 +214,188 @@ export function SettingsScreen({
     }
   };
 
+  const goToMain = useCallback(() => setViewState("main"), []);
+
+  const handleHeaderBack = () => {
+    if (viewState === "main") {
+      onBack();
+      return;
+    }
+    if (viewState === "export-completed") {
+      markSampleExportDone();
+      setShowSampleReady(true);
+      setViewState("main");
+      return;
+    }
+    setViewState("main");
+  };
+
+  const handleExportRequest = () => {
+    if (!isSignedIn) {
+      setViewState("sample-export");
+      return;
+    }
+    onRequestExport();
+  };
+
+  const handleSampleDownload = async () => {
+    setSampleDownloading(true);
+    try {
+      const demo = await ensureOnboardingDemoDone();
+      downloadOnboardingSampleCsv(demo);
+      if (onboardingAha) {
+        await onSampleExportAhaComplete?.();
+      }
+      setViewState("export-completed");
+    } finally {
+      setSampleDownloading(false);
+    }
+  };
+
+  const handleViewStatus = () => {
+    markSampleExportDone();
+    setShowSampleReady(true);
+    setViewState("main");
+  };
+
+  const handleDownloadAgain = async () => {
+    const demo = await ensureOnboardingDemoDone();
+    downloadOnboardingSampleCsv(demo);
+  };
+
+  const handleDismissExportBlocked = () => {
+    dismissExportBlockedBanner();
+    setShowExportBlocked(false);
+  };
+
+  const showRedBanner = isSignedIn && !seasonPaid && showExportBlocked;
+  const showGreenBanner = !isSignedIn && showSampleReady && !showRedBanner;
+
+  if (viewState === "language") {
+    return (
+      <>
+        <LanguageSubPage onBack={goToMain} />
+        {googleSheet && (
+          <GoogleSignInSheet
+            mode={googleSheet}
+            onClose={() => setGoogleSheet(null)}
+            onSoftDismiss={googleSheet === "soft" ? handleSoftDismiss : undefined}
+            onUserSignedIn={handleUserSignedIn}
+            onSuccess={handleGoogleSuccess}
+            onFailure={(msg) => setErrorMessage(msg)}
+          />
+        )}
+      </>
+    );
+  }
+
+  if (viewState === "industry") {
+    return (
+      <>
+        <IndustrySubPage
+          industry={industry}
+          onIndustryChange={(value) => void handleIndustryChange(value)}
+          onBack={goToMain}
+        />
+        {googleSheet && (
+          <GoogleSignInSheet
+            mode={googleSheet}
+            onClose={() => setGoogleSheet(null)}
+            onSoftDismiss={googleSheet === "soft" ? handleSoftDismiss : undefined}
+            onUserSignedIn={handleUserSignedIn}
+            onSuccess={handleGoogleSuccess}
+            onFailure={(msg) => setErrorMessage(msg)}
+          />
+        )}
+      </>
+    );
+  }
+
+  if (viewState === "notifications") {
+    return (
+      <>
+        <NotificationsSubPage onBack={goToMain} />
+        {googleSheet && (
+          <GoogleSignInSheet
+            mode={googleSheet}
+            onClose={() => setGoogleSheet(null)}
+            onSoftDismiss={googleSheet === "soft" ? handleSoftDismiss : undefined}
+            onUserSignedIn={handleUserSignedIn}
+            onSuccess={handleGoogleSuccess}
+            onFailure={(msg) => setErrorMessage(msg)}
+          />
+        )}
+      </>
+    );
+  }
+
+  if (viewState === "privacy-center") {
+    return (
+      <>
+        <PrivacyCenterSubPage
+          onBack={goToMain}
+          isSignedIn={isSignedIn}
+          onAccountDeleted={onAccountDeleted ?? onLocalDataCleared}
+        />
+        {googleSheet && (
+          <GoogleSignInSheet
+            mode={googleSheet}
+            onClose={() => setGoogleSheet(null)}
+            onSoftDismiss={googleSheet === "soft" ? handleSoftDismiss : undefined}
+            onUserSignedIn={handleUserSignedIn}
+            onSuccess={handleGoogleSuccess}
+            onFailure={(msg) => setErrorMessage(msg)}
+          />
+        )}
+      </>
+    );
+  }
+
+  if (viewState === "sample-export") {
+    return (
+      <>
+        <SampleExportPage
+          onBack={goToMain}
+          onDownload={() => void handleSampleDownload()}
+          onContinueGoogle={() => {
+            clearError();
+            setGoogleSheet("hard-export");
+          }}
+          downloading={sampleDownloading}
+        />
+        {googleSheet && (
+          <GoogleSignInSheet
+            mode={googleSheet}
+            onClose={() => setGoogleSheet(null)}
+            onUserSignedIn={handleUserSignedIn}
+            onSuccess={handleGoogleSuccess}
+            onFailure={(msg) => setErrorMessage(msg)}
+          />
+        )}
+      </>
+    );
+  }
+
+  if (viewState === "export-completed") {
+    return (
+      <>
+        <ExportCompletedPage onViewStatus={handleViewStatus} />
+        {googleSheet && (
+          <GoogleSignInSheet
+            mode={googleSheet}
+            onClose={() => setGoogleSheet(null)}
+            onUserSignedIn={handleUserSignedIn}
+            onSuccess={handleGoogleSuccess}
+            onFailure={(msg) => setErrorMessage(msg)}
+          />
+        )}
+      </>
+    );
+  }
+
   return (
     <div className="flex h-full flex-col bg-black text-white">
-      <header className="flex items-center border-b-4 border-yellow-500 bg-zinc-900 p-4">
-        <button
-          type="button"
-          onClick={onBack}
-          className="flex min-h-16 min-w-16 items-center justify-center rounded-xl border-2 border-zinc-600 bg-zinc-800 px-4 text-sm font-black uppercase tracking-wider transition-transform active:scale-95"
-        >
-          {copy.settings.back}
-        </button>
-        <h1 className="ml-4 text-lg font-black uppercase tracking-wider">
-          {copy.settings.title}
-        </h1>
-      </header>
+      <SettingsHeader onBack={handleHeaderBack} title={copy.settings.title} />
 
       <div className="flex-1 overflow-y-auto p-6">
         <SettingsAccountBlock
@@ -218,16 +418,27 @@ export function SettingsScreen({
           exportEmptyTip={exportEmptyTip}
           exportEmptyTipKey={exportEmptyTipKey}
           onExportEmptyTipDismiss={onExportEmptyTipDismiss}
-          onRequestExport={onRequestExport}
+          onRequestExport={handleExportRequest}
         />
+
+        {showRedBanner && (
+          <ExportStatusBanner
+            variant="export-blocked"
+            onDismiss={handleDismissExportBlocked}
+          />
+        )}
+        {showGreenBanner && (
+          <ExportStatusBanner
+            variant="sample-ready"
+            onDownloadAgain={() => void handleDownloadAgain()}
+          />
+        )}
 
         <ShareAppSection />
 
-        <SettingsPreferencesSection
+        <SettingsPreferencesList
           industry={industry}
-          onIndustryChange={(value) => void handleIndustryChange(value)}
-          isSignedIn={isSignedIn}
-          onAccountDeleted={onAccountDeleted ?? onLocalDataCleared}
+          onNavigate={setViewState}
         />
 
         {isSignedIn && onSignOut && (

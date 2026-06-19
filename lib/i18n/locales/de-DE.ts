@@ -290,6 +290,10 @@ export const DE_DE_COPY: UserCopy = {
     possibleMerchant: "Möglicher Händler: {merchant}",
     dateCaptured: "Aufnahmedatum: {date}",
     merchant: "Händler",
+    payer: "Zahlungspflichtiger",
+    formType: "Formularart",
+    taxYear: "Steuerjahr",
+    taxYearUnknown: "Unklar",
     totalAmount: "Gesamtbetrag",
     category: "Kategorie",
     irsLine: "IRS-Zeile",
@@ -326,6 +330,7 @@ export const DE_DE_COPY: UserCopy = {
       personalUs: "Privat (nicht abzugsfähig)",
       addedVat: "✓ Zur MwSt.-Erstattung hinzugefügt",
       addedScheduleC: "✓ Zu Schedule-C-Abzug hinzugefügt",
+      income1099: "{form}-Einkommen",
     },
   },
   paywall: {
@@ -467,10 +472,14 @@ export const DE_DE_COPY: UserCopy = {
       taxSaved: "Est. Tax Saved",
       receipts: "Receipts",
       deductions: "Deductions",
+      income: "Einkommen",
+      incomeForms: "{count} Formulare",
     },
     exportCard: {
       compatLine: "TurboTax & H&R Block kompatibel",
-      formatLine: "IRS-fertiges Excel + CSV",
+      formatLine: "TurboTax CSV · CPA-Paket · TXF",
+      snap1099Nec: "1099-NEC fotografieren",
+      snap1099K: "1099-K fotografieren",
       trustLine: "Von Tausenden Selbstständigen genutzt",
       mostPopular: "Am beliebtesten",
       price: "49 $",
@@ -817,8 +826,15 @@ export const DE_DE_COPY: UserCopy = {
     back: "← Zurück",
     generate: "Erstellen →",
     generating: "Paket wird erstellt…",
-    ready: "Bereit zum Teilen",
+    ready: "Ihr Steuerpaket ist bereit",
+    saveToPhone: "Auf Handy speichern",
     share: "Steuerpaket teilen →",
+    shareUnsupportedHint:
+      "Tippen Sie auf Auf Handy speichern, dann hängen Sie die Datei aus Downloads per E-Mail oder WhatsApp an.",
+    shareFailedHint:
+      "Teilen fehlgeschlagen. Tippen Sie stattdessen auf Auf Handy speichern.",
+    savedToPhoneHint:
+      "Auf Ihrem Handy gespeichert. Prüfen Sie Downloads zum Anhängen oder Senden.",
     yearSummary: "{year} · {amount} · {count} Belege",
     formatCsvTitle: "CSV für TurboTax / Steuersoftware",
     formatCsvHint:
@@ -840,6 +856,15 @@ export const DE_DE_COPY: UserCopy = {
     formatCpaPdfTitle: "CPA-Zusammenfassung PDF (Links zu Belegen)",
     formatCpaPdfHint:
       "IRS-konforme Zusammenfassung mit anklickbaren Links zu Ihren Belegfotos.",
+    formatTxfTitle: "TXF für Steuersoftware",
+    formatTxfHint:
+      "Buchhaltungsformat für Desktop-Steuertools (V042-Blöcke).",
+    snap1099Title: "1099-Einkommensformulare",
+    snap1099Hint:
+      "1099-NEC oder 1099-K fotografieren — im CPA-Paket unter 01_Income_Documents.",
+    snap1099NecButton: "1099-NEC →",
+    snap1099KButton: "1099-K →",
+    incomeFormsLabel: "{count} Einkommensformulare (1099)",
     turboTaxSteps: [
       "Öffnen Sie TurboTax Self-Employed → Business",
       "Wählen Sie Import / Upload expenses from CSV",

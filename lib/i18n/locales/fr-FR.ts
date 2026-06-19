@@ -290,6 +290,10 @@ export const FR_FR_COPY: UserCopy = {
     possibleMerchant: "Commerçant possible : {merchant}",
     dateCaptured: "Date de capture : {date}",
     merchant: "Commerçant",
+    payer: "Payeur",
+    formType: "Type de formulaire",
+    taxYear: "Année fiscale",
+    taxYearUnknown: "Flou",
     totalAmount: "Montant total",
     category: "Catégorie",
     irsLine: "Ligne IRS",
@@ -326,6 +330,7 @@ export const FR_FR_COPY: UserCopy = {
       personalUs: "Personnel (non déductible)",
       addedVat: "✓ Ajouté à la récupération de TVA",
       addedScheduleC: "✓ Ajouté aux déductions Schedule C",
+      income1099: "Revenu {form}",
     },
   },
   paywall: {
@@ -468,10 +473,14 @@ export const FR_FR_COPY: UserCopy = {
       taxSaved: "Est. Tax Saved",
       receipts: "Receipts",
       deductions: "Deductions",
+      income: "Revenus",
+      incomeForms: "{count} formulaires",
     },
     exportCard: {
       compatLine: "Compatible TurboTax et H&R Block",
-      formatLine: "Excel + CSV prêt pour l'IRS",
+      formatLine: "TurboTax CSV · Pack CPA · TXF",
+      snap1099Nec: "Photo 1099-NEC",
+      snap1099K: "Photo 1099-K",
       trustLine: "Utilisé par des milliers de travailleurs indépendants",
       mostPopular: "Le plus populaire",
       price: "49 $",
@@ -818,8 +827,15 @@ export const FR_FR_COPY: UserCopy = {
     back: "← Retour",
     generate: "Générer →",
     generating: "Création de votre pack…",
-    ready: "Prêt à partager",
+    ready: "Votre pack fiscal est prêt",
+    saveToPhone: "Enregistrer sur le téléphone",
     share: "Partager le pack fiscal →",
+    shareUnsupportedHint:
+      "Appuyez sur Enregistrer, puis joignez ce fichier depuis Téléchargements par e-mail ou WhatsApp.",
+    shareFailedHint:
+      "Partage impossible. Appuyez sur Enregistrer sur le téléphone.",
+    savedToPhoneHint:
+      "Enregistré sur votre téléphone. Consultez Téléchargements pour joindre ou envoyer.",
     yearSummary: "{year} · {amount} · {count} reçus",
     formatCsvTitle: "CSV pour TurboTax / logiciel fiscal",
     formatCsvHint:
@@ -841,6 +857,15 @@ export const FR_FR_COPY: UserCopy = {
     formatCpaPdfTitle: "PDF récapitulatif CPA (liens vers les reçus)",
     formatCpaPdfHint:
       "Récapitulatif conforme à l'IRS avec liens cliquables vers vos photos de reçus.",
+    formatTxfTitle: "TXF pour logiciel fiscal",
+    formatTxfHint:
+      "Format assistant comptable pour outils fiscaux (blocs V042).",
+    snap1099Title: "Formulaires 1099 (revenus)",
+    snap1099Hint:
+      "Photographiez votre 1099-NEC ou 1099-K — inclus dans le pack CPA sous 01_Income_Documents.",
+    snap1099NecButton: "1099-NEC →",
+    snap1099KButton: "1099-K →",
+    incomeFormsLabel: "{count} formulaires revenus (1099)",
     turboTaxSteps: [
       "Ouvrez TurboTax Self-Employed → Business",
       "Choisissez Import / Upload expenses from CSV",

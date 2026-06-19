@@ -38,6 +38,8 @@ export interface Receipt {
   photoMissing?: boolean;
   /** OpenAI Vision confidence 0–1; mid tier (0.5–0.69) → REVIEW bucket. */
   aiConfidence?: number;
+  /** 1099 form tax year from Vision (may differ from capture calendar year). */
+  incomeTaxYear?: number | null;
   isOnboardingDemo?: boolean;
 }
 

@@ -2,6 +2,7 @@ import { ZipArchive } from "archiver";
 import { get } from "@vercel/blob";
 import { PassThrough } from "node:stream";
 import type { ExportExpenseRow } from "@/lib/tax/exportRows";
+import type { ExportIncomeRow } from "@/lib/export/incomeDocuments";
 import { blobCommandOptions } from "@/lib/server/blob";
 
 export type CpaPackImageStats = {
@@ -22,14 +23,10 @@ export type CpaPackProgress = {
 
 const IMAGE_FETCH_CONCURRENCY = 5;
 
-function safeReceiptFilename(row: ExportExpenseRow): string {
-  const merchant = row.merchant
-    .replace(/[^a-zA-Z0-9_-]+/g, "_")
-    .replace(/^_+|_+$/g, "")
-    .slice(0, 40);
-  const datePart = row.dateIso;
-  return `${datePart}_${merchant || "receipt"}_${row.id}.jpg`;
-}
+type ImagePackRow = {
+  imagePathname: string;
+  archivePath: string;
+};
 
 async function streamToBuffer(stream: ReadableStream<Uint8Array>): Promise<Buffer> {
   const chunks: Uint8Array[] = [];
@@ -79,15 +76,29 @@ async function mapWithConcurrency<T, R>(
 }
 
 export async function buildCpaPackZip(
-  csv: string,
-  summaryText: string,
-  rows: ExportExpenseRow[],
+  detailCsv: string,
+  summaryPdf: Buffer,
+  expenseRows: ExportExpenseRow[],
+  incomeRows: ExportIncomeRow[] = [],
   onProgress?: (progress: CpaPackProgress) => void,
 ): Promise<CpaPackResult> {
   const archive = new ZipArchive({ zlib: { level: 6 } });
   const stream = new PassThrough();
   const chunks: Buffer[] = [];
-  const imageRows = rows.filter((row) => row.imagePathname);
+
+  const expenseImages: ImagePackRow[] = expenseRows
+    .filter((row) => row.imagePathname && row.receiptArchivePath)
+    .map((row) => ({
+      imagePathname: row.imagePathname!,
+      archivePath: row.receiptArchivePath,
+    }));
+  const incomeImages: ImagePackRow[] = incomeRows
+    .filter((row) => row.imagePathname && row.incomeArchivePath)
+    .map((row) => ({
+      imagePathname: row.imagePathname!,
+      archivePath: row.incomeArchivePath,
+    }));
+  const imageRows = [...incomeImages, ...expenseImages];
   let imagesIncluded = 0;
 
   const done = new Promise<Buffer>((resolve, reject) => {
@@ -98,15 +109,15 @@ export async function buildCpaPackZip(
   });
 
   archive.pipe(stream);
-  archive.append(csv, { name: "Expenses-Detail.csv" });
-  archive.append(summaryText, { name: "Summary-by-Line.txt" });
+  archive.append(summaryPdf, { name: "00_READ_ME_Summary.pdf" });
+  archive.append(detailCsv, { name: "Expenses-Detail.csv" });
 
   let completed = 0;
   const fetched = await mapWithConcurrency(
     imageRows,
     IMAGE_FETCH_CONCURRENCY,
     async (row) => {
-      const image = await fetchImageBuffer(row.imagePathname!);
+      const image = await fetchImageBuffer(row.imagePathname);
       completed += 1;
       onProgress?.({ phase: "images", completed, total: imageRows.length });
       return { row, image };
@@ -116,7 +127,7 @@ export async function buildCpaPackZip(
   for (const { row, image } of fetched) {
     if (!image) continue;
     imagesIncluded += 1;
-    archive.append(image, { name: `receipts/${safeReceiptFilename(row)}` });
+    archive.append(image, { name: row.archivePath });
   }
 
   await archive.finalize();

@@ -4,6 +4,8 @@ import { ExportEmptyTip } from "@/components/export/ExportEmptyTip";
 import { useUserCopy } from "@/components/i18n/I18nProvider";
 import { resolveExportCardState } from "@/lib/settings/resolveExportCardState";
 import { settingsVisual } from "@/lib/ui/settingsVisual";
+import type { IncomeCaptureKind } from "@/lib/export/incomeCapture";
+import { setPendingIncomeCapture } from "@/lib/export/incomeCapture";
 
 interface TaxExportCardProps {
   currentSeason: string;
@@ -15,6 +17,7 @@ interface TaxExportCardProps {
   exportEmptyTipKey?: number;
   onExportEmptyTipDismiss?: () => void;
   onRequestExport: () => void;
+  onSnap1099?: (kind: IncomeCaptureKind) => void;
 }
 
 function LockIcon() {
@@ -64,6 +67,7 @@ export function TaxExportCard({
   exportEmptyTipKey = 0,
   onExportEmptyTipDismiss,
   onRequestExport,
+  onSnap1099,
 }: TaxExportCardProps) {
   const copy = useUserCopy().settings;
   const cardCopy = copy.exportCard;
@@ -127,6 +131,32 @@ export function TaxExportCard({
         >
           {ctaLabel}
         </button>
+        {onSnap1099 && (
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              disabled={exportBusy}
+              onClick={() => {
+                setPendingIncomeCapture("1099-NEC");
+                onSnap1099("1099-NEC");
+              }}
+              className="min-h-11 rounded-lg border border-yellow-500/60 bg-zinc-900 py-2 text-[10px] font-black uppercase tracking-wider text-yellow-400 transition-transform active:scale-95 disabled:opacity-50"
+            >
+              {cardCopy.snap1099Nec}
+            </button>
+            <button
+              type="button"
+              disabled={exportBusy}
+              onClick={() => {
+                setPendingIncomeCapture("1099-K");
+                onSnap1099("1099-K");
+              }}
+              className="min-h-11 rounded-lg border border-zinc-600 bg-zinc-900 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-300 transition-transform active:scale-95 disabled:opacity-50"
+            >
+              {cardCopy.snap1099K}
+            </button>
+          </div>
+        )}
         {showPricing && (
           <p className={settingsVisual.exportCard.trustFootnote}>
             ✓ {cardCopy.trustLine}

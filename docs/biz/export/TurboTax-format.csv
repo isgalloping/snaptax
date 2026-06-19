@@ -1,0 +1,6 @@
+Date,Merchant,Category,Amount,Schedule C Line,Tax Deductible,Business %
+2026-01-15,OpenAI,Office Expenses,20.00,Line 18,Yes,100%
+2026-02-10,Google Domains,Advertising,12.50,Line 8,Yes,100%
+2026-03-01,Verizon Wireless,Utilities,70.00,Line 25,Yes,70%
+2026-03-15,Home Depot,Supplies,125.50,Line 22,Yes,100%
+2026-04-02,Chevron Gas,Car & Truck,45.00,Line 9,Yes,80%

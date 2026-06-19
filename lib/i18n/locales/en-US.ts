@@ -286,6 +286,10 @@ export const EN_US_COPY: UserCopy = {
       possibleMerchant: "Possible Merchant: {merchant}",
       dateCaptured: "Date Captured: {date}",
       merchant: "Merchant",
+      payer: "Payer",
+      formType: "Form Type",
+      taxYear: "Tax Year",
+      taxYearUnknown: "Unclear",
       totalAmount: "Total Amount",
       category: "Category",
       irsLine: "IRS Line",
@@ -322,6 +326,7 @@ export const EN_US_COPY: UserCopy = {
         personalUs: "Personal (Non-Deductible)",
         addedVat: "✓ Added to VAT recovery",
         addedScheduleC: "✓ Added to Schedule C Deduction",
+        income1099: "{form} income",
       },
     },
     paywall: {
@@ -459,10 +464,14 @@ export const EN_US_COPY: UserCopy = {
         taxSaved: "Est. Tax Saved",
         receipts: "Receipts",
         deductions: "Deductions",
+        income: "Income",
+        incomeForms: "{count} forms",
       },
       exportCard: {
         compatLine: "TurboTax & H&R Block Compatible",
-        formatLine: "IRS-ready Excel + CSV",
+        formatLine: "TurboTax CSV · CPA Pack · TXF",
+        snap1099Nec: "Snap 1099-NEC",
+        snap1099K: "Snap 1099-K",
         trustLine: "Used by thousands of self-employed pros",
         mostPopular: "Most Popular",
         price: "$49",
@@ -807,8 +816,13 @@ export const EN_US_COPY: UserCopy = {
       back: "← Back",
       generate: "Generate →",
       generating: "Building your pack…",
-      ready: "Ready to share",
+      ready: "Your tax pack is ready",
+      saveToPhone: "Save to Phone",
       share: "Share Tax Pack →",
+      shareUnsupportedHint:
+        "Tap Save to Phone, then attach this file from Downloads in email or WhatsApp.",
+      shareFailedHint: "Could not open share. Tap Save to Phone instead.",
+      savedToPhoneHint: "Saved to your phone. Check Downloads to attach or send.",
       yearSummary: "{year} · {amount} · {count} receipts",
       formatCsvTitle: "CSV for TurboTax / Tax Software",
       formatCsvHint:
@@ -828,6 +842,15 @@ export const EN_US_COPY: UserCopy = {
       formatCpaPdfTitle: "CPA Summary PDF (Links to Receipts)",
       formatCpaPdfHint:
         "IRS-compliant summary with clickable links to your receipt photos.",
+      formatTxfTitle: "TXF for Tax Software",
+      formatTxfHint:
+        "Accounting assistant format for desktop tax tools (V042 blocks).",
+      snap1099Title: "1099 income forms",
+      snap1099Hint:
+        "Snap your 1099-NEC or 1099-K — included in CPA Audit Pack under 01_Income_Documents.",
+      snap1099NecButton: "1099-NEC →",
+      snap1099KButton: "1099-K →",
+      incomeFormsLabel: "{count} income forms (1099)",
       turboTaxSteps: [
         "Open TurboTax Self-Employed → Business",
         "Choose Import / Upload expenses from CSV",
@@ -836,7 +859,7 @@ export const EN_US_COPY: UserCopy = {
       ],
       previewCsv: "Preview CSV locally",
       previewCsvHint:
-        "Instant offline preview without receipt image links. Full export adds signed URLs.",
+        "Instant offline preview with REC aliases. Full export adds CPA pack paths.",
       progressPreparing: "Preparing expenses…",
       progressFetchingImages: "Fetching receipt images…",
       progressBuildingPdf: "Building PDF…",

@@ -108,7 +108,7 @@ export async function pollTaxRecalc(
   }
 }
 
-export type ExportFormat = "csv" | "cpa_pack" | "cpa_pdf" | "xlsx";
+export type ExportFormat = "csv" | "cpa_pack" | "cpa_pdf" | "txf" | "xlsx";
 
 export type ExportTaxPackParams = {
   taxYear: string;
@@ -155,6 +155,7 @@ function parseExportFilename(
   if (format === "csv") return `Snap1099-${taxYear}-TurboTax-Expenses.csv`;
   if (format === "cpa_pack") return `Snap1099-${taxYear}-CPA-Audit-Pack.zip`;
   if (format === "cpa_pdf") return `Snap1099-${taxYear}-CPA-Summary.pdf`;
+  if (format === "txf") return `Snap1099-${taxYear}-Expenses.txf`;
   return `Snap1099-${taxYear}-Tax-Pack.xlsx`;
 }
 

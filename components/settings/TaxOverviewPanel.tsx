@@ -8,6 +8,8 @@ export interface SettingsTaxStats {
   taxSaved: number | null;
   receiptCount: number;
   totalDeductions: number;
+  incomeFormCount: number;
+  totalIncomeGross: number;
 }
 
 type TaxOverviewPanelProps = SettingsTaxStats;
@@ -24,6 +26,8 @@ export function TaxOverviewPanel({
   taxSaved,
   receiptCount,
   totalDeductions,
+  incomeFormCount,
+  totalIncomeGross,
 }: TaxOverviewPanelProps) {
   const copy = useUserCopy().settings.taxOverview;
 
@@ -55,6 +59,17 @@ export function TaxOverviewPanel({
           </p>
         </div>
       </div>
+      {incomeFormCount > 0 && (
+        <div className="border-t border-zinc-700 px-4 py-3 text-center">
+          <p className={settingsVisual.taxOverview.label}>{copy.income}</p>
+          <p className="mt-1 text-lg font-black text-yellow-400">
+            {formatCurrency(totalIncomeGross)}
+          </p>
+          <p className="mt-0.5 text-[11px] font-bold uppercase tracking-wider text-zinc-500">
+            {copy.incomeForms.replace("{count}", String(incomeFormCount))}
+          </p>
+        </div>
+      )}
     </section>
   );
 }

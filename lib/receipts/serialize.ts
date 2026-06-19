@@ -1,4 +1,8 @@
 import type { SnaptaxReceipt } from "@prisma/client";
+import {
+  extractIncomeTaxYearFromAiRaw,
+  isIncomeDocument,
+} from "@/lib/export/incomeDocuments";
 
 export function serializeReceipt(r: SnaptaxReceipt) {
   return {
@@ -18,6 +22,9 @@ export function serializeReceipt(r: SnaptaxReceipt) {
     taxSeason: r.taxSeason,
     taxSeasonDate: r.taxSeasonDate?.toISOString() ?? null,
     hasImage: Boolean(r.imageUrl?.trim()),
+    incomeTaxYear: isIncomeDocument(r)
+      ? extractIncomeTaxYearFromAiRaw(r.aiRaw)
+      : null,
   };
 }
 

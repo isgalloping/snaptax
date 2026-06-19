@@ -55,6 +55,9 @@ function backfillExtractionFromRemote(
   if (local.deductible === undefined && remote.deductible !== undefined) {
     patch.deductible = remote.deductible;
   }
+  if (local.incomeTaxYear == null && remote.incomeTaxYear != null) {
+    patch.incomeTaxYear = remote.incomeTaxYear;
+  }
 
   if (Object.keys(patch).length === 0) return local;
   return { ...local, ...patch };

@@ -19,6 +19,7 @@ import { useI18n } from "@/components/i18n/I18nProvider";
 import { hasExportableReceipts } from "@/lib/tax/exportGate";
 import { markExportBlockedBanner } from "@/lib/settings/exportSampleState";
 import { markSeasonExportDone } from "@/lib/settings/seasonExportState";
+import type { IncomeCaptureKind } from "@/lib/export/incomeCapture";
 
 interface UseTaxExportGateOptions {
   receipts: Receipt[];
@@ -32,6 +33,7 @@ interface UseTaxExportGateOptions {
   onPreExportPrepare?: () => Promise<Receipt[] | void>;
   onPostExportSync?: () => Promise<void>;
   onReceiptUpdated?: (receipt: Receipt) => void;
+  onSnap1099?: (kind: IncomeCaptureKind) => void;
 }
 
 export function useTaxExportGate({
@@ -46,6 +48,7 @@ export function useTaxExportGate({
   onPreExportPrepare,
   onPostExportSync,
   onReceiptUpdated,
+  onSnap1099,
 }: UseTaxExportGateOptions) {
   const { copy } = useI18n();
   const [googleSheet, setGoogleSheet] = useState<GoogleSignInMode | null>(null);
@@ -200,6 +203,10 @@ export function useTaxExportGate({
             setShowPaywall(true);
           }}
           onReceiptUpdated={onReceiptUpdated}
+          onSnap1099={(kind) => {
+            setShowExportSheet(false);
+            onSnap1099?.(kind);
+          }}
         />
       )}
     </>

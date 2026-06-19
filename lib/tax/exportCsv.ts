@@ -1,12 +1,13 @@
 import type { ExportExpenseRow } from "@/lib/tax/exportRows";
-import { irsCategoryExportLabel } from "@/lib/tax/irsScheduleLabel";
 
 const TURBOTAX_HEADERS = [
   "Date",
-  "Vendor",
+  "Merchant",
+  "Category",
   "Amount",
-  "IRS_Category",
-  "Deductible_Amount",
+  "Schedule C Line",
+  "Tax Deductible",
+  "Business %",
   "Receipt_Image_URL",
 ] as const;
 
@@ -15,10 +16,10 @@ const FULL_CSV_HEADERS = [
   "Merchant",
   "Amount",
   "Category",
-  "IRS Schedule Line",
-  "IRS Schedule",
+  "Schedule C Line",
+  "Tax Deductible",
+  "Business %",
   "Deductible Amount",
-  "Deductible (Y/N)",
   "Tax Saved (Est.)",
   "Notes",
   "Receipt ID",
@@ -37,7 +38,19 @@ function csvLine(values: (string | number)[]): string {
   return values.map(escapeCsvField).join(",");
 }
 
-/** TurboTax / tax-software import matrix (RFC 4180, UTF-8 BOM). */
+export type CsvImageUrlStyle = "alias" | "archive";
+
+function receiptImageUrlForRow(
+  row: ExportExpenseRow,
+  style: CsvImageUrlStyle,
+): string {
+  if (style === "archive") {
+    return row.receiptArchivePath || row.receiptAlias;
+  }
+  return row.receiptAlias;
+}
+
+/** TurboTax import matrix (RFC 4180, UTF-8 without BOM). */
 export function buildTurboTaxCsv(rows: ExportExpenseRow[]): string {
   const lines = [TURBOTAX_HEADERS.join(",")];
   for (const row of rows) {
@@ -45,18 +58,23 @@ export function buildTurboTaxCsv(rows: ExportExpenseRow[]): string {
       csvLine([
         row.dateIso,
         row.merchant,
-        row.amount.toFixed(2),
-        irsCategoryExportLabel(row.category),
-        row.deductibleAmount.toFixed(2),
-        row.receiptImageUrl,
+        row.categoryDisplay,
+        row.exportAmount.toFixed(2),
+        row.scheduleCLine,
+        row.taxDeductible,
+        row.businessPercent,
+        receiptImageUrlForRow(row, "alias"),
       ]),
     );
   }
-  return `\uFEFF${lines.join("\r\n")}`;
+  return lines.join("\r\n");
 }
 
-/** Full CPA detail CSV with all audit columns. */
-export function buildExpensesCsv(rows: ExportExpenseRow[]): string {
+/** Full CPA detail CSV with audit columns (for CPA Audit Pack). */
+export function buildExpensesCsv(
+  rows: ExportExpenseRow[],
+  imageUrlStyle: CsvImageUrlStyle = "archive",
+): string {
   const lines = [FULL_CSV_HEADERS.join(",")];
   for (const row of rows) {
     lines.push(
@@ -64,19 +82,19 @@ export function buildExpensesCsv(rows: ExportExpenseRow[]): string {
         row.dateIso,
         row.merchant,
         row.amount.toFixed(2),
-        row.category,
-        row.irsLine,
-        row.irsSchedule,
+        row.categoryDisplay || row.category,
+        row.scheduleCLine,
+        row.taxDeductible,
+        row.businessPercent,
         row.deductibleAmount.toFixed(2),
-        row.deductible ? "Yes" : "No",
         row.taxSaved.toFixed(2),
         row.notes,
         row.id,
-        row.receiptImageUrl,
+        receiptImageUrlForRow(row, imageUrlStyle),
       ]),
     );
   }
-  return `\uFEFF${lines.join("\r\n")}`;
+  return lines.join("\r\n");
 }
 
 export function buildSummaryText(
@@ -89,7 +107,8 @@ export function buildSummaryText(
     0,
   );
   const lines = [
-    `Snap1099 Tax Year ${taxYear} — Schedule C Summary`,
+    `Snap1099 Tax Year ${taxYear} — Schedule C Summary (Expenses only)`,
+    "Income not tracked in Snap1099 — snap 1099 forms for your CPA.",
     "For estimation only — not tax advice.",
     "",
     ...summaryLines.map((s) => `${s.line}: $${s.total.toFixed(2)}`),

@@ -15,14 +15,16 @@ import {
   filterReceiptsByTaxYear,
   summarizeByIrsLine,
 } from "@/lib/tax/exportRows";
-import {
-  buildExpensesCsv,
-  buildSummaryText,
-  buildTurboTaxCsv,
-} from "@/lib/tax/exportCsv";
+import { buildExpensesCsv, buildTurboTaxCsv } from "@/lib/tax/exportCsv";
 import { buildCpaPackZip } from "@/lib/export/buildCpaPack";
 import { buildCpaSummaryPdf } from "@/lib/export/buildCpaPdf";
+import { buildTxfExport } from "@/lib/export/buildTxf";
+import { finalizeExportRows } from "@/lib/export/mapping/finalizeExportRows";
 import { enrichExportRowsWithImageUrls } from "@/lib/export/receiptImageUrl";
+import {
+  buildExportIncomeRow,
+  isIncomeDocument,
+} from "@/lib/export/incomeDocuments";
 import { logEvent } from "@/lib/server/log/logEvent";
 import { resolveVerifyContext } from "@/lib/verify/context";
 import { ensureBypassEntitlement } from "@/lib/verify/ensureBypassEntitlement";
@@ -32,7 +34,10 @@ export const maxDuration = 60;
 
 const exportBodySchema = z.object({
   taxYear: z.string().regex(/^\d{4}$/).optional(),
-  format: z.enum(["csv", "cpa_pack", "cpa_pdf", "xlsx"]).optional().default("csv"),
+  format: z
+    .enum(["csv", "cpa_pack", "cpa_pdf", "txf", "xlsx"])
+    .optional()
+    .default("csv"),
 });
 
 export const POST = withRequestLog("api.entitlement", async (request, _context) => {
@@ -86,40 +91,76 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
     const timeZone = parseRequestTimeZone(request.headers.get("X-Time-Zone"));
     const region = (user.dataRegion ?? "us") as TaxRegion;
     const exportedAt = utcNow();
-    const receipts = filterReceiptsByTaxYear(allReceipts, taxYearNum, timeZone);
+    const yearReceipts = filterReceiptsByTaxYear(allReceipts, taxYearNum, timeZone);
 
-    if (receipts.length === 0) {
+    if (yearReceipts.length === 0) {
       return apiError("NO_RECEIPTS", "No completed receipts to export", 422);
     }
 
-    const rows = receipts.map((r) =>
+    const incomeReceipts = yearReceipts.filter((r) => isIncomeDocument(r));
+    const expenseReceipts = yearReceipts.filter((r) => !isIncomeDocument(r));
+
+    const incomeRows = incomeReceipts
+      .map((r) => buildExportIncomeRow(r, timeZone))
+      .filter((row): row is NonNullable<typeof row> => row != null);
+
+    const expenseRows = expenseReceipts.map((r) =>
       buildExportExpenseRow(r, timeZone, region),
     );
-    const enrichedRows = await enrichExportRowsWithImageUrls(rows);
-    const summaryLines = summarizeByIrsLine(enrichedRows);
-    const totalExpenses = enrichedRows.reduce((sum, r) => sum + r.amount, 0);
-    const totalDeductible = enrichedRows.reduce(
+    const enrichedExpenseRows = finalizeExportRows(expenseRows);
+    const summaryLines = summarizeByIrsLine(enrichedExpenseRows);
+    const totalExpenses = enrichedExpenseRows.reduce((sum, r) => sum + r.amount, 0);
+    const totalDeductible = enrichedExpenseRows.reduce(
       (sum, r) => sum + (r.deductible ? r.deductibleAmount : 0),
       0,
     );
-    const totalTaxSaved = enrichedRows.reduce((sum, r) => sum + r.taxSaved, 0);
+    const totalTaxSaved = enrichedExpenseRows.reduce((sum, r) => sum + r.taxSaved, 0);
 
     let buffer: Buffer | ArrayBuffer;
     let contentType: string;
     let filename: string;
     const responseHeaders: Record<string, string> = {
-      "X-Export-Receipt-Count": String(enrichedRows.length),
+      "X-Export-Receipt-Count": String(yearReceipts.length),
     };
 
     if (body.format === "csv") {
-      const csv = buildTurboTaxCsv(enrichedRows);
+      if (enrichedExpenseRows.length === 0) {
+        return apiError(
+          "NO_RECEIPTS",
+          "No expense receipts to export for TurboTax CSV",
+          422,
+        );
+      }
+      const csv = buildTurboTaxCsv(enrichedExpenseRows);
       buffer = Buffer.from(csv, "utf-8");
       contentType = "text/csv; charset=utf-8";
       filename = `Snap1099-${taxYear}-TurboTax-Expenses.csv`;
+    } else if (body.format === "txf") {
+      if (enrichedExpenseRows.length === 0) {
+        return apiError(
+          "NO_RECEIPTS",
+          "No expense receipts to export for TXF",
+          422,
+        );
+      }
+      const txf = buildTxfExport(enrichedExpenseRows, exportedAt);
+      buffer = Buffer.from(txf, "utf-8");
+      contentType = "text/plain; charset=utf-8";
+      filename = `Snap1099-${taxYear}-Expenses.txf`;
     } else if (body.format === "cpa_pack") {
-      const csv = buildExpensesCsv(enrichedRows);
-      const summaryText = buildSummaryText(taxYear, enrichedRows, summaryLines);
-      const pack = await buildCpaPackZip(csv, summaryText, enrichedRows);
+      const csv = buildExpensesCsv(enrichedExpenseRows, "archive");
+      const summaryPdf = await buildCpaSummaryPdf(
+        taxYear,
+        enrichedExpenseRows,
+        summaryLines,
+        incomeRows,
+      );
+      const pack = await buildCpaPackZip(
+        csv,
+        summaryPdf,
+        enrichedExpenseRows,
+        incomeRows,
+      );
       buffer = pack.buffer;
       contentType = "application/zip";
       filename = `Snap1099-${taxYear}-CPA-Audit-Pack.zip`;
@@ -134,7 +175,13 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
       );
     } else if (body.format === "cpa_pdf") {
       try {
-        buffer = await buildCpaSummaryPdf(taxYear, enrichedRows, summaryLines);
+        const pdfRows = await enrichExportRowsWithImageUrls(enrichedExpenseRows);
+        buffer = await buildCpaSummaryPdf(
+          taxYear,
+          pdfRows,
+          summaryLines,
+          incomeRows,
+        );
       } catch (pdfErr) {
         logEvent({
           ts: utcNow().toISOString(),
@@ -145,7 +192,7 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
           userId: actor.userId,
           meta: {
             taxSeason: taxYear,
-            reason: `pdf_generation_failed;count=${receipts.length}`,
+            reason: `pdf_generation_failed;count=${yearReceipts.length}`,
             errorMessage:
               pdfErr instanceof Error ? pdfErr.message.slice(0, 120) : "unknown",
           },
@@ -171,7 +218,7 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
         { header: "Receipt ID", key: "id", width: 38 },
       ];
 
-      for (const row of enrichedRows) {
+      for (const row of enrichedExpenseRows) {
         expenses.addRow({
           date: row.date,
           merchant: row.merchant,
@@ -211,7 +258,7 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
     }
 
     await prisma.snaptaxReceipt.updateMany({
-      where: { id: { in: receipts.map((r) => r.id) } },
+      where: { id: { in: yearReceipts.map((r) => r.id) } },
       data: { taxSeason: taxYear, taxSeasonDate: exportedAt },
     });
 
@@ -224,7 +271,7 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
       userId: actor.userId,
       meta: {
         taxSeason: taxYear,
-        reason: `format=${body.format};count=${receipts.length};deductible=${totalDeductible}`,
+        reason: `format=${body.format};count=${yearReceipts.length};deductible=${totalDeductible};income=${incomeRows.length}`,
       },
     });
 

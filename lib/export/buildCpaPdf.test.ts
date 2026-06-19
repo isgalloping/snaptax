@@ -19,6 +19,14 @@ function sampleRow(overrides: Partial<ExportExpenseRow> = {}): ExportExpenseRow 
     notes: "",
     imagePathname: "/receipts/test.jpg",
     receiptImageUrl: "https://example.com/receipt.jpg",
+    categoryDisplay: "Supplies",
+    scheduleCLine: "Line 22",
+    taxDeductible: "Yes",
+    businessPercent: "100%",
+    exportAmount: 120,
+    receiptAlias: "REC_20260315_HomeDepot_120.00.jpg",
+    receiptArchivePath:
+      "02_Expenses_Receipts_Book/Line_22_Supplies/REC_20260315_HomeDepot_120.00.jpg",
     ...overrides,
   };
 }
@@ -30,11 +38,18 @@ describe("buildCpaSummaryPdf", () => {
       sampleRow({
         id: "00000000-0000-0000-0000-000000000002",
         merchant: "Shell",
-        category: "VEHICLE",
+        category: "TRUCK GAS",
         irsLine: "Line 9",
         amount: 45.5,
         deductibleAmount: 45.5,
         receiptImageUrl: "",
+        categoryDisplay: "Car & Truck",
+        scheduleCLine: "Line 9",
+        taxDeductible: "Yes",
+        businessPercent: "100%",
+        exportAmount: 45.5,
+        receiptAlias: "",
+        receiptArchivePath: "",
       }),
     ];
     const summaryLines = [{ line: "Line 22", total: 120 }];

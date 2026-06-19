@@ -5,6 +5,7 @@ import { fetchReceiptImageUrlCached } from "@/lib/client/receiptImageCache";
 import { isPersistedReceiptId } from "@/lib/receipts/receiptId";
 import { loadPhoto } from "@/lib/storage/receiptDb";
 import { irsScheduleLineBadge } from "@/lib/tax/irsScheduleLabel";
+import { isIncomeFormType } from "@/lib/export/incomeDocuments";
 
 export type ReceiptDetailHero =
   | { kind: "processing" }
@@ -14,6 +15,7 @@ export type ReceiptDetailHero =
       savedLabel: string;
       subtitle: string;
       muted?: boolean;
+      incomeForm?: boolean;
     };
 
 export type ResolvedReceiptImage =
@@ -32,6 +34,17 @@ export function buildReceiptDetailHero(
   const region = receipt.dataRegion ?? "us";
   const tax = receipt.taxAmount ?? 0;
   const currency = receipt.currency ?? (region === "eu" ? "EUR" : "USD");
+  const formType = receipt.category?.toUpperCase().trim();
+
+  if (isIncomeFormType(formType)) {
+    const amount = receipt.amount ?? 0;
+    return {
+      kind: "done",
+      savedLabel: formatCurrencyForRegion(amount, currency, region),
+      subtitle: heroCopy.income1099.replace("{form}", formType ?? "1099"),
+      incomeForm: true,
+    };
+  }
 
   if (receipt.deductible === false || tax <= 0) {
     return {

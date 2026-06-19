@@ -253,7 +253,11 @@ export function ReceiptListCard({
       </div>
       <div className="flex shrink-0 items-center gap-0.5">
         <StatusPill
-          variant={tax.variant === "deductible" ? "done" : "doneMuted"}
+          variant={
+            tax.variant === "muted"
+              ? "doneMuted"
+              : "done"
+          }
           doneLabel={tax.label}
         />
         <ChevronRightIcon className="h-5 w-5 text-zinc-500" />

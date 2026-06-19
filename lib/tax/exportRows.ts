@@ -1,6 +1,10 @@
 import type { SnaptaxReceipt } from "@prisma/client";
 import { formatIsoDate, formatLocalDate } from "@/lib/format";
 import {
+  extractIncomeTaxYearFromAiRaw,
+  isIncomeDocument,
+} from "@/lib/export/incomeDocuments";
+import {
   irsScheduleLabel,
   irsScheduleLineShort,
 } from "@/lib/tax/irsScheduleLabel";
@@ -22,7 +26,17 @@ export type ExportExpenseRow = {
   taxSaved: number;
   notes: string;
   imagePathname: string | null;
+  /** Set by finalizeExportRows — TurboTax standalone alias or CPA relative path. */
   receiptImageUrl: string;
+  /** Human-readable category for TurboTax CSV (after finalizeExportRows). */
+  categoryDisplay: string;
+  scheduleCLine: string;
+  taxDeductible: string;
+  businessPercent: string;
+  /** Amount column for TurboTax export (deductible or personal per biz rules). */
+  exportAmount: number;
+  receiptAlias: string;
+  receiptArchivePath: string;
 };
 
 export function extractAiDeductionRatio(
@@ -64,6 +78,13 @@ export function buildExportExpenseRow(
     notes: unclassified ? "Unclassified — review with CPA" : "",
     imagePathname: receipt.imageUrl?.trim() || null,
     receiptImageUrl: "",
+    categoryDisplay: "",
+    scheduleCLine: "",
+    taxDeductible: "",
+    businessPercent: "",
+    exportAmount: 0,
+    receiptAlias: "",
+    receiptArchivePath: "",
   };
 }
 
@@ -74,7 +95,12 @@ export function filterReceiptsByTaxYear(
 ): SnaptaxReceipt[] {
   return receipts.filter((r) => {
     const instant = r.snapAt ?? r.capturedAt;
-    return receiptTaxYear(instant, timeZone) === taxYear;
+    let year = receiptTaxYear(instant, timeZone);
+    if (isIncomeDocument(r)) {
+      const formYear = extractIncomeTaxYearFromAiRaw(r.aiRaw);
+      if (formYear != null) year = formYear;
+    }
+    return year === taxYear;
   });
 }
 

@@ -42,7 +42,7 @@ import {
   markSampleExportDone,
 } from "@/lib/settings/exportSampleState";
 import { isLeavingExportCompleted } from "@/lib/client/appNavigationHistory";
-import { hasSeasonExportDone } from "@/lib/settings/seasonExportState";
+import type { IncomeCaptureKind } from "@/lib/export/incomeCapture";
 
 interface SettingsScreenProps {
   industry: Industry | null;
@@ -69,6 +69,7 @@ interface SettingsScreenProps {
   exportEmptyTip?: string | null;
   exportEmptyTipKey?: number;
   onExportEmptyTipDismiss?: () => void;
+  onSnap1099?: (kind: IncomeCaptureKind) => void;
   requestSoftGoogleSheet?: boolean;
   onSoftGoogleSheetConsumed?: () => void;
   onSoftGuideDismiss?: () => void;
@@ -103,6 +104,7 @@ export function SettingsScreen({
   exportEmptyTip = null,
   exportEmptyTipKey = 0,
   onExportEmptyTipDismiss,
+  onSnap1099,
   requestSoftGoogleSheet = false,
   onSoftGoogleSheetConsumed,
   onSoftGuideDismiss,
@@ -437,6 +439,7 @@ export function SettingsScreen({
           exportEmptyTipKey={exportEmptyTipKey}
           onExportEmptyTipDismiss={onExportEmptyTipDismiss}
           onRequestExport={handleExportRequest}
+          onSnap1099={onSnap1099}
         />
 
         {showRedBanner && (

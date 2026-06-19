@@ -9,34 +9,76 @@
 ## 8.2 请求体
 
 ```json
-{ "taxYear": "2025", "format": "csv" | "cpa_pack" | "xlsx" }
+{ "taxYear": "2025", "format": "csv" | "cpa_pack" | "cpa_pdf" | "xlsx" }
 ```
 
 `taxYear` 默认 `currentTaxSeason()`。按用户时区（`X-Time-Zone`）过滤 `snap_at` / `captured_at` 所在日历年。
+
+Canonical 业务规范：`docs/biz/export/` · 设计 spec：`docs/superpowers/specs/2026-06-19-export-formats-refactor-design.md`
 
 ## 8.3 输出格式
 
 | format | 文件名 | 说明 |
 |--------|--------|------|
-| `csv`（默认） | `Snap1099-{year}-TurboTax-Expenses.csv` | TurboTax / 报税软件矩阵 |
-| `cpa_pack` | `Snap1099-{year}-CPA-Audit-Pack.zip` | CSV + Summary + `receipts/*.jpg` |
+| `csv`（默认） | `Snap1099-{year}-TurboTax-Expenses.csv` | TurboTax 8 列（无 BOM） |
+| `cpa_pack` | `Snap1099-{year}-CPA-Audit-Pack.zip` | P&L PDF + 按 Line 分目录收据 + Detail CSV |
+| `cpa_pdf` | `Snap1099-{year}-CPA-Summary.pdf` | P&L 摘要（含 Income + Expenses） |
+| `txf` | `Snap1099-{year}-Expenses.txf` | TXF V042 费用块（无里程汇总） |
 | `xlsx` | `Snap1099-{year}-Tax-Pack.xlsx` | 兼容旧版 Excel |
 
-**Expenses 列（CSV / Excel 共用逻辑）**
+### TurboTax CSV（`format=csv`）
+
+UTF-8 **无 BOM**。`Amount` = 合规抵扣额（已乘 Business %）。
 
 | 列 | 说明 |
 |----|------|
-| Date | `snap_at` or `captured_at` in user's timezone; US `MM/DD/YYYY` |
+| Date | `YYYY-MM-DD`（用户时区） |
 | Merchant | merchant |
-| Amount | amount USD |
-| Category | category |
-| IRS Schedule Line | `irsScheduleLineShort(category)` e.g. Line 9 |
-| IRS Schedule | `irsScheduleLabel(category)` |
-| Deductible Amount | `amount × resolveDeductionRatio`（MEALS 50%） |
-| Deductible (Y/N) | Yes/No |
+| Category | 人类可读科目（如 Supplies） |
+| Amount | 合规抵扣额 |
+| Schedule C Line | `Line 9` / `Line 22` 等 |
+| Tax Deductible | Yes / No |
+| Business % | `100%` / `70%` 等 |
+| Receipt_Image_URL | `REC_{date}_{merchant}_{amount}.jpg` 短别名 |
+
+### CPA Audit Pack（`format=cpa_pack`）
+
+```
+00_READ_ME_Summary.pdf
+02_Expenses_Receipts_Book/Line_{NN}_{Name}/REC_*.jpg
+Expenses-Detail.csv
+```
+
+不含 `03_Mileage_Log.csv`。`01_Income_Documents/` 来自 **Snap 1099** 拍摄（1099-NEC / 1099-K）。
+
+### TXF（`format=txf`）
+
+- 头 `V042` + 每条费用 `^` 块（TD / P / D / M / $）
+- **不含** TD 2214 里程汇总行
+- 非 deductible 行跳过
+
+### 1099 Income 拍摄（M2b）
+
+- Export 格式步骤 → **Snap 1099 Form** → 打开相机，`X-Capture-Kind: 1099-NEC` 上传
+- Vision 专用 prompt 提取 payer / amount / form_type
+- CPA Pack：`01_Income_Documents/1099_NEC_{Payer}_{date}.jpg` + P&L Part I
+
+**Expenses-Detail.csv 列**
+
+| 列 | 说明 |
+|----|------|
+| Date | ISO date |
+| Merchant | merchant |
+| Amount | 原始账单金额 |
+| Category | 人类可读科目 |
+| Schedule C Line | Line 短标签 |
+| Tax Deductible | Yes / No |
+| Business % | 比例 |
+| Deductible Amount | 合规抵扣额 |
 | Tax Saved (Est.) | `tax_amount` |
-| Notes | 未分类时 `Unclassified — review with CPA` |
+| Notes | Meals 商业目的等 |
 | Receipt ID | UUID |
+| Receipt Image URL | ZIP 内相对路径（同 REC 命名） |
 
 **Sheet: Summary**
 
@@ -61,13 +103,15 @@
 ## 8.5 客户端分享
 
 ```typescript
-const res = await fetch('/api/export/tax-pack', { method: 'POST' })
-const blob = await res.blob()
 const file = new File([blob], filename, { type: blob.type })
-await navigator.share({ files: [file], title: 'Snap1099 Tax Pack' })
+if (navigator.canShare?.({ files: [file] })) {
+  await navigator.share({ files: [file], title: 'Snap1099 Tax Pack' })
+} else {
+  // trigger explicit download via Save to Phone — never fallback download on share failure
+}
 ```
 
-分享取消（`AbortError`）不视为错误；其他 share 失败回退 `<a download>` 下载。
+分享取消（`AbortError`）不视为错误。`canShare` 为 false 或 share 失败时 **不** 自动下载；Step 4 提供 **Save to Phone**（`<a download>`）与条件可用的 **Share** 按钮。
 
 ## 8.6 重复导出
 

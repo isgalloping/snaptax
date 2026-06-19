@@ -1,63 +1,58 @@
 import type { Receipt } from "@/lib/types";
-import { formatIsoDate } from "@/lib/format";
-import { irsCategoryExportLabel } from "@/lib/tax/irsScheduleLabel";
-import { resolveDeductionRatio } from "@/lib/tax/usCategories";
-import { receiptTaxYear } from "@/lib/tax/taxYearStats";
+import type { SnaptaxReceipt } from "@prisma/client";
+import { finalizeExportRows } from "@/lib/export/mapping/finalizeExportRows";
+import { buildTurboTaxCsv } from "@/lib/tax/exportCsv";
+import {
+  buildExportExpenseRow,
+  filterReceiptsByTaxYear,
+} from "@/lib/tax/exportRows";
 
-function escapeCsvField(value: string | number): string {
-  const str = String(value);
-  if (/[",\n\r]/.test(str)) {
-    return `"${str.replace(/"/g, '""')}"`;
-  }
-  return str;
-}
-
-function csvLine(values: (string | number)[]): string {
-  return values.map(escapeCsvField).join(",");
+function toSnaptaxReceipt(receipt: Receipt): SnaptaxReceipt {
+  return {
+    id: receipt.id,
+    userId: "",
+    ghostId: null,
+    imageUrl: receipt.imageUrl ?? null,
+    status: "done",
+    amount: (receipt.amount ?? 0) as SnaptaxReceipt["amount"],
+    currency: receipt.currency ?? "USD",
+    merchantName: receipt.merchant ?? "",
+    category: receipt.category ?? null,
+    deductible: receipt.deductible ?? false,
+    taxAmount: (receipt.taxAmount ?? 0) as SnaptaxReceipt["taxAmount"],
+    dataRegion: receipt.dataRegion ?? "us",
+    aiRaw: { deduction_ratio: 1 },
+    capturedAt: receipt.timestamp,
+    snapAt: receipt.timestamp,
+    processedAt: null,
+    taxSeason: receipt.taxSeason ?? null,
+    taxSeasonDate: receipt.taxSeasonDate ?? null,
+    contentSha256: "",
+    imageFingerprint: "",
+    createdAt: receipt.timestamp,
+    updatedAt: receipt.updatedAt ?? receipt.timestamp,
+  };
 }
 
 /**
  * Client-side TurboTax CSV preview (no signed image URLs).
- * Useful for instant offline preview before server export.
+ * Uses the same column layout as server export after finalizeExportRows.
  */
 export function buildLocalTurboTaxCsv(
   receipts: Receipt[],
   taxYear: number,
   timeZone: string,
 ): string {
-  const headers = [
-    "Date",
-    "Vendor",
-    "Amount",
-    "IRS_Category",
-    "Deductible_Amount",
-    "Receipt_Image_URL",
-  ];
-  const lines = [headers.join(",")];
-
-  for (const receipt of receipts) {
-    if (receipt.status !== "done") continue;
-    if (receiptTaxYear(receipt.timestamp, timeZone) !== taxYear) continue;
-
-    const category = (receipt.category ?? "OTHER").toUpperCase().trim() || "OTHER";
-    const amount = Number(receipt.amount ?? 0);
-    const ratio =
-      receipt.deductible && category !== "PERSONAL"
-        ? resolveDeductionRatio(category, 1)
-        : 0;
-    const deductibleAmount = Math.round(amount * ratio * 100) / 100;
-
-    lines.push(
-      csvLine([
-        formatIsoDate(receipt.timestamp, timeZone),
-        receipt.merchant ?? "",
-        amount.toFixed(2),
-        irsCategoryExportLabel(category),
-        deductibleAmount.toFixed(2),
-        "",
-      ]),
-    );
-  }
-
-  return `\uFEFF${lines.join("\r\n")}`;
+  const snaptaxReceipts = receipts
+    .filter((r) => r.status === "done")
+    .map(toSnaptaxReceipt);
+  const filtered = filterReceiptsByTaxYear(
+    snaptaxReceipts,
+    taxYear,
+    timeZone,
+  );
+  const rows = filtered.map((r) =>
+    buildExportExpenseRow(r, timeZone, "us"),
+  );
+  return buildTurboTaxCsv(finalizeExportRows(rows));
 }

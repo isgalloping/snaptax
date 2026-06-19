@@ -1,6 +1,7 @@
 "use client";
 
 import { useUserCopy } from "@/components/i18n/I18nProvider";
+import { ContinueWithGoogleButton } from "@/components/auth/ContinueWithGoogleButton";
 import type { GoogleUser } from "@/lib/client/authStorage";
 import { maskEmailForDisplay } from "@/lib/client/maskEmail";
 import { displayInitials } from "@/lib/user/displayInitials";
@@ -36,14 +37,10 @@ export function SettingsAccountBlock({
   if (!googleUser) {
     return (
       <div className="mb-6">
-        <p className="text-base font-black text-yellow-400">{copy.notSignedIn}</p>
-        <button
-          type="button"
-          onClick={onSignIn}
-          className="mt-4 flex w-full min-h-16 items-center justify-center rounded-xl border-4 border-white bg-yellow-500 px-4 py-4 text-lg font-black uppercase tracking-wider text-black transition-transform active:scale-95"
-        >
-          {copy.googleCta}
-        </button>
+        <p className="text-base font-black text-yellow-400 drop-shadow-md">
+          {copy.notSignedIn}
+        </p>
+        <ContinueWithGoogleButton onClick={onSignIn} className="mt-4" />
       </div>
     );
   }

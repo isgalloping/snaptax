@@ -21,6 +21,7 @@ import { SampleExportPage } from "@/components/settings/export/SampleExportPage"
 import { ExportStatusBanner } from "@/components/settings/ExportStatusBanner";
 import { SettingsAccountBlock } from "@/components/settings/SettingsAccountBlock";
 import { SettingsHeader } from "@/components/settings/SettingsHeader";
+import { SettingsPageShell } from "@/components/settings/SettingsPageShell";
 import { SettingsPreferencesList } from "@/components/settings/SettingsPreferencesList";
 import type { SettingsViewState } from "@/components/settings/settingsViewState";
 import { ShareAppSection } from "@/components/settings/ShareAppSection";
@@ -408,7 +409,8 @@ export function SettingsScreen({
   }
 
   return (
-    <div className="flex h-full flex-col bg-black text-white">
+    <SettingsPageShell variant="main">
+    <div className="flex h-full flex-col">
       <SettingsHeader onBack={handleHeaderBack} title={copy.settings.title} />
 
       <div className="flex-1 overflow-y-auto p-6">
@@ -533,5 +535,6 @@ export function SettingsScreen({
         </div>
       )}
     </div>
+    </SettingsPageShell>
   );
 }

@@ -1,4 +1,10 @@
 export const settingsVisual = {
+  pageBackgroundImage: "/photo/settings-bg.png",
+  pageImage: "absolute inset-0 bg-cover bg-center bg-no-repeat",
+  pageOverlayMain:
+    "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.72) 45%, rgba(0,0,0,0.88) 100%)",
+  pageOverlaySubpage:
+    "linear-gradient(180deg, rgba(0,0,0,0.62) 0%, rgba(0,0,0,0.78) 45%, rgba(0,0,0,0.92) 100%)",
   taxOverview: {
     container:
       "rounded-2xl border border-yellow-500/30 bg-zinc-900 shadow-[0_0_24px_rgba(234,179,8,0.08)]",

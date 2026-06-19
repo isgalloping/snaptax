@@ -7,35 +7,24 @@ import {
   extractIncomeTaxYearFromAiRaw,
   isIncomeDocument,
 } from "@/lib/export/incomeDocuments";
+import { stubSnaptaxReceipt } from "@/lib/receipts/snaptaxReceiptStub";
 
 function incomeReceipt(
   overrides: Partial<SnaptaxReceipt> = {},
 ): SnaptaxReceipt {
-  return {
-    id: "00000000-0000-0000-0000-000000000001",
+  return stubSnaptaxReceipt({
     userId: "user",
-    ghostId: null,
     imageUrl: "receipts/1099.jpg",
-    status: "done",
     amount: 64800 as unknown as SnaptaxReceipt["amount"],
-    currency: "USD",
     merchantName: "Client A",
     category: "1099-NEC",
-    deductible: true,
     taxAmount: 0 as unknown as SnaptaxReceipt["taxAmount"],
-    dataRegion: "us",
     aiRaw: { document_kind: "1099-NEC", payer: "Client A" },
     capturedAt: new Date("2025-12-31T12:00:00.000Z"),
     snapAt: new Date("2025-12-31T12:00:00.000Z"),
-    processedAt: null,
-    taxSeason: null,
-    taxSeasonDate: null,
     contentSha256: "abc",
-    imageFingerprint: "0000000000000000",
-    createdAt: new Date(),
-    updatedAt: new Date(),
     ...overrides,
-  };
+  });
 }
 
 describe("isIncomeDocument", () => {

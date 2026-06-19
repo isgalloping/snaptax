@@ -12,7 +12,7 @@ function toSnaptaxReceipt(receipt: Receipt): SnaptaxReceipt {
     id: receipt.id,
     userId: "",
     ghostId: null,
-    imageUrl: receipt.imageUrl ?? null,
+    imageUrl: receipt.imageUrl?.trim() || "",
     status: "done",
     amount: (receipt.amount ?? 0) as SnaptaxReceipt["amount"],
     currency: receipt.currency ?? "USD",

@@ -2,6 +2,7 @@
 
 **Date:** 2026-06-19  
 **Status:** Approved (design)  
+**Superseded in part by:** `2026-06-19-android-webapk-hyperos-launch-design.md` — `start_url` reverted to `/` (was `/?source=pwa`); see HyperOS spec for pre/post install Chrome permission guidance.  
 **Builds on:** `2026-06-10-pwa-cross-browser-install-design.md`, `2026-06-10-pwa-cross-context-installed-design.md`  
 **Scope:** Ensure Android home-screen launch opens Snap1099 as a **standalone PWA window** (no Chrome URL bar), and guide users away from bookmark shortcuts.
 

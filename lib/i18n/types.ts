@@ -18,6 +18,14 @@ export type UserCopy = {
     installWebApkLead: string;
     launchFromHomeHint: string;
     launchFromHomeGotIt: string;
+    webApkGuide: {
+      preInstallTitle: string;
+      preInstallBody: string;
+      continueInstall: string;
+      postInstallTitle: string;
+      postInstallSteps: string[];
+      gotIt: string;
+    };
     manualSteps: {
       chromiumAndroid: string[];
       chromiumDesktop: string[];

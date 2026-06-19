@@ -2,7 +2,6 @@
 
 import { useCallback, useState } from "react";
 import { useUserCopy } from "@/components/i18n/I18nProvider";
-import { ReferralLearnSheet } from "@/components/settings/ReferralLearnSheet";
 import {
   buildAppSharePayload,
   buildFacebookShareUrl,
@@ -54,12 +53,11 @@ function MoreShareIcon() {
   );
 }
 
-const shareTileClass = `flex min-h-14 flex-col items-center justify-center gap-1.5 border-0 ${settingsVisual.shareTile} text-[11px] font-bold text-zinc-300 transition-transform active:scale-95`;
+const shareTileClass = `flex ${settingsVisual.shareTile} flex-col items-center justify-center gap-1.5 border-0 text-[11px] font-bold text-zinc-300 transition-transform active:scale-95`;
 
 export function ShareAppSection() {
   const copy = useUserCopy().settings.share;
   const [notice, setNotice] = useState<string | null>(null);
-  const [learnOpen, setLearnOpen] = useState(false);
 
   const buildPayload = useCallback(
     () =>
@@ -96,7 +94,6 @@ export function ShareAppSection() {
 
   return (
     <section className={`mb-6 ${settingsVisual.referralCard}`}>
-      <p className="mb-3 text-sm font-bold text-white">{copy.cta}</p>
       <div className="mb-4 flex items-center gap-2">
         {AVATAR_INITIALS.map((initials, index) => (
           <div
@@ -110,13 +107,6 @@ export function ShareAppSection() {
           </div>
         ))}
       </div>
-      <button
-        type="button"
-        onClick={() => setLearnOpen(true)}
-        className="mb-4 text-xs font-bold text-yellow-400 underline transition-transform active:scale-95"
-      >
-        {copy.learnHow}
-      </button>
       <div className="grid grid-cols-3 gap-2">
         <button type="button" onClick={handleWhatsApp} className={shareTileClass}>
           <WhatsAppIcon />
@@ -131,13 +121,11 @@ export function ShareAppSection() {
           {copy.more}
         </button>
       </div>
-      <p className="mt-3 text-xs text-zinc-500">{copy.footnote}</p>
       {notice && (
         <p className="mt-3 text-center text-sm font-bold text-yellow-400" role="status">
           {notice}
         </p>
       )}
-      {learnOpen && <ReferralLearnSheet onClose={() => setLearnOpen(false)} />}
     </section>
   );
 }

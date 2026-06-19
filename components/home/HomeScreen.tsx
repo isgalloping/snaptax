@@ -134,6 +134,7 @@ export function HomeScreen() {
   const [listFilter, setListFilter] = useState<ReceiptListFilter>("all");
   const [syncStuckIds, setSyncStuckIds] = useState<Set<string>>(() => new Set());
   const [receiptNotice, setReceiptNotice] = useState<string | null>(null);
+  const [seasonExportTick, setSeasonExportTick] = useState(0);
   const [homeOverlay, setHomeOverlay] = useState<HomeOverlay>(null);
   const [exitConfirmOpen, setExitConfirmOpen] = useState(false);
   const [settingsViewState, setSettingsViewState] =
@@ -700,6 +701,7 @@ export function HomeScreen() {
   const handlePostExportSync = useCallback(async () => {
     const stored = await loadAllReceipts();
     await syncFromServer(stored, "immediate");
+    setSeasonExportTick((tick) => tick + 1);
   }, [syncFromServer]);
 
   const handlePreExportPrepare = useCallback(async () => {
@@ -1146,6 +1148,7 @@ export function HomeScreen() {
         taxStats={settingsTaxStats}
         onRequestExport={handleSettingsExport}
         exportBlockedTick={taxExport.exportBlockedTick}
+        seasonExportTick={seasonExportTick}
         onboardingAha={
           onboardingStatus === "stage_3" || onboardingStatus === "stage_aha"
         }

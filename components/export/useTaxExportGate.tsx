@@ -18,6 +18,7 @@ import { ExportEngineSheet } from "@/components/export/ExportEngineSheet";
 import { useI18n } from "@/components/i18n/I18nProvider";
 import { hasExportableReceipts } from "@/lib/tax/exportGate";
 import { markExportBlockedBanner } from "@/lib/settings/exportSampleState";
+import { markSeasonExportDone } from "@/lib/settings/seasonExportState";
 
 interface UseTaxExportGateOptions {
   receipts: Receipt[];
@@ -191,6 +192,7 @@ export function useTaxExportGate({
           onClose={() => setShowExportSheet(false)}
           onPreExportPrepare={onPreExportPrepare}
           onExported={async () => {
+            markSeasonExportDone(currentSeason);
             await refreshSeasonPaid?.();
             await onPostExportSync?.();
           }}

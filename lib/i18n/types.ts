@@ -367,8 +367,23 @@ export type UserCopy = {
     };
     taxOverview: {
       taxSaved: string;
-      receiptsTracked: string;
-      totalDeductions: string;
+      receipts: string;
+      deductions: string;
+      receiptsSnapped: string;
+    };
+    exportCard: {
+      compatLine: string;
+      formatLine: string;
+      trustLine: string;
+      mostPopular: string;
+      price: string;
+      states: {
+        final_deadline: { title: string; cta: string };
+        anon: { title: string; cta: string };
+        unpaid: { title: string; cta: string };
+        paid_new: { title: string; cta: string };
+        paid_exported: { title: string; cta: string };
+      };
     };
     notifications: {
       title: string;

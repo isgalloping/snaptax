@@ -451,8 +451,38 @@ export const FR_FR_COPY: UserCopy = {
     },
     taxOverview: {
       taxSaved: "Est. Tax Saved",
-      receiptsTracked: "Receipts Tracked",
-      totalDeductions: "Total Deductions",
+      receipts: "Receipts",
+      deductions: "Deductions",
+      receiptsSnapped: "{count} Snapped",
+    },
+    exportCard: {
+      compatLine: "Compatible TurboTax et H&R Block",
+      formatLine: "Excel + CSV prêt pour l'IRS",
+      trustLine: "Utilisé par des milliers de travailleurs indépendants",
+      mostPopular: "Le plus populaire",
+      price: "49 $",
+      states: {
+        final_deadline: {
+          title: "Dossier fiscal final prêt",
+          cta: "Exporter le dossier fiscal final",
+        },
+        anon: {
+          title: "Débloquer le dossier fiscal IRS",
+          cta: "Aperçu export exemple",
+        },
+        unpaid: {
+          title: "Exporter le dossier IRS {season}",
+          cta: "Débloquer pour 49 $",
+        },
+        paid_new: {
+          title: "Dossier fiscal {season} débloqué",
+          cta: "Télécharger le dossier fiscal",
+        },
+        paid_exported: {
+          title: "Prêt pour la déclaration",
+          cta: "Exporter à nouveau",
+        },
+      },
     },
     notifications: {
       title: "Notifications",

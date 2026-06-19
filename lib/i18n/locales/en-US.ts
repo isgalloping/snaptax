@@ -442,8 +442,38 @@ export const EN_US_COPY: UserCopy = {
       },
       taxOverview: {
         taxSaved: "Est. Tax Saved",
-        receiptsTracked: "Receipts Tracked",
-        totalDeductions: "Total Deductions",
+        receipts: "Receipts",
+        deductions: "Deductions",
+        receiptsSnapped: "{count} Snapped",
+      },
+      exportCard: {
+        compatLine: "TurboTax & H&R Block Compatible",
+        formatLine: "IRS-ready Excel + CSV",
+        trustLine: "Used by thousands of self-employed pros",
+        mostPopular: "Most Popular",
+        price: "$49",
+        states: {
+          final_deadline: {
+            title: "Final Tax Pack Ready",
+            cta: "Export Final Tax Pack",
+          },
+          anon: {
+            title: "Unlock IRS Tax Pack",
+            cta: "Preview Sample Export",
+          },
+          unpaid: {
+            title: "Export {season} IRS Tax Pack",
+            cta: "Unlock for $49",
+          },
+          paid_new: {
+            title: "{season} IRS Tax Pack Unlocked",
+            cta: "Download Tax Pack",
+          },
+          paid_exported: {
+            title: "Tax Filing Ready",
+            cta: "Export Again",
+          },
+        },
       },
       notifications: {
         title: "Notifications",

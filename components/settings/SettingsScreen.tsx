@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Industry } from "@/lib/types";
 import type { GoogleUser } from "@/lib/client/authStorage";
 import type { GoogleAuthResponse } from "@/lib/client/authApi";
@@ -24,7 +24,7 @@ import { SettingsHeader } from "@/components/settings/SettingsHeader";
 import { SettingsPreferencesList } from "@/components/settings/SettingsPreferencesList";
 import type { SettingsViewState } from "@/components/settings/settingsViewState";
 import { ShareAppSection } from "@/components/settings/ShareAppSection";
-import { TaxExportSection } from "@/components/settings/TaxExportSection";
+import { TaxExportCard } from "@/components/settings/TaxExportCard";
 import {
   TaxOverviewPanel,
   type SettingsTaxStats,
@@ -41,6 +41,7 @@ import {
   markSampleExportDone,
 } from "@/lib/settings/exportSampleState";
 import { isLeavingExportCompleted } from "@/lib/client/appNavigationHistory";
+import { hasSeasonExportDone } from "@/lib/settings/seasonExportState";
 
 interface SettingsScreenProps {
   industry: Industry | null;
@@ -72,6 +73,7 @@ interface SettingsScreenProps {
   onSoftGuideDismiss?: () => void;
   skipSoftGoogleSheet?: boolean;
   exportBlockedTick?: number;
+  seasonExportTick?: number;
   onboardingAha?: boolean;
   onSampleExportAhaComplete?: () => Promise<void>;
 }
@@ -105,6 +107,7 @@ export function SettingsScreen({
   onSoftGuideDismiss,
   skipSoftGoogleSheet = false,
   exportBlockedTick = 0,
+  seasonExportTick = 0,
   onboardingAha = false,
   onSampleExportAhaComplete,
 }: SettingsScreenProps) {
@@ -122,6 +125,11 @@ export function SettingsScreen({
   const [showSampleReady, setShowSampleReady] = useState(false);
   const [showExportBlocked, setShowExportBlocked] = useState(false);
   const firstVisitHandled = useRef(false);
+
+  const seasonExportDone = useMemo(
+    () => hasSeasonExportDone(currentSeason),
+    [currentSeason, seasonExportTick],
+  );
 
   useEffect(() => {
     setShowSampleReady(isSampleExportDone());
@@ -417,9 +425,11 @@ export function SettingsScreen({
 
         <TaxOverviewPanel {...taxStats} />
 
-        <TaxExportSection
+        <TaxExportCard
           currentSeason={currentSeason}
+          isSignedIn={isSignedIn}
           seasonPaid={seasonPaid}
+          hasSeasonExportDone={seasonExportDone}
           exportBusy={exportBusy}
           exportEmptyTip={exportEmptyTip}
           exportEmptyTipKey={exportEmptyTipKey}

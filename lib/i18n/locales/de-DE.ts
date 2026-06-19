@@ -450,8 +450,38 @@ export const DE_DE_COPY: UserCopy = {
     },
     taxOverview: {
       taxSaved: "Est. Tax Saved",
-      receiptsTracked: "Receipts Tracked",
-      totalDeductions: "Total Deductions",
+      receipts: "Receipts",
+      deductions: "Deductions",
+      receiptsSnapped: "{count} Snapped",
+    },
+    exportCard: {
+      compatLine: "TurboTax & H&R Block kompatibel",
+      formatLine: "IRS-fertiges Excel + CSV",
+      trustLine: "Von Tausenden Selbstständigen genutzt",
+      mostPopular: "Am beliebtesten",
+      price: "49 $",
+      states: {
+        final_deadline: {
+          title: "Finaler Steuerpaket bereit",
+          cta: "Finales Steuerpaket exportieren",
+        },
+        anon: {
+          title: "IRS-Steuerpaket freischalten",
+          cta: "Beispielexport ansehen",
+        },
+        unpaid: {
+          title: "{season} IRS-Steuerpaket exportieren",
+          cta: "Für 49 $ freischalten",
+        },
+        paid_new: {
+          title: "{season} IRS-Steuerpaket freigeschaltet",
+          cta: "Steuerpaket herunterladen",
+        },
+        paid_exported: {
+          title: "Steuererklärung bereit",
+          cta: "Erneut exportieren",
+        },
+      },
     },
     notifications: {
       title: "Notifications",

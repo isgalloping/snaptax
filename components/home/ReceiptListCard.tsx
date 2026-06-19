@@ -57,16 +57,17 @@ function resolveVisualState(
 function CardShell({
   children,
   className = "",
+  onClick,
   ...props
-}: ComponentProps<"button"> & { className?: string }) {
+}: ComponentProps<"div"> & { className?: string; onClick?: () => void }) {
   return (
-    <button
-      type="button"
-      className={`flex w-full items-center gap-3 rounded-xl border border-zinc-700/80 bg-zinc-800/90 text-left transition-transform active:scale-[0.98] ${className}`}
+    <div
+      onClick={onClick}
+      className={`flex w-full items-center gap-3 rounded-xl border border-zinc-700/80 bg-zinc-800/90 text-left transition-transform active:scale-[0.98] ${onClick ? "cursor-pointer" : ""} ${className}`}
       {...props}
     >
       {children}
-    </button>
+    </div>
   );
 }
 
@@ -190,15 +191,7 @@ export function ReceiptListCard({
   if (receipt.status === "blurry") {
     return (
       <div
-        role="button"
-        tabIndex={0}
         onClick={() => onSelect(receipt)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            onSelect(receipt);
-          }
-        }}
         className="flex w-full cursor-pointer items-center gap-3 rounded-xl border border-red-900/50 bg-zinc-800/90 p-3 text-left transition-transform active:scale-[0.98]"
       >
         <CircularStatusIcon state="blurry" />

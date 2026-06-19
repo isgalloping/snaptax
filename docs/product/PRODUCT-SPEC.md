@@ -126,12 +126,23 @@ Privacy Policy · Terms · **Data storage（美国）** · legal@snap1099.com ·
 
 设置/导出 (Settings)
 ├── [1] 账户区（未登录施压 headline + Continue with Google；已登录 Avatar 首字母 + 姓名 + Paid）
-├── [2] 税务资产总览（Est. Tax Saved · Receipts Tracked · Total Deductions；数据来自 HomeScreen）
-├── [3] 通栏 Export IRS Tax Pack ($49)（无 section 标题；全宽黄 CTA）
-├── [4] Share & Referral（1 Year Free 文案 · 灰卡片 · 无后端计数/权益）
-├── [5] Preferences 列表（Language · Industry · Notifications · Privacy & Security Center → viewState 子页）
-└── [6] Sign out（页底全宽按钮，仅已登录；已从账户区移出）
+├── [2] 税务资产总览 v5（Est. Tax Saved · Receipts `{n} Snapped` · Deductions；户外大字号；有值绿/零值灰；数据来自 HomeScreen）
+├── [3] Export Tax Pack 卡片 v5（五态标题/CTA + 卡片内黄按钮；P0 截止 Apr 15 前 ≤7 天）
+├── [4] Export 状态横幅（绿 sample ready / 红 export blocked）
+├── [5] Share（3 头像 + WhatsApp/Facebook/More；无 Learn 链接）
+├── [6] Preferences v5（72pt 行 + 彩色图标 + 通知 green pill → viewState 子页）
+└── [7] Sign out（页底全宽按钮，仅已登录）
 ```
+
+**Settings Export 卡片五态（P0 优先）：**
+
+| 状态 | 标题 | CTA |
+|------|------|-----|
+| P0 已付费 + 距 Apr 15 ≤7 天 | Final Tax Pack Ready | Export Final Tax Pack |
+| 未登录 | Unlock IRS Tax Pack | Preview Sample Export → Path A |
+| 已登录未付费 | Export `{season}` IRS Tax Pack | Unlock for $49 → Paywall |
+| 已付费未导出 | `{season}` IRS Tax Pack Unlocked | Download Tax Pack |
+| 已付费已导出 | Tax Filing Ready | Export Again |
 
 **Settings Export 门控（与 Home 区分）：**
 
@@ -140,7 +151,7 @@ Privacy Policy · Terms · **Data storage（美国）** · legal@snap1099.com ·
 | **Settings Export** | **v3 Path A**：样例中间页 → Download CSV → Completed → VIEW STATUS 回主屏 + 绿色状态条 | `useTaxExportGate` → Paywall（天平 UI）；Maybe later → 红色 Export blocked 横幅 | Export Again |
 | **Home Export**（TaxHeader · CPA Ready） | **不变** — 仍走完整 export 门控（硬拦截 Google / Paywall） | 同上 | 同上 |
 
-> 设计：[2026-06-17-settings-v3-redesign-design.md](../superpowers/specs/2026-06-17-settings-v3-redesign-design.md) · PRD：`docs/prd/settings.md`
+> 设计：[2026-06-18-settings-v5-redesign-design.md](../superpowers/specs/2026-06-18-settings-v5-redesign-design.md) · v3 交互：[2026-06-17-settings-v3-redesign-design.md](../superpowers/specs/2026-06-17-settings-v3-redesign-design.md) · PRD：`docs/prd/settings.md`
 
 ### 3.1 连拍相机与 Post-Review
 

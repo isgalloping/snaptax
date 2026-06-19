@@ -24,7 +24,7 @@ export function SettingsHeader({
   const headerCopy = copy.settings.header;
 
   return (
-    <header className="flex shrink-0 items-center gap-2 border-b-4 border-yellow-500 bg-zinc-900 p-4">
+    <header className="flex shrink-0 items-center gap-2 border-b-4 border-yellow-500 bg-black/50 p-4 backdrop-blur-sm">
       <button
         type="button"
         onClick={onBack}

@@ -14,6 +14,12 @@ type TaxOverviewPanelProps = SettingsTaxStats;
 
 const EMPTY_AMOUNT = "$—";
 
+function valueColorClass(active: boolean): string {
+  return active
+    ? settingsVisual.taxOverview.valuePositive
+    : settingsVisual.taxOverview.valueNeutral;
+}
+
 export function TaxOverviewPanel({
   taxSaved,
   receiptCount,
@@ -25,24 +31,26 @@ export function TaxOverviewPanel({
     <section className={`${settingsVisual.taxOverview.container} mb-4`}>
       <div className="grid grid-cols-3 divide-x divide-zinc-700 py-4">
         <div className="flex flex-col items-center px-2 text-center">
-          <p className="text-[10px] font-bold uppercase text-zinc-400">{copy.taxSaved}</p>
-          <p className={`mt-1 text-lg font-black ${settingsVisual.taxOverview.columnSaved}`}>
+          <p className={settingsVisual.taxOverview.label}>{copy.taxSaved}</p>
+          <p
+            className={`${settingsVisual.taxOverview.value} ${valueColorClass(taxSaved !== null && taxSaved > 0)}`}
+          >
             {taxSaved === null ? EMPTY_AMOUNT : formatCurrency(taxSaved)}
           </p>
         </div>
         <div className="flex flex-col items-center px-2 text-center">
-          <p className="text-[10px] font-bold uppercase text-zinc-400">
-            {copy.receiptsTracked}
-          </p>
-          <p className={`mt-1 text-lg font-black ${settingsVisual.taxOverview.columnReceipts}`}>
-            {receiptCount}
+          <p className={settingsVisual.taxOverview.label}>{copy.receipts}</p>
+          <p
+            className={`${settingsVisual.taxOverview.value} ${valueColorClass(receiptCount > 0)}`}
+          >
+            {copy.receiptsSnapped.replace("{count}", String(receiptCount))}
           </p>
         </div>
         <div className="flex flex-col items-center px-2 text-center">
-          <p className="text-[10px] font-bold uppercase text-zinc-400">
-            {copy.totalDeductions}
-          </p>
-          <p className={`mt-1 text-lg font-black ${settingsVisual.taxOverview.columnDeductions}`}>
+          <p className={settingsVisual.taxOverview.label}>{copy.deductions}</p>
+          <p
+            className={`${settingsVisual.taxOverview.value} ${valueColorClass(totalDeductions > 0)}`}
+          >
             {formatCurrency(totalDeductions)}
           </p>
         </div>

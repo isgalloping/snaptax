@@ -450,8 +450,38 @@ export const DE_DE_COPY: UserCopy = {
     },
     taxOverview: {
       taxSaved: "Est. Tax Saved",
-      receiptsTracked: "Receipts Tracked",
-      totalDeductions: "Total Deductions",
+      receipts: "Receipts",
+      deductions: "Deductions",
+      receiptsSnapped: "{count} Snapped",
+    },
+    exportCard: {
+      compatLine: "TurboTax & H&R Block kompatibel",
+      formatLine: "IRS-fertiges Excel + CSV",
+      trustLine: "Von Tausenden Selbstständigen genutzt",
+      mostPopular: "Am beliebtesten",
+      price: "49 $",
+      states: {
+        final_deadline: {
+          title: "Finaler Steuerpaket bereit",
+          cta: "Finales Steuerpaket exportieren",
+        },
+        anon: {
+          title: "IRS-Steuerpaket freischalten",
+          cta: "Beispielexport ansehen",
+        },
+        unpaid: {
+          title: "{season} IRS-Steuerpaket exportieren",
+          cta: "Für 49 $ freischalten",
+        },
+        paid_new: {
+          title: "{season} IRS-Steuerpaket freigeschaltet",
+          cta: "Steuerpaket herunterladen",
+        },
+        paid_exported: {
+          title: "Steuererklärung bereit",
+          cta: "Erneut exportieren",
+        },
+      },
     },
     notifications: {
       title: "Notifications",
@@ -500,17 +530,16 @@ export const DE_DE_COPY: UserCopy = {
       ],
     },
     share: {
-      cta: "Tell a fellow 1099 contractor to get 1 Year Free",
-      footnote: "Share with 3 friends — reward program coming soon",
-      learnHow: "Learn how it works",
-      learnSheetTitle: "Refer a fellow contractor",
-      learnSheetBody:
-        "Share Snap1099 with other 1099 workers. When our referral program launches, you'll earn 1 year free for every 3 friends who export their tax pack.",
-      whatsapp: "WhatsApp",
-      facebook: "Facebook",
-      more: "Mehr",
+      sectionTitle: "App teilen",
+      heroTagline: "Belege fotografieren. Steuern sparen. Kostenlos für 1099-Arbeiter.",
+      whatsappTitle: "Via WhatsApp teilen",
+      whatsappSubtitle: "An Ihre Arbeitsgruppe oder einen Kollegen senden",
+      facebookTitle: "Via Facebook teilen",
+      facebookSubtitle: "In Ihrem Feed oder einer Gruppe posten",
+      moreTitle: "Weitere Optionen",
+      moreSubtitle: "SMS, E-Mail, AirDrop & mehr",
       message:
-        "Ich nutze Snap1099 für Belege und einen IRS-fertigen Steuerexport. Probieren Sie es:",
+        "Hey — ich nutze Snap1099, um meine 1099-Belege zu tracken und Steuern zu sparen. Kostenlos für Auftragnehmer — könnte für dich interessant sein:",
       shareTitle: "Snap1099 — Belege zum IRS-Steuerpaket",
       linkCopied: "Link kopiert",
       shareFailed: "Teilen fehlgeschlagen. Link stattdessen kopiert.",

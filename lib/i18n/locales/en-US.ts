@@ -442,8 +442,38 @@ export const EN_US_COPY: UserCopy = {
       },
       taxOverview: {
         taxSaved: "Est. Tax Saved",
-        receiptsTracked: "Receipts Tracked",
-        totalDeductions: "Total Deductions",
+        receipts: "Receipts",
+        deductions: "Deductions",
+        receiptsSnapped: "{count} Snapped",
+      },
+      exportCard: {
+        compatLine: "TurboTax & H&R Block Compatible",
+        formatLine: "IRS-ready Excel + CSV",
+        trustLine: "Used by thousands of self-employed pros",
+        mostPopular: "Most Popular",
+        price: "$49",
+        states: {
+          final_deadline: {
+            title: "Final Tax Pack Ready",
+            cta: "Export Final Tax Pack",
+          },
+          anon: {
+            title: "Unlock IRS Tax Pack",
+            cta: "Preview Sample Export",
+          },
+          unpaid: {
+            title: "Export {season} IRS Tax Pack",
+            cta: "Unlock for $49",
+          },
+          paid_new: {
+            title: "{season} IRS Tax Pack Unlocked",
+            cta: "Download Tax Pack",
+          },
+          paid_exported: {
+            title: "Tax Filing Ready",
+            cta: "Export Again",
+          },
+        },
       },
       notifications: {
         title: "Notifications",
@@ -492,17 +522,16 @@ export const EN_US_COPY: UserCopy = {
         ],
       },
       share: {
-        cta: "Tell a fellow 1099 contractor to get 1 Year Free",
-        footnote: "Share with 3 friends — reward program coming soon",
-        learnHow: "Learn how it works",
-        learnSheetTitle: "Refer a fellow contractor",
-        learnSheetBody:
-          "Share Snap1099 with other 1099 workers. When our referral program launches, you'll earn 1 year free for every 3 friends who export their tax pack.",
-        whatsapp: "WhatsApp",
-        facebook: "Facebook",
-        more: "More",
+        sectionTitle: "Share App",
+        heroTagline: "Snap receipts. Save on taxes. Free for 1099 workers.",
+        whatsappTitle: "Share via WhatsApp",
+        whatsappSubtitle: "Send to your work group or buddy",
+        facebookTitle: "Share via Facebook",
+        facebookSubtitle: "Post to your feed or a group",
+        moreTitle: "More options",
+        moreSubtitle: "SMS, Email, AirDrop & more",
         message:
-          "I use Snap1099 to snap receipts and export an IRS-ready tax pack. Try it:",
+          "Hey — I've been using Snap1099 to track my 1099 receipts and save on taxes. Free for contractors — thought you'd find it useful:",
         shareTitle: "Snap1099 — Receipts to IRS tax pack",
         linkCopied: "Link copied",
         shareFailed: "Could not share. Link copied instead.",

@@ -367,8 +367,23 @@ export type UserCopy = {
     };
     taxOverview: {
       taxSaved: string;
-      receiptsTracked: string;
-      totalDeductions: string;
+      receipts: string;
+      deductions: string;
+      receiptsSnapped: string;
+    };
+    exportCard: {
+      compatLine: string;
+      formatLine: string;
+      trustLine: string;
+      mostPopular: string;
+      price: string;
+      states: {
+        final_deadline: { title: string; cta: string };
+        anon: { title: string; cta: string };
+        unpaid: { title: string; cta: string };
+        paid_new: { title: string; cta: string };
+        paid_exported: { title: string; cta: string };
+      };
     };
     notifications: {
       title: string;
@@ -398,14 +413,14 @@ export type UserCopy = {
       points: { title: string; body: string }[];
     };
     share: {
-      cta: string;
-      footnote: string;
-      learnHow: string;
-      learnSheetTitle: string;
-      learnSheetBody: string;
-      whatsapp: string;
-      facebook: string;
-      more: string;
+      sectionTitle: string;
+      heroTagline: string;
+      whatsappTitle: string;
+      whatsappSubtitle: string;
+      facebookTitle: string;
+      facebookSubtitle: string;
+      moreTitle: string;
+      moreSubtitle: string;
       message: string;
       shareTitle: string;
       linkCopied: string;

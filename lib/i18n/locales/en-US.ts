@@ -839,6 +839,10 @@ export const EN_US_COPY: UserCopy = {
         "Instant offline preview without receipt image links. Full export adds signed URLs.",
       progressPreparing: "Preparing expenses…",
       progressFetchingImages: "Fetching receipt images…",
+      progressBuildingPdf: "Building PDF…",
       progressFinalizing: "Finalizing your pack…",
+      pdfFailed:
+        "PDF export failed. Try CSV or CPA Audit Pack, or try again later.",
+      exportTimeout: "Export timed out. Check your connection and try again.",
     },
   };

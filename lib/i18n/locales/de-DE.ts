@@ -851,6 +851,11 @@ export const DE_DE_COPY: UserCopy = {
       "Sofortige Offline-Vorschau ohne Belegbild-Links. Vollständiger Export fügt signierte URLs hinzu.",
     progressPreparing: "Ausgaben werden vorbereitet…",
     progressFetchingImages: "Belegbilder werden abgerufen…",
+    progressBuildingPdf: "PDF wird erstellt…",
     progressFinalizing: "Paket wird fertiggestellt…",
+    pdfFailed:
+      "PDF-Export fehlgeschlagen. Versuchen Sie CSV oder CPA-Audit-Paket.",
+    exportTimeout:
+      "Export-Zeitüberschreitung. Verbindung prüfen und erneut versuchen.",
   },
 };

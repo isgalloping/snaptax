@@ -28,6 +28,8 @@ import { resolveVerifyContext } from "@/lib/verify/context";
 import { ensureBypassEntitlement } from "@/lib/verify/ensureBypassEntitlement";
 import { userAccountReceiptFilter } from "@/lib/receipts/accountCleanup";
 
+export const maxDuration = 60;
+
 const exportBodySchema = z.object({
   taxYear: z.string().regex(/^\d{4}$/).optional(),
   format: z.enum(["csv", "cpa_pack", "cpa_pdf", "xlsx"]).optional().default("csv"),
@@ -131,7 +133,25 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
         pack.imageStats.imagesEligible - pack.imageStats.imagesIncluded,
       );
     } else if (body.format === "cpa_pdf") {
-      buffer = await buildCpaSummaryPdf(taxYear, enrichedRows, summaryLines);
+      try {
+        buffer = await buildCpaSummaryPdf(taxYear, enrichedRows, summaryLines);
+      } catch (pdfErr) {
+        logEvent({
+          ts: utcNow().toISOString(),
+          module: "biz.export",
+          level: "error",
+          success: false,
+          durationMs: 0,
+          userId: actor.userId,
+          meta: {
+            taxSeason: taxYear,
+            reason: `pdf_generation_failed;count=${receipts.length}`,
+            errorMessage:
+              pdfErr instanceof Error ? pdfErr.message.slice(0, 120) : "unknown",
+          },
+        });
+        throw new Error("PDF_GENERATION_FAILED");
+      }
       contentType = "application/pdf";
       filename = `Snap1099-${taxYear}-CPA-Summary.pdf`;
     } else if (body.format === "xlsx") {

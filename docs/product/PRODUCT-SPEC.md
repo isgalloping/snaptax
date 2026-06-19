@@ -114,7 +114,7 @@ Privacy Policy · Terms · **Data storage（美国）** · legal@snap1099.com ·
 ```
 主界面 (Home)
 ├── 固定区（不滚动）
-│   ├── TaxHeader：Est. Tax Saved **photo hero 卡片**（`/photo/hero.png` + overlay）；**CPA/IRS Ready** Export + Settings（无 Sync/Filter / 无盾牌）
+│   ├── TaxHeader：Est. Tax Saved **photo hero 卡片**（`/photo/hero.png` + overlay）；**CPA/IRS Ready** Export + **ADD HOME** 安装（header-button 模式；64px 热区；主屏网格图标+短文案）+ Settings（无 Sync/Filter / 无盾牌）
 │   ├── SnapButton：全宽黄 SNAP RECEIPT（合规脚注仅在相机界面）
 │   ├── InlinePrivacy：Snap 下内联隐私条 + Learn more → privacy-trust overlay
 │   └── WidgetPager：Need Action 有 ACTION 小票时固定第 2 位；报税季 + ACTION 时 CPA /IRS Ready 第 3 位
@@ -126,7 +126,7 @@ Privacy Policy · Terms · **Data storage（美国）** · legal@snap1099.com ·
 
 设置/导出 (Settings)
 ├── [1] 账户区（未登录施压 headline + Continue with Google；已登录 Avatar 首字母 + 姓名 + Paid）
-├── [2] 税务资产总览 v5（Est. Tax Saved · Receipts `{n} Snapped` · Deductions；户外大字号；有值绿/零值灰；数据来自 HomeScreen）
+├── [2] 税务资产总览 v5（Est. Tax Saved · Receipts 计数 · Deductions；户外大字号；有值绿/零值灰；数据来自 HomeScreen）
 ├── [3] Export Tax Pack 卡片 v5（五态标题/CTA + 卡片内黄按钮；P0 截止 Apr 15 前 ≤7 天）
 ├── [4] Export 状态横幅（绿 sample ready / 红 export blocked）
 ├── [5] Share（3 头像 + WhatsApp/Facebook/More；无 Learn 链接）

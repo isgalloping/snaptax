@@ -123,6 +123,7 @@ export type UserCopy = {
       exportTaxPack: string;
       cpaIrsReady: string;
       installApp: string;
+      installShortLabel: string;
       syncReceipts: string;
       settings: string;
       filterReceipts: string;
@@ -377,7 +378,6 @@ export type UserCopy = {
       taxSaved: string;
       receipts: string;
       deductions: string;
-      receiptsSnapped: string;
     };
     exportCard: {
       compatLine: string;
@@ -421,8 +421,8 @@ export type UserCopy = {
       points: { title: string; body: string }[];
     };
     share: {
-      sectionTitle: string;
-      heroTagline: string;
+      sectionHeading: string;
+      rowLabel: string;
       whatsappTitle: string;
       whatsappSubtitle: string;
       facebookTitle: string;

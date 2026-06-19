@@ -154,7 +154,8 @@ export const FR_FR_COPY: UserCopy = {
       tracked: "enregistrés",
       exportTaxPack: "Exporter le dossier fiscal",
       cpaIrsReady: "CPA /IRS Ready",
-      installApp: "Installer l'application",
+      installApp: "Ajouter Snap1099 à l'écran d'accueil",
+      installShortLabel: "ACCUEIL",
       syncReceipts: "Synchroniser les reçus",
       settings: "Paramètres",
       filterReceipts: "Filter receipts",
@@ -467,7 +468,6 @@ export const FR_FR_COPY: UserCopy = {
       taxSaved: "Est. Tax Saved",
       receipts: "Receipts",
       deductions: "Deductions",
-      receiptsSnapped: "{count} Snapped",
     },
     exportCard: {
       compatLine: "Compatible TurboTax et H&R Block",
@@ -545,8 +545,8 @@ export const FR_FR_COPY: UserCopy = {
       ],
     },
     share: {
-      sectionTitle: "Partager l'app",
-      heroTagline: "Photographiez vos reçus. Économisez sur vos impôts. Gratuit pour les 1099.",
+      sectionHeading: "Partager & parrainer",
+      rowLabel: "Partager l'app et parrainer des amis",
       whatsappTitle: "Partager via WhatsApp",
       whatsappSubtitle: "Envoyer à votre groupe de travail ou un collègue",
       facebookTitle: "Partager via Facebook",
@@ -581,7 +581,7 @@ export const FR_FR_COPY: UserCopy = {
       cancel: "Annuler",
     },
     preferences: {
-      title: "Préférences",
+      title: "Préférences et actions",
     },
     export: {
       title: "Export fiscal",

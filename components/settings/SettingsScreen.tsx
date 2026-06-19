@@ -452,12 +452,12 @@ export function SettingsScreen({
           />
         )}
 
-        <ShareAppSection />
-
         <SettingsPreferencesList
           industry={industry}
           onNavigate={onViewStateChange}
         />
+
+        <ShareAppSection />
 
         {isSignedIn && onSignOut && (
           <button

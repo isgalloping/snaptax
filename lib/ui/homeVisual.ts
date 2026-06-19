@@ -94,6 +94,8 @@ export const homeVisual = {
     heroFade:
       "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,1) 55%)",
   },
+  headerActionBtn:
+    "flex min-h-16 min-w-[3.5rem] flex-col items-center justify-center rounded-xl border border-zinc-700 bg-black/40 px-2 transition-transform active:scale-95 disabled:opacity-40",
   widgets: {
     deadline: {
       bg: "bg-violet-950/80",

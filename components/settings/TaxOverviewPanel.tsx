@@ -43,7 +43,7 @@ export function TaxOverviewPanel({
           <p
             className={`${settingsVisual.taxOverview.value} ${valueColorClass(receiptCount > 0)}`}
           >
-            {copy.receiptsSnapped.replace("{count}", String(receiptCount))}
+            {receiptCount}
           </p>
         </div>
         <div className="flex flex-col items-center px-2 text-center">

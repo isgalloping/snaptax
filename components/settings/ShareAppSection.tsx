@@ -12,43 +12,31 @@ import {
 } from "@/lib/client/shareApp";
 import { settingsVisual } from "@/lib/ui/settingsVisual";
 
-function ShareSectionIcon() {
+function ShareRowIcon() {
   return (
     <svg
       viewBox="0 0 24 24"
-      className="h-5 w-5 shrink-0 text-[#F5B800]"
+      className="h-5 w-5 shrink-0 text-zinc-300"
       aria-hidden
       fill="none"
       stroke="currentColor"
       strokeWidth="2"
     >
-      <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" strokeLinecap="round" strokeLinejoin="round" />
-      <polyline points="16 6 12 2 8 6" strokeLinecap="round" strokeLinejoin="round" />
-      <line x1="12" y1="2" x2="12" y2="15" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
 
-function ChevronDown({ expanded }: { expanded: boolean }) {
+function ChevronRight({ expanded }: { expanded?: boolean }) {
   return (
     <svg
       viewBox="0 0 24 24"
-      className={`h-5 w-5 shrink-0 text-zinc-500 transition-transform ${expanded ? "rotate-180" : ""}`}
-      aria-hidden
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function ChevronRight() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className="h-4 w-4 shrink-0 text-zinc-500"
+      className={`h-5 w-5 shrink-0 text-zinc-500 transition-transform ${expanded ? "rotate-90" : ""}`}
       aria-hidden
       fill="none"
       stroke="currentColor"
@@ -137,87 +125,86 @@ export function ShareAppSection() {
   };
 
   return (
-    <section className={`mb-6 ${settingsVisual.referralCard}`}>
-      <button
-        type="button"
-        aria-expanded={expanded}
-        onClick={() => setExpanded((open) => !open)}
-        className={settingsVisual.share.collapseTrigger}
-      >
-        <ShareSectionIcon />
-        <span className="min-w-0 flex-1">
-          <span className="block text-xs font-bold uppercase tracking-wider text-zinc-300">
-            {copy.sectionTitle}
-          </span>
-          <span className="mt-0.5 block truncate text-sm font-bold text-zinc-500">
-            {copy.heroTagline}
-          </span>
-        </span>
-        <ChevronDown expanded={expanded} />
-      </button>
+    <section className="mb-4">
+      <p className={settingsVisual.sectionHeading}>{copy.sectionHeading}</p>
+      <div className={settingsVisual.preferences.container}>
+        <button
+          type="button"
+          aria-expanded={expanded}
+          onClick={() => setExpanded((open) => !open)}
+          className={settingsVisual.preferences.row}
+        >
+          <ShareRowIcon />
+          <span className="min-w-0 flex-1 text-sm font-bold text-white">{copy.rowLabel}</span>
+          <ChevronRight expanded={expanded} />
+        </button>
 
-      {expanded && (
-        <div className={settingsVisual.share.panel}>
-          <div className="flex flex-col gap-2.5">
-            <button
-              type="button"
-              onClick={handleWhatsApp}
-              className={`${settingsVisual.share.channelButton} ${settingsVisual.share.whatsapp}`}
-            >
-              <WhatsAppIcon />
-              <span className="min-w-0 flex-1">
-                <span className={`block ${settingsVisual.share.channelTitle}`}>
-                  {copy.whatsappTitle}
+        {expanded && (
+          <div className={settingsVisual.share.panel}>
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={handleWhatsApp}
+                className={`${settingsVisual.share.channelButton} ${settingsVisual.share.whatsapp}`}
+              >
+                <WhatsAppIcon />
+                <span className="min-w-0 flex-1">
+                  <span className={`block ${settingsVisual.share.channelTitle}`}>
+                    {copy.whatsappTitle}
+                  </span>
+                  <span className="mt-0.5 block text-xs font-bold text-[#3d8b57]">
+                    {copy.whatsappSubtitle}
+                  </span>
                 </span>
-                <span className="mt-0.5 block text-xs font-bold text-[#3d8b57]">
-                  {copy.whatsappSubtitle}
-                </span>
-              </span>
-              <ChevronRight />
-            </button>
+                <ChevronRight />
+              </button>
 
-            <button
-              type="button"
-              onClick={handleFacebook}
-              className={`${settingsVisual.share.channelButton} ${settingsVisual.share.facebook}`}
-            >
-              <FacebookIcon />
-              <span className="min-w-0 flex-1">
-                <span className={`block ${settingsVisual.share.channelTitle}`}>
-                  {copy.facebookTitle}
+              <button
+                type="button"
+                onClick={handleFacebook}
+                className={`${settingsVisual.share.channelButton} ${settingsVisual.share.facebook}`}
+              >
+                <FacebookIcon />
+                <span className="min-w-0 flex-1">
+                  <span className={`block ${settingsVisual.share.channelTitle}`}>
+                    {copy.facebookTitle}
+                  </span>
+                  <span className="mt-0.5 block text-xs font-bold text-[#5b9bd5]">
+                    {copy.facebookSubtitle}
+                  </span>
                 </span>
-                <span className="mt-0.5 block text-xs font-bold text-[#5b9bd5]">
-                  {copy.facebookSubtitle}
-                </span>
-              </span>
-              <ChevronRight />
-            </button>
+                <ChevronRight />
+              </button>
 
-            <button
-              type="button"
-              onClick={() => void handleMore()}
-              className={`${settingsVisual.share.channelButton} ${settingsVisual.share.more}`}
-            >
-              <MoreShareIcon />
-              <span className="min-w-0 flex-1">
-                <span className={`block ${settingsVisual.share.channelTitle}`}>
-                  {copy.moreTitle}
+              <button
+                type="button"
+                onClick={() => void handleMore()}
+                className={`${settingsVisual.share.channelButton} ${settingsVisual.share.more}`}
+              >
+                <MoreShareIcon />
+                <span className="min-w-0 flex-1">
+                  <span className={`block ${settingsVisual.share.channelTitle}`}>
+                    {copy.moreTitle}
+                  </span>
+                  <span className={`mt-0.5 block ${settingsVisual.share.channelSubtitle}`}>
+                    {copy.moreSubtitle}
+                  </span>
                 </span>
-                <span className={`mt-0.5 block ${settingsVisual.share.channelSubtitle}`}>
-                  {copy.moreSubtitle}
-                </span>
-              </span>
-              <ChevronRight />
-            </button>
+                <ChevronRight />
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {notice && (
-        <p className="border-t border-zinc-800 px-4 py-3 text-center text-sm font-bold text-yellow-400" role="status">
-          {notice}
-        </p>
-      )}
+        {notice && (
+          <p
+            className="border-t border-zinc-800 px-4 py-2 text-center text-sm font-bold text-yellow-400"
+            role="status"
+          >
+            {notice}
+          </p>
+        )}
+      </div>
     </section>
   );
 }

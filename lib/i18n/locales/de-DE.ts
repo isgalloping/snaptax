@@ -154,7 +154,8 @@ export const DE_DE_COPY: UserCopy = {
       tracked: "erfasst",
       exportTaxPack: "Steuerpaket exportieren",
       cpaIrsReady: "CPA /IRS Ready",
-      installApp: "App installieren",
+      installApp: "Snap1099 zum Startbildschirm hinzufügen",
+      installShortLabel: "START",
       syncReceipts: "Belege synchronisieren",
       settings: "Einstellungen",
       filterReceipts: "Filter receipts",
@@ -466,7 +467,6 @@ export const DE_DE_COPY: UserCopy = {
       taxSaved: "Est. Tax Saved",
       receipts: "Receipts",
       deductions: "Deductions",
-      receiptsSnapped: "{count} Snapped",
     },
     exportCard: {
       compatLine: "TurboTax & H&R Block kompatibel",
@@ -544,8 +544,8 @@ export const DE_DE_COPY: UserCopy = {
       ],
     },
     share: {
-      sectionTitle: "App teilen",
-      heroTagline: "Belege fotografieren. Steuern sparen. Kostenlos für 1099-Arbeiter.",
+      sectionHeading: "Teilen & empfehlen",
+      rowLabel: "App teilen & Freunde empfehlen",
       whatsappTitle: "Via WhatsApp teilen",
       whatsappSubtitle: "An Ihre Arbeitsgruppe oder einen Kollegen senden",
       facebookTitle: "Via Facebook teilen",
@@ -580,7 +580,7 @@ export const DE_DE_COPY: UserCopy = {
       cancel: "Abbrechen",
     },
     preferences: {
-      title: "Einstellungen",
+      title: "Einstellungen & Aktionen",
     },
     export: {
       title: "Steuerexport",

@@ -6,7 +6,7 @@ import { homeVisual } from "@/lib/ui/homeVisual";
 import { ReceiptIcon } from "@/components/icons/ReceiptIcon";
 import { SlidersIcon } from "@/components/icons/SlidersIcon";
 import { DownloadIcon } from "@/components/icons/DownloadIcon";
-import { InstallIcon } from "@/components/icons/InstallIcon";
+import { HomeScreenAddIcon } from "@/components/icons/HomeScreenAddIcon";
 import { usePwaInstallOptional } from "@/components/pwa/pwaInstallContext";
 import { CoachPulseOverlay } from "@/components/onboarding/CoachPulseOverlay";
 
@@ -25,8 +25,7 @@ interface TaxHeaderProps {
   onAhaCoachDismiss?: () => void;
 }
 
-const actionBtn =
-  "flex min-h-11 min-w-11 flex-col items-center justify-center rounded-xl border border-zinc-700 bg-black/40 px-2 transition-transform active:scale-95 disabled:opacity-40";
+const actionBtn = homeVisual.headerActionBtn;
 
 export function TaxHeader({
   taxSaved,
@@ -140,7 +139,10 @@ export function TaxHeader({
               className={`${actionBtn} border-yellow-500/60`}
               aria-label={copy.installApp}
             >
-              <InstallIcon className="h-5 w-5 text-yellow-400" />
+              <HomeScreenAddIcon className="h-5 w-5 text-yellow-400" />
+              <span className="mt-0.5 text-[9px] font-bold leading-none text-yellow-400/90">
+                {copy.installShortLabel}
+              </span>
             </button>
           )}
           {showSettings && (

@@ -117,10 +117,8 @@ export function SettingsPreferencesList({
       : copy.settings.industry.labels.general;
 
   return (
-    <section className="mb-8">
-      <p className="mb-3 text-xs font-bold uppercase tracking-wider text-zinc-500">
-        {copy.settings.preferences.title}
-      </p>
+    <section className="mb-4">
+      <p className={settingsVisual.sectionHeading}>{copy.settings.preferences.title}</p>
       <div className={settingsVisual.preferences.container}>
         <PrefRow
           icon={<GlobeIcon />}

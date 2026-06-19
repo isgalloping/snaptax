@@ -413,14 +413,14 @@ export type UserCopy = {
       points: { title: string; body: string }[];
     };
     share: {
-      cta: string;
-      footnote: string;
-      learnHow: string;
-      learnSheetTitle: string;
-      learnSheetBody: string;
-      whatsapp: string;
-      facebook: string;
-      more: string;
+      sectionTitle: string;
+      heroTagline: string;
+      whatsappTitle: string;
+      whatsappSubtitle: string;
+      facebookTitle: string;
+      facebookSubtitle: string;
+      moreTitle: string;
+      moreSubtitle: string;
       message: string;
       shareTitle: string;
       linkCopied: string;

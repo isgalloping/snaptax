@@ -21,7 +21,19 @@ export const settingsVisual = {
     badgePopular: "rounded-full bg-blue-600 px-2 py-0.5 text-[10px] font-black uppercase text-white",
     price: "text-xl font-black text-yellow-500",
   },
-  referralCard: "rounded-2xl border border-zinc-800 bg-zinc-900 p-4",
+  referralCard: "rounded-2xl border border-zinc-800 bg-zinc-900/90 overflow-hidden",
+  share: {
+    collapseTrigger:
+      "flex min-h-[4.5rem] w-full items-center gap-3 px-4 py-3 text-left transition-transform active:scale-[0.99]",
+    panel: "space-y-2.5 border-t border-zinc-800 px-4 pb-4 pt-3",
+    channelButton:
+      "flex min-h-[3.875rem] w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition-transform active:scale-[0.98]",
+    whatsapp: "border-[#1a5c2e] bg-[#0A1F10]",
+    facebook: "border-[#1048a0] bg-[#0A1020]",
+    more: "border-zinc-700 bg-zinc-900",
+    channelTitle: "text-sm font-black text-white",
+    channelSubtitle: "text-xs font-bold text-zinc-400",
+  },
   shareTile: "rounded-xl bg-zinc-800 p-2 min-h-[4.5rem]",
   preferences: {
     container: "overflow-hidden rounded-2xl border border-zinc-700 bg-zinc-900",

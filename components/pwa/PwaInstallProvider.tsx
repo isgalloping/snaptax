@@ -4,6 +4,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -30,11 +31,19 @@ import {
 import { InstallManualSheet } from "./InstallManualSheet";
 import { InstallPrompt } from "./InstallPrompt";
 import { LaunchFromHomeHint } from "./LaunchFromHomeHint";
+import {
+  WebApkLaunchGuideSheet,
+  type WebApkGuideVariant,
+} from "./WebApkLaunchGuideSheet";
 
-function useInstallUiState(): PwaInstallContextValue {
+function useInstallUiState() {
   const [mode, setMode] = useState<InstallUiMode>("none");
   const [canPrompt, setCanPrompt] = useState(false);
   const [manualSheetOpen, setManualSheetOpen] = useState(false);
+  const [webApkGuideOpen, setWebApkGuideOpen] = useState(false);
+  const [webApkGuideVariant, setWebApkGuideVariant] =
+    useState<WebApkGuideVariant>("pre-install");
+  const pendingNativeInstallRef = useRef(false);
 
   const sync = useCallback(async () => {
     setCanPrompt(canNativeInstallPrompt());
@@ -54,6 +63,27 @@ function useInstallUiState(): PwaInstallContextValue {
       ),
     );
   }, []);
+
+  const runNativeInstall = useCallback(async () => {
+    const deferredPrompt = getDeferredInstallPrompt();
+    if (!deferredPrompt) {
+      setManualSheetOpen(true);
+      return;
+    }
+
+    try {
+      await deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === "accepted") {
+        clearDeferredInstallPrompt();
+        setManualSheetOpen(false);
+        setMode("none");
+      }
+    } catch {
+      setManualSheetOpen(true);
+    }
+    void sync();
+  }, [sync]);
 
   useEffect(() => {
     if (isStandaloneDisplayMode()) {
@@ -104,10 +134,18 @@ function useInstallUiState(): PwaInstallContextValue {
     };
     document.addEventListener("visibilitychange", onVisible);
 
+    const onInstalled = () => {
+      if (getInstallPlatform() !== "chromium-android") return;
+      setWebApkGuideVariant("post-install");
+      setWebApkGuideOpen(true);
+    };
+    window.addEventListener("appinstalled", onInstalled);
+
     return () => {
       unsubPrompt();
       unsubLanding();
       document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("appinstalled", onInstalled);
       if (onController) {
         navigator.serviceWorker.removeEventListener(
           "controllerchange",
@@ -144,19 +182,28 @@ function useInstallUiState(): PwaInstallContextValue {
       return;
     }
 
-    try {
-      await deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === "accepted") {
-        clearDeferredInstallPrompt();
-        setManualSheetOpen(false);
-        setMode("none");
-      }
-    } catch {
-      setManualSheetOpen(true);
+    if (platform === "chromium-android") {
+      pendingNativeInstallRef.current = true;
+      setWebApkGuideVariant("pre-install");
+      setWebApkGuideOpen(true);
+      return;
     }
-    void sync();
-  }, [sync]);
+
+    await runNativeInstall();
+  }, [runNativeInstall]);
+
+  const handleWebApkGuideContinue = useCallback(() => {
+    setWebApkGuideOpen(false);
+    if (pendingNativeInstallRef.current) {
+      pendingNativeInstallRef.current = false;
+      void runNativeInstall();
+    }
+  }, [runNativeInstall]);
+
+  const handleWebApkGuideDismiss = useCallback(() => {
+    pendingNativeInstallRef.current = false;
+    setWebApkGuideOpen(false);
+  }, []);
 
   const dismissBar = useCallback(() => {
     dismissInstallBar();
@@ -164,7 +211,7 @@ function useInstallUiState(): PwaInstallContextValue {
     void sync();
   }, [sync]);
 
-  return useMemo(
+  const contextValue = useMemo<PwaInstallContextValue>(
     () => ({
       mode,
       canPrompt,
@@ -175,18 +222,39 @@ function useInstallUiState(): PwaInstallContextValue {
     }),
     [mode, canPrompt, manualSheetOpen, install, dismissBar, acknowledgeManualSheet],
   );
+
+  return {
+    contextValue,
+    webApkGuideOpen,
+    webApkGuideVariant,
+    handleWebApkGuideContinue,
+    handleWebApkGuideDismiss,
+  };
 }
 
 export function PwaInstallProvider({ children }: { children: ReactNode }) {
-  const value = useInstallUiState();
+  const {
+    contextValue,
+    webApkGuideOpen,
+    webApkGuideVariant,
+    handleWebApkGuideContinue,
+    handleWebApkGuideDismiss,
+  } = useInstallUiState();
+
   return (
-    <PwaInstallContext.Provider value={value}>
+    <PwaInstallContext.Provider value={contextValue}>
       {children}
       <LaunchFromHomeHint />
       <InstallPrompt />
       <InstallManualSheet
-        open={value.manualSheetOpen}
-        onClose={value.closeManualSheet}
+        open={contextValue.manualSheetOpen}
+        onClose={contextValue.closeManualSheet}
+      />
+      <WebApkLaunchGuideSheet
+        open={webApkGuideOpen}
+        variant={webApkGuideVariant}
+        onContinue={handleWebApkGuideContinue}
+        onDismiss={handleWebApkGuideDismiss}
       />
     </PwaInstallContext.Provider>
   );

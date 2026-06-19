@@ -23,10 +23,24 @@ export const FR_FR_COPY: UserCopy = {
     launchFromHomeHint:
       "Ouvrez Snap1099 depuis l'icône de l'écran d'accueil, pas dans Chrome.",
     launchFromHomeGotIt: "Compris",
+    webApkGuide: {
+      preInstallTitle: "Avant l'installation",
+      preInstallBody:
+        "Après l'installation, ouvrez Snap1099 depuis l'écran d'accueil — pas dans Chrome. Sur certains téléphones Android, le premier lancement demande d'ouvrir Chrome. Appuyez sur Toujours autoriser. Refuser empêchera l'application de s'ouvrir.",
+      continueInstall: "Continuer l'installation",
+      postInstallTitle: "Snap1099 installé",
+      postInstallSteps: [
+        "Allez sur l'écran d'accueil et appuyez sur l'icône Snap1099.",
+        "Si votre téléphone demande d'ouvrir Chrome, appuyez sur Toujours autoriser.",
+        "L'application s'ouvre en plein écran sans barre d'adresse.",
+      ],
+      gotIt: "Compris",
+    },
     manualSteps: {
       chromiumAndroid: [
         "Appuyez sur ⋮ (en haut à droite de Chrome), puis sur « Installer l'application » (pas un raccourci).",
         "Confirmez — Snap1099 s'ouvre depuis votre écran d'accueil comme une app native.",
+        "Au premier lancement depuis l'écran d'accueil, si on vous demande d'ouvrir Chrome, appuyez sur Toujours autoriser. Refuser bloque l'ouverture de l'app.",
       ],
       chromiumDesktop: [
         "Appuyez sur le menu ⋮ (en haut à droite de Chrome ou Edge).",

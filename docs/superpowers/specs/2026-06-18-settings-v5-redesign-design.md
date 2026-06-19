@@ -18,7 +18,7 @@ Upgrade Settings from v3 implementation to v5 visual spec while keeping existing
 | Summary | v5 — larger numerals, semantic green/grey, `Est. Tax Saved` / `Receipts` / `Deductions`, `{n} Snapped`; no privacy footer |
 | Export card | v5 chrome + five-state machine (below); marketing copy **Excel + CSV** (not PDF) |
 | Filing deadline P0 threshold | **7 days** before Apr 15 of `currentSeason` |
-| Referral / Share | 3 avatars + WhatsApp / Facebook / More; v5 dark card tone; optional `Learn how it works` link |
+| Referral / Share | 3 avatars + WhatsApp / Facebook / More; v5 dark card tone; **no** `Learn how it works` link |
 | Preferences | v5 — grouped card, 72pt rows, colored icons, green `{n} on` pill for notifications |
 | Footer | Keep — full-width Sign out + confirm sheet; no version string |
 | PWA Before/After chrome | Out of scope (separate PWA polish) |
@@ -146,7 +146,7 @@ New `lib/settings/seasonExportState.ts`:
 - **Keep:** grid of three share tiles — WhatsApp, Facebook, More sharing.
 - Tile hot zone: **`min-h-[4.5rem]`** (72px).
 - **Remove:** large top referral headline (`Tell a fellow 1099 contractor…`).
-- **Optional:** small yellow underlined `Learn how it works` → existing `ReferralLearnSheet`.
+- **Remove:** `Learn how it works` link and `ReferralLearnSheet` usage (component may be deleted).
 - Share handlers unchanged (`shareApp.ts`).
 
 ## § Preferences list (`SettingsPreferencesList`)
@@ -243,7 +243,7 @@ SettingsScreen
 5. Export P4 paid exported: `Tax Filing Ready` / `Export Again`; after export, P4 persists on reload.
 6. Export P0: mock date ≤7 days before Apr 15 + paid → `Final Tax Pack Ready` overrides P3/P4.
 7. P0 does not apply to unsigned or unpaid users.
-8. Share: three buttons work; Learn sheet opens if link kept.
+8. Share: three buttons work; no Learn link or ReferralLearnSheet.
 9. Preferences: 72pt rows, icons, notification pill, sub-page BACK → main.
 10. Header / account / sign-out unchanged; EN/FR/DE sync.
 11. Home Export gate regression-free.

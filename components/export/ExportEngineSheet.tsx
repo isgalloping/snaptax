@@ -5,6 +5,7 @@ import type { Receipt } from "@/lib/types";
 import { useI18n } from "@/components/i18n/I18nProvider";
 import {
   availableTaxYears,
+  incomeFormsInTaxYear,
   taxYearDeductions,
   receiptsInTaxYear,
 } from "@/lib/tax/taxYearStats";
@@ -18,8 +19,14 @@ import {
   type ExportFormat,
   type ExportTaxPackMeta,
 } from "@/lib/client/authApi";
-import { shareTaxPackFile } from "@/lib/export/shareTaxPack";
+import {
+  canShareTaxPackFile,
+  downloadTaxPackFile,
+  shareTaxPackFile,
+} from "@/lib/export/shareTaxPack";
 import { buildLocalTurboTaxCsv } from "@/lib/export/buildLocalTurboTaxCsv";
+import { setPendingIncomeCapture } from "@/lib/export/incomeCapture";
+import type { IncomeCaptureKind } from "@/lib/export/incomeCapture";
 import { ExportCategoryReview } from "@/components/export/ExportCategoryReview";
 
 type Step = 1 | 2 | 3 | 4;
@@ -31,6 +38,7 @@ interface ExportEngineSheetProps {
   onExported?: () => void | Promise<void>;
   onPaymentRequired?: () => void;
   onReceiptUpdated?: (receipt: Receipt) => void;
+  onSnap1099?: (kind: IncomeCaptureKind) => void;
 }
 
 const PROGRESS_TICK_MS = 16;
@@ -43,6 +51,7 @@ export function ExportEngineSheet({
   onExported,
   onPaymentRequired,
   onReceiptUpdated,
+  onSnap1099,
 }: ExportEngineSheetProps) {
   const { copy } = useI18n();
   const t = copy.exportEngine;
@@ -69,12 +78,14 @@ export function ExportEngineSheet({
   const [readyFile, setReadyFile] = useState<File | null>(null);
   const [exportMeta, setExportMeta] = useState<ExportTaxPackMeta | null>(null);
   const [sharing, setSharing] = useState(false);
+  const [shareStatus, setShareStatus] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const autoSharedRef = useRef(false);
   const progressTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const yearReceipts = receiptsInTaxYear(receipts, taxYear, timeZone);
   const yearDeductions = taxYearDeductions(receipts, taxYear, timeZone);
+  const incomeFormCount = incomeFormsInTaxYear(receipts, taxYear, timeZone);
   const reviewReceipts = useMemo(
     () => receiptsNeedingExportReview(yearReceipts),
     [yearReceipts],
@@ -142,12 +153,20 @@ export function ExportEngineSheet({
 
   const handleShare = async (file: File) => {
     setSharing(true);
+    setShareStatus(null);
     try {
-      await shareTaxPackFile(
+      const result = await shareTaxPackFile(
         file,
         `Snap1099 ${taxYear}`,
         copy.settings.export.shareText,
       );
+      if (result === "unsupported") {
+        setShareStatus(t.shareUnsupportedHint);
+      } else if (result === "failed") {
+        setShareStatus(t.shareFailedHint);
+      } else if (result === "cancelled") {
+        setShareStatus(t.sharingHint);
+      }
     } finally {
       setSharing(false);
     }
@@ -155,9 +174,15 @@ export function ExportEngineSheet({
 
   useEffect(() => {
     if (!readyFile || autoSharedRef.current) return;
+    if (!canShareTaxPackFile(readyFile)) return;
     autoSharedRef.current = true;
     void handleShare(readyFile);
   }, [readyFile]);
+
+  const handleSaveToPhone = (file: File) => {
+    downloadTaxPackFile(file);
+    setShareStatus(t.savedToPhoneHint);
+  };
 
   const goToFormatStep = () => {
     setStep(includesReview ? 3 : 2);
@@ -186,11 +211,17 @@ export function ExportEngineSheet({
         `Snap1099-${taxYear}-TurboTax-Preview.csv`,
         { type: "text/csv" },
       );
-      await shareTaxPackFile(
+      const result = await shareTaxPackFile(
         file,
         `Snap1099 ${taxYear} Preview`,
         copy.settings.export.shareText,
       );
+      if (result === "unsupported") {
+        downloadTaxPackFile(file);
+        setShareStatus(t.savedToPhoneHint);
+      } else if (result === "failed") {
+        setErrorMessage(t.shareFailedHint);
+      }
     } catch {
       setErrorMessage(copy.settings.export.failed);
     } finally {
@@ -201,6 +232,7 @@ export function ExportEngineSheet({
   const handleGenerate = async () => {
     setErrorMessage(null);
     autoSharedRef.current = false;
+    setShareStatus(null);
     if (!navigator.onLine) {
       setErrorMessage(copy.settings.export.offline);
       return;
@@ -254,9 +286,11 @@ export function ExportEngineSheet({
   const selectedFormatLabel =
     format === "csv"
       ? t.formatCsvTitle
-      : format === "cpa_pdf"
-        ? t.formatCpaPdfTitle
-        : t.formatCpaTitle;
+      : format === "txf"
+        ? t.formatTxfTitle
+        : format === "cpa_pdf"
+          ? t.formatCpaPdfTitle
+          : t.formatCpaTitle;
 
   const imageWarning =
     exportMeta?.imagesMissing != null && exportMeta.imagesMissing > 0
@@ -336,6 +370,14 @@ export function ExportEngineSheet({
                         ? t.noReceiptsYear
                         : t.receiptsLabel.replace("{count}", String(count))}
                     </p>
+                    {incomeFormCount > 0 && taxYear === year && (
+                      <p className="mt-1 text-xs text-yellow-500/90">
+                        {t.incomeFormsLabel.replace(
+                          "{count}",
+                          String(incomeFormCount),
+                        )}
+                      </p>
+                    )}
                   </button>
                 );
               })}
@@ -449,6 +491,56 @@ export function ExportEngineSheet({
                   {t.formatCpaPdfHint}
                 </p>
               </button>
+              <button
+                type="button"
+                onClick={() => setFormat("txf")}
+                className={`w-full min-h-[88px] rounded-xl border-2 p-4 text-left transition-transform active:scale-95 ${
+                  format === "txf"
+                    ? "border-yellow-500 bg-yellow-950"
+                    : "border-zinc-600 bg-zinc-800"
+                }`}
+              >
+                <p className="text-sm font-black uppercase tracking-wider text-white">
+                  {format === "txf" ? "✓ " : ""}
+                  {t.formatTxfTitle}
+                </p>
+                <p className="mt-2 text-xs leading-relaxed text-zinc-400">
+                  {t.formatTxfHint}
+                </p>
+              </button>
+            </div>
+
+            <div className="mt-4 rounded-xl border-2 border-zinc-700 bg-zinc-950 p-4">
+              <p className="text-xs font-black uppercase tracking-wider text-yellow-400">
+                {t.snap1099Title}
+              </p>
+              <p className="mt-2 text-xs leading-relaxed text-zinc-400">
+                {t.snap1099Hint}
+              </p>
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPendingIncomeCapture("1099-NEC");
+                    onClose();
+                    onSnap1099?.("1099-NEC");
+                  }}
+                  className="min-h-12 rounded-lg border-2 border-yellow-500 bg-yellow-950 py-3 text-[11px] font-black uppercase tracking-wider text-yellow-400 transition-transform active:scale-95"
+                >
+                  {t.snap1099NecButton}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPendingIncomeCapture("1099-K");
+                    onClose();
+                    onSnap1099?.("1099-K");
+                  }}
+                  className="min-h-12 rounded-lg border-2 border-zinc-600 bg-zinc-800 py-3 text-[11px] font-black uppercase tracking-wider text-white transition-transform active:scale-95"
+                >
+                  {t.snap1099KButton}
+                </button>
+              </div>
             </div>
 
             {format === "csv" && (
@@ -529,14 +621,26 @@ export function ExportEngineSheet({
                     {imageWarning}
                   </p>
                 )}
-                <p className="mt-2 text-xs text-zinc-500">
-                  {sharing ? t.sharing : t.sharingHint}
+                <p className="mt-2 text-xs text-zinc-500" role="status">
+                  {sharing
+                    ? t.sharing
+                    : shareStatus ??
+                      (canShareTaxPackFile(readyFile)
+                        ? t.sharingHint
+                        : t.shareUnsupportedHint)}
                 </p>
                 <button
                   type="button"
-                  disabled={sharing}
+                  onClick={() => handleSaveToPhone(readyFile)}
+                  className="mt-6 w-full min-h-16 rounded-xl border-4 border-white bg-yellow-500 py-4 text-lg font-black uppercase tracking-wider text-black transition-transform active:scale-95"
+                >
+                  {t.saveToPhone}
+                </button>
+                <button
+                  type="button"
+                  disabled={sharing || !canShareTaxPackFile(readyFile)}
                   onClick={() => void handleShare(readyFile)}
-                  className="mt-6 w-full min-h-16 rounded-xl border-4 border-white bg-yellow-500 py-4 text-lg font-black uppercase tracking-wider text-black transition-transform active:scale-95 disabled:opacity-60"
+                  className="mt-3 w-full min-h-14 rounded-xl border-2 border-zinc-600 bg-zinc-800 py-3 text-sm font-black uppercase tracking-wider text-white transition-transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {t.share}
                 </button>

@@ -19,6 +19,7 @@ import {
   assertValidReceiptImage,
 } from "@/lib/receipts/uploadValidation";
 import { withRequestLog } from "@/lib/server/log/withRequestLog";
+import { parseCaptureKindHeader } from "@/lib/export/incomeCapture";
 import { parseUtcISOString } from "@/lib/time/utc";
 
 export const maxDuration = 60;
@@ -136,6 +137,9 @@ export const POST = withRequestLog(
         dataRegion,
         snapAt,
         industry,
+        captureKind: parseCaptureKindHeader(
+          request.headers.get("X-Capture-Kind"),
+        ),
       });
     } catch (err) {
       return mapErrorToResponse(err);

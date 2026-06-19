@@ -1,0 +1,25 @@
+V042
+A记账辅助退税工具
+D 02/15/2026
+^
+TD 2222
+G 1
+P OpenAI API Subscription
+D 01/15/2026
+M 1099 Business Expense
+$ 20.00
+^
+TD 2213
+G 1
+P Google Domains
+D 02/10/2026
+M 1099 Business Expense
+$ 12.50
+^
+TD 2214
+G 1
+P Auto-Tracked Mileage Deduction
+D 12/31/2025
+M 4800 Miles Standard Rate
+$ 3120.00
+^

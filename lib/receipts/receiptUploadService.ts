@@ -96,6 +96,7 @@ async function runVisionForReceipt(params: {
   bytes: Buffer;
   mime: "image/jpeg" | "image/png";
   industry: string | null;
+  captureKind?: "1099-NEC" | "1099-K" | null;
 }) {
   const verify = await logVerifyBypass(params.request, params.actor);
   try {
@@ -106,6 +107,7 @@ async function runVisionForReceipt(params: {
       mime: params.mime,
       industry: params.industry,
       canMockAi: verify.canMockAi,
+      captureKind: params.captureKind ?? null,
     });
     return { processFailed: false as const, result };
   } catch {
@@ -145,6 +147,7 @@ async function replaceReceiptImage(params: {
   industry: string | null;
   sha: string;
   fingerprint: string;
+  captureKind?: "1099-NEC" | "1099-K" | null;
 }) {
   const pathname = receiptImagePathname(params.receipt.id, params.kind);
   await put(pathname, params.bytes, {
@@ -182,6 +185,7 @@ async function replaceReceiptImage(params: {
     bytes: params.bytes,
     mime: params.mime,
     industry: params.industry,
+    captureKind: params.captureKind,
   });
 
   const updated = await prisma.snaptaxReceipt.findUnique({
@@ -200,6 +204,7 @@ export async function handleReceiptUploadPost(params: {
   dataRegion: "us" | "eu";
   snapAt: Date | null;
   industry: string | null;
+  captureKind?: "1099-NEC" | "1099-K" | null;
 }) {
   const mime = mimeForKind(params.kind);
   const sha = contentSha256(params.bytes);
@@ -232,6 +237,7 @@ export async function handleReceiptUploadPost(params: {
       industry: params.industry,
       sha,
       fingerprint,
+      captureKind: params.captureKind,
     });
   }
 
@@ -306,6 +312,7 @@ export async function handleReceiptUploadPost(params: {
     bytes: params.bytes,
     mime,
     industry: params.industry,
+    captureKind: params.captureKind,
   });
 
   const created = await prisma.snaptaxReceipt.findUnique({

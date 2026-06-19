@@ -241,6 +241,10 @@ export type UserCopy = {
     possibleMerchant: string;
     dateCaptured: string;
     merchant: string;
+    payer: string;
+    formType: string;
+    taxYear: string;
+    taxYearUnknown: string;
     totalAmount: string;
     category: string;
     irsLine: string;
@@ -276,6 +280,7 @@ export type UserCopy = {
       personalUs: string;
       addedVat: string;
       addedScheduleC: string;
+      income1099: string;
     };
   };
   paywall: {
@@ -378,11 +383,15 @@ export type UserCopy = {
       taxSaved: string;
       receipts: string;
       deductions: string;
+      income: string;
+      incomeForms: string;
     };
     exportCard: {
       compatLine: string;
       formatLine: string;
       trustLine: string;
+      snap1099Nec: string;
+      snap1099K: string;
       mostPopular: string;
       price: string;
       states: {
@@ -565,7 +574,11 @@ export type UserCopy = {
     generate: string;
     generating: string;
     ready: string;
+    saveToPhone: string;
     share: string;
+    shareUnsupportedHint: string;
+    shareFailedHint: string;
+    savedToPhoneHint: string;
     yearSummary: string;
     formatCsvTitle: string;
     formatCsvHint: string;
@@ -581,6 +594,13 @@ export type UserCopy = {
     reviewSaveFailed: string;
     formatCpaPdfTitle: string;
     formatCpaPdfHint: string;
+    formatTxfTitle: string;
+    formatTxfHint: string;
+    snap1099Title: string;
+    snap1099Hint: string;
+    snap1099NecButton: string;
+    snap1099KButton: string;
+    incomeFormsLabel: string;
     turboTaxSteps: string[];
     previewCsv: string;
     previewCsvHint: string;

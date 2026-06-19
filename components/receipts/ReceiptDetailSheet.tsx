@@ -190,6 +190,11 @@ export function ReceiptDetailSheet({
       ? formatCurrencyForRegion(receipt.amount, currency, region)
       : "—";
 
+  const incomeTaxYearLabel =
+    receipt.incomeTaxYear != null
+      ? String(receipt.incomeTaxYear)
+      : copy.taxYearUnknown;
+
   const processingTitle =
     receipt.photoMissing && receipt.pendingUpload
       ? copy.photoMissing
@@ -307,14 +312,22 @@ export function ReceiptDetailSheet({
                   <p
                     id="receipt-detail-title"
                     className={`text-4xl font-black tracking-tight ${
-                      hero.muted ? "text-zinc-500" : "text-green-400"
+                      hero.incomeForm
+                        ? "text-yellow-400"
+                        : hero.muted
+                          ? "text-zinc-500"
+                          : "text-green-400"
                     }`}
                   >
                     {hero.savedLabel}
                   </p>
                   <p
                     className={`mt-2 text-sm font-bold ${
-                      hero.muted ? "text-zinc-500" : "text-green-400"
+                      hero.incomeForm
+                        ? "text-yellow-400"
+                        : hero.muted
+                          ? "text-zinc-500"
+                          : "text-green-400"
                     }`}
                   >
                     {hero.subtitle}
@@ -342,18 +355,32 @@ export function ReceiptDetailSheet({
 
             {hero.kind === "done" && (
               <section className="mb-8 rounded-xl border border-zinc-800 bg-zinc-950 px-4">
-                <DetailRow label={copy.merchant} value={receipt.merchant ?? "—"} />
-                <DetailRow label={copy.totalAmount} value={totalLabel} />
-                <div className="flex items-start justify-between gap-4 border-b border-zinc-800 py-3">
-                  <span className="text-sm font-bold text-zinc-400">{copy.category}</span>
-                  <CategoryBadge
-                    category={receiptCategoryDisplayLabel(receipt.category)}
-                  />
-                </div>
-                <DetailRow
-                  label={copy.irsLine}
-                  value={irsScheduleLineBadge(receipt.category)}
-                />
+                {hero.incomeForm ? (
+                  <>
+                    <DetailRow
+                      label={copy.formType}
+                      value={receipt.category ?? "—"}
+                    />
+                    <DetailRow label={copy.payer} value={receipt.merchant ?? "—"} />
+                    <DetailRow label={copy.taxYear} value={incomeTaxYearLabel} />
+                    <DetailRow label={copy.totalAmount} value={totalLabel} />
+                  </>
+                ) : (
+                  <>
+                    <DetailRow label={copy.merchant} value={receipt.merchant ?? "—"} />
+                    <DetailRow label={copy.totalAmount} value={totalLabel} />
+                    <div className="flex items-start justify-between gap-4 border-b border-zinc-800 py-3">
+                      <span className="text-sm font-bold text-zinc-400">{copy.category}</span>
+                      <CategoryBadge
+                        category={receiptCategoryDisplayLabel(receipt.category)}
+                      />
+                    </div>
+                    <DetailRow
+                      label={copy.irsLine}
+                      value={irsScheduleLineBadge(receipt.category)}
+                    />
+                  </>
+                )}
               </section>
             )}
 

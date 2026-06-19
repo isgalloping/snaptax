@@ -1,0 +1,12 @@
+├── [00_READ_ME_Summary.pdf]          <-- 上述年度财务损益总表与税盾摘要
+├── [01_Income_Documents]             <-- 所有的收入证明（1099-NEC、1099-K 电子原件）
+│   ├── 1099_NEC_ClientA.pdf
+│   └── 1099_K_Stripe.pdf
+├── [02_Expenses_Receipts_Book]       <-- 按 Schedule C 科目分门别类的票据归档（内含已重命名的收据原图）
+│   ├── Line_09_Car_and_Truck/
+│   ├── Line_18_Office_Expenses/
+│   │   ├── REC_20250115_OpenAI_20.00.jpg   <-- 规范命名：[日期]_[商户]_[金额]
+│   │   └── REC_20250201_Vercel_40.00.jpg
+│   └── Line_22_Supplies/
+│       └── REC_20250315_HomeDepot_125.50.jpg
+└── [03_Mileage_Log.csv]              <-- 详细的 GPS 行车记录日志明细（包含每次行程的商业目的备注）

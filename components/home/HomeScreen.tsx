@@ -101,7 +101,7 @@ import {
   writeOnboardFlag,
 } from "@/lib/onboarding/onboardingStorage";
 import { visibleReceiptsForOnboarding } from "@/lib/onboarding/onboardingReceipts";
-import { taxYearDeductions } from "@/lib/tax/taxYearStats";
+import { taxYearDeductions, incomeFormsInTaxYear, totalIncomeGrossInTaxYear } from "@/lib/tax/taxYearStats";
 import { clientTimeZone } from "@/lib/time/timeZone";
 import { useI18n } from "@/components/i18n/I18nProvider";
 
@@ -732,6 +732,12 @@ export function HomeScreen() {
     onReceiptUpdated: (updated) => {
       void applyReceiptUpdate(updated as StoredReceipt);
     },
+    onSnap1099: (kind) => {
+      setView("home");
+      window.requestAnimationFrame(() => {
+        snapButtonRef.current?.openCamera();
+      });
+    },
   });
 
   useEffect(() => {
@@ -843,6 +849,8 @@ export function HomeScreen() {
       taxSaved: displayTaxSaved ?? taxSaved,
       receiptCount: displayReceipts.length,
       totalDeductions: taxYearDeductions(displayReceipts, year, clientTimeZone()),
+      incomeFormCount: incomeFormsInTaxYear(displayReceipts, year, clientTimeZone()),
+      totalIncomeGross: totalIncomeGrossInTaxYear(displayReceipts, year, clientTimeZone()),
     };
   }, [displayReceipts, displayTaxSaved, taxSaved]);
 
@@ -1158,6 +1166,12 @@ export function HomeScreen() {
         exportEmptyTip={taxExport.exportEmptyTip}
         exportEmptyTipKey={taxExport.exportEmptyTipKey}
         onExportEmptyTipDismiss={taxExport.clearExportEmptyTip}
+        onSnap1099={(kind) => {
+          setView("home");
+          window.requestAnimationFrame(() => {
+            snapButtonRef.current?.openCamera();
+          });
+        }}
         isSignedIn={auth.isSignedIn}
         authHydrated={auth.hydrated}
         requestSoftGoogleSheet={requestSoftGoogleSheet}

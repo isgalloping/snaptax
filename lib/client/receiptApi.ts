@@ -4,6 +4,7 @@ import type { TaxRegion } from "@/lib/tax/types";
 import { parseUtcISOString, toUtcISOString } from "@/lib/time/utc";
 import { isPersistedReceiptId } from "@/lib/receipts/receiptId";
 import { apiFetch } from "@/lib/client/ghostClient";
+import { consumePendingIncomeCapture } from "@/lib/export/incomeCapture";
 
 export type ApiReceipt = {
   id: string;
@@ -22,6 +23,7 @@ export type ApiReceipt = {
   taxSeason: string | null;
   taxSeasonDate: string | null;
   hasImage: boolean;
+  incomeTaxYear?: number | null;
 };
 
 export type ReceiptListResponse = {
@@ -50,6 +52,7 @@ export function apiReceiptToLocal(r: ApiReceipt): Receipt {
       : undefined,
     hasRemoteImage: r.hasImage,
     pendingUpload: false,
+    incomeTaxYear: r.incomeTaxYear ?? undefined,
   };
 }
 
@@ -124,6 +127,7 @@ export type UploadCreateResponse = {
   taxSeason?: string | null;
   taxSeasonDate?: string | null;
   hasImage?: boolean;
+  incomeTaxYear?: number | null;
 };
 
 export class DuplicateReceiptError extends Error {
@@ -179,6 +183,7 @@ export function apiReceiptFromUploadResponse(
     taxSeason: created.taxSeason ?? null,
     taxSeasonDate: created.taxSeasonDate ?? null,
     hasImage: created.hasImage ?? true,
+    incomeTaxYear: created.incomeTaxYear ?? null,
   };
 }
 
@@ -186,6 +191,7 @@ export async function uploadReceipt(
   file: Blob,
   clientReceiptId: string,
   snapAt?: Date,
+  captureKind?: "1099-NEC" | "1099-K" | null,
 ): Promise<ApiReceipt> {
   if (!isPersistedReceiptId(clientReceiptId)) {
     throw new Error("INVALID_CLIENT_RECEIPT_ID");
@@ -196,9 +202,15 @@ export async function uploadReceipt(
   if (snapAt) {
     form.append("snapAt", toUtcISOString(snapAt));
   }
+  const headers: Record<string, string> = {};
+  const resolvedCaptureKind = captureKind ?? consumePendingIncomeCapture();
+  if (resolvedCaptureKind) {
+    headers["X-Capture-Kind"] = resolvedCaptureKind;
+  }
   const res = await apiFetch("/api/receipts", {
     method: "POST",
     body: form,
+    headers,
   });
   if (res.status === 409) {
     const body = (await res.json().catch(() => null)) as {

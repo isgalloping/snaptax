@@ -43,6 +43,7 @@ import {
 } from "@/lib/settings/exportSampleState";
 import { isLeavingExportCompleted } from "@/lib/client/appNavigationHistory";
 import type { IncomeCaptureKind } from "@/lib/export/incomeCapture";
+import { hasSeasonExportDone } from "@/lib/settings/seasonExportState";
 
 interface SettingsScreenProps {
   industry: Industry | null;

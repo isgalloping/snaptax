@@ -121,7 +121,11 @@ export function ExportEngineSheet({
       const cap = imageHeavy ? 88 : 90;
       setProgress(ratio * cap);
       if (imageHeavy && ratio > 0.25) {
-        setProgressLabel(t.progressFetchingImages);
+        setProgressLabel(
+          selectedFormat === "cpa_pdf"
+            ? t.progressBuildingPdf
+            : t.progressFetchingImages,
+        );
       }
       if (ratio >= 1) clearProgressTimer();
     }, PROGRESS_TICK_MS);
@@ -231,6 +235,10 @@ export function ExportEngineSheet({
           onClose();
           onPaymentRequired?.();
           return;
+        } else if (err.message === "PDF_GENERATION_FAILED") {
+          setErrorMessage(t.pdfFailed);
+        } else if (err.message === "EXPORT_TIMEOUT") {
+          setErrorMessage(t.exportTimeout);
         } else {
           setErrorMessage(copy.settings.export.failed);
         }

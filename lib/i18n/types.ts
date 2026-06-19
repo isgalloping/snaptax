@@ -586,6 +586,9 @@ export type UserCopy = {
     previewCsvHint: string;
     progressPreparing: string;
     progressFetchingImages: string;
+    progressBuildingPdf: string;
     progressFinalizing: string;
+    pdfFailed: string;
+    exportTimeout: string;
   };
 };

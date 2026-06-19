@@ -102,6 +102,12 @@ export function resolveApiError(err: unknown): ResolvedApiError {
         clientMessage: "No receipts to export",
         status: 422,
       };
+    case "PDF_GENERATION_FAILED":
+      return {
+        code: "PDF_GENERATION_FAILED",
+        clientMessage: "PDF export failed",
+        status: 500,
+      };
     case "BLOB_CREDENTIALS_MISSING":
       return {
         code: "BLOB_CREDENTIALS_MISSING",

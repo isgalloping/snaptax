@@ -2,6 +2,10 @@ import type { NextConfig } from "next";
 import { withSerwist } from "@serwist/turbopack";
 
 const nextConfig: NextConfig = {
+  serverExternalPackages: ["pdfkit", "fontkit"],
+  outputFileTracingIncludes: {
+    "/api/export/tax-pack": ["./node_modules/pdfkit/js/data/**"],
+  },
   env: {
     NEXT_PUBLIC_GOOGLE_CLIENT_ID:
       process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ??

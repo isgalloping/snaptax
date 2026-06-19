@@ -115,6 +115,8 @@ export type ExportTaxPackParams = {
   format?: ExportFormat;
 };
 
+const EXPORT_TIMEOUT_MS = 90_000;
+
 export type ExportTaxPackMeta = {
   receiptCount: number;
   imagesIncluded?: number;
@@ -160,27 +162,48 @@ export async function exportTaxPack(
   params: ExportTaxPackParams,
 ): Promise<ExportTaxPackResult> {
   const format = params.format ?? "csv";
-  const res = await apiFetch("/api/export/tax-pack", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Time-Zone": clientTimeZone(),
-    },
-    body: JSON.stringify({ taxYear: params.taxYear, format }),
-  });
-  if (res.status === 402) throw new Error("PAYMENT_REQUIRED");
-  if (res.status === 422) throw new Error("NO_RECEIPTS");
-  if (!res.ok) throw new Error("EXPORT_FAILED");
-  const blob = await res.blob();
-  const filename = parseExportFilename(
-    res.headers.get("Content-Disposition"),
-    params.taxYear,
-    format,
-  );
-  return {
-    file: new File([blob], filename, { type: blob.type }),
-    meta: parseExportMeta(res),
-  };
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), EXPORT_TIMEOUT_MS);
+
+  try {
+    const res = await apiFetch("/api/export/tax-pack", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Time-Zone": clientTimeZone(),
+      },
+      body: JSON.stringify({ taxYear: params.taxYear, format }),
+      signal: controller.signal,
+    });
+    if (res.status === 402) throw new Error("PAYMENT_REQUIRED");
+    if (res.status === 422) throw new Error("NO_RECEIPTS");
+    if (!res.ok) {
+      const errBody = (await res.json().catch(() => null)) as {
+        error?: { code?: string };
+      } | null;
+      if (errBody?.error?.code === "PDF_GENERATION_FAILED") {
+        throw new Error("PDF_GENERATION_FAILED");
+      }
+      throw new Error("EXPORT_FAILED");
+    }
+    const blob = await res.blob();
+    const filename = parseExportFilename(
+      res.headers.get("Content-Disposition"),
+      params.taxYear,
+      format,
+    );
+    return {
+      file: new File([blob], filename, { type: blob.type }),
+      meta: parseExportMeta(res),
+    };
+  } catch (err) {
+    if (err instanceof Error && err.name === "AbortError") {
+      throw new Error("EXPORT_TIMEOUT");
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 export async function pollEntitlementReady(

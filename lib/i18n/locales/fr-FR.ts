@@ -852,6 +852,11 @@ export const FR_FR_COPY: UserCopy = {
       "Aperçu hors ligne instantané sans liens vers les images de reçus. L'export complet ajoute des URL signées.",
     progressPreparing: "Préparation des dépenses…",
     progressFetchingImages: "Récupération des images de reçus…",
+    progressBuildingPdf: "Création du PDF…",
     progressFinalizing: "Finalisation de votre pack…",
+    pdfFailed:
+      "Échec de l'export PDF. Essayez CSV ou le pack CPA, ou réessayez plus tard.",
+    exportTimeout:
+      "Délai d'export dépassé. Vérifiez votre connexion et réessayez.",
   },
 };

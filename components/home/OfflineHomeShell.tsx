@@ -5,12 +5,17 @@ import type { Receipt } from "@/lib/types";
 import type { ReceiptListFilter } from "@/lib/receipts/receiptBucket";
 import { useAuthSession } from "@/lib/client/useAuthSession";
 import {
+  DUPLICATE_HIGHLIGHT_MS,
+  duplicateNoticeCopy,
+  scrollReceiptIntoView,
+} from "@/lib/client/duplicateReceiptNotice";
+import { prepareReceiptCapture } from "@/lib/client/prepareReceiptCapture";
+import {
   STARTUP_UNFILED_LIMIT,
   UI_RECEIPT_LIMIT,
 } from "@/lib/client/receiptSync";
-import { withFreshBudget, isSyncStuck } from "@/lib/client/receiptSyncBudget";
+import { isSyncStuck } from "@/lib/client/receiptSyncBudget";
 import { ensureTaxRegionCandidate } from "@/lib/client/taxRegion";
-import { utcNow } from "@/lib/time/utc";
 import {
   convertDemoReceiptAfterLogin,
   ensureConvertedDemoUploadReady,
@@ -18,8 +23,6 @@ import {
 import {
   loadRecentUnfiledReceipts,
   loadTopByUpdatedAt,
-  savePhoto,
-  saveReceipt,
   sumUnfiledLocalTaxSavedIndexed,
   type StoredReceipt,
 } from "@/lib/storage/receiptDb";
@@ -30,6 +33,7 @@ import { SnapFocusRing } from "@/components/onboarding/SnapFocusRing";
 import { SnapTooltip } from "@/components/onboarding/SnapTooltip";
 import { useOnboardingFlow } from "@/components/onboarding/useOnboardingFlow";
 import { visibleReceiptsForOnboarding } from "@/lib/onboarding/onboardingReceipts";
+import { useUserCopy } from "@/components/i18n/I18nProvider";
 import { TaxHeader } from "./TaxHeader";
 import { InlinePrivacyNote } from "./InlinePrivacyNote";
 import { SnapButton } from "./SnapButton";
@@ -48,10 +52,15 @@ function stuckIdsFromReceipts(receipts: StoredReceipt[]): Set<string> {
 
 export function OfflineHomeShell() {
   const auth = useAuthSession();
+  const copy = useUserCopy();
   const [receipts, setReceipts] = useState<Receipt[]>([]);
   const [taxSaved, setTaxSaved] = useState<number | null>(null);
   const [syncStuckIds, setSyncStuckIds] = useState<Set<string>>(() => new Set());
   const [listFilter, setListFilter] = useState<ReceiptListFilter>("all");
+  const [receiptNotice, setReceiptNotice] = useState<string | null>(null);
+  const [highlightReceiptId, setHighlightReceiptId] = useState<string | null>(
+    null,
+  );
 
   const refreshListFromLocal = useCallback(async () => {
     const visible = await loadTopByUpdatedAt(UI_RECEIPT_LIMIT);
@@ -126,25 +135,38 @@ export function OfflineHomeShell() {
     };
   }, [initializeOnboarding, refreshListFromLocal]);
 
-  const handleCapture = useCallback(async (file: File) => {
-    const id = crypto.randomUUID();
-    const snapAt = utcNow();
-    const processingReceipt: StoredReceipt = withFreshBudget({
-      id,
-      status: "processing",
-      merchant: "Scanning",
-      timestamp: snapAt,
-      updatedAt: snapAt,
-      pendingUpload: true,
-    });
+  useEffect(() => {
+    if (!receiptNotice) return;
+    const timer = window.setTimeout(() => setReceiptNotice(null), 4000);
+    return () => window.clearTimeout(timer);
+  }, [receiptNotice]);
 
-    await savePhoto(id, file);
-    await saveReceipt(processingReceipt);
-    await refreshListFromLocal();
-  }, [refreshListFromLocal]);
+  const showDuplicateReceiptNotice = useCallback(
+    (existingReceiptId: string, matchType: "exact" | "similar") => {
+      setReceiptNotice(
+        duplicateNoticeCopy(copy.home.receiptList, matchType),
+      );
+      setHighlightReceiptId(existingReceiptId);
+      window.setTimeout(() => setHighlightReceiptId(null), DUPLICATE_HIGHLIGHT_MS);
+      requestAnimationFrame(() => scrollReceiptIntoView(existingReceiptId));
+    },
+    [copy.home.receiptList],
+  );
+
+  const handleCapture = useCallback(
+    async (file: File) => {
+      const result = await prepareReceiptCapture(file);
+      if (result.kind === "duplicate") {
+        showDuplicateReceiptNotice(result.existingReceiptId, "exact");
+        return;
+      }
+      await refreshListFromLocal();
+    },
+    [refreshListFromLocal, showDuplicateReceiptNotice],
+  );
 
   const noopAsync = useCallback(async () => {}, []);
-  const noopBatchShot = useCallback(async () => crypto.randomUUID(), []);
+  const noopBatchShot = useCallback(async () => null, []);
 
   return (
     <div className="flex h-full flex-col overflow-hidden bg-black font-sans text-white select-none">
@@ -178,10 +200,20 @@ export function OfflineHomeShell() {
 
       <InlinePrivacyNote />
 
+      {receiptNotice && (
+        <p
+          className="mx-4 mb-2 rounded-xl border-2 border-yellow-500 bg-yellow-950 px-4 py-3 text-center text-sm font-bold text-yellow-400"
+          role="status"
+        >
+          {receiptNotice}
+        </p>
+      )}
+
       <div className="flex min-h-0 flex-1 flex-col">
         <ReceiptList
           receipts={displayReceipts}
           syncStuckIds={syncStuckIds}
+          highlightReceiptId={highlightReceiptId}
           filter={listFilter}
           onFilterChange={setListFilter}
           ahaCoachActive={ahaCoachActive}

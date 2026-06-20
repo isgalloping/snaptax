@@ -190,6 +190,8 @@ export const FR_FR_COPY: UserCopy = {
       delete: "Supprimer",
       unknownMerchant: "Commerçant inconnu",
       duplicateReceipt: "Ce reçu est déjà dans votre liste.",
+      duplicateReceiptSimilar:
+        "Ce reçu ressemble à un reçu que vous avez déjà scanné.",
       status: {
         analyzing: "ANALYSE",
         uploading: "ENVOI",

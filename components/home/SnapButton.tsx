@@ -32,7 +32,7 @@ import type { LegalDoc } from "@/lib/legal/content";
 
 interface SnapButtonProps {
   onCapture: (file: File) => void;
-  onBatchShot: (file: File) => Promise<string>;
+  onBatchShot: (file: File) => Promise<string | null>;
   onBatchDone: (sessionIds: string[]) => Promise<void>;
   onBatchClose: (sessionIds: string[]) => Promise<void>;
   onReviewDelete: (id: string) => Promise<void>;
@@ -161,6 +161,8 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
 
     const handleBatchShot = async (file: File) => {
       const id = await onBatchShot(file);
+      if (!id) return;
+
       const slot = resnapSlotIndexRef.current;
 
       if (slot !== null) {

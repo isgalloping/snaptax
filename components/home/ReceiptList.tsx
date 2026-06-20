@@ -28,6 +28,7 @@ interface ReceiptListProps {
   ahaCoachActive?: boolean;
   onAhaCoachDismiss?: () => void;
   filterBarRef?: RefObject<HTMLDivElement | null>;
+  highlightReceiptId?: string | null;
 }
 
 export function ReceiptList({
@@ -46,6 +47,7 @@ export function ReceiptList({
   ahaCoachActive = false,
   onAhaCoachDismiss,
   filterBarRef,
+  highlightReceiptId = null,
 }: ReceiptListProps) {
   const copy = useUserCopy().home.receiptList;
   const counts = useMemo(
@@ -101,6 +103,7 @@ export function ReceiptList({
               key={receipt.id}
               receipt={receipt}
               syncStuck={syncStuckIds.has(receipt.id)}
+              highlighted={highlightReceiptId === receipt.id}
               ahaCoach={ahaCoachActive}
               onAhaCoachDismiss={onAhaCoachDismiss}
               onSelect={onSelect}

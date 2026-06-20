@@ -186,6 +186,7 @@ export const EN_US_COPY: UserCopy = {
         delete: "Delete",
         unknownMerchant: "Unknown merchant",
         duplicateReceipt: "This receipt is already in your list.",
+        duplicateReceiptSimilar: "This looks like a receipt you already snapped.",
         status: {
           analyzing: "ANALYZING",
           uploading: "UPLOADING",

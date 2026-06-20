@@ -149,8 +149,11 @@ export async function saveEncryptedPhoto(
   db: IDBDatabase,
   id: string,
   file: File | Blob,
+  precompressed?: { blob: Blob; width: number; height: number },
 ): Promise<void> {
-  const { blob: compressed, width, height } = await compressReceiptImage(file);
+  const { blob: compressed, width, height } = precompressed
+    ? precompressed
+    : await compressReceiptImage(file);
 
   if (!isOpfsAvailable()) {
     await saveLegacyEncryptedPhotoInIdb(db, id, compressed);

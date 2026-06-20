@@ -23,12 +23,17 @@ import { CoachPulseOverlay } from "@/components/onboarding/CoachPulseOverlay";
 interface ReceiptListCardProps {
   receipt: Receipt;
   syncStuck?: boolean;
+  highlighted?: boolean;
   ahaCoach?: boolean;
   onAhaCoachDismiss?: () => void;
   onSelect: (receipt: Receipt) => void;
   onResnap: (id: string) => void;
   onRetrySync: (id: string) => void;
   onDelete: (id: string) => void;
+}
+
+function duplicateHighlightClass(highlighted: boolean): string {
+  return highlighted ? " ring-2 ring-yellow-500 animate-pulse" : "";
 }
 
 function listSubtitle(receipt: Receipt, contextLabel: string): string {
@@ -58,11 +63,17 @@ function CardShell({
   children,
   className = "",
   onClick,
+  receiptId,
   ...props
-}: ComponentProps<"div"> & { className?: string; onClick?: () => void }) {
+}: ComponentProps<"div"> & {
+  className?: string;
+  onClick?: () => void;
+  receiptId?: string;
+}) {
   return (
     <div
       onClick={onClick}
+      data-receipt-id={receiptId}
       className={`flex w-full items-center gap-3 rounded-xl border border-zinc-700/80 bg-zinc-800/90 text-left transition-transform active:scale-[0.98] ${onClick ? "cursor-pointer" : ""} ${className}`}
       {...props}
     >
@@ -92,6 +103,7 @@ function ListDeleteButton({
 export function ReceiptListCard({
   receipt,
   syncStuck = false,
+  highlighted = false,
   ahaCoach = false,
   onAhaCoachDismiss,
   onSelect,
@@ -112,7 +124,8 @@ export function ReceiptListCard({
   if (receipt.isOnboardingDemo && receipt.status === "processing") {
     return (
       <CardShell
-        className="p-3 ring-2 ring-yellow-500/60 animate-pulse shadow-[0_0_16px_rgba(234,179,8,0.45)]"
+        receiptId={receipt.id}
+        className={`p-3 ring-2 ring-yellow-500/60 animate-pulse shadow-[0_0_16px_rgba(234,179,8,0.45)]${duplicateHighlightClass(highlighted)}`}
         onClick={() => onSelect(receipt)}
       >
         <CircularStatusIcon state="analyzing" />
@@ -134,7 +147,8 @@ export function ReceiptListCard({
     if (receipt.photoMissing && pending) {
       return (
         <CardShell
-          className="p-3"
+          receiptId={receipt.id}
+          className={`p-3${duplicateHighlightClass(highlighted)}`}
           onClick={() => onResnap(receipt.id)}
         >
           <CircularStatusIcon state="paused" />
@@ -164,7 +178,8 @@ export function ReceiptListCard({
 
     return (
       <CardShell
-        className="p-3"
+        receiptId={receipt.id}
+        className={`p-3${duplicateHighlightClass(highlighted)}`}
         onClick={() => {
           if (syncStuck) onRetrySync(receipt.id);
           else onSelect(receipt);
@@ -191,8 +206,9 @@ export function ReceiptListCard({
   if (receipt.status === "blurry") {
     return (
       <div
+        data-receipt-id={receipt.id}
         onClick={() => onSelect(receipt)}
-        className="flex w-full cursor-pointer items-center gap-3 rounded-xl border border-red-900/50 bg-zinc-800/90 p-3 text-left transition-transform active:scale-[0.98]"
+        className={`flex w-full cursor-pointer items-center gap-3 rounded-xl border border-red-900/50 bg-zinc-800/90 p-3 text-left transition-transform active:scale-[0.98]${duplicateHighlightClass(highlighted)}`}
       >
         <CircularStatusIcon state="blurry" />
         <div className="min-w-0 flex-1">
@@ -227,7 +243,8 @@ export function ReceiptListCard({
     <div className="relative">
       {ahaCoach && demoDone && <CoachPulseOverlay />}
       <CardShell
-        className={`p-3 ${demoDone ? "border-l-4 border-l-green-500" : ""}`}
+        receiptId={receipt.id}
+        className={`p-3 ${demoDone ? "border-l-4 border-l-green-500" : ""}${duplicateHighlightClass(highlighted)}`}
         onClick={() => {
           if (ahaCoach && demoDone) onAhaCoachDismiss?.();
           onSelect(receipt);

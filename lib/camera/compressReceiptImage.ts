@@ -1,4 +1,5 @@
 import { fitInsideDimensions } from "@/lib/camera/imageDimensions";
+import { contentSha256FromBlob } from "@/lib/receipts/clientContentSha256";
 
 export const RECEIPT_FULL_MAX_EDGE = 1280;
 export const RECEIPT_FULL_JPEG_QUALITY = 0.75;
@@ -90,6 +91,21 @@ export async function compressReceiptImage(
     minQuality: RECEIPT_FULL_JPEG_MIN_QUALITY,
     maxBytes: RECEIPT_FULL_TARGET_MAX_BYTES,
   });
+}
+
+export type CompressedReceiptImage = {
+  blob: Blob;
+  width: number;
+  height: number;
+  contentSha256: string;
+};
+
+export async function compressReceiptImageWithFingerprint(
+  file: File | Blob,
+): Promise<CompressedReceiptImage> {
+  const { blob, width, height } = await compressReceiptImage(file);
+  const contentSha256 = await contentSha256FromBlob(blob);
+  return { blob, width, height, contentSha256 };
 }
 
 export async function generateReceiptThumbnail(

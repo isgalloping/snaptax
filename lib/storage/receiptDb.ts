@@ -1,6 +1,6 @@
 import type { OcrDraftPayload } from "@/lib/ocr/types";
 import type { Receipt, ReceiptStatus } from "@/lib/types";
-import { filedFlag } from "@/lib/receipts/filedStatus";
+import { filedFlag, isReceiptFiled } from "@/lib/receipts/filedStatus";
 import { parseUtcISOString, toUtcISOString } from "@/lib/time/utc";
 import {
   migrateLegacyPhotosToOpfs,
@@ -162,6 +162,7 @@ function createReceiptIndexes(store: IDBObjectStore): void {
   ensureIndex("byStatusUpdatedAt", ["status", "updatedAtMs"]);
   ensureIndex("byFiledUpdatedAt", ["isFiled", "updatedAtMs"]);
   ensureIndex("byFiledStatus", ["isFiled", "status"]);
+  ensureIndex("byContentSha256", "contentSha256");
 }
 
 function readIndexLimited<T>(
@@ -239,6 +240,20 @@ function copyObjectStore(
     putReq.onerror = () => onError(putReq.error);
     putReq.onsuccess = () => cursor.continue();
   };
+}
+
+function upgradeReceiptIndexesForV6(
+  db: IDBDatabase,
+  tx: IDBTransaction,
+  oldVersion: number,
+): void {
+  if (oldVersion >= 6) return;
+  if (db.objectStoreNames.contains(IDB_LEGACY_RECEIPTS)) {
+    createReceiptIndexes(tx.objectStore(IDB_LEGACY_RECEIPTS));
+  }
+  if (db.objectStoreNames.contains(IDB_STORE_RECEIPTS)) {
+    createReceiptIndexes(tx.objectStore(IDB_STORE_RECEIPTS));
+  }
 }
 
 function migrateToSnaptaxStores(
@@ -423,6 +438,7 @@ function openDbInner(): Promise<IDBDatabase> {
         if (oldVersion < IDB_DB_VERSION) {
           migrateToSnaptaxStores(db, tx, oldVersion, reject);
         }
+        upgradeReceiptIndexesForV6(db, tx, oldVersion);
       };
 
       if (db.objectStoreNames.contains(legacyReceipts) && oldVersion < 4) {
@@ -649,6 +665,39 @@ export async function savePhoto(id: string, file: File | Blob): Promise<void> {
   const db = await openDb();
   await ensurePhotoCipherReady(db);
   await saveEncryptedPhoto(db, id, file);
+}
+
+export async function savePhotoCompressed(
+  id: string,
+  compressed: { blob: Blob; width: number; height: number },
+): Promise<void> {
+  const db = await openDb();
+  await ensurePhotoCipherReady(db);
+  await saveEncryptedPhoto(db, id, compressed.blob, compressed);
+}
+
+export async function findReceiptIdByContentSha256(
+  sha: string,
+): Promise<string | null> {
+  const db = await openDb();
+  const storeName = receiptsStoreName(db);
+  const tx = db.transaction(storeName, "readonly");
+  const store = tx.objectStore(storeName);
+  if (!store.indexNames.contains("byContentSha256")) {
+    return null;
+  }
+  const rows = await readIndexAll<SerializedReceipt>(
+    store,
+    "byContentSha256",
+    IDBKeyRange.only(sha),
+  );
+  for (const row of rows) {
+    const receipt = deserializeReceipt(row);
+    if (receipt.isOnboardingDemo) continue;
+    if (isReceiptFiled(receipt)) continue;
+    return receipt.id;
+  }
+  return null;
 }
 
 export async function loadPhoto(id: string): Promise<Blob | null> {

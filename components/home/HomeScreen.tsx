@@ -17,6 +17,12 @@ import {
 import { schedulePhotoRetentionPurge } from "@/lib/client/photoRetentionJob";
 import { reconcileDuplicateReceipt } from "@/lib/client/reconcileDuplicateReceipt";
 import {
+  DUPLICATE_HIGHLIGHT_MS,
+  duplicateNoticeCopy,
+  scrollReceiptIntoView,
+} from "@/lib/client/duplicateReceiptNotice";
+import { prepareReceiptCapture } from "@/lib/client/prepareReceiptCapture";
+import {
   deferBatchOcrUpload,
   isBatchOcrUploadDeferred,
   shouldBlockUploadForOcr,
@@ -62,7 +68,6 @@ import {
   loadReceipt,
   loadRecentUnfiledReceipts,
   loadTopByUpdatedAt,
-  savePhoto,
   saveReceipt,
   markRemoteSyncedPhotos,
   sumUnfiledLocalTaxSavedIndexed,
@@ -148,6 +153,9 @@ export function HomeScreen() {
   const [listFilter, setListFilter] = useState<ReceiptListFilter>("all");
   const [syncStuckIds, setSyncStuckIds] = useState<Set<string>>(() => new Set());
   const [receiptNotice, setReceiptNotice] = useState<string | null>(null);
+  const [highlightReceiptId, setHighlightReceiptId] = useState<string | null>(
+    null,
+  );
   const [seasonExportTick, setSeasonExportTick] = useState(0);
   const [homeOverlay, setHomeOverlay] = useState<HomeOverlay>(null);
   const [exitConfirmOpen, setExitConfirmOpen] = useState(false);
@@ -437,11 +445,22 @@ export function HomeScreen() {
     [refreshTaxSaved],
   );
 
+  const showDuplicateReceiptNotice = useCallback(
+    (existingReceiptId: string, matchType: "exact" | "similar") => {
+      setReceiptNotice(duplicateNoticeCopy(copy.home.receiptList, matchType));
+      setHighlightReceiptId(existingReceiptId);
+      window.setTimeout(() => setHighlightReceiptId(null), DUPLICATE_HIGHLIGHT_MS);
+      requestAnimationFrame(() => scrollReceiptIntoView(existingReceiptId));
+    },
+    [copy.home.receiptList],
+  );
+
   const handleDuplicateUpload = useCallback(
     async (
       localId: string,
       existingReceiptId: string,
       prior?: StoredReceipt,
+      matchType: "exact" | "similar" = "exact",
     ) => {
       const updated = await reconcileDuplicateReceipt(
         localId,
@@ -458,13 +477,13 @@ export function HomeScreen() {
         refreshTaxSaved(next);
         return next;
       });
-      setReceiptNotice(copy.home.receiptList.duplicateReceipt);
+      showDuplicateReceiptNotice(existingReceiptId, matchType);
       if (updated.status === "processing") {
         queueRef.current?.enqueue(updated.id);
       }
       return updated;
     },
-    [copy.home.receiptList.duplicateReceipt, refreshTaxSaved],
+    [showDuplicateReceiptNotice, refreshTaxSaved],
   );
 
   const uploadPendingInner = async (receipt: StoredReceipt) => {
@@ -508,7 +527,12 @@ export function HomeScreen() {
       }
     } catch (err) {
       if (isDuplicateReceiptError(err)) {
-        await handleDuplicateUpload(latest.id, err.existingReceiptId, latest);
+        await handleDuplicateUpload(
+          latest.id,
+          err.existingReceiptId,
+          latest,
+          err.matchType,
+        );
         return;
       }
       const failed = recordWriteFailure(latest);
@@ -1028,23 +1052,20 @@ export function HomeScreen() {
     };
   }, [initializeOnboarding, runDeferredStartup]);
 
-  const handleBatchShot = useCallback(async (file: File): Promise<string> => {
-    const id = crypto.randomUUID();
-    const snapAt = utcNow();
-    const processingReceipt: StoredReceipt = withFreshBudget({
-      id,
-      status: "processing",
-      merchant: "Scanning",
-      timestamp: snapAt,
-      updatedAt: snapAt,
-      pendingUpload: true,
-    });
-    await savePhoto(id, file);
-    await saveReceipt(processingReceipt);
-    deferBatchOcrUpload([id]);
-    scheduleOcrJob(id);
-    return id;
-  }, []);
+  const handleBatchShot = useCallback(
+    async (file: File): Promise<string | null> => {
+      const result = await prepareReceiptCapture(file);
+      if (result.kind === "duplicate") {
+        showDuplicateReceiptNotice(result.existingReceiptId, "exact");
+        return null;
+      }
+      const { receipt } = result;
+      deferBatchOcrUpload([receipt.id]);
+      scheduleOcrJob(receipt.id);
+      return receipt.id;
+    },
+    [showDuplicateReceiptNotice],
+  );
 
   const handleBatchClose = useCallback(async (sessionIds: string[]) => {
     releaseBatchOcrUpload(sessionIds);
@@ -1114,25 +1135,18 @@ export function HomeScreen() {
       const replaceId = resnapId;
       setResnapId(null);
 
-      const id = replaceId ?? crypto.randomUUID();
-      const snapAt = utcNow();
-      const processingReceipt: StoredReceipt = withFreshBudget({
-        id,
-        status: "processing",
-        merchant: "Scanning",
-        timestamp: snapAt,
-        updatedAt: snapAt,
-        pendingUpload: true,
-        photoMissing: undefined,
-      });
+      const result = await prepareReceiptCapture(file, { replaceId });
+      if (result.kind === "duplicate") {
+        showDuplicateReceiptNotice(result.existingReceiptId, "exact");
+        return;
+      }
 
+      const { receipt: processingReceipt } = result;
       setReceipts((prev) => {
         const without = replaceId ? prev.filter((r) => r.id !== replaceId) : prev;
         return top100ByUpdatedAt([processingReceipt, ...without]);
       });
-      await savePhoto(id, file);
-      await saveReceipt(processingReceipt);
-      scheduleOcrJob(id);
+      scheduleOcrJob(processingReceipt.id);
 
       if (replaceId) {
         watcherRef.current?.unwatch(replaceId);
@@ -1145,7 +1159,7 @@ export function HomeScreen() {
         });
       }
     },
-    [resnapId],
+    [resnapId, showDuplicateReceiptNotice],
   );
 
   const handleResnap = useCallback((id: string) => {
@@ -1292,6 +1306,7 @@ export function HomeScreen() {
         <ReceiptList
           receipts={displayReceipts}
           syncStuckIds={syncStuckIds}
+          highlightReceiptId={highlightReceiptId}
           filter={listFilter}
           onFilterChange={setListFilter}
           filterBarRef={filterBarRef}

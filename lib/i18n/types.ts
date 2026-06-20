@@ -158,6 +158,7 @@ export type UserCopy = {
       delete: string;
       unknownMerchant: string;
       duplicateReceipt: string;
+      duplicateReceiptSimilar: string;
       status: {
         analyzing: string;
         uploading: string;

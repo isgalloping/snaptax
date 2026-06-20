@@ -19,6 +19,8 @@
 
 ## 2. 命名规范
 
+### 2.1 PostgreSQL
+
 | 对象 | 规则 | 示例 |
 |------|------|------|
 | 表名 | 小写 + `snaptax_` 前缀 + snake_case | `snaptax_users` |
@@ -31,6 +33,51 @@
 | Prisma 字段 | camelCase + `@map("snake_case")` | `userEmail @map("user_email")` |
 
 **禁止：** 无 `snaptax_` 前缀的新业务表；camelCase 列名；在 Route Handler 中裸写 SQL（除 migration/脚本）。
+
+### 2.2 IndexedDB（客户端离线）
+
+| 对象 | 规则 | 示例 |
+|------|------|------|
+| **数据库名** | 固定 **`snaptax`**（legacy 名 `snap1099` 首次打开时自动迁移并删除） | `snaptax` |
+| **Object store** | 小写 + **`snaptax_` 前缀** + snake_case；与 PG 表名对齐（客户端专有 store 仍用同前缀） | `snaptax_receipts` |
+| **常量出口** | 单一模块导出 store 名；禁止在业务文件硬编码字符串 | `lib/storage/idbStores.ts`（v5 迁移时引入） |
+
+**铁律：** 所有 IndexedDB object store 名必须以 `snaptax_` 开头，与服务器端 `snaptax_*` 表命名空间一致。
+
+#### Object store 注册表
+
+| Store | 职责 | PG 对应 |
+|-------|------|---------|
+| `snaptax_receipts` | 小票元数据 + 同步字段（`serverId` / `syncStatus` / `pendingUpload` 等） | `snaptax_receipts` |
+| `snaptax_receipt_photos` | **图片元数据 only**（OPFS 路径、尺寸、同步/回收状态）；**像素在 OPFS**，见 [`12-local-image-storage-design.md`](./12-local-image-storage-design.md) | —（Blob 在 Vercel Blob；pathname 在 receipt 行） |
+| `snaptax_system_meta` | 客户端元数据（`onboarding_status`、`deleted_receipt_ids` 等 KV） | — |
+| `snaptax_crypto_meta` | 本地加密 DEK / 密钥材料 | — |
+| `snaptax_receipt_events` | **第二阶段** append-only 生命周期事件队列 | Postgres Event Store（待定） |
+
+#### 遗留名 → 规范名（v4 → v5 迁移）
+
+| v4（遗留，禁止新代码引用） | v5（规范） |
+|---------------------------|-----------|
+| `receipts` | `snaptax_receipts` |
+| `photos` | `snaptax_receipt_photos` |
+| `system_meta` | `snaptax_system_meta` |
+| `meta` | `snaptax_crypto_meta` |
+
+**迁移约定（`DB_VERSION = 5`）：** `onupgradeneeded` 中创建新 store → 只读旧 store 全量 copy → 删除旧 store；同一 upgrade 事务内完成。读路径在迁移完成前可双读 fallback（实现细节见 `receiptDb.ts` plan）。
+
+**禁止：** 新建无 `snaptax_` 前缀的 object store；在 `photoStore.ts` / `keyManager.ts` / 组件内散落 store 字符串（须从 `idbStores.ts` 或 `receiptDb`  re-export 引用）；在 **`snaptax_receipt_photos` 存图片 Blob/密文**（像素必须 OPFS，见 [`12-local-image-storage-design.md`](./12-local-image-storage-design.md)）。
+
+### 2.3 客户端图片字节（OPFS）
+
+| 项 | 规范 |
+|----|------|
+| 存储 | **OPFS** `snaptax/photos/{receiptId}/`；AES-GCM 加密（LEL DEK） |
+| IDB | **`snaptax_receipt_photos` 仅元数据** |
+| 拍照压缩 | 长边 ≤**1280**（约 1280×960），**JPEG 75%**，目标 **200～300KB** |
+| 缩略图 | 长边 **480**，JPEG 70% |
+| 已同步 **≥90 天** | 删 OPFS **原图**，保留缩略图；详情走 signed URL |
+
+详设：[`12-local-image-storage-design.md`](./12-local-image-storage-design.md)
 
 ---
 
@@ -211,7 +258,9 @@ prisma.snaptaxSeasonEntitlement
 - `ghost_id` 使用 UUID 类型（与 G2 决策冲突）  
 - 无注释的新表/新列  
 - 仅改 Prisma 不改 `init-table.sql`（或反之）  
-- 删除 `transaction_id` UNIQUE（破坏 Webhook 幂等）
+- 删除 `transaction_id` UNIQUE（破坏 Webhook 幂等）  
+- **IndexedDB** 新建 object store 无 `snaptax_` 前缀；硬编码 legacy 名 `receipts` / `photos` / `system_meta` / `meta`  
+- 在 **`snaptax_receipt_photos` 存图片 Blob**（须 OPFS，见 §2.3）
 
 ---
 

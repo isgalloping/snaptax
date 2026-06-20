@@ -93,7 +93,7 @@ async function main() {
 
       const photoStored = await page.evaluate(async () => {
         return new Promise((resolve) => {
-          const req = indexedDB.open("snap1099", 1);
+          const req = indexedDB.open("snaptax", 1);
           req.onerror = () => resolve(false);
           req.onsuccess = () => {
             const db = req.result;

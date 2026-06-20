@@ -22,8 +22,10 @@ North American 1099 contractor receipt app — PWA, offline-first, Ghost → Goo
 
 ## Database
 
-- **Design spec:** `docs/tech/DB-DESIGN-SPEC.md`（改表/索引/Prisma 必读）
+- **Design spec:** `docs/tech/DB-DESIGN-SPEC.md`（改表/索引/Prisma 必读；IndexedDB store 命名 §2.2）
 - DDL: `db/init-table.sql` · Schema: `prisma/schema.prisma`
+- **Client stores:** `snaptax_receipts` · `snaptax_receipt_photos`（meta）· OPFS 图片 · `snaptax_system_meta` · `snaptax_crypto_meta`
+- **Local images:** `docs/tech/12-local-image-storage-design.md`（压缩 1280/q75；同步 90 天后删原图留 thumb）
 
 ## Compliance
 
@@ -66,7 +68,20 @@ Single Next.js app (no monorepo). Package manager is **npm** (`package-lock.json
 - `.env.local` holds local secrets and is intentionally **not committed**. If missing, recreate it with at least:
   - `DATABASE_URL` and `POSTGRES_URL_NON_POOLING` → `postgresql://snaptax:snaptax@localhost:5432/snaptax?schema=public`
   - `GHOST_HMAC_SECRET` and `AUTH_SECRET` → **two different** strings ≥32 chars (required to sign Ghost/session cookies; write APIs 500 without them). In production/preview they must not share the same value or cross-fallback.
+- **Local dev rate limits** (optional; production defaults are Ghost 10/h, IP 60/min — see `lib/api/rateLimit.ts`):
+  ```
+  RECEIPT_GHOST_HOURLY=100
+  RECEIPT_IP_PER_MIN=200
+  ```
+  Raise these when debugging upload/OCR retries; otherwise `POST /api/receipts` returns **429** `RATE_LIMITED` (not OpenAI). Stuck buckets: `DELETE FROM snaptax_rate_limit_buckets WHERE bucket_key LIKE 'ghost:receipt:%';`
+- **Desktop OCR speed** (optional; Tesseract cold start on first capture can take 30–60s without preload):
+  ```
+  NEXT_PUBLIC_SKIP_LOCAL_OCR=1      # skip client OCR; upload → server Vision/classify only
+  NEXT_PUBLIC_OCR_MAX_EDGE=960      # smaller OCR input (default 1280)
+  ```
+  App boot calls `preloadOcrEngine()` to warm Tesseract in a Web Worker after first load.
 - Env name aliasing lives in `lib/server/env.ts` + `scripts/load-env.mjs`.
+- **After `vercel env pull`:** add `DATABASE_URL` at the top of `.env.local` — pooler `:6543` often times out locally (Prisma **P1001**, `POST /api/ghost/register` **500**). Use direct `db.*.supabase.co:5432` or local Postgres; see `docs/tech/09-deployment-vercel.md` §9.7.
 
 ### Migrations
 - Apply with `npm run db:migrate:deploy` (loads `.env.local`, uses a direct connection). Run after Postgres is up. `npm run db:migrate:dev` is for authoring new migrations.

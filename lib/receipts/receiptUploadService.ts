@@ -97,6 +97,7 @@ async function runVisionForReceipt(params: {
   mime: "image/jpeg" | "image/png";
   industry: string | null;
   captureKind?: "1099-NEC" | "1099-K" | null;
+  ocrDraft?: import("@/lib/ocr/types").OcrDraftPayload | null;
 }) {
   const verify = await logVerifyBypass(params.request, params.actor);
   try {
@@ -108,6 +109,8 @@ async function runVisionForReceipt(params: {
       industry: params.industry,
       canMockAi: verify.canMockAi,
       captureKind: params.captureKind ?? null,
+      ocrDraft: params.ocrDraft ?? null,
+      logContext: { request: params.request, actor: params.actor },
     });
     return { processFailed: false as const, result };
   } catch {
@@ -148,6 +151,7 @@ async function replaceReceiptImage(params: {
   sha: string;
   fingerprint: string;
   captureKind?: "1099-NEC" | "1099-K" | null;
+  ocrDraft?: import("@/lib/ocr/types").OcrDraftPayload | null;
 }) {
   const pathname = receiptImagePathname(params.receipt.id, params.kind);
   await put(pathname, params.bytes, {
@@ -186,6 +190,7 @@ async function replaceReceiptImage(params: {
     mime: params.mime,
     industry: params.industry,
     captureKind: params.captureKind,
+    ocrDraft: params.ocrDraft,
   });
 
   const updated = await prisma.snaptaxReceipt.findUnique({
@@ -205,6 +210,7 @@ export async function handleReceiptUploadPost(params: {
   snapAt: Date | null;
   industry: string | null;
   captureKind?: "1099-NEC" | "1099-K" | null;
+  ocrDraft?: import("@/lib/ocr/types").OcrDraftPayload | null;
 }) {
   const mime = mimeForKind(params.kind);
   const sha = contentSha256(params.bytes);
@@ -238,6 +244,7 @@ export async function handleReceiptUploadPost(params: {
       sha,
       fingerprint,
       captureKind: params.captureKind,
+      ocrDraft: params.ocrDraft,
     });
   }
 
@@ -313,6 +320,7 @@ export async function handleReceiptUploadPost(params: {
     mime,
     industry: params.industry,
     captureKind: params.captureKind,
+    ocrDraft: params.ocrDraft,
   });
 
   const created = await prisma.snaptaxReceipt.findUnique({

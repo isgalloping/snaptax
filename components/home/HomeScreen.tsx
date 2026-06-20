@@ -14,7 +14,19 @@ import {
   uploadReceipt,
   type ApiReceipt,
 } from "@/lib/client/receiptApi";
+import { schedulePhotoRetentionPurge } from "@/lib/client/photoRetentionJob";
 import { reconcileDuplicateReceipt } from "@/lib/client/reconcileDuplicateReceipt";
+import {
+  deferBatchOcrUpload,
+  isBatchOcrUploadDeferred,
+  shouldBlockUploadForOcr,
+  preloadOcrEngine,
+  releaseBatchOcrUpload,
+  resumePendingOcrJobsFromStorage,
+  scheduleOcrJob,
+  setOcrCompleteHandler,
+  waitForOcrJobs,
+} from "@/lib/client/scheduleOcrJob";
 import {
   deleteReceiptLocalAndRemote,
   flushPendingDeletes,
@@ -47,10 +59,12 @@ import {
   deleteReceipt as deleteStoredReceipt,
   loadAllReceipts,
   loadPhoto,
+  loadReceipt,
   loadRecentUnfiledReceipts,
   loadTopByUpdatedAt,
   savePhoto,
   saveReceipt,
+  markRemoteSyncedPhotos,
   sumUnfiledLocalTaxSavedIndexed,
   type StoredReceipt,
 } from "@/lib/storage/receiptDb";
@@ -417,6 +431,7 @@ export function HomeScreen() {
         return next;
       });
       await saveReceipt(updated);
+      await markRemoteSyncedPhotos([updated.id]);
       return updated;
     },
     [refreshTaxSaved],
@@ -455,34 +470,48 @@ export function HomeScreen() {
   const uploadPendingInner = async (receipt: StoredReceipt) => {
     if (shouldSkipUploadAttempt(receipt)) return;
     if (uploadInFlightRef.current.has(receipt.id)) return;
+    if (shouldBlockUploadForOcr(receipt)) return;
+
+    const latest = await loadReceipt(receipt.id);
+    if (!latest?.pendingUpload || shouldSkipUploadAttempt(latest)) return;
+    if (shouldBlockUploadForOcr(latest)) return;
 
     let photo: Blob | null = null;
     try {
-      photo = await loadPhoto(receipt.id);
+      photo = await loadPhoto(latest.id);
     } catch {
       photo = null;
     }
     if (!photo) {
-      const marked = applyPhotoMissingState(receipt);
+      const marked = applyPhotoMissingState(latest);
       await saveReceipt(marked);
       setReceipts((prev) => prev.map((r) => (r.id === marked.id ? marked : r)));
       setSyncStuckIds((prev) => new Set(prev).add(marked.id));
       return;
     }
 
-    uploadInFlightRef.current.add(receipt.id);
+    uploadInFlightRef.current.add(latest.id);
     try {
-      const uploaded = await uploadReceipt(photo, receipt.id, receipt.timestamp);
-      const updated = await persistUploadedReceipt(receipt, uploaded);
+      const uploaded = await uploadReceipt(
+        photo,
+        latest.id,
+        latest.timestamp,
+        undefined,
+        latest.ocrDraft,
+      );
+      const updated = await persistUploadedReceipt(latest, uploaded);
+      if (updated.status === "done" && updated.taxAmount != null) {
+        pulseTaxAnimating();
+      }
       if (updated.status === "processing") {
         queueRef.current?.enqueue(updated.id);
       }
     } catch (err) {
       if (isDuplicateReceiptError(err)) {
-        await handleDuplicateUpload(receipt.id, err.existingReceiptId, receipt);
+        await handleDuplicateUpload(latest.id, err.existingReceiptId, latest);
         return;
       }
-      const failed = recordWriteFailure(receipt);
+      const failed = recordWriteFailure(latest);
       await saveReceipt(failed);
       setReceipts((prev) => prev.map((r) => (r.id === failed.id ? failed : r)));
       if (isSyncStuck(failed)) {
@@ -490,7 +519,7 @@ export function HomeScreen() {
       }
       throw failed;
     } finally {
-      uploadInFlightRef.current.delete(receipt.id);
+      uploadInFlightRef.current.delete(latest.id);
     }
   };
 
@@ -505,7 +534,10 @@ export function HomeScreen() {
     }
     const stored = await loadAllReceipts();
     const pending = stored.filter(
-      (r) => r.pendingUpload && !shouldSkipUploadAttempt(r),
+      (r) =>
+        r.pendingUpload &&
+        !shouldSkipUploadAttempt(r) &&
+        !shouldBlockUploadForOcr(r),
     );
     for (const receipt of pending) {
       try {
@@ -517,6 +549,28 @@ export function HomeScreen() {
   }, []);
 
   flushPendingUploadsRef.current = flushPendingUploads;
+
+  useEffect(() => {
+    setOcrCompleteHandler((receiptId) => {
+      void (async () => {
+        if (!navigator.onLine) return;
+        try {
+          await ensureGhostSession();
+        } catch {
+          return;
+        }
+        const receipt = await loadReceipt(receiptId);
+        if (!receipt?.pendingUpload || shouldSkipUploadAttempt(receipt)) return;
+        if (isBatchOcrUploadDeferred(receiptId)) return;
+        try {
+          await uploadPendingInnerRef.current(receipt);
+        } catch {
+          // write budget updated in uploadPendingInner
+        }
+      })();
+    });
+    return () => setOcrCompleteHandler(null);
+  }, []);
 
   const flushPendingDeletesCallback = useCallback(async () => {
     await flushPendingDeletes();
@@ -550,6 +604,7 @@ export function HomeScreen() {
           queueRef.current?.bootstrapFromList(
             mergedAfter.filter((r) => !stuck.has(r.id)),
           );
+          schedulePhotoRetentionPurge();
         })();
       });
     },
@@ -757,6 +812,10 @@ export function HomeScreen() {
   }, [runDeferredStartup]);
 
   useEffect(() => {
+    preloadOcrEngine();
+  }, []);
+
+  useEffect(() => {
     if (!navigator.onLine) return;
 
     const retryPending = () => {
@@ -937,6 +996,9 @@ export function HomeScreen() {
         setSyncStuckIds(stuckIdsFromReceipts(hot));
         setTaxSaved(await sumUnfiledLocalTaxSavedIndexed());
 
+        await resumePendingOcrJobsFromStorage();
+        if (cancelled) return;
+
         deferAfterPaint(async () => {
           if (cancelled) return;
           const visible = await loadTopByUpdatedAt(UI_RECEIPT_LIMIT);
@@ -954,6 +1016,9 @@ export function HomeScreen() {
           setReceipts(visible);
           setSyncStuckIds(stuckIdsFromReceipts(visible));
           setTaxSaved(await sumUnfiledLocalTaxSavedIndexed().catch(() => 0));
+          if (navigator.onLine) {
+            runDeferredStartup(() => cancelled);
+          }
         }
       }
     })();
@@ -976,32 +1041,48 @@ export function HomeScreen() {
     });
     await savePhoto(id, file);
     await saveReceipt(processingReceipt);
+    deferBatchOcrUpload([id]);
+    scheduleOcrJob(id);
     return id;
   }, []);
 
-  const handleBatchClose = useCallback(async () => {
+  const handleBatchClose = useCallback(async (sessionIds: string[]) => {
+    releaseBatchOcrUpload(sessionIds);
     await refreshListFromLocal();
-  }, [refreshListFromLocal]);
-
-  const handleBatchDone = useCallback(async () => {
-    await refreshListFromLocal();
-    if (navigator.onLine) {
+    if (navigator.onLine && sessionIds.length > 0) {
       try {
         await ensureGhostSession();
         await flushPendingUploadsRef.current();
       } catch {
-        // Local pending rows remain until next flush
+        // pending rows remain until next flush
       }
     }
-    const visible = await loadTopByUpdatedAt(UI_RECEIPT_LIMIT);
-    setReceipts(visible);
-    refreshTaxSaved(visible);
-    const stuck = stuckIdsFromReceipts(visible);
-    setSyncStuckIds(stuck);
-    queueRef.current?.bootstrapFromList(
-      visible.filter((r) => r.status === "processing" && !stuck.has(r.id)),
-    );
-  }, [refreshListFromLocal, refreshTaxSaved]);
+  }, [refreshListFromLocal]);
+
+  const handleBatchDone = useCallback(
+    async (sessionIds: string[]) => {
+      await waitForOcrJobs(sessionIds);
+      releaseBatchOcrUpload(sessionIds);
+      await refreshListFromLocal();
+      if (navigator.onLine) {
+        try {
+          await ensureGhostSession();
+          await flushPendingUploadsRef.current();
+        } catch {
+          // Local pending rows remain until next flush
+        }
+      }
+      const visible = await loadTopByUpdatedAt(UI_RECEIPT_LIMIT);
+      setReceipts(visible);
+      refreshTaxSaved(visible);
+      const stuck = stuckIdsFromReceipts(visible);
+      setSyncStuckIds(stuck);
+      queueRef.current?.bootstrapFromList(
+        visible.filter((r) => r.status === "processing" && !stuck.has(r.id)),
+      );
+    },
+    [refreshListFromLocal, refreshTaxSaved],
+  );
 
   const handleDeleteReceipt = useCallback(
     async (id: string) => {
@@ -1041,7 +1122,7 @@ export function HomeScreen() {
         merchant: "Scanning",
         timestamp: snapAt,
         updatedAt: snapAt,
-        pendingUpload: !navigator.onLine,
+        pendingUpload: true,
         photoMissing: undefined,
       });
 
@@ -1051,6 +1132,7 @@ export function HomeScreen() {
       });
       await savePhoto(id, file);
       await saveReceipt(processingReceipt);
+      scheduleOcrJob(id);
 
       if (replaceId) {
         watcherRef.current?.unwatch(replaceId);
@@ -1062,47 +1144,8 @@ export function HomeScreen() {
           return next;
         });
       }
-
-      if (!navigator.onLine) return;
-
-      if (uploadInFlightRef.current.has(id)) return;
-      uploadInFlightRef.current.add(id);
-      try {
-        await ensureGhostSession();
-        const uploaded = await uploadReceipt(file, id, snapAt);
-        const updated = await persistUploadedReceipt(processingReceipt, uploaded);
-
-        if (updated.status === "done" && updated.taxAmount != null) {
-          pulseTaxAnimating();
-        }
-
-        if (updated.status === "processing") {
-          enqueueReceipt(updated.id);
-        }
-      } catch (err) {
-        if (isDuplicateReceiptError(err)) {
-          await handleDuplicateUpload(id, err.existingReceiptId, processingReceipt);
-          return;
-        }
-        const failed = recordWriteFailure(processingReceipt);
-        await saveReceipt({ ...failed, pendingUpload: true });
-        setReceipts((prev) =>
-          prev.map((r) => (r.id === id ? { ...failed, pendingUpload: true } : r)),
-        );
-        if (isSyncStuck(failed)) {
-          setSyncStuckIds((prev) => new Set(prev).add(id));
-        }
-      } finally {
-        uploadInFlightRef.current.delete(id);
-      }
     },
-    [
-      resnapId,
-      enqueueReceipt,
-      pulseTaxAnimating,
-      persistUploadedReceipt,
-      handleDuplicateUpload,
-    ],
+    [resnapId],
   );
 
   const handleResnap = useCallback((id: string) => {
@@ -1256,7 +1299,10 @@ export function HomeScreen() {
           onAhaCoachDismiss={dismissAhaCoach}
           onSelect={(receipt) => {
             if (isPersistedReceiptId(receipt.id)) {
-              prefetchReceiptImageUrl(receipt.id);
+              prefetchReceiptImageUrl(receipt.id, {
+                hasRemoteImage: receipt.hasRemoteImage,
+                pendingUpload: receipt.pendingUpload,
+              });
             }
             setSelectedReceipt(receipt);
           }}

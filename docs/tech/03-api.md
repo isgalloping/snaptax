@@ -94,7 +94,13 @@ Query: `limit=3`（默认最近 3 条）
 
 ### `POST /api/receipts`
 
-`multipart/form-data`: `file` (image/jpeg)
+`multipart/form-data`: `file` (image/jpeg) · 可选 `ocrDraft`（JSON string，客户端本地 OCR 草稿）
+
+| 客户端 payload | 服务端 |
+|----------------|--------|
+| 仅 `file` | Path B · Vision（100% 现网） |
+| `file` + `ocrDraft` 且 gate 通过 | Path A · `classifyReceiptText`；失败则 Vision |
+| `file` + `ocrDraft` 且 gate 失败 | Path B · Vision |
 
 Header: **`snap1099_ghost` Cookie**（Ghost）或 session  
 Header: **`X-Tax-Region`**（`us` \| `eu`；缺省 `us`）→ 写入 `receipt.data_region`

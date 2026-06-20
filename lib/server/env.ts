@@ -62,6 +62,10 @@ export function getOpenAiModel(): string {
   );
 }
 
+export function getOpenAiClassifyModel(): string {
+  return firstDefined(process.env.OPENAI_CLASSIFY_MODEL, getOpenAiModel());
+}
+
 export function getOpenAiTimeoutMs(): number {
   const raw = firstDefined(process.env.OPENAI_TIMEOUT_MS);
   const parsed = raw ? Number(raw) : 120_000;

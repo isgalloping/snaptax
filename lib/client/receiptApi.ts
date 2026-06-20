@@ -192,6 +192,7 @@ export async function uploadReceipt(
   clientReceiptId: string,
   snapAt?: Date,
   captureKind?: "1099-NEC" | "1099-K" | null,
+  ocrDraft?: import("@/lib/ocr/types").OcrDraftPayload | null,
 ): Promise<ApiReceipt> {
   if (!isPersistedReceiptId(clientReceiptId)) {
     throw new Error("INVALID_CLIENT_RECEIPT_ID");
@@ -201,6 +202,9 @@ export async function uploadReceipt(
   form.append("clientReceiptId", clientReceiptId);
   if (snapAt) {
     form.append("snapAt", toUtcISOString(snapAt));
+  }
+  if (ocrDraft) {
+    form.append("ocrDraft", JSON.stringify(ocrDraft));
   }
   const headers: Record<string, string> = {};
   const resolvedCaptureKind = captureKind ?? consumePendingIncomeCapture();

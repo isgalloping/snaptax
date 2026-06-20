@@ -37,7 +37,7 @@
 
 - 核心 UI 离线可开；弱网 **≤ 1.5s** 可操作  
 - **离线：** 可拍照；小票 + 照片入 **IndexedDB**；保持 `Processing...`，**不调 OpenAI**  
-- **联网（含未登录 Ghost）：** 调用服务端 API → **OpenAI Vision** 识别小票（见 §2.3.1）  
+- **联网（含未登录 Ghost）：** 本地 OCR Worker 生成 `ocrDraft`（离线亦可）；上传后服务端 **文本 GPT 分类**（Path A）或 **OpenAI Vision 兜底**（Path B，见 §2.3.1）  
 - Service Worker 预缓存 `/` 及静态资源  
 
 ### 2.3 隐私、合规与数据存储（EU + US · MVP 美国驻留）
@@ -49,7 +49,7 @@
 | 场景 | 本地 | 云端（美国） | OpenAI |
 |------|------|--------------|--------|
 | **未登录 + 离线** | IndexedDB 队列 | 无 | 无 |
-| **未登录 + 在线** | IndexedDB 备份 | Blob + Postgres（`ghost_id`） | **是** — 识别小票 |
+| **未登录 + 在线** | IndexedDB 备份 + `ocrDraft` | Blob + Postgres（`ghost_id`） | **是** — 文本分类优先；Vision 兜底 |
 | **已登录 + 在线** | IndexedDB 缓存 | 同上，绑定 `user_id` | **是** |
 | **Google 登录** | — | Ghost 小票 **迁移/关联** 至 Google 账户 | — |
 
@@ -260,7 +260,7 @@ Next.js 16 · React 19 · Tailwind 4 · Serwist · **PostgreSQL（美国）** ·
 | 能力 | 产品设计 v1.2 | 代码 |
 |------|---------------|------|
 | 主界面 + 拍照 + 三态 | ✅ | ✅ |
-| 未登录 **联网 OpenAI** | ✅ | ✅（`POST /api/receipts` → Vision） |
+| 未登录 **联网 OpenAI** | ✅ | ✅（本地 OCR + `classifyReceiptText`；Vision 兜底） |
 | 美国存储 + 知情 UI | ✅ | ✅ |
 | Google 软/硬引导 UI | ✅ | ✅（GIS + 后端绑定；T1 Nudge + T2 首次 Settings Sheet） |
 | 蓝领新人引导（Aha onboarding） | ✅ | ✅（Hero Stage 0 + shadow/sandbox/Aha + Stage 1 SNAP focus ring） |
@@ -274,6 +274,7 @@ Next.js 16 · React 19 · Tailwind 4 · Serwist · **PostgreSQL（美国）** ·
 | 行业六选一 | ✅ | ✅（登录 API 回填；Ghost `localStorage`） |
 | Home WidgetPager（Snap 下固定分页） | ✅ | ✅（等宽 3 卡/页，>3 左滑 + 分页点） |
 | Home v2 筛选桶 + 列表展示 | ✅ | ✅（ALL/READY/REVIEW/ACTION/PROCESSING；绿/灰 tax；category + Line pill） |
+| 本地 OCR + 双路径 AI（Phase 1） | ✅ | ✅（Worker OCR、`ocrDraft`、router、`biz.ocr` 日志；O3 ROI/EU parse） |
 
 **Dev 限制（非产品偏离）：** 无 Upstash 时速率限制放行；无 Paddle env 时 Paywall 显示错误而非假付费。
 

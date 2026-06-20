@@ -1,6 +1,6 @@
 ---
-description: Snap1099 PostgreSQL 数据库设计 — 改表、DDL、Prisma、索引、注释时遵循
-globs: db/**/*,prisma/**/*,lib/prisma.ts,lib/server/**/*,lib/time/**/*
+description: Snap1099 PostgreSQL + IndexedDB 设计 — 改表、DDL、Prisma、IDB store、索引、注释时遵循
+globs: db/**/*,prisma/**/*,lib/prisma.ts,lib/server/**/*,lib/storage/**/*,lib/time/**/*
 alwaysApply: false
 ---
 
@@ -12,6 +12,7 @@ alwaysApply: false
 ## 铁律
 
 - 引擎 **PostgreSQL**；表名 **`snaptax_` 前缀** + snake_case 列名
+- **IndexedDB object store** 一律 **`snaptax_` 前缀**（与 PG 对齐）；DB 名 **`snaptax`**（旧名 `snap1099` 自动迁移）
 - 子表 FK 一律 → **`snaptax_users.id`**（UUID）；OAuth 外部 ID 在 `user_id` + `auth_channel`
 - **`ghost_id` 全表 `varchar(255)`**；Ghost↔User 一对一
 - 枚举 **E3**：库内无 ENUM/CHECK；应用层 Zod/常量校验 + `COMMENT ON` 文档化
@@ -27,14 +28,23 @@ alwaysApply: false
 | 服务端写入 | `captured_at` / `snap_at` / `processed_at` 等用 **`Date` UTC  instant** 或解析客户端 **`…Z` ISO 字符串** |
 | API JSON | ISO 8601 **带 `Z` 或 offset**，如 `2026-06-05T11:30:00.000Z`（见 `03-api.md`） |
 | 客户端持久化 | **`lib/time/utc.ts`**：`utcNow()` · `toUtcISOString()` · `parseUtcISOString()` |
-| IndexedDB | 时间字段存 **UTC ISO 字符串**（`receiptDb` 已封装） |
+| IndexedDB | Store 名 **`snaptax_*`**（如 `snaptax_receipts`）；时间字段存 **UTC ISO 字符串**（`receiptDb` 已封装） |
 | UI 展示 | **仅** `formatReceiptTime` 等 formatter 转用户 **本地** 时区；禁止把本地字符串写入 DB/API |
 
 **禁止：** 无时区 `TIMESTAMP(3)` 新列 · API 返回 `YYYY-MM-DD HH:mm:ss` 无后缀 · 业务代码裸 `new Date()` 写库（用 `utcNow()`） · 把 `toLocaleString` 结果当持久化值
 
+## IndexedDB stores（规范名）
+
+`snaptax_receipts` · `snaptax_receipt_photos`（**meta only**）· `snaptax_system_meta` · `snaptax_crypto_meta` ·（Phase 2）`snaptax_receipt_events`
+
+Legacy v4：`receipts` / `photos` / `system_meta` / `meta` → v5 迁移后废弃。常量单一出口：`lib/storage/idbStores.ts`。
+
+**图片字节：** OPFS + 压缩（1280/q75）+ 90 天 synced 回收 — `docs/tech/12-local-image-storage-design.md`
+
 ## 改表检查清单
 
 - [ ] 同步 `db/init-table.sql` + `prisma/schema.prisma` + `04-data-model.md`
+- [ ] 改 IDB store：更新 `DB-DESIGN-SPEC.md` §2.2 + bump `DB_VERSION` + 迁移旧 store 数据
 - 金额 `NUMERIC(10,2)`；时间 **`TIMESTAMPTZ(3)`**；审计列 `created_at`/`updated_at`
 - **`snaptax_receipts`：** `tax_amount NUMERIC(10,2) DEFAULT 0` · `data_region VARCHAR(8) DEFAULT 'us'`（税法辖区快照，见 tax spec）
 - [ ] 新索引对应真实 API 查询；Webhook 幂等键保持 UNIQUE
@@ -46,4 +56,4 @@ alwaysApply: false
 
 ## 禁止
 
-- 无 `snaptax_` 前缀新表 · `ghost_id` 用 UUID 类型 · 子表存 `auth_channel` 代替 user FK · 仅改 Prisma 不改 DDL
+- 无 `snaptax_` 前缀新表 / 新 IDB store · `ghost_id` 用 UUID 类型 · 子表存 `auth_channel` 代替 user FK · 仅改 Prisma 不改 DDL · 业务代码硬编码 legacy IDB store 名

@@ -12,8 +12,8 @@ alwaysApply: false
 ## 铁律
 
 - **顶栏 Est. Tax Saved** = **`SUM(tax_amount)`**（`status=done`）；**禁止** 客户端 `amount×0.25`
-- **`tax_amount` 变更唯一路径：** `processReceiptTax` → **OpenAI Vision 读图** → Zod → `computeTaxAmount` → DB
-- **禁止** 无 Vision 的 `UPDATE tax_amount` 或纯 DB 字段公式重算
+- **`tax_amount` 变更路径：** `processReceiptTax` → **`routeStandardReceiptTax`**（Path A：本地 OCR + `classifyReceiptText` + `computeTaxAmount`；Path B 兜底：**OpenAI Vision**）→ DB
+- **禁止** 绕过 `processReceiptTax` / router 的 `UPDATE tax_amount` 或纯 DB 字段公式重算
 - **US：** `(amount × deduction_ratio) × TAX_US_MARGINAL_RATE`（默认 0.25）；ratio 由 AI + `usCategories` 兜底
 - **EU：** `deductible` 时 `tax_amount = vat_amount`；AI 必须提取 `vat_rate` / `vat_amount`
 
@@ -35,7 +35,8 @@ else → 历史小票逐张 OpenAI Vision（lockedRegion）
 ## 改代码检查清单
 
 - [ ] 新小票 upload 带 `X-Tax-Region`
-- [ ] Vision 分 US/EU prompt
+- [ ] Path A：`ocrDraft` + text classify；Path B：Vision fallback（`shouldUseVisionFallback`）
+- [ ] Vision 分 US/EU prompt（Path B / 1099）
 - [ ] `tax_amount` / `data_region` 写入 receipts
 - [ ] 登录绑定调 `shouldRecalcOnLogin`
 - [ ] Export Summary 读 `tax_amount`

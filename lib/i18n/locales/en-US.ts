@@ -126,7 +126,7 @@ export const EN_US_COPY: UserCopy = {
         done: "Added! Est. Tax Saved updates at the top.",
         blurry: "Too blurry — tap the row to resnap.",
       },
-      googleNudge: "New phone? Sign in with Google to save your receipts.",
+      googleNudge: "New phone? Sign in with Google to ocr your receipts.",
       googleNudgeDismiss: "Not now",
       aha: {
         snapTooltip:
@@ -554,7 +554,7 @@ export const EN_US_COPY: UserCopy = {
         moreTitle: "More options",
         moreSubtitle: "SMS, Email, AirDrop & more",
         message:
-          "Hey — I've been using Snap1099 to track my 1099 receipts and save on taxes. Free for contractors — thought you'd find it useful:",
+          "Hey — I've been using Snap1099 to track my 1099 receipts and ocr on taxes. Free for contractors — thought you'd find it useful:",
         shareTitle: "Snap1099 — Receipts to IRS tax pack",
         linkCopied: "Link copied",
         shareFailed: "Could not share. Link copied instead.",
@@ -660,7 +660,7 @@ export const EN_US_COPY: UserCopy = {
             {
               label: "**Est. Tax Saved** (yellow, top)",
               meaning:
-                "Rough guess of tax you might save. **Not official tax advice.**",
+                "Rough guess of tax you might ocr. **Not official tax advice.**",
             },
             {
               label: "**SNAP RECEIPT**",
@@ -730,7 +730,7 @@ export const EN_US_COPY: UserCopy = {
             "Sign in with Google (if not yet).",
             "Pay **$49** once for this tax season (via Paddle).",
             "Pick your tax year and file type.",
-            "Share the file — email, WhatsApp, or save to Files.",
+            "Share the file — email, WhatsApp, or ocr to Files.",
           ],
           afterPayTitle: "After you pay",
           afterPay: [
@@ -838,7 +838,7 @@ export const EN_US_COPY: UserCopy = {
         "These receipts need a category before your CPA or tax software can use them.",
       reviewUnknownMerchant: "Unknown merchant",
       reviewSaving: "Saving…",
-      reviewSaveFailed: "Could not save category. Try again.",
+      reviewSaveFailed: "Could not ocr category. Try again.",
       formatCpaPdfTitle: "CPA Summary PDF (Links to Receipts)",
       formatCpaPdfHint:
         "IRS-compliant summary with clickable links to your receipt photos.",

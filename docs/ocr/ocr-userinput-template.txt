@@ -1,0 +1,17 @@
+You will receive structured receipt data extracted from OCR.
+
+Classify and compute tax deduction using IRS Schedule C rules.
+
+INPUT:
+
+Merchant: {{merchant}}
+Date: {{date}}
+Total Amount: {{total}}
+Tax Amount: {{tax}}
+OCR Text: {{ocr_text}}
+
+Optional Context:
+Business Type: {{business_type}}
+Work Category: {{work_category}}
+
+Return strict JSON only.

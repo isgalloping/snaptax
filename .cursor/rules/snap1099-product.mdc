@@ -12,7 +12,7 @@ alwaysApply: true
 - **用户：** 北美 1099 蓝领；**哲学：** 前台傻瓜、后台聪明
 - **2 逻辑页：** 主界面 + 设置/导出；主界面单屏三段式，**核心拍照零 Modal**
 - **视觉：** 黑 `#000000` / 白 `#FFFFFF` / 黄 `#EAB308`；热区 ≥64px，核心 >96px；`active:scale-95`
-- **离线：** PWA 须离线可开主界面；离线可拍照；IndexedDB 队列
+- **离线：** PWA 须离线可开主界面；离线可拍照；IndexedDB 队列（store **`snaptax_*`**）；**图片字节 OPFS**，IDB 仅 meta（见 `12-local-image-storage-design.md`）
 - **联网 Ghost：** 服务端 OpenAI（非 client mock）；**Est. Tax Saved** = SUM(`tax_amount`) — 见 **`snap1099-tax.mdc`**
 
 ## 账户

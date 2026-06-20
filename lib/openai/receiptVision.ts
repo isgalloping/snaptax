@@ -160,6 +160,7 @@ export async function processReceiptVision(
         vat_amount: f.vat_amount,
         computed_vat: f.vat_amount == null && computedVat != null,
         model,
+        extractionSource: "vision_fallback",
       },
     };
   }
@@ -187,6 +188,7 @@ export async function processReceiptVision(
       marginal_rate: usMarginalRate(),
       deductible_base: usDeductibleBase(f),
       model,
+      extractionSource: "vision_fallback",
     },
   };
 }
@@ -212,6 +214,6 @@ function blurryFallback(
     amount: null,
     currency: region === "eu" ? "EUR" : "USD",
     deductible: false,
-    aiRaw: { region, model, ...meta },
+    aiRaw: { region, model, extractionSource: "vision_fallback", ...meta },
   };
 }

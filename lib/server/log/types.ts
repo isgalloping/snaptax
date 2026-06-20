@@ -8,6 +8,7 @@ export type LogModule =
   | "api.billing"
   | "api.webhook"
   | "biz.openai"
+  | "biz.ocr"
   | "biz.blob"
   | "biz.ghost"
   | "biz.paddle"
@@ -38,6 +39,9 @@ export type LogMeta = {
   verifyBypass?: boolean;
   mockAi?: boolean;
   bypassPay?: boolean;
+  stage?: string;
+  extractionSource?: string;
+  engine?: string;
 };
 
 export type LogEntry = {

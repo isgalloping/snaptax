@@ -2,6 +2,7 @@ import { apiReceiptToLocal, fetchReceiptById } from "@/lib/client/receiptApi";
 import { getBudget } from "@/lib/client/receiptSyncBudget";
 import {
   deleteReceipt as deleteStoredReceipt,
+  markRemoteSyncedPhotos,
   saveReceipt,
   type StoredReceipt,
 } from "@/lib/storage/receiptDb";
@@ -23,5 +24,6 @@ export async function reconcileDuplicateReceipt(
     await deleteStoredReceipt(localId);
   }
   await saveReceipt(updated);
+  await markRemoteSyncedPhotos([updated.id]);
   return updated;
 }

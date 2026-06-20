@@ -1,0 +1,76 @@
+Gas Station
+Input
+{
+"merchant": "Shell",
+"total": 72.14,
+"ocr_text": "SHELL GASOLINE PURCHASE TOTAL 72.14"
+}
+Output
+{
+"merchant": "Shell",
+"schedule_c_category": "Car and Truck Expenses",
+"irs_line_reference": "Line 9",
+"deductible": true,
+"deductible_amount": 72.14,
+"business_use_confidence": 0.95,
+"expense_type": "direct",
+"requires_confirmation": false,
+"reason_flags": []
+}
+示例 2：Hardware Store
+Input
+{
+"merchant": "Home Depot",
+"total": 183.22,
+"ocr_text": "HOME DEPOT NAILS DRILL BITS MATERIALS"
+}
+Output
+{
+"merchant": "Home Depot",
+"schedule_c_category": "Supplies",
+"irs_line_reference": "Line 22",
+"deductible": true,
+"deductible_amount": 183.22,
+"business_use_confidence": 0.98,
+"expense_type": "direct",
+"requires_confirmation": false,
+"reason_flags": []
+}
+示例 3：Restaurant（半扣）
+Input
+{
+"merchant": "McDonald's",
+"total": 12.00,
+"ocr_text": "BIG MAC MEAL"
+}
+Output
+{
+"merchant": "McDonald's",
+"schedule_c_category": "Meals",
+"irs_line_reference": "Line 24b",
+"deductible": true,
+"deductible_amount": 6.00,
+"business_use_confidence": 0.8,
+"expense_type": "mixed",
+"requires_confirmation": false,
+"reason_flags": ["50_percent_rule_applied"]
+}
+示例 4：不确定情况
+Input
+{
+"merchant": "Walmart",
+"total": 45.00,
+"ocr_text": "GENERAL MERCHANDISE"
+}
+Output
+{
+"merchant": "Walmart",
+"schedule_c_category": "Supplies",
+"irs_line_reference": "Line 22",
+"deductible": true,
+"deductible_amount": 45.00,
+"business_use_confidence": 0.55,
+"expense_type": "mixed",
+"requires_confirmation": true,
+"reason_flags": ["uncertain_item_mixed_usage"]
+}

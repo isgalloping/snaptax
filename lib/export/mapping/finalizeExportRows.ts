@@ -23,7 +23,7 @@ function dedupeExportRows(rows: ExportExpenseRow[]): ExportExpenseRow[] {
   const seen = new Set<string>();
   const result: ExportExpenseRow[] = [];
   for (const row of rows) {
-    const key = `${row.dateIso}|${row.merchant.trim().toLowerCase()}|${row.amount.toFixed(2)}`;
+    const key = row.id;
     if (seen.has(key)) continue;
     seen.add(key);
     result.push(row);

@@ -1,5 +1,58 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { setPendingIncomeCapture } from "@/lib/export/incomeCapture";
+import { resolveUploadCaptureKind } from "./receiptApi.ts";
+
+function withSessionStorage(fn: () => void): void {
+  const original = globalThis.sessionStorage;
+  const values = new Map<string, string>();
+  Object.defineProperty(globalThis, "sessionStorage", {
+    configurable: true,
+    value: {
+      getItem(key: string) {
+        return values.get(key) ?? null;
+      },
+      setItem(key: string, value: string) {
+        values.set(key, value);
+      },
+      removeItem(key: string) {
+        values.delete(key);
+      },
+    },
+  });
+  try {
+    fn();
+  } finally {
+    Object.defineProperty(globalThis, "sessionStorage", {
+      configurable: true,
+      value: original,
+    });
+  }
+}
+
+describe("resolveUploadCaptureKind", () => {
+  it("does not use legacy pending capture when caller passes explicit null", () => {
+    withSessionStorage(() => {
+      setPendingIncomeCapture("1099-NEC");
+
+      const resolved = resolveUploadCaptureKind(null);
+
+      assert.deepEqual(resolved, { captureKind: null, fromPending: false });
+    });
+  });
+
+  it("uses legacy pending capture only when capture kind is omitted", () => {
+    withSessionStorage(() => {
+      setPendingIncomeCapture("1099-K");
+
+      const resolved = resolveUploadCaptureKind(undefined);
+
+      assert.deepEqual(resolved, { captureKind: "1099-K", fromPending: true });
+    });
+  });
+});
+import assert from "node:assert/strict";
+import { describe, it } from "node:test";
 import { apiReceiptFromUploadResponse } from "./receiptApi.ts";
 
 describe("apiReceiptFromUploadResponse", () => {

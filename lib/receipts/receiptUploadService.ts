@@ -21,6 +21,10 @@ import { utcNow } from "@/lib/time/utc";
 import { resolveVerifyContext } from "@/lib/verify/context";
 import { logEvent } from "@/lib/server/log/logEvent";
 import { baseLogEntry } from "@/lib/server/log/context";
+import {
+  incomeFormTypeFromReceipt,
+  type IncomeFormType,
+} from "@/lib/export/incomeDocuments";
 
 export type DuplicateMatchType = "exact" | "similar";
 
@@ -96,7 +100,7 @@ async function runVisionForReceipt(params: {
   bytes: Buffer;
   mime: "image/jpeg" | "image/png";
   industry: string | null;
-  captureKind?: "1099-NEC" | "1099-K" | null;
+  captureKind?: IncomeFormType | null;
 }) {
   const verify = await logVerifyBypass(params.request, params.actor);
   try {
@@ -147,7 +151,7 @@ async function replaceReceiptImage(params: {
   industry: string | null;
   sha: string;
   fingerprint: string;
-  captureKind?: "1099-NEC" | "1099-K" | null;
+  captureKind?: IncomeFormType | null;
 }) {
   const pathname = receiptImagePathname(params.receipt.id, params.kind);
   await put(pathname, params.bytes, {
@@ -166,11 +170,13 @@ async function replaceReceiptImage(params: {
       amount: null,
       currency: null,
       merchantName: null,
-      category: null,
-      deductible: true,
+      category: params.captureKind ?? null,
+      deductible: params.captureKind ? false : true,
       taxAmount: 0,
       dataRegion: params.dataRegion,
-      aiRaw: Prisma.DbNull,
+      aiRaw: params.captureKind
+        ? { document_kind: params.captureKind }
+        : Prisma.DbNull,
       processedAt: null,
       snapAt: params.snapAt ?? params.receipt.snapAt,
       capturedAt: utcNow(),
@@ -204,7 +210,7 @@ export async function handleReceiptUploadPost(params: {
   dataRegion: "us" | "eu";
   snapAt: Date | null;
   industry: string | null;
-  captureKind?: "1099-NEC" | "1099-K" | null;
+  captureKind?: IncomeFormType | null;
 }) {
   const mime = mimeForKind(params.kind);
   const sha = contentSha256(params.bytes);
@@ -225,6 +231,21 @@ export async function handleReceiptUploadPost(params: {
       return uploadJsonResponse(existing, 200);
     }
 
+    const exactDup = await findExactDuplicate(params.actor, sha, existing.id);
+    if (exactDup) {
+      return duplicateResponse(exactDup.id, "exact");
+    }
+
+    const similarDup = await findSimilarDuplicate(
+      params.actor,
+      fingerprint,
+      existing.id,
+    );
+    if (similarDup) {
+      return duplicateResponse(similarDup.id, "similar");
+    }
+
+    const captureKind = params.captureKind ?? incomeFormTypeFromReceipt(existing);
     return replaceReceiptImage({
       request: params.request,
       actor: params.actor,
@@ -237,7 +258,7 @@ export async function handleReceiptUploadPost(params: {
       industry: params.industry,
       sha,
       fingerprint,
-      captureKind: params.captureKind,
+      captureKind,
     });
   }
 
@@ -279,6 +300,13 @@ export async function handleReceiptUploadPost(params: {
         snapAt: params.snapAt,
         contentSha256: sha,
         imageFingerprint: fingerprint,
+        ...(params.captureKind
+          ? {
+              category: params.captureKind,
+              deductible: false,
+              aiRaw: { document_kind: params.captureKind },
+            }
+          : {}),
       },
     });
   } catch (err) {

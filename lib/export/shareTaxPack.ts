@@ -7,8 +7,10 @@ export function downloadTaxPackFile(file: File): void {
   const a = document.createElement("a");
   a.href = url;
   a.download = file.name;
+  document.body.appendChild(a);
   a.click();
-  URL.revokeObjectURL(url);
+  a.remove();
+  globalThis.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 export function canShareTaxPackFile(file: File): boolean {

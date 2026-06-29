@@ -83,12 +83,23 @@ describe("finalizeExportRows", () => {
     assert.equal(row!.businessPercent, "0%");
   });
 
-  it("dedupes identical merchant/date/amount rows", () => {
+  it("dedupes repeated rows for the same receipt id", () => {
+    const rows = finalizeExportRows([
+      sampleRow(),
+      sampleRow(),
+    ]);
+    assert.equal(rows.length, 1);
+  });
+
+  it("keeps separate receipts with the same merchant, date, and amount", () => {
     const rows = finalizeExportRows([
       sampleRow(),
       sampleRow({ id: "00000000-0000-0000-0000-000000000002" }),
     ]);
-    assert.equal(rows.length, 1);
+
+    assert.equal(rows.length, 2);
+    assert.equal(rows[0]!.receiptAlias, "REC_20260315_HomeDepot_125.50.jpg");
+    assert.equal(rows[1]!.receiptAlias, "REC_20260315_HomeDepot_125.50_2.jpg");
   });
 
   it("aligns with docs/biz/export/TurboTax-format.csv demo row", () => {

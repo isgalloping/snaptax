@@ -31,6 +31,7 @@ import {
 } from "@/lib/client/receiptSync";
 import {
   applyPhotoMissingState,
+  captureKindForUpload,
   shouldSkipUploadAttempt,
 } from "@/lib/client/receiptUploadFlow";
 import {
@@ -42,9 +43,11 @@ import {
 } from "@/lib/client/receiptSyncBudget";
 import { ProcessingQueue } from "@/lib/client/processingQueue";
 import { ProcessingReceiptWatcher } from "@/lib/client/processingReceiptWatcher";
+import { clearPendingIncomeCapture } from "@/lib/export/incomeCapture";
 import { utcNow } from "@/lib/time/utc";
 import {
   deleteReceipt as deleteStoredReceipt,
+  deletePhoto,
   loadAllReceipts,
   loadPhoto,
   loadRecentUnfiledReceipts,
@@ -152,6 +155,7 @@ export function HomeScreen() {
   const uploadInFlightRef = useRef(new Set<string>());
   const receiptsRef = useRef<Receipt[]>([]);
   const cameraOpenRef = useRef(false);
+  const pendingCaptureKindRef = useRef<Receipt["captureKind"]>(null);
   const pendingMergeRef = useRef<{
     receipts: Receipt[];
     taxSavedEstimate?: number;
@@ -407,6 +411,7 @@ export function HomeScreen() {
         pendingUpload: false,
         writeBudgetRemaining: getBudget(prior),
         photoMissing: undefined,
+        captureKind: prior.captureKind,
       };
       setReceipts((prev) => {
         const next = top100ByUpdatedAt([
@@ -472,7 +477,12 @@ export function HomeScreen() {
 
     uploadInFlightRef.current.add(receipt.id);
     try {
-      const uploaded = await uploadReceipt(photo, receipt.id, receipt.timestamp);
+      const uploaded = await uploadReceipt(
+        photo,
+        receipt.id,
+        receipt.timestamp,
+        captureKindForUpload(receipt),
+      );
       const updated = await persistUploadedReceipt(receipt, uploaded);
       if (updated.status === "processing") {
         queueRef.current?.enqueue(updated.id);
@@ -733,9 +743,12 @@ export function HomeScreen() {
       void applyReceiptUpdate(updated as StoredReceipt);
     },
     onSnap1099: (kind) => {
+      pendingCaptureKindRef.current = kind;
+      clearPendingIncomeCapture();
       setView("home");
       window.requestAnimationFrame(() => {
-        snapButtonRef.current?.openCamera();
+        const opened = snapButtonRef.current?.openCamera() ?? false;
+        if (!opened) pendingCaptureKindRef.current = null;
       });
     },
   });
@@ -966,6 +979,7 @@ export function HomeScreen() {
   const handleBatchShot = useCallback(async (file: File): Promise<string> => {
     const id = crypto.randomUUID();
     const snapAt = utcNow();
+    const captureKind = pendingCaptureKindRef.current;
     const processingReceipt: StoredReceipt = withFreshBudget({
       id,
       status: "processing",
@@ -973,6 +987,7 @@ export function HomeScreen() {
       timestamp: snapAt,
       updatedAt: snapAt,
       pendingUpload: true,
+      captureKind,
     });
     await savePhoto(id, file);
     await saveReceipt(processingReceipt);
@@ -1035,6 +1050,17 @@ export function HomeScreen() {
 
       const id = replaceId ?? crypto.randomUUID();
       const snapAt = utcNow();
+      const existing = replaceId
+        ? (receiptsRef.current.find((r) => r.id === replaceId) as
+            | StoredReceipt
+            | undefined)
+        : undefined;
+      const captureKind = replaceId
+        ? existing
+          ? captureKindForUpload(existing)
+          : null
+        : pendingCaptureKindRef.current;
+      pendingCaptureKindRef.current = null;
       const processingReceipt: StoredReceipt = withFreshBudget({
         id,
         status: "processing",
@@ -1043,12 +1069,16 @@ export function HomeScreen() {
         updatedAt: snapAt,
         pendingUpload: !navigator.onLine,
         photoMissing: undefined,
+        captureKind,
       });
 
       setReceipts((prev) => {
         const without = replaceId ? prev.filter((r) => r.id !== replaceId) : prev;
         return top100ByUpdatedAt([processingReceipt, ...without]);
       });
+      const originalPhoto = replaceId
+        ? await loadPhoto(id).catch(() => null)
+        : null;
       await savePhoto(id, file);
       await saveReceipt(processingReceipt);
 
@@ -1069,7 +1099,7 @@ export function HomeScreen() {
       uploadInFlightRef.current.add(id);
       try {
         await ensureGhostSession();
-        const uploaded = await uploadReceipt(file, id, snapAt);
+        const uploaded = await uploadReceipt(file, id, snapAt, captureKind);
         const updated = await persistUploadedReceipt(processingReceipt, uploaded);
 
         if (updated.status === "done" && updated.taxAmount != null) {
@@ -1081,6 +1111,30 @@ export function HomeScreen() {
         }
       } catch (err) {
         if (isDuplicateReceiptError(err)) {
+          if (replaceId && existing) {
+            if (originalPhoto) {
+              await savePhoto(id, originalPhoto);
+            } else {
+              await deletePhoto(id).catch(() => undefined);
+            }
+            await saveReceipt(existing);
+            setReceipts((prev) => {
+              const next = top100ByUpdatedAt([
+                existing,
+                ...prev.filter((r) => r.id !== existing.id),
+              ]);
+              refreshTaxSaved(next);
+              return next;
+            });
+            setSelectedReceipt((prev) =>
+              prev?.id === existing.id ? existing : prev,
+            );
+            if (existing.status === "processing") {
+              enqueueReceipt(existing.id);
+            }
+            setReceiptNotice(copy.home.receiptList.duplicateReceipt);
+            return;
+          }
           await handleDuplicateUpload(id, err.existingReceiptId, processingReceipt);
           return;
         }
@@ -1102,6 +1156,8 @@ export function HomeScreen() {
       pulseTaxAnimating,
       persistUploadedReceipt,
       handleDuplicateUpload,
+      refreshTaxSaved,
+      copy.home.receiptList.duplicateReceipt,
     ],
   );
 
@@ -1167,9 +1223,12 @@ export function HomeScreen() {
         exportEmptyTipKey={taxExport.exportEmptyTipKey}
         onExportEmptyTipDismiss={taxExport.clearExportEmptyTip}
         onSnap1099={(kind) => {
+          pendingCaptureKindRef.current = kind;
+          clearPendingIncomeCapture();
           setView("home");
           window.requestAnimationFrame(() => {
-            snapButtonRef.current?.openCamera();
+            const opened = snapButtonRef.current?.openCamera() ?? false;
+            if (!opened) pendingCaptureKindRef.current = null;
           });
         }}
         isSignedIn={auth.isSignedIn}
@@ -1214,7 +1273,12 @@ export function HomeScreen() {
             onBatchClose={handleBatchClose}
             onReviewDelete={handleDeleteReceipt}
             resnapId={resnapId}
-            onCameraOpenChange={setCameraOpen}
+            onCameraOpenChange={(open, options) => {
+              setCameraOpen(open);
+              if (!open && !options?.keepPendingCaptureKind) {
+                pendingCaptureKindRef.current = null;
+              }
+            }}
             onSyncClick={handleManualListSync}
             onSettingsClick={handleOpenSettings}
             syncing={listSyncing}

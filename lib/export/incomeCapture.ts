@@ -7,12 +7,16 @@ export function setPendingIncomeCapture(kind: IncomeCaptureKind): void {
   sessionStorage.setItem(CAPTURE_KIND_KEY, kind);
 }
 
-export function consumePendingIncomeCapture(): IncomeCaptureKind | null {
+export function peekPendingIncomeCapture(): IncomeCaptureKind | null {
   if (typeof sessionStorage === "undefined") return null;
   const value = sessionStorage.getItem(CAPTURE_KIND_KEY);
-  sessionStorage.removeItem(CAPTURE_KIND_KEY);
   if (value === "1099-NEC" || value === "1099-K") return value;
   return null;
+}
+
+export function clearPendingIncomeCapture(): void {
+  if (typeof sessionStorage === "undefined") return;
+  sessionStorage.removeItem(CAPTURE_KIND_KEY);
 }
 
 export function parseCaptureKindHeader(

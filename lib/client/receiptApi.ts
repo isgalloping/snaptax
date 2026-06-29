@@ -4,7 +4,11 @@ import type { TaxRegion } from "@/lib/tax/types";
 import { parseUtcISOString, toUtcISOString } from "@/lib/time/utc";
 import { isPersistedReceiptId } from "@/lib/receipts/receiptId";
 import { apiFetch } from "@/lib/client/ghostClient";
-import { consumePendingIncomeCapture } from "@/lib/export/incomeCapture";
+import {
+  clearPendingIncomeCapture,
+  peekPendingIncomeCapture,
+  type IncomeCaptureKind,
+} from "@/lib/export/incomeCapture";
 
 export type ApiReceipt = {
   id: string;
@@ -187,11 +191,21 @@ export function apiReceiptFromUploadResponse(
   };
 }
 
+export function resolveUploadCaptureKind(
+  captureKind: IncomeCaptureKind | null | undefined,
+): { captureKind: IncomeCaptureKind | null; fromPending: boolean } {
+  if (captureKind !== undefined) {
+    return { captureKind, fromPending: false };
+  }
+  const pending = peekPendingIncomeCapture();
+  return { captureKind: pending, fromPending: pending != null };
+}
+
 export async function uploadReceipt(
   file: Blob,
   clientReceiptId: string,
   snapAt?: Date,
-  captureKind?: "1099-NEC" | "1099-K" | null,
+  captureKind?: IncomeCaptureKind | null,
 ): Promise<ApiReceipt> {
   if (!isPersistedReceiptId(clientReceiptId)) {
     throw new Error("INVALID_CLIENT_RECEIPT_ID");
@@ -203,7 +217,8 @@ export async function uploadReceipt(
     form.append("snapAt", toUtcISOString(snapAt));
   }
   const headers: Record<string, string> = {};
-  const resolvedCaptureKind = captureKind ?? consumePendingIncomeCapture();
+  const resolved = resolveUploadCaptureKind(captureKind);
+  const resolvedCaptureKind = resolved.captureKind;
   if (resolvedCaptureKind) {
     headers["X-Capture-Kind"] = resolvedCaptureKind;
   }
@@ -213,6 +228,7 @@ export async function uploadReceipt(
     headers,
   });
   if (res.status === 409) {
+    if (resolved.fromPending) clearPendingIncomeCapture();
     const body = (await res.json().catch(() => null)) as {
       error?: { code?: string };
       existingReceiptId?: string;
@@ -235,6 +251,7 @@ export async function uploadReceipt(
     const code = body?.error?.code ?? "UPLOAD_FAILED";
     throw new Error(code);
   }
+  if (resolved.fromPending) clearPendingIncomeCapture();
   const created = (await res.json()) as UploadCreateResponse | ApiReceipt;
   if (!created.id || !("status" in created) || !created.status) {
     throw new Error("UPLOAD_FAILED");

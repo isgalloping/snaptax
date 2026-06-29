@@ -37,7 +37,10 @@ interface SnapButtonProps {
   onBatchClose: (sessionIds: string[]) => Promise<void>;
   onReviewDelete: (id: string) => Promise<void>;
   resnapId?: string | null;
-  onCameraOpenChange?: (open: boolean) => void;
+  onCameraOpenChange?: (
+    open: boolean,
+    options?: { keepPendingCaptureKind?: boolean },
+  ) => void;
   onSyncClick?: () => void;
   onSettingsClick?: () => void;
   syncing?: boolean;
@@ -46,7 +49,7 @@ interface SnapButtonProps {
 }
 
 export interface SnapButtonHandle {
-  openCamera: () => void;
+  openCamera: () => boolean;
 }
 
 export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
@@ -96,15 +99,18 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
     }, []);
 
     const setCamera = useCallback(
-      (open: boolean) => {
+      (
+        open: boolean,
+        options?: { keepPendingCaptureKind?: boolean },
+      ) => {
         setCameraOpen(open);
-        onCameraOpenChange?.(open);
+        onCameraOpenChange?.(open, options);
       },
       [onCameraOpenChange],
     );
 
     const openCamera = useCallback(() => {
-      if (onSnapIntent && !onSnapIntent()) return;
+      if (onSnapIntent && !onSnapIntent()) return false;
       if (isCameraSupported()) {
         resetSession();
         streamPromiseRef.current = openCameraStream();
@@ -112,6 +118,7 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
       } else {
         inputRef.current?.click();
       }
+      return true;
     }, [onSnapIntent, resetSession, setCamera]);
 
     useImperativeHandle(ref, () => ({ openCamera }), [openCamera]);
@@ -119,6 +126,7 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (file) onCapture(file);
+      else onCameraOpenChange?.(false);
       e.target.value = "";
     };
 
@@ -279,7 +287,7 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
 
     const handleFallback = () => {
       streamPromiseRef.current = null;
-      setCamera(false);
+      setCamera(false, { keepPendingCaptureKind: true });
       inputRef.current?.click();
     };
 
@@ -312,6 +320,7 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
             capture="environment"
             className="hidden"
             onChange={handleFileChange}
+            onCancel={() => onCameraOpenChange?.(false)}
             aria-hidden
           />
         </main>

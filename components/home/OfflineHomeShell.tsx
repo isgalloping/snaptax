@@ -26,6 +26,8 @@ import {
   type StoredReceipt,
 } from "@/lib/storage/receiptDb";
 import { readCurrentSeasonSummary } from "@/lib/storage/receiptSummary";
+import type { ReceiptSeasonSummary } from "@/lib/storage/receiptSummaryTypes";
+import { resolveHeaderTaxSaved } from "@/lib/client/resolveHeaderTaxSaved";
 import { sumDoneExpenses } from "@/lib/receipts/receiptStats";
 import { OnboardingOrchestrator } from "@/components/onboarding/OnboardingOrchestrator";
 import { OnboardingSkipButton } from "@/components/onboarding/OnboardingSkipButton";
@@ -55,6 +57,9 @@ export function OfflineHomeShell() {
   const copy = useUserCopy();
   const [receipts, setReceipts] = useState<Receipt[]>([]);
   const [taxSaved, setTaxSaved] = useState<number | null>(null);
+  const [seasonSummary, setSeasonSummary] = useState<ReceiptSeasonSummary | null>(
+    null,
+  );
   const [syncStuckIds, setSyncStuckIds] = useState<Set<string>>(() => new Set());
   const [listFilter, setListFilter] = useState<ReceiptListFilter>("all");
   const [receiptNotice, setReceiptNotice] = useState<string | null>(null);
@@ -64,6 +69,7 @@ export function OfflineHomeShell() {
 
   const refreshTaxAndSummary = useCallback(async () => {
     const summary = await readCurrentSeasonSummary();
+    setSeasonSummary(summary);
     setTaxSaved(summary.unfiledTaxSaved);
   }, []);
 
@@ -109,6 +115,16 @@ export function OfflineHomeShell() {
   const displayReceipts = useMemo(
     () => visibleReceiptsForOnboarding(receipts, onboardingStatus),
     [receipts, onboardingStatus],
+  );
+
+  const headerTaxSaved = useMemo(
+    () =>
+      resolveHeaderTaxSaved({
+        displayTaxSaved,
+        seasonUnfiledTaxSaved: seasonSummary?.unfiledTaxSaved,
+        taxSavedFallback: taxSaved,
+      }),
+    [displayTaxSaved, seasonSummary, taxSaved],
   );
 
   useEffect(() => {
@@ -176,8 +192,7 @@ export function OfflineHomeShell() {
   return (
     <div className="flex h-full flex-col overflow-hidden bg-black font-sans text-white select-none">
       <TaxHeader
-        taxSaved={taxSaved}
-        displayTaxSaved={displayTaxSaved}
+        taxSaved={headerTaxSaved}
         totalExpenses={sumDoneExpenses(displayReceipts)}
         receiptCount={displayReceipts.length}
         animating={taxAnimating}

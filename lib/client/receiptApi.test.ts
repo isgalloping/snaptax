@@ -3,6 +3,15 @@ import { afterEach, describe, it } from "node:test";
 import { setPendingIncomeCapture } from "@/lib/export/incomeCapture";
 import { apiReceiptFromUploadResponse, uploadReceipt } from "./receiptApi.ts";
 
+const originalFetchDescriptor = Object.getOwnPropertyDescriptor(
+  globalThis,
+  "fetch",
+);
+const originalSessionStorageDescriptor = Object.getOwnPropertyDescriptor(
+  globalThis,
+  "sessionStorage",
+);
+
 class MemoryStorage {
   private readonly values = new Map<string, string>();
 
@@ -34,9 +43,20 @@ class MemoryStorage {
 const receiptId = "550e8400-e29b-41d4-a716-446655440000";
 
 afterEach(() => {
-  Reflect.deleteProperty(globalThis, "fetch");
-  Reflect.deleteProperty(globalThis, "sessionStorage");
+  restoreGlobalProperty("fetch", originalFetchDescriptor);
+  restoreGlobalProperty("sessionStorage", originalSessionStorageDescriptor);
 });
+
+function restoreGlobalProperty(
+  key: "fetch" | "sessionStorage",
+  descriptor: PropertyDescriptor | undefined,
+) {
+  if (descriptor) {
+    Object.defineProperty(globalThis, key, descriptor);
+  } else {
+    Reflect.deleteProperty(globalThis, key);
+  }
+}
 
 function installSessionStorage() {
   Object.defineProperty(globalThis, "sessionStorage", {

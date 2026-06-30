@@ -6,6 +6,11 @@ import {
   setPendingIncomeCapture,
 } from "@/lib/export/incomeCapture";
 
+const originalSessionStorageDescriptor = Object.getOwnPropertyDescriptor(
+  globalThis,
+  "sessionStorage",
+);
+
 class MemoryStorage {
   private readonly values = new Map<string, string>();
 
@@ -42,7 +47,15 @@ function withSessionStorage(storage: MemoryStorage) {
 }
 
 afterEach(() => {
-  Reflect.deleteProperty(globalThis, "sessionStorage");
+  if (originalSessionStorageDescriptor) {
+    Object.defineProperty(
+      globalThis,
+      "sessionStorage",
+      originalSessionStorageDescriptor,
+    );
+  } else {
+    Reflect.deleteProperty(globalThis, "sessionStorage");
+  }
 });
 
 describe("income capture session handoff", () => {

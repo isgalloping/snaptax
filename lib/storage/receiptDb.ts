@@ -27,9 +27,15 @@ import {
   IDB_LEGACY_SYSTEM_META,
   IDB_STORE_CRYPTO_META,
   IDB_STORE_RECEIPT_PHOTOS,
+  IDB_STORE_RECEIPT_SUMMARY,
   IDB_STORE_RECEIPTS,
   IDB_STORE_SYSTEM_META,
 } from "@/lib/storage/idbStores";
+import {
+  applyReceiptSummaryDelta,
+  rebuildCurrentSeasonSummary,
+} from "@/lib/storage/receiptSummary";
+import { RECEIPT_SUMMARY_BOOTSTRAP_KEY } from "@/lib/storage/receiptSummaryTypes";
 import { wipeSnaptaxOpfsTree } from "@/lib/storage/opfs/photoFiles";
 
 const DB_NAME = IDB_DB_NAME;
@@ -279,6 +285,24 @@ function migrateToSnaptaxStores(
   if (!db.objectStoreNames.contains(IDB_STORE_SYSTEM_META)) {
     db.createObjectStore(IDB_STORE_SYSTEM_META, { keyPath: "key" });
   }
+  if (
+    oldVersion < 7 &&
+    !db.objectStoreNames.contains(IDB_STORE_RECEIPT_SUMMARY)
+  ) {
+    db.createObjectStore(IDB_STORE_RECEIPT_SUMMARY, { keyPath: "scopeKey" });
+  }
+
+  const finishReceiptSummaryBootstrap = (): void => {
+    if (
+      oldVersion < 7 &&
+      db.objectStoreNames.contains(IDB_STORE_SYSTEM_META)
+    ) {
+      tx.objectStore(systemMetaStoreName(db)).put({
+        key: RECEIPT_SUMMARY_BOOTSTRAP_KEY,
+        value: "pending",
+      });
+    }
+  };
 
   const finishPhotoMigrationFlag = (): void => {
     if (
@@ -291,6 +315,7 @@ function migrateToSnaptaxStores(
         value: "pending",
       });
     }
+    finishReceiptSummaryBootstrap();
   };
 
   const migrateCryptoMeta = (): void => {
@@ -467,6 +492,38 @@ function openDb(): Promise<IDBDatabase> {
 }
 
 let migrationPromise: Promise<void> | null = null;
+let summaryBootstrapPromise: Promise<void> | null = null;
+
+async function getReceiptById(
+  db: IDBDatabase,
+  id: string,
+): Promise<StoredReceipt | null> {
+  const receiptsStore = receiptsStoreName(db);
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(receiptsStore, "readonly");
+    const request = tx.objectStore(receiptsStore).get(id);
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => {
+      const raw = request.result as SerializedReceipt | undefined;
+      resolve(raw ? deserializeReceipt(raw) : null);
+    };
+  });
+}
+
+async function ensureReceiptSummaryBootstrapped(db: IDBDatabase): Promise<void> {
+  if (!summaryBootstrapPromise) {
+    summaryBootstrapPromise = (async () => {
+      const status = await readSystemMeta<string>(RECEIPT_SUMMARY_BOOTSTRAP_KEY);
+      if (status !== "pending") return;
+      await rebuildCurrentSeasonSummary(db);
+      await writeSystemMeta(RECEIPT_SUMMARY_BOOTSTRAP_KEY, "done");
+    })().catch((err) => {
+      summaryBootstrapPromise = null;
+      throw err;
+    });
+  }
+  await summaryBootstrapPromise;
+}
 
 async function ensurePhotoCipherReady(db: IDBDatabase): Promise<void> {
   if (!migrationPromise) {
@@ -483,6 +540,7 @@ async function ensurePhotoCipherReady(db: IDBDatabase): Promise<void> {
 export async function warmReceiptDb(): Promise<IDBDatabase> {
   const db = await openDb();
   await ensurePhotoCipherReady(db);
+  await ensureReceiptSummaryBootstrapped(db);
   return db;
 }
 
@@ -614,25 +672,29 @@ export async function loadReceipt(id: string): Promise<StoredReceipt | null> {
 
 export async function saveReceipt(receipt: StoredReceipt): Promise<void> {
   const db = await openDb();
+  const old = await getReceiptById(db, receipt.id);
   const receiptsStore = receiptsStoreName(db);
-  return new Promise((resolve, reject) => {
+  await new Promise<void>((resolve, reject) => {
     const tx = db.transaction(receiptsStore, "readwrite");
     const request = tx.objectStore(receiptsStore).put(enrichRow(receipt));
     request.onerror = () => reject(request.error);
     request.onsuccess = () => resolve();
   });
+  await applyReceiptSummaryDelta(db, old, receipt);
 }
 
 export async function deleteReceipt(id: string): Promise<void> {
   const db = await openDb();
+  const old = await getReceiptById(db, id);
   await deleteEncryptedPhoto(db, id);
   const receiptsStore = receiptsStoreName(db);
-  return new Promise((resolve, reject) => {
+  await new Promise<void>((resolve, reject) => {
     const tx = db.transaction(receiptsStore, "readwrite");
     tx.objectStore(receiptsStore).delete(id);
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
   });
+  await applyReceiptSummaryDelta(db, old, null);
 }
 
 export async function deletePhoto(id: string): Promise<void> {

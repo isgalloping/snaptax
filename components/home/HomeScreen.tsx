@@ -14,7 +14,9 @@ import {
   uploadReceipt,
   type ApiReceipt,
 } from "@/lib/client/receiptApi";
+import { shouldRunHiddenBackgroundSync } from "@/lib/client/backgroundSyncGate";
 import { schedulePhotoRetentionPurge } from "@/lib/client/photoRetentionJob";
+import { scheduleReceiptRetentionPrune } from "@/lib/client/receiptRetention";
 import { scheduleReceiptSummaryVerify } from "@/lib/client/receiptSummaryVerify";
 import { reconcileDuplicateReceipt } from "@/lib/client/reconcileDuplicateReceipt";
 import { reconcileNonDoneWindow } from "@/lib/client/reconcileNonDoneWindow";
@@ -666,6 +668,7 @@ export function HomeScreen() {
             mergedAfter.filter((r) => !stuck.has(r.id)),
           );
           schedulePhotoRetentionPurge();
+          scheduleReceiptRetentionPrune();
           scheduleReceiptSummaryVerify();
           void reconcileNonDoneWindow();
         })();
@@ -882,7 +885,13 @@ export function HomeScreen() {
     if (!navigator.onLine) return;
 
     const retryPending = () => {
-      if (!navigator.onLine || document.visibilityState === "hidden") return;
+      if (!navigator.onLine) return;
+      if (
+        document.visibilityState === "hidden" &&
+        !shouldRunHiddenBackgroundSync()
+      ) {
+        return;
+      }
       void flushPendingUploadsRef.current();
       void flushPendingDeletesRef.current();
       if (document.visibilityState === "visible") {

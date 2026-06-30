@@ -1,3 +1,4 @@
+import type { Receipt } from "@/lib/types";
 import {
   fetchReceiptImageUrl,
   type ReceiptImageUrlResponse,
@@ -61,13 +62,32 @@ export async function fetchReceiptImageUrlCached(
   return result;
 }
 
+/** Server signed URL is only available after upload (hasRemoteImage). */
+export function canFetchRemoteReceiptImage(
+  receipt: Pick<Receipt, "hasRemoteImage" | "pendingUpload">,
+): boolean {
+  if (receipt.pendingUpload) return false;
+  return receipt.hasRemoteImage === true;
+}
+
 /** Warm signed URL while user is opening detail. */
 export function prefetchReceiptImageUrl(
   id: string,
-  deps: ReceiptImageCacheDeps = {},
+  opts: ReceiptImageCacheDeps & {
+    hasRemoteImage?: boolean;
+    pendingUpload?: boolean;
+  } = {},
 ): void {
   if (!isPersistedReceiptId(id)) return;
+  if (
+    !canFetchRemoteReceiptImage({
+      hasRemoteImage: opts.hasRemoteImage,
+      pendingUpload: opts.pendingUpload,
+    })
+  ) {
+    return;
+  }
   if (peekCachedReceiptImageUrl(id)) return;
   if (inflight.has(id)) return;
-  void fetchReceiptImageUrlCached(id, deps).catch(() => {});
+  void fetchReceiptImageUrlCached(id, opts).catch(() => {});
 }

@@ -20,6 +20,7 @@ import {
 } from "@/lib/receipts/uploadValidation";
 import { withRequestLog } from "@/lib/server/log/withRequestLog";
 import { parseCaptureKindHeader } from "@/lib/export/incomeCapture";
+import { parseOcrDraftJson } from "@/lib/ocr/ocrDraftSchema";
 import { parseUtcISOString } from "@/lib/time/utc";
 
 export const maxDuration = 60;
@@ -128,6 +129,12 @@ export const POST = withRequestLog(
         industry = user?.industry ?? null;
       }
 
+      const ocrDraftRaw = form.get("ocrDraft");
+      const ocrDraft =
+        typeof ocrDraftRaw === "string" && ocrDraftRaw
+          ? parseOcrDraftJson(ocrDraftRaw)
+          : null;
+
       return await handleReceiptUploadPost({
         request,
         actor,
@@ -140,6 +147,7 @@ export const POST = withRequestLog(
         captureKind: parseCaptureKindHeader(
           request.headers.get("X-Capture-Kind"),
         ),
+        ocrDraft,
       });
     } catch (err) {
       return mapErrorToResponse(err);

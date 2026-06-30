@@ -142,8 +142,63 @@ cp .env.example .env.local
 npx prisma migrate dev
 npm run dev
 # 使用 ngrok / Cloudflare Tunnel 测 Webhook 与 OAuth 回调
-vercel env pull .env.local
+vercel env pull .env.local   # 见下方「pull 之后必做」
 ```
+
+### `vercel env pull` 之后必做
+
+`vercel env pull` 会写入 **Supabase pooler**（`aws-*-*.pooler.supabase.com:6543`）。`lib/server/env.ts` 里 `getDatabaseUrl()` 优先级为：
+
+`DATABASE_URL` → `POSTGRES_PRISMA_URL` → `POSTGRES_URL_NON_POOLING` → `POSTGRES_URL`
+
+**未设 `DATABASE_URL` 时** dev 默认走 pooler。在部分网络（高延迟 / 防火墙）下 pooler 连接约 **5s 超时**，表现为：
+
+```text
+Prisma P1001 — Can't reach database server at `aws-1-us-east-1.pooler.supabase.com:6543`
+POST /api/ghost/register 500  （限流表 `snaptax_rate_limit_buckets` 写入失败）
+```
+
+**二选一：**
+
+| 方案 | 配置 |
+|------|------|
+| **远程 Supabase（常见）** | 在 `.env.local` **顶部**加直连（非 pooler）：<br>`DATABASE_URL=postgres://...@db.<project>.supabase.co:5432/postgres?sslmode=require&connect_timeout=30` |
+| **本机 Postgres** | `DATABASE_URL=postgresql://snaptax:snaptax@localhost:5432/snaptax?schema=public`（见根目录 `AGENTS.md`） |
+
+改完 **必须重启** `npm run dev`。勿把含密码的 `.env.local` 提交 git。
+
+### 本地限流（建议写入 `.env.local`）
+
+生产默认：Ghost **10 次/小时**、同 IP **60 次/分钟**（`lib/api/rateLimit.ts`）。本地调试 upload/OCR 重试时容易触发 **429** `RATE_LIMITED`（与 OpenAI/maxapi 无关）。建议在本地放宽：
+
+```
+RECEIPT_GHOST_HOURLY=100
+RECEIPT_IP_PER_MIN=200
+```
+
+已撞限流时可清 Postgres bucket（仅开发）：
+
+```sql
+DELETE FROM snaptax_rate_limit_buckets WHERE bucket_key LIKE 'ghost:receipt:%';
+```
+
+或等到当前小时窗口结束（bucket 的 `window_start` + 1h）。
+
+### 本地 OCR / 桌面调试（建议写入 `.env.local`）
+
+桌面开发无相机时用 **Choose from gallery**；Tesseract 首次识别可能很慢。可选客户端 env（详见 [11-ocr-pipeline-design.md §10.1](./11-ocr-pipeline-design.md#101-本地桌面调试推荐写入-envlocal)）：
+
+```bash
+# 跳过本地 OCR，直接 upload → 服务端 Vision（桌面调试最快）
+NEXT_PUBLIC_SKIP_LOCAL_OCR=1
+
+# 或缩小 OCR 输入（默认长边 1280）
+NEXT_PUBLIC_OCR_MAX_EDGE=960
+```
+
+- `NEXT_PUBLIC_SKIP_LOCAL_OCR=1`：**不跑** Web Worker OCR；依赖 `OPENAI_API_KEY` + Blob 的上传链路（本地未配则 upload 仍 500，但可排除 OCR 耗时）。
+- `NEXT_PUBLIC_OCR_MAX_EDGE=960`：仍跑 Path A 本地 OCR，仅缩小预处理尺寸。
+- 修改后须重启 dev server；**生产 / Preview 勿设** `SKIP_LOCAL_OCR`。
 
 ## 9.8 CI
 

@@ -1,0 +1,12 @@
+{
+  "merchant": "",
+  "date": "",
+  "schedule_c_category": "",
+  "irs_line_reference": "",
+  "deductible": true,
+  "deductible_amount": 0,
+  "business_use_confidence": 0.0,
+  "expense_type": "direct|indirect|mixed",
+  "requires_confirmation": false,
+  "reason_flags": []
+}

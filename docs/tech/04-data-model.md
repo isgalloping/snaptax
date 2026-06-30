@@ -145,15 +145,44 @@ export const prisma =
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 ```
 
-## 4.7 客户端 IndexedDB（已有）
+## 4.7 客户端 IndexedDB
 
-Store `receipts` + `photos` — 字段与 server 对齐，额外：
+**Canonical 命名：** [`DB-DESIGN-SPEC.md`](./DB-DESIGN-SPEC.md) §2.2
+
+| 项 | 值 |
+|----|-----|
+| 数据库名 | `snaptax`（自 v5 更名；旧名 `snap1099` 启动时一次性迁移） |
+| 小票 store | `snaptax_receipts` |
+| 原图 store | `snaptax_receipt_photos`（**元数据 only**；像素 → OPFS） |
+| 系统 KV | `snaptax_system_meta` |
+| 加密密钥 | `snaptax_crypto_meta` |
+| 事件队列（Phase 2） | `snaptax_receipt_events` |
+
+实现入口：`lib/storage/receiptDb.ts` · 规范常量：`lib/storage/idbStores.ts`（v5 迁移）
+
+字段与 server `snaptax_receipts` 对齐，额外客户端字段：
 
 | 字段 | 说明 |
 |------|------|
 | serverId | 同步后服务端 id |
 | syncStatus | `local` \| `synced` \| `failed` |
 | timestamp | UTC ISO 8601 字符串（`toUtcISOString`）；读时 `parseUtcISOString` |
+
+**遗留（v4，待 v5 迁移）：** `receipts` · `photos` · `system_meta` · `meta`
+
+### 4.7.1 图片元数据（`snaptax_receipt_photos`）
+
+**Canonical：** [`12-local-image-storage-design.md`](./12-local-image-storage-design.md)
+
+| 字段 | 说明 |
+|------|------|
+| `opfsFullPath` / `opfsThumbPath` | OPFS 加密文件路径 |
+| `width` / `height` / `byteLength` | 压缩后 full（1280×960 内，JPEG 75%，约 200～300KB） |
+| `thumbWidth` / `thumbHeight` / `thumbByteLength` | 缩略图（长边 480，JPEG 70%） |
+| `remoteSyncedAtMs` | 上传成功、服务端有图时写入 |
+| `fullPurged` | 已同步 ≥90 天后删除 OPFS 原图，仅留 thumb |
+
+**禁止**在 IDB 行内存 `Blob` / 密文 `ArrayBuffer`。
 
 ## 4.8 迁移与工作流
 

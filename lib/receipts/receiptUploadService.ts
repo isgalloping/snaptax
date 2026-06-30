@@ -97,6 +97,7 @@ async function runVisionForReceipt(params: {
   mime: "image/jpeg" | "image/png";
   industry: string | null;
   captureKind?: "1099-NEC" | "1099-K" | null;
+  ocrDraft?: import("@/lib/ocr/types").OcrDraftPayload | null;
 }) {
   const verify = await logVerifyBypass(params.request, params.actor);
   try {
@@ -108,6 +109,8 @@ async function runVisionForReceipt(params: {
       industry: params.industry,
       canMockAi: verify.canMockAi,
       captureKind: params.captureKind ?? null,
+      ocrDraft: params.ocrDraft ?? null,
+      logContext: { request: params.request, actor: params.actor },
     });
     return { processFailed: false as const, result };
   } catch {
@@ -148,6 +151,7 @@ async function replaceReceiptImage(params: {
   sha: string;
   fingerprint: string;
   captureKind?: "1099-NEC" | "1099-K" | null;
+  ocrDraft?: import("@/lib/ocr/types").OcrDraftPayload | null;
 }) {
   const pathname = receiptImagePathname(params.receipt.id, params.kind);
   await put(pathname, params.bytes, {
@@ -186,6 +190,7 @@ async function replaceReceiptImage(params: {
     mime: params.mime,
     industry: params.industry,
     captureKind: params.captureKind,
+    ocrDraft: params.ocrDraft,
   });
 
   const updated = await prisma.snaptaxReceipt.findUnique({
@@ -193,6 +198,45 @@ async function replaceReceiptImage(params: {
   });
   if (!updated) throw new Error("NOT_FOUND");
   return uploadJsonResponse(updated, 200, vision.processFailed);
+}
+
+async function resolveUniqueConflictUpload(params: {
+  actor: Actor;
+  clientReceiptId: string;
+  sha: string;
+}): Promise<ReturnType<typeof duplicateResponse> | ReturnType<typeof uploadJsonResponse> | null> {
+  const byId = await prisma.snaptaxReceipt.findUnique({
+    where: { id: params.clientReceiptId },
+  });
+  if (byId) {
+    try {
+      assertReceiptAccess(byId, params.actor);
+    } catch {
+      throw new Error("NOT_FOUND");
+    }
+    return uploadJsonResponse(byId, 200);
+  }
+
+  const exactDup =
+    (await findExactDuplicate(
+      params.actor,
+      params.sha,
+      params.clientReceiptId,
+    )) ??
+    (await prisma.snaptaxReceipt.findFirst({
+      where: {
+        ...receiptWhereForActor(params.actor),
+        ...unfiledReceiptWhere(),
+        contentSha256: params.sha,
+        NOT: { id: params.clientReceiptId },
+      },
+    }));
+
+  if (exactDup) {
+    return duplicateResponse(exactDup.id, "exact");
+  }
+
+  return null;
 }
 
 export async function handleReceiptUploadPost(params: {
@@ -205,6 +249,7 @@ export async function handleReceiptUploadPost(params: {
   snapAt: Date | null;
   industry: string | null;
   captureKind?: "1099-NEC" | "1099-K" | null;
+  ocrDraft?: import("@/lib/ocr/types").OcrDraftPayload | null;
 }) {
   const mime = mimeForKind(params.kind);
   const sha = contentSha256(params.bytes);
@@ -238,6 +283,7 @@ export async function handleReceiptUploadPost(params: {
       sha,
       fingerprint,
       captureKind: params.captureKind,
+      ocrDraft: params.ocrDraft,
     });
   }
 
@@ -286,20 +332,12 @@ export async function handleReceiptUploadPost(params: {
       err instanceof Prisma.PrismaClientKnownRequestError &&
       err.code === "P2002"
     ) {
-      const dup =
-        (await findExactDuplicate(params.actor, sha, params.clientReceiptId)) ??
-        (await prisma.snaptaxReceipt.findUnique({
-          where: { id: params.clientReceiptId },
-        }));
-      if (dup) {
-        try {
-          assertReceiptAccess(dup, params.actor);
-        } catch {
-          throw new Error("NOT_FOUND");
-        }
-        return uploadJsonResponse(dup, 200);
-      }
-      throw new Error("DUPLICATE_RECEIPT");
+      const resolved = await resolveUniqueConflictUpload({
+        actor: params.actor,
+        clientReceiptId: params.clientReceiptId,
+        sha,
+      });
+      if (resolved) return resolved;
     }
     throw err;
   }
@@ -313,6 +351,7 @@ export async function handleReceiptUploadPost(params: {
     mime,
     industry: params.industry,
     captureKind: params.captureKind,
+    ocrDraft: params.ocrDraft,
   });
 
   const created = await prisma.snaptaxReceipt.findUnique({

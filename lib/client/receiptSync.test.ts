@@ -99,3 +99,44 @@ test("unionMergeLWW backfills extraction when local updatedAt is newer", () => {
   assert.equal(row?.amount, 14.75);
   assert.equal(row?.updatedAt?.toISOString(), "2026-06-07T14:00:00.000Z");
 });
+
+test("unionMergeLWW applies filed fields when remote is newer after export", () => {
+  const local = [stored("a", "2026-06-07T10:00:00.000Z", { taxAmount: 10 })];
+  const filedAt = new Date("2026-06-07T14:00:00.000Z");
+  const remote = [
+    {
+      id: "a",
+      status: "done" as const,
+      timestamp: new Date("2026-06-07T08:00:00.000Z"),
+      updatedAt: filedAt,
+      taxAmount: 10,
+      taxSeason: "2026",
+      taxSeasonDate: filedAt,
+    },
+  ];
+  const merged = unionMergeLWW(local, remote);
+  const row = merged.find((r) => r.id === "a");
+  assert.equal(row?.taxSeason, "2026");
+  assert.equal(row?.taxSeasonDate?.toISOString(), filedAt.toISOString());
+});
+
+test("unionMergeLWW backfills filed when local updatedAt ties remote", () => {
+  const tiedAt = "2026-06-07T12:00:00.000Z";
+  const filedAt = new Date("2026-06-07T14:00:00.000Z");
+  const local = [stored("a", tiedAt, { taxAmount: 10 })];
+  const remote = [
+    {
+      id: "a",
+      status: "done" as const,
+      timestamp: new Date(tiedAt),
+      updatedAt: new Date(tiedAt),
+      taxAmount: 10,
+      taxSeason: "2026",
+      taxSeasonDate: filedAt,
+    },
+  ];
+  const merged = unionMergeLWW(local, remote);
+  const row = merged.find((r) => r.id === "a");
+  assert.equal(row?.taxSeason, "2026");
+  assert.equal(row?.taxSeasonDate?.toISOString(), filedAt.toISOString());
+});

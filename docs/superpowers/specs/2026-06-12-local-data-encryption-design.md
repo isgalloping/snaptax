@@ -6,6 +6,10 @@
 
 **Depends on:** [`2026-06-05-api-security-design.md`](./2026-06-05-api-security-design.md) (Blob private + signed URL) · [`2026-06-10-indexeddb-receipt-query-design.md`](./2026-06-10-indexeddb-receipt-query-design.md) (IDB v2 indexes) · [`2026-06-07-receipt-sync-ghost-reconcile-design.md`](./2026-06-07-receipt-sync-ghost-reconcile-design.md) (safe reconcile)
 
+**Store 命名（Canonical）：** 本文档中的 `photos` / `receipts` / `meta` 为 **legacy v4** 名；规范名见 [`DB-DESIGN-SPEC.md`](../../tech/DB-DESIGN-SPEC.md) §2.2（`snaptax_receipt_photos` · `snaptax_receipts` · `snaptax_crypto_meta`）。
+
+**图片存储（Supersedes §5.3 起 IDB 存密文 Blob）：** IndexedDB **仅元数据**；像素 → **OPFS**；拍照 **1280×960 / JPEG 75% / 200～300KB**；已同步 **≥90 天** 删原图留缩略图 — 见 [`12-local-image-storage-design.md`](../../tech/12-local-image-storage-design.md)。
+
 ---
 
 ## 1. Problem
@@ -162,6 +166,8 @@ openDb v3:
 
 ### 5.3 Photo store shape (v3)
 
+> **Superseded by** [`12-local-image-storage-design.md`](../../tech/12-local-image-storage-design.md)：IDB 仅存 `ReceiptPhotoMeta`；密文在 OPFS。以下为 **legacy v3** 形状，迁移后废弃。
+
 ```typescript
 // photos store — keyPath: id
 {
@@ -227,7 +233,7 @@ openDb v3:
 | 场景 | 行为 |
 |------|------|
 | `pendingUpload` + 本地加密图 | 不上传覆盖；flush 优先 |
-| 上传成功 | 删本地图；`hasRemoteImage=true` |
+| 上传成功 | 写 `remoteSyncedAtMs`；**保留** OPFS full + thumb（最多 90 天，见 [`12-local-image-storage-design.md`](../../tech/12-local-image-storage-design.md)）；`hasRemoteImage=true` |
 | `syncFromServer` 合并远程行 | 远程 `hasImage` → 本地 `hasRemoteImage=true`；若本地仍有 photo 且已 `hasRemoteImage`，**删除冗余本地 photo** |
 | 远程有、本地无图 | 正常；看图走 signed URL |
 | 本地有图、远程无（pending） | 保留加密图直至上传 |

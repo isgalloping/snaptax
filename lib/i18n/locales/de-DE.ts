@@ -190,6 +190,8 @@ export const DE_DE_COPY: UserCopy = {
       delete: "Löschen",
       unknownMerchant: "Unbekannter Händler",
       duplicateReceipt: "Dieser Beleg ist bereits in Ihrer Liste.",
+      duplicateReceiptSimilar:
+        "Dieser Beleg ähnelt einem Beleg, den Sie bereits gescannt haben.",
       status: {
         analyzing: "ANALYSE",
         uploading: "UPLOAD",

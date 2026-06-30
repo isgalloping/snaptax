@@ -2,6 +2,7 @@ import { clearAllLocalData } from "@/lib/storage/receiptDb";
 
 const SNAP1099_LS_PREFIX = "snap1099_";
 
+/** Wipes IndexedDB (incl. `cloud_restore_attempted` in system_meta) and snap1099_* localStorage. */
 export async function clearLocalAppData(): Promise<void> {
   await clearAllLocalData();
   if (typeof localStorage !== "undefined") {

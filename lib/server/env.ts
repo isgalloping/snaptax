@@ -13,10 +13,12 @@ function isProdLikeDeployEnv(): boolean {
 }
 
 export function getDatabaseUrl(): string {
+  // Local dev: prefer session pooler / direct (5432) over transaction pooler (6543).
+  // See docs/tech/09-deployment-vercel.md §9.7 — :6543 often P1001 on local networks.
   return firstDefined(
     process.env.DATABASE_URL,
-    process.env.POSTGRES_PRISMA_URL,
     process.env.POSTGRES_URL_NON_POOLING,
+    process.env.POSTGRES_PRISMA_URL,
     process.env.POSTGRES_URL,
   );
 }
@@ -60,6 +62,10 @@ export function getOpenAiModel(): string {
     process.env.OPENAi_MODEL_NAME,
     "gpt-4o-mini",
   );
+}
+
+export function getOpenAiClassifyModel(): string {
+  return firstDefined(process.env.OPENAI_CLASSIFY_MODEL, getOpenAiModel());
 }
 
 export function getOpenAiTimeoutMs(): number {

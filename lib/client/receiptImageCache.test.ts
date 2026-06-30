@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { afterEach, describe, it } from "node:test";
 import {
   clearReceiptImageCache,
+  canFetchRemoteReceiptImage,
   fetchReceiptImageUrlCached,
   peekCachedReceiptImageUrl,
   prefetchReceiptImageUrl,
@@ -54,5 +55,35 @@ describe("receiptImageCache", () => {
       },
     });
     assert.equal(calls, 0);
+  });
+
+  it("prefetchReceiptImageUrl skips pending local-only receipts", async () => {
+    let calls = 0;
+    prefetchReceiptImageUrl(RECEIPT_ID, {
+      pendingUpload: true,
+      hasRemoteImage: false,
+      fetchUrl: async () => {
+        calls += 1;
+        return { url: "x", expiresAt: new Date().toISOString() };
+      },
+    });
+    assert.equal(calls, 0);
+  });
+
+  it("canFetchRemoteReceiptImage requires upload complete", () => {
+    assert.equal(
+      canFetchRemoteReceiptImage({
+        pendingUpload: true,
+        hasRemoteImage: false,
+      }),
+      false,
+    );
+    assert.equal(
+      canFetchRemoteReceiptImage({
+        pendingUpload: false,
+        hasRemoteImage: true,
+      }),
+      true,
+    );
   });
 });

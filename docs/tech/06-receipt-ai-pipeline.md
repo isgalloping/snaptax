@@ -4,7 +4,16 @@
 
 ## 6.1 概述
 
-上传小票 JPEG → Vercel Blob → OpenAI GPT-4o Vision（**US 或 EU prompt**，由 `receipt.data_region`）→ Zod → **`computeTaxAmount`** → 更新 `receipts`（含 **`tax_amount`**）
+**双路径（Phase 1 · 2026-06-19）：**
+
+| 路径 | 触发 | 流程 |
+|------|------|------|
+| **A · 本地 OCR** | 客户端 `ocrDraft` + `qualityGate` 通过 | Tesseract（Worker）→ `parseReceipt` → **`classifyReceiptText`**（gpt-4o-mini 文本）→ **`computeTaxAmount`** |
+| **B · Vision 兜底** | 无 `ocrDraft` / gate 失败 / 文本分类失败 | Vercel Blob → **`processReceiptVision`**（1568/q82，与现网一致）→ **`computeTaxAmount`** |
+
+`ai_raw.extractionSource`：`local_ocr` \| `vision_fallback`。唯一入口仍为 **`processReceiptTax`**（`lib/receipts/processReceiptTaxRouter.ts`）。
+
+**Legacy 单路径描述：** 上传小票 JPEG → Vercel Blob → OpenAI GPT-4o Vision（**US 或 EU prompt**，由 `receipt.data_region`）→ Zod → **`computeTaxAmount`** → 更新 `receipts`（含 **`tax_amount`**）——现为 Path B。
 
 ## 6.2 状态机
 
@@ -107,6 +116,8 @@
 
 ## 6.7 环境变量
 
+**服务端（Route Handler）：**
+
 ```
 OPENAI_API_KEY=
 OPENAI_BASE_URL=          # optional; e.g. https://maxapi.pro/v1 for OpenAI-compatible gateways
@@ -115,6 +126,15 @@ OPENAI_TIMEOUT_MS=120000
 OPENAI_MAX_RETRIES=2
 RECEIPT_CONFIDENCE_THRESHOLD=0.7
 ```
+
+**客户端 OCR（可选 · 本地桌面调试，写入 `.env.local`）：**
+
+```
+NEXT_PUBLIC_SKIP_LOCAL_OCR=1   # 跳过 Tesseract；upload → 本节后服务端 Vision/classify
+NEXT_PUBLIC_OCR_MAX_EDGE=960   # 缩小 OCR 输入，默认 1280
+```
+
+详见 [11-ocr-pipeline-design.md §10.1](./11-ocr-pipeline-design.md#101-本地桌面调试推荐写入-envlocal) · 限流见 [09-deployment-vercel.md §9.7](./09-deployment-vercel.md#97-本地开发)。
 
 **Max API Pro ([maxapi.pro](https://maxapi.pro)):** set `OPENAI_BASE_URL`, gateway API key, and `OPENAI_MODEL=gpt-5.4-mini`. Prompts, Zod, and tax math unchanged.
 

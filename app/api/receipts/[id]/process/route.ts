@@ -18,6 +18,7 @@ import { withRequestLog } from "@/lib/server/log/withRequestLog";
 import { logEvent } from "@/lib/server/log/logEvent";
 import { baseLogEntry } from "@/lib/server/log/context";
 import { blobCommandOptions } from "@/lib/server/blob";
+import { ocrDraftFromAiRaw } from "@/lib/ocr/ocrDraftSchema";
 import { resolveVerifyContext } from "@/lib/verify/context";
 
 export const maxDuration = 60;
@@ -89,6 +90,7 @@ export const POST = withRequestLog(
         });
       }
       try {
+        const ocrDraft = ocrDraftFromAiRaw(receipt.aiRaw);
         const result = await processReceiptTax({
           receiptId: id,
           dataRegion: receipt.dataRegion as "us" | "eu",
@@ -96,6 +98,8 @@ export const POST = withRequestLog(
           mime,
           industry,
           canMockAi: verify.canMockAi,
+          ocrDraft,
+          logContext: { request, actor },
         });
 
         logEvent({

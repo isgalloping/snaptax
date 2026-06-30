@@ -28,6 +28,7 @@ describe("ProcessingReceiptWatcher", () => {
     let fetchByIdCalls = 0;
     let listCalls = 0;
     let updated: ApiReceipt | null = null;
+    let summaryRefreshCount = 0;
 
     const watcher = new ProcessingReceiptWatcher(
       {
@@ -37,7 +38,9 @@ describe("ProcessingReceiptWatcher", () => {
         onReceiptStuck: () => {},
         getWriteBudget: () => 5,
         onWriteFailure: () => {},
-        onTaxSaved: () => {},
+        onSummaryRefresh: () => {
+          summaryRefreshCount += 1;
+        },
       },
       {
         fetchReceipt: async (id) => {
@@ -62,12 +65,14 @@ describe("ProcessingReceiptWatcher", () => {
     assert.equal(fetchByIdCalls, 1);
     assert.equal(listCalls, 0);
     assert.equal(updated, null);
+    assert.equal(summaryRefreshCount, 0);
 
     await watcher.tickOnce();
 
     assert.equal(fetchByIdCalls, 2);
-    assert.equal(listCalls, 1);
+    assert.equal(listCalls, 0);
     assert.equal(updated?.status, "done");
+    assert.equal(summaryRefreshCount, 1);
     watcher.dispose();
   });
 

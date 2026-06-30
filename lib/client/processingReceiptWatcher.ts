@@ -8,7 +8,8 @@ import {
 export type ProcessingWatcherCallbacks = {
   onReceiptUpdate: (receipt: ApiReceipt) => void;
   onReceiptStuck: (id: string) => void;
-  onTaxSaved?: (estimate: number) => void;
+  /** Fired after processing settles; consumer re-reads local season summary. */
+  onSummaryRefresh?: () => void;
   getWriteBudget: (id: string) => number;
   onWriteFailure: (id: string) => void;
 };
@@ -128,10 +129,9 @@ export class ProcessingReceiptWatcher {
       }
 
       if (receipt.status !== "processing") {
-        const { taxSavedEstimate } = await this.fetchList();
         this.callbacks.onReceiptUpdate(receipt);
         this.unwatch(id);
-        this.callbacks.onTaxSaved?.(taxSavedEstimate);
+        this.callbacks.onSummaryRefresh?.();
         return;
       }
 

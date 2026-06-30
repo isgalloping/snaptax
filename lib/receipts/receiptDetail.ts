@@ -3,7 +3,7 @@ import type { UserCopy } from "@/lib/i18n";
 import { formatCurrencyForRegion } from "@/lib/format";
 import { fetchReceiptImageUrlCached } from "@/lib/client/receiptImageCache";
 import { isPersistedReceiptId } from "@/lib/receipts/receiptId";
-import { loadPhoto } from "@/lib/storage/receiptDb";
+import { loadPhoto, loadPhotoThumb } from "@/lib/storage/receiptDb";
 import { irsScheduleLineBadge } from "@/lib/tax/irsScheduleLabel";
 import { isIncomeFormType } from "@/lib/export/incomeDocuments";
 
@@ -129,7 +129,8 @@ export async function resolveReceiptImage(
   };
 
   const tryLocal = async (): Promise<ResolvedReceiptImage | null> => {
-    const blob = await loadPhoto(receipt.id);
+    const blob =
+      (await loadPhoto(receipt.id)) ?? (await loadPhotoThumb(receipt.id));
     if (!blob) return null;
     const src = URL.createObjectURL(blob);
     return { kind: "local", src, revoke: () => URL.revokeObjectURL(src) };
@@ -141,10 +142,13 @@ export async function resolveReceiptImage(
     return { kind: "offline-placeholder" };
   }
 
-  const preferRemoteFirst =
-    receipt.hasRemoteImage ||
+  const remoteEligible =
+    Boolean(receipt.hasRemoteImage) ||
     (persisted &&
+      !receipt.pendingUpload &&
       (receipt.status === "done" || receipt.status === "blurry"));
+
+  const preferRemoteFirst = remoteEligible;
 
   if (preferRemoteFirst) {
     const winner = await firstResolvedImage([tryRemote, tryLocal]);
@@ -154,8 +158,10 @@ export async function resolveReceiptImage(
 
   const local = await tryLocal();
   if (local) return local;
-  const remote = await tryRemote();
-  if (remote) return remote;
+  if (remoteEligible) {
+    const remote = await tryRemote();
+    if (remote) return remote;
+  }
   return { kind: "missing" };
 }
 

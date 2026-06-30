@@ -1,4 +1,5 @@
 import { apiReceiptToLocal } from "@/lib/client/receiptApi";
+import { isReceiptFiled } from "@/lib/receipts/filedStatus";
 import {
   reconcileServerPrimaryPhotos,
   saveReceipt,
@@ -57,6 +58,10 @@ function backfillExtractionFromRemote(
   }
   if (local.incomeTaxYear == null && remote.incomeTaxYear != null) {
     patch.incomeTaxYear = remote.incomeTaxYear;
+  }
+  if (!isReceiptFiled(local) && isReceiptFiled(remote)) {
+    patch.taxSeason = remote.taxSeason;
+    patch.taxSeasonDate = remote.taxSeasonDate;
   }
 
   if (Object.keys(patch).length === 0) return local;

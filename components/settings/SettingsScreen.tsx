@@ -24,6 +24,7 @@ import { SettingsHeader } from "@/components/settings/SettingsHeader";
 import { SettingsPageShell } from "@/components/settings/SettingsPageShell";
 import { SettingsPreferencesList } from "@/components/settings/SettingsPreferencesList";
 import type { SettingsViewState } from "@/components/settings/settingsViewState";
+import { RestoreFromCloudSection } from "@/components/settings/RestoreFromCloudSection";
 import { ShareAppSection } from "@/components/settings/ShareAppSection";
 import { TaxExportCard } from "@/components/settings/TaxExportCard";
 import {
@@ -79,6 +80,7 @@ interface SettingsScreenProps {
   seasonExportTick?: number;
   onboardingAha?: boolean;
   onSampleExportAhaComplete?: () => Promise<void>;
+  onRestored?: () => void | Promise<void>;
 }
 
 export function SettingsScreen({
@@ -114,6 +116,7 @@ export function SettingsScreen({
   seasonExportTick = 0,
   onboardingAha = false,
   onSampleExportAhaComplete,
+  onRestored,
 }: SettingsScreenProps) {
   const { copy } = useI18n();
   const prevViewStateRef = useRef(viewState);
@@ -462,6 +465,8 @@ export function SettingsScreen({
         />
 
         <ShareAppSection />
+
+        <RestoreFromCloudSection onRestored={onRestored} />
 
         {isSignedIn && onSignOut && (
           <button

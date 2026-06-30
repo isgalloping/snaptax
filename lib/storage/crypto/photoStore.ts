@@ -250,27 +250,6 @@ export async function markPhotoRemoteSynced(
     await putPhotoMeta(db, { ...meta, remoteSyncedAtMs: atMs });
     return;
   }
-  const legacy = await readLegacyPhotoRow(db, id);
-  if (legacy) {
-    await putPhotoMeta(db, {
-      id,
-      v: PHOTO_META_VERSION,
-      mime: "image/jpeg",
-      width: 0,
-      height: 0,
-      byteLength: isEncryptedPhotoRow(legacy) ? legacy.byteLength : 0,
-      thumbWidth: 0,
-      thumbHeight: 0,
-      thumbByteLength: 0,
-      opfsFullPath: opfsFullRelPath(id),
-      opfsThumbPath: opfsThumbRelPath(id),
-      fullIvB64: "",
-      thumbIvB64: "",
-      cipher: { alg: "AES-GCM", v: 1 },
-      remoteSyncedAtMs: atMs,
-      fullPurged: true,
-    });
-  }
 }
 
 export async function purgePhotoFull(

@@ -29,6 +29,9 @@ export async function shouldAutoRestoreFromCloud(
   return true;
 }
 
-export async function markCloudRestoreAttempted(): Promise<void> {
+export async function markCloudRestoreAttempted(result?: {
+  restoredCount: number;
+}): Promise<void> {
+  if (result && result.restoredCount <= 0) return;
   await writeSystemMeta(CLOUD_RESTORE_ATTEMPTED_KEY, "1");
 }

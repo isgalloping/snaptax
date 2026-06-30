@@ -3,6 +3,8 @@ import { describe, it } from "node:test";
 import type { Receipt } from "@/lib/types";
 import {
   availableTaxYears,
+  countReceiptsInTaxYearAllStatuses,
+  effectiveReceiptTaxYear,
   incomeFormsInTaxYear,
   receiptTaxYear,
   receiptsInTaxYear,
@@ -104,5 +106,34 @@ describe("taxYearStats", () => {
     assert.equal(incomeFormsInTaxYear(receipts, 2024, "UTC"), 1);
     assert.equal(incomeFormsInTaxYear(receipts, 2025, "UTC"), 0);
     assert.equal(totalIncomeGrossInTaxYear(receipts, 2024, "UTC"), 50000);
+  });
+});
+
+function r(partial: Partial<Receipt> & Pick<Receipt, "id" | "timestamp">): Receipt {
+  return { status: "processing", ...partial };
+}
+
+describe("taxYearStats extensions", () => {
+  it("effectiveReceiptTaxYear uses incomeTaxYear for 1099 forms", () => {
+    const year = effectiveReceiptTaxYear(
+      r({
+        id: "1",
+        timestamp: new Date("2026-06-01T12:00:00.000Z"),
+        category: "1099-NEC",
+        incomeTaxYear: 2025,
+      }),
+      "America/New_York",
+    );
+    assert.equal(year, 2025);
+  });
+
+  it("countReceiptsInTaxYearAllStatuses includes processing", () => {
+    const tz = "UTC";
+    const receipts = [
+      r({ id: "a", timestamp: new Date("2026-01-01T00:00:00.000Z"), status: "processing" }),
+      r({ id: "b", timestamp: new Date("2026-01-02T00:00:00.000Z"), status: "done" }),
+      r({ id: "c", timestamp: new Date("2025-01-01T00:00:00.000Z"), status: "done" }),
+    ];
+    assert.equal(countReceiptsInTaxYearAllStatuses(receipts, 2026, tz), 2);
   });
 });

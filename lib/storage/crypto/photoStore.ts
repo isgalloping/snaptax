@@ -21,7 +21,10 @@ import {
   getPhotoMeta,
   putPhotoMeta,
 } from "@/lib/storage/photoMetadata";
-import { PHOTO_META_VERSION } from "@/lib/storage/photoTypes";
+import {
+  hasMigratedPhotoPayload,
+  PHOTO_META_VERSION,
+} from "@/lib/storage/photoTypes";
 
 export const PHOTOS_STORE = IDB_LEGACY_PHOTOS;
 export const PHOTO_CIPHER_VERSION = 1 as const;
@@ -208,7 +211,7 @@ export async function loadEncryptedPhoto(
   id: string,
 ): Promise<Blob | null> {
   const meta = await getPhotoMeta(db, id);
-  if (meta && !meta.fullPurged) {
+  if (hasMigratedPhotoPayload(meta) && !meta.fullPurged) {
     const dek = await getOrCreateDek(db);
     const fromOpfs = await decryptOpfsFile(
       dek,
@@ -233,7 +236,7 @@ export async function loadEncryptedThumbnail(
   id: string,
 ): Promise<Blob | null> {
   const meta = await getPhotoMeta(db, id);
-  if (meta) {
+  if (hasMigratedPhotoPayload(meta)) {
     const dek = await getOrCreateDek(db);
     return decryptOpfsFile(dek, meta.thumbIvB64, meta.opfsThumbPath, meta.mime);
   }
@@ -249,27 +252,6 @@ export async function markPhotoRemoteSynced(
   if (meta) {
     await putPhotoMeta(db, { ...meta, remoteSyncedAtMs: atMs });
     return;
-  }
-  const legacy = await readLegacyPhotoRow(db, id);
-  if (legacy) {
-    await putPhotoMeta(db, {
-      id,
-      v: PHOTO_META_VERSION,
-      mime: "image/jpeg",
-      width: 0,
-      height: 0,
-      byteLength: isEncryptedPhotoRow(legacy) ? legacy.byteLength : 0,
-      thumbWidth: 0,
-      thumbHeight: 0,
-      thumbByteLength: 0,
-      opfsFullPath: opfsFullRelPath(id),
-      opfsThumbPath: opfsThumbRelPath(id),
-      fullIvB64: "",
-      thumbIvB64: "",
-      cipher: { alg: "AES-GCM", v: 1 },
-      remoteSyncedAtMs: atMs,
-      fullPurged: true,
-    });
   }
 }
 

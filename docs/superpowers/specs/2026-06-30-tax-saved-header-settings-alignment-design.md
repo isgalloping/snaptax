@@ -1,7 +1,7 @@
 # Est. Tax Saved 首屏 ↔ Settings 对齐 — Design
 
 **Date:** 2026-06-30  
-**Status:** Approved (design)  
+**Status:** Implemented  
 **Scope:** 在线场景下首屏 `TaxHeader` 与 Settings `TaxOverviewPanel` 的 **Est. Tax Saved** 数值不一致
 
 **References:** [`2026-06-29-receipt-summary-local-design.md`](./2026-06-29-receipt-summary-local-design.md) · [`2026-06-07-tax-savings-regional-design.md`](./2026-06-07-tax-savings-regional-design.md) · [`PRODUCT-SPEC.md`](../../product/PRODUCT-SPEC.md) §5.1

@@ -69,6 +69,7 @@ import {
 } from "@/lib/client/receiptSyncBudget";
 import { ProcessingQueue } from "@/lib/client/processingQueue";
 import { ProcessingReceiptWatcher } from "@/lib/client/processingReceiptWatcher";
+import { resolveHeaderTaxSaved } from "@/lib/client/resolveHeaderTaxSaved";
 import { utcNow } from "@/lib/time/utc";
 import {
   deleteReceipt as deleteStoredReceipt,
@@ -83,7 +84,6 @@ import {
 } from "@/lib/storage/receiptDb";
 import {
   readCurrentSeasonSummary,
-  readCurrentSeasonUnfiledTaxSaved,
 } from "@/lib/storage/receiptSummary";
 import type { ReceiptSeasonSummary } from "@/lib/storage/receiptSummaryTypes";
 import { TaxHeader } from "./TaxHeader";
@@ -197,7 +197,6 @@ export function HomeScreen() {
   const cameraOpenRef = useRef(false);
   const pendingMergeRef = useRef<{
     receipts: Receipt[];
-    taxSavedEstimate?: number;
   } | null>(null);
   const snapButtonRef = useRef<SnapButtonHandle>(null);
   const setTaxAnimatingRef = useRef<(value: boolean) => void>(() => {});
@@ -325,38 +324,34 @@ export function HomeScreen() {
     cameraOpenRef.current = cameraOpen;
   }, [cameraOpen]);
 
-  const refreshTaxAndSummary = useCallback(async (apiEstimate?: number) => {
+  const refreshTaxAndSummary = useCallback(async () => {
     const summary = await readCurrentSeasonSummary();
     setSeasonSummary(summary);
-    if (apiEstimate != null && navigator.onLine) {
-      setTaxSaved(apiEstimate);
-    } else {
-      setTaxSaved(summary.unfiledTaxSaved);
-    }
+    setTaxSaved(summary.unfiledTaxSaved);
   }, []);
 
   const refreshTaxSaved = useCallback(
-    (_next: Receipt[], apiEstimate?: number) => {
-      void refreshTaxAndSummary(apiEstimate);
+    (_next: Receipt[]) => {
+      void refreshTaxAndSummary();
     },
     [refreshTaxAndSummary],
   );
 
   const applyMergeNow = useCallback(
-    (merged: Receipt[], taxSavedEstimate?: number) => {
+    (merged: Receipt[]) => {
       setReceipts(merged);
-      refreshTaxSaved(merged, taxSavedEstimate);
+      refreshTaxSaved(merged);
     },
     [refreshTaxSaved],
   );
 
   const applyMergeOrDefer = useCallback(
-    (merged: Receipt[], taxSavedEstimate?: number) => {
+    (merged: Receipt[]) => {
       if (cameraOpenRef.current) {
-        pendingMergeRef.current = { receipts: merged, taxSavedEstimate };
+        pendingMergeRef.current = { receipts: merged };
         return;
       }
-      applyMergeNow(merged, taxSavedEstimate);
+      applyMergeNow(merged);
     },
     [applyMergeNow],
   );
@@ -365,7 +360,7 @@ export function HomeScreen() {
     if (cameraOpen || !pendingMergeRef.current) return;
     const pending = pendingMergeRef.current;
     pendingMergeRef.current = null;
-    applyMergeNow(pending.receipts, pending.taxSavedEstimate);
+    applyMergeNow(pending.receipts);
   }, [cameraOpen, applyMergeNow]);
 
   const syncFromServer = useCallback(
@@ -378,14 +373,12 @@ export function HomeScreen() {
         return local;
       }
       try {
-        const { visible, taxSavedEstimate } = await mergeServerReceiptsIntoLocal(
-          local,
-        );
+        const { visible } = await mergeServerReceiptsIntoLocal(local);
         if (applyMode === "immediate") {
           pendingMergeRef.current = null;
-          applyMergeNow(visible, taxSavedEstimate);
+          applyMergeNow(visible);
         } else {
-          applyMergeOrDefer(visible, taxSavedEstimate);
+          applyMergeOrDefer(visible);
         }
         return visible;
       } catch {
@@ -400,7 +393,7 @@ export function HomeScreen() {
   );
 
   const applyReceiptUpdate = useCallback(
-    async (updated: StoredReceipt, apiEstimate?: number) => {
+    async (updated: StoredReceipt) => {
       let merged = updated;
       setReceipts((prev) => {
         const existing = prev.find((r) => r.id === updated.id) as
@@ -412,7 +405,7 @@ export function HomeScreen() {
             updated.writeBudgetRemaining ?? existing?.writeBudgetRemaining,
         };
         const next = prev.map((r) => (r.id === merged.id ? merged : r));
-        refreshTaxSaved(top100ByUpdatedAt(next as StoredReceipt[]), apiEstimate);
+        refreshTaxSaved(top100ByUpdatedAt(next as StoredReceipt[]));
         return top100ByUpdatedAt(next as StoredReceipt[]);
       });
       await saveReceipt(merged);
@@ -425,12 +418,12 @@ export function HomeScreen() {
   );
 
   const applyFromApi = useCallback(
-    async (api: ApiReceipt, apiEstimate?: number) => {
+    async (api: ApiReceipt) => {
       const updated: StoredReceipt = {
         ...apiReceiptToLocal(api),
         pendingUpload: false,
       };
-      await applyReceiptUpdate(updated, apiEstimate);
+      await applyReceiptUpdate(updated);
     },
     [applyReceiptUpdate],
   );
@@ -715,11 +708,8 @@ export function HomeScreen() {
         setSyncStuckIds((prev) => new Set(prev).add(id));
         queue.onSettled(id);
       },
-      onTaxSaved: (estimate) => {
-        setReceipts((prev) => {
-          refreshTaxSaved(prev, estimate);
-          return prev;
-        });
+      onSummaryRefresh: () => {
+        void refreshTaxAndSummary();
       },
       getWriteBudget: (id) => {
         const r = receiptsRef.current.find((x) => x.id === id) as
@@ -737,7 +727,7 @@ export function HomeScreen() {
       queueRef.current = null;
       watcherRef.current = null;
     };
-  }, [applyFromApi, refreshTaxSaved]);
+  }, [applyFromApi, refreshTaxAndSummary]);
 
   const handleRetrySync = useCallback(
     (id: string) => {
@@ -972,11 +962,21 @@ export function HomeScreen() {
     [receipts, onboardingStatus],
   );
 
+  const headerTaxSaved = useMemo(
+    () =>
+      resolveHeaderTaxSaved({
+        displayTaxSaved,
+        seasonUnfiledTaxSaved: seasonSummary?.unfiledTaxSaved,
+        taxSavedFallback: taxSaved,
+      }),
+    [displayTaxSaved, seasonSummary, taxSaved],
+  );
+
   const settingsTaxStats = useMemo((): SettingsTaxStats => {
     if (!seasonSummary) {
       const year = currentTaxYear();
       return {
-        taxSaved: displayTaxSaved ?? taxSaved,
+        taxSaved: headerTaxSaved,
         receiptCount: displayReceipts.length,
         totalDeductions: taxYearDeductions(displayReceipts, year, clientTimeZone()),
         incomeFormCount: incomeFormsInTaxYear(displayReceipts, year, clientTimeZone()),
@@ -984,22 +984,17 @@ export function HomeScreen() {
       };
     }
     return {
-      taxSaved: seasonSummary.unfiledTaxSaved,
+      taxSaved: headerTaxSaved,
       receiptCount: seasonSummary.totalReceiptCount,
       totalDeductions: seasonSummary.totalDeductions,
       incomeFormCount: seasonSummary.incomeFormCount,
       totalIncomeGross: seasonSummary.totalIncomeGross,
     };
-  }, [seasonSummary, displayReceipts, displayTaxSaved, taxSaved]);
+  }, [seasonSummary, displayReceipts, headerTaxSaved]);
 
   const widgetsData = useMemo(
-    () =>
-      computeHomeWidgets(
-        displayReceipts,
-        displayTaxSaved ?? taxSaved,
-        industry,
-      ),
-    [displayReceipts, displayTaxSaved, taxSaved, industry],
+    () => computeHomeWidgets(displayReceipts, headerTaxSaved, industry),
+    [displayReceipts, headerTaxSaved, industry],
   );
 
   const actionCount = useMemo(
@@ -1303,8 +1298,7 @@ export function HomeScreen() {
       className="relative flex h-full flex-col overflow-hidden bg-black font-sans text-white select-none"
     >
       <TaxHeader
-        taxSaved={taxSaved}
-        displayTaxSaved={displayTaxSaved}
+        taxSaved={headerTaxSaved}
         totalExpenses={sumDoneExpenses(displayReceipts)}
         receiptCount={displayReceipts.length}
         animating={taxAnimating}

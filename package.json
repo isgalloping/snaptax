@@ -45,6 +45,7 @@
     "esbuild": "^0.28.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.7",
+    "fake-indexeddb": "^6.2.5",
     "playwright": "^1.49.1",
     "prisma": "^6.19.3",
     "serwist": "^9.5.11",

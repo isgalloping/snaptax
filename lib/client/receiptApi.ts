@@ -31,6 +31,12 @@ export type ReceiptListResponse = {
   taxSavedEstimate: number;
 };
 
+export type ReceiptSyncPageResponse = {
+  receipts: ApiReceipt[];
+  nextCursor: string | null;
+  hasMore: boolean;
+};
+
 export function apiReceiptToLocal(r: ApiReceipt): Receipt {
   const timestamp = parseUtcISOString(r.snapAt ?? r.capturedAt);
   return {
@@ -91,6 +97,19 @@ export async function fetchReceiptList(
   );
   if (!res.ok) throw new Error("FETCH_RECEIPTS_FAILED");
   return (await res.json()) as ReceiptListResponse;
+}
+
+export async function fetchReceiptSyncPage(
+  cursor?: string,
+  since?: string,
+): Promise<ReceiptSyncPageResponse> {
+  const params = new URLSearchParams();
+  if (since) params.set("since", since);
+  if (cursor) params.set("cursor", cursor);
+  const suffix = params.size > 0 ? `?${params.toString()}` : "";
+  const res = await apiFetch(`/api/receipts/sync${suffix}`);
+  if (!res.ok) throw new Error("FETCH_RECEIPT_SYNC_FAILED");
+  return (await res.json()) as ReceiptSyncPageResponse;
 }
 
 export async function fetchReceiptById(id: string): Promise<ApiReceipt> {
@@ -216,30 +235,30 @@ export async function uploadReceipt(
     body: form,
     headers,
   });
-  if (res.status === 409) {
-    const body = (await res.json().catch(() => null)) as {
-      error?: { code?: string };
-      existingReceiptId?: string;
-      matchType?: "exact" | "similar";
-    } | null;
-    if (
-      body?.error?.code === "DUPLICATE_RECEIPT" &&
-      body.existingReceiptId
-    ) {
-      throw new DuplicateReceiptError(
-        body.existingReceiptId,
-        body.matchType ?? "exact",
-      );
-    }
+  const body = (await res.json().catch(() => null)) as {
+    error?: { code?: string; message?: string };
+    existingReceiptId?: string;
+    matchType?: "exact" | "similar";
+    id?: string;
+    status?: string;
+  } | null;
+
+  if (
+    res.status === 409 &&
+    body?.error?.code === "DUPLICATE_RECEIPT" &&
+    body.existingReceiptId
+  ) {
+    throw new DuplicateReceiptError(
+      body.existingReceiptId,
+      body.matchType ?? "exact",
+    );
   }
+
   if (!res.ok) {
-    const body = (await res.json().catch(() => null)) as {
-      error?: { code?: string };
-    } | null;
     const code = body?.error?.code ?? "UPLOAD_FAILED";
     throw new Error(code);
   }
-  const created = (await res.json()) as UploadCreateResponse | ApiReceipt;
+  const created = body as UploadCreateResponse | ApiReceipt;
   if (!created.id || !("status" in created) || !created.status) {
     throw new Error("UPLOAD_FAILED");
   }

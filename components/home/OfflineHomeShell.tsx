@@ -23,9 +23,9 @@ import {
 import {
   loadRecentUnfiledReceipts,
   loadTopByUpdatedAt,
-  sumUnfiledLocalTaxSavedIndexed,
   type StoredReceipt,
 } from "@/lib/storage/receiptDb";
+import { readCurrentSeasonSummary } from "@/lib/storage/receiptSummary";
 import { sumDoneExpenses } from "@/lib/receipts/receiptStats";
 import { OnboardingOrchestrator } from "@/components/onboarding/OnboardingOrchestrator";
 import { OnboardingSkipButton } from "@/components/onboarding/OnboardingSkipButton";
@@ -62,13 +62,18 @@ export function OfflineHomeShell() {
     null,
   );
 
+  const refreshTaxAndSummary = useCallback(async () => {
+    const summary = await readCurrentSeasonSummary();
+    setTaxSaved(summary.unfiledTaxSaved);
+  }, []);
+
   const refreshListFromLocal = useCallback(async () => {
     const visible = await loadTopByUpdatedAt(UI_RECEIPT_LIMIT);
     setReceipts(visible);
     setSyncStuckIds(stuckIdsFromReceipts(visible));
-    setTaxSaved(await sumUnfiledLocalTaxSavedIndexed());
+    await refreshTaxAndSummary();
     return visible;
-  }, []);
+  }, [refreshTaxAndSummary]);
 
   const handleOnboardingPostLogin = useCallback(async (_taxRecalcQueued: number) => {
     await convertDemoReceiptAfterLogin();
@@ -122,7 +127,7 @@ export function OfflineHomeShell() {
 
       setSyncStuckIds(stuckIdsFromReceipts(hot));
       setReceipts(hot);
-      setTaxSaved(await sumUnfiledLocalTaxSavedIndexed());
+      await refreshTaxAndSummary();
 
       deferAfterPaint(async () => {
         if (cancelled) return;
@@ -133,7 +138,7 @@ export function OfflineHomeShell() {
     return () => {
       cancelled = true;
     };
-  }, [initializeOnboarding, refreshListFromLocal]);
+  }, [initializeOnboarding, refreshListFromLocal, refreshTaxAndSummary]);
 
   useEffect(() => {
     if (!receiptNotice) return;

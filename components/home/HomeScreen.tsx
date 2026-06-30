@@ -15,6 +15,7 @@ import {
   type ApiReceipt,
 } from "@/lib/client/receiptApi";
 import { schedulePhotoRetentionPurge } from "@/lib/client/photoRetentionJob";
+import { scheduleReceiptSummaryVerify } from "@/lib/client/receiptSummaryVerify";
 import { reconcileDuplicateReceipt } from "@/lib/client/reconcileDuplicateReceipt";
 import {
   DUPLICATE_HIGHLIGHT_MS,
@@ -70,9 +71,13 @@ import {
   loadTopByUpdatedAt,
   saveReceipt,
   markRemoteSyncedPhotos,
-  sumUnfiledLocalTaxSavedIndexed,
   type StoredReceipt,
 } from "@/lib/storage/receiptDb";
+import {
+  readCurrentSeasonSummary,
+  readCurrentSeasonUnfiledTaxSaved,
+} from "@/lib/storage/receiptSummary";
+import type { ReceiptSeasonSummary } from "@/lib/storage/receiptSummaryTypes";
 import { TaxHeader } from "./TaxHeader";
 import { SnapButton, type SnapButtonHandle } from "./SnapButton";
 import { ReceiptList } from "./ReceiptList";
@@ -120,7 +125,12 @@ import {
   writeOnboardFlag,
 } from "@/lib/onboarding/onboardingStorage";
 import { visibleReceiptsForOnboarding } from "@/lib/onboarding/onboardingReceipts";
-import { taxYearDeductions, incomeFormsInTaxYear, totalIncomeGrossInTaxYear } from "@/lib/tax/taxYearStats";
+import {
+  currentTaxYear,
+  taxYearDeductions,
+  incomeFormsInTaxYear,
+  totalIncomeGrossInTaxYear,
+} from "@/lib/tax/taxYearStats";
 import { clientTimeZone } from "@/lib/time/timeZone";
 import { useI18n } from "@/components/i18n/I18nProvider";
 
@@ -143,6 +153,9 @@ export function HomeScreen() {
   const [view, setView] = useState<View>("home");
   const [receipts, setReceipts] = useState<Receipt[]>([]);
   const [taxSaved, setTaxSaved] = useState<number | null>(null);
+  const [seasonSummary, setSeasonSummary] = useState<ReceiptSeasonSummary | null>(
+    null,
+  );
   const [industry, setIndustry] = useState<Industry | null>(null);
   const [requestSoftGoogleSheet, setRequestSoftGoogleSheet] = useState(false);
   const [resnapId, setResnapId] = useState<string | null>(null);
@@ -304,13 +317,22 @@ export function HomeScreen() {
     cameraOpenRef.current = cameraOpen;
   }, [cameraOpen]);
 
-  const refreshTaxSaved = useCallback((next: Receipt[], apiEstimate?: number) => {
+  const refreshTaxAndSummary = useCallback(async (apiEstimate?: number) => {
+    const summary = await readCurrentSeasonSummary();
+    setSeasonSummary(summary);
     if (apiEstimate != null && navigator.onLine) {
       setTaxSaved(apiEstimate);
-      return;
+    } else {
+      setTaxSaved(summary.unfiledTaxSaved);
     }
-    void sumUnfiledLocalTaxSavedIndexed().then(setTaxSaved);
   }, []);
+
+  const refreshTaxSaved = useCallback(
+    (_next: Receipt[], apiEstimate?: number) => {
+      void refreshTaxAndSummary(apiEstimate);
+    },
+    [refreshTaxAndSummary],
+  );
 
   const applyMergeNow = useCallback(
     (merged: Receipt[], taxSavedEstimate?: number) => {
@@ -629,6 +651,7 @@ export function HomeScreen() {
             mergedAfter.filter((r) => !stuck.has(r.id)),
           );
           schedulePhotoRetentionPurge();
+          scheduleReceiptSummaryVerify();
         })();
       });
     },
@@ -922,20 +945,24 @@ export function HomeScreen() {
   );
 
   const settingsTaxStats = useMemo((): SettingsTaxStats => {
-    const year = Number(
-      new Intl.DateTimeFormat("en-US", {
-        timeZone: clientTimeZone(),
-        year: "numeric",
-      }).format(new Date()),
-    );
+    if (!seasonSummary) {
+      const year = currentTaxYear();
+      return {
+        taxSaved: displayTaxSaved ?? taxSaved,
+        receiptCount: displayReceipts.length,
+        totalDeductions: taxYearDeductions(displayReceipts, year, clientTimeZone()),
+        incomeFormCount: incomeFormsInTaxYear(displayReceipts, year, clientTimeZone()),
+        totalIncomeGross: totalIncomeGrossInTaxYear(displayReceipts, year, clientTimeZone()),
+      };
+    }
     return {
-      taxSaved: displayTaxSaved ?? taxSaved,
-      receiptCount: displayReceipts.length,
-      totalDeductions: taxYearDeductions(displayReceipts, year, clientTimeZone()),
-      incomeFormCount: incomeFormsInTaxYear(displayReceipts, year, clientTimeZone()),
-      totalIncomeGross: totalIncomeGrossInTaxYear(displayReceipts, year, clientTimeZone()),
+      taxSaved: seasonSummary.unfiledTaxSaved,
+      receiptCount: seasonSummary.totalReceiptCount,
+      totalDeductions: seasonSummary.totalDeductions,
+      incomeFormCount: seasonSummary.incomeFormCount,
+      totalIncomeGross: seasonSummary.totalIncomeGross,
     };
-  }, [displayReceipts, displayTaxSaved, taxSaved]);
+  }, [seasonSummary, displayReceipts, displayTaxSaved, taxSaved]);
 
   const widgetsData = useMemo(
     () =>
@@ -1018,7 +1045,7 @@ export function HomeScreen() {
 
         setReceipts(hot);
         setSyncStuckIds(stuckIdsFromReceipts(hot));
-        setTaxSaved(await sumUnfiledLocalTaxSavedIndexed());
+        await refreshTaxAndSummary();
 
         await resumePendingOcrJobsFromStorage();
         if (cancelled) return;
@@ -1039,7 +1066,7 @@ export function HomeScreen() {
         if (!cancelled) {
           setReceipts(visible);
           setSyncStuckIds(stuckIdsFromReceipts(visible));
-          setTaxSaved(await sumUnfiledLocalTaxSavedIndexed().catch(() => 0));
+          await refreshTaxAndSummary().catch(() => setTaxSaved(0));
           if (navigator.onLine) {
             runDeferredStartup(() => cancelled);
           }
@@ -1050,7 +1077,7 @@ export function HomeScreen() {
     return () => {
       cancelled = true;
     };
-  }, [initializeOnboarding, runDeferredStartup]);
+  }, [initializeOnboarding, refreshTaxAndSummary, runDeferredStartup]);
 
   const handleBatchShot = useCallback(
     async (file: File): Promise<string | null> => {
@@ -1192,6 +1219,7 @@ export function HomeScreen() {
           void (async () => {
             setReceipts([]);
             setTaxSaved(null);
+            setSeasonSummary(null);
             setSyncStuckIds(new Set());
             queueRef.current?.clear();
             watcherRef.current?.reset();

@@ -40,6 +40,11 @@ import {
 } from "@/lib/client/receiptDeleteFlow";
 import { pollTaxRecalc } from "@/lib/client/authApi";
 import { prepareExportSync } from "@/lib/client/exportPrepareFlow";
+import { restoreReceiptsFromCloud } from "@/lib/client/cloudRestoreFlow";
+import {
+  markCloudRestoreAttempted,
+  shouldAutoRestoreFromCloud,
+} from "@/lib/client/localDataLoss";
 import { prefetchReceiptImageUrl } from "@/lib/client/receiptImageCache";
 import { isPersistedReceiptId } from "@/lib/receipts/receiptId";
 import { mergeServerReceiptsIntoLocal } from "@/lib/client/receiptSyncOrchestrator";
@@ -634,6 +639,15 @@ export function HomeScreen() {
             await ensureGhostSession();
           } catch {
             return;
+          }
+          if (cancelled()) return;
+          if (await shouldAutoRestoreFromCloud()) {
+            try {
+              await restoreReceiptsFromCloud({ downloadImages: true });
+              await markCloudRestoreAttempted();
+            } catch {
+              // allow retry on next startup if restore fails
+            }
           }
           if (cancelled()) return;
           await flushPendingUploadsRef.current();

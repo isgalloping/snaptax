@@ -129,6 +129,22 @@ export async function fetchReceiptByIdIfExists(
   return (await res.json()) as ApiReceipt;
 }
 
+export type ReconcileReceiptsResponse = {
+  receipts: ApiReceipt[];
+};
+
+export async function fetchReceiptsReconcile(
+  ids: string[],
+): Promise<ReconcileReceiptsResponse> {
+  const res = await apiFetch("/api/receipts/reconcile", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ids }),
+  });
+  if (!res.ok) throw new Error("RECONCILE_RECEIPTS_FAILED");
+  return (await res.json()) as ReconcileReceiptsResponse;
+}
+
 export type UploadCreateResponse = {
   id: string;
   status: Receipt["status"];

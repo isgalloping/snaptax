@@ -17,6 +17,7 @@ import {
 import { schedulePhotoRetentionPurge } from "@/lib/client/photoRetentionJob";
 import { scheduleReceiptSummaryVerify } from "@/lib/client/receiptSummaryVerify";
 import { reconcileDuplicateReceipt } from "@/lib/client/reconcileDuplicateReceipt";
+import { reconcileNonDoneWindow } from "@/lib/client/reconcileNonDoneWindow";
 import {
   DUPLICATE_HIGHLIGHT_MS,
   duplicateNoticeCopy,
@@ -666,6 +667,7 @@ export function HomeScreen() {
           );
           schedulePhotoRetentionPurge();
           scheduleReceiptSummaryVerify();
+          void reconcileNonDoneWindow();
         })();
       });
     },
@@ -883,6 +885,9 @@ export function HomeScreen() {
       if (!navigator.onLine || document.visibilityState === "hidden") return;
       void flushPendingUploadsRef.current();
       void flushPendingDeletesRef.current();
+      if (document.visibilityState === "visible") {
+        void reconcileNonDoneWindow();
+      }
     };
 
     const intervalId = window.setInterval(retryPending, 60_000);
@@ -1276,6 +1281,7 @@ export function HomeScreen() {
         requestSoftGoogleSheet={requestSoftGoogleSheet}
         onSoftGoogleSheetConsumed={() => setRequestSoftGoogleSheet(false)}
         onSoftGuideDismiss={handleSoftGuideDismiss}
+        onRestored={refreshListFromLocal}
       />
       {taxExport.overlays}
     </>

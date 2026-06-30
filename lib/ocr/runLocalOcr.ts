@@ -1,4 +1,5 @@
 import { parseReceipt } from "@/lib/ocr/parseReceipt";
+import { tesseractCreateWorkerOptions } from "@/lib/ocr/tesseractWorkerOptions";
 import type { LocalOcrResult, OcrDraftPayload } from "@/lib/ocr/types";
 
 let workerPromise: Promise<import("tesseract.js").Worker> | null = null;
@@ -7,9 +8,7 @@ async function getTesseractWorker(): Promise<import("tesseract.js").Worker> {
   if (!workerPromise) {
     workerPromise = (async () => {
       const { createWorker } = await import("tesseract.js");
-      const worker = await createWorker("eng", 1, {
-        logger: () => {},
-      });
+      const worker = await createWorker("eng", 1, tesseractCreateWorkerOptions());
       return worker;
     })();
   }

@@ -200,6 +200,45 @@ async function replaceReceiptImage(params: {
   return uploadJsonResponse(updated, 200, vision.processFailed);
 }
 
+async function resolveUniqueConflictUpload(params: {
+  actor: Actor;
+  clientReceiptId: string;
+  sha: string;
+}): Promise<ReturnType<typeof duplicateResponse> | ReturnType<typeof uploadJsonResponse> | null> {
+  const byId = await prisma.snaptaxReceipt.findUnique({
+    where: { id: params.clientReceiptId },
+  });
+  if (byId) {
+    try {
+      assertReceiptAccess(byId, params.actor);
+    } catch {
+      throw new Error("NOT_FOUND");
+    }
+    return uploadJsonResponse(byId, 200);
+  }
+
+  const exactDup =
+    (await findExactDuplicate(
+      params.actor,
+      params.sha,
+      params.clientReceiptId,
+    )) ??
+    (await prisma.snaptaxReceipt.findFirst({
+      where: {
+        ...receiptWhereForActor(params.actor),
+        ...unfiledReceiptWhere(),
+        contentSha256: params.sha,
+        NOT: { id: params.clientReceiptId },
+      },
+    }));
+
+  if (exactDup) {
+    return duplicateResponse(exactDup.id, "exact");
+  }
+
+  return null;
+}
+
 export async function handleReceiptUploadPost(params: {
   request: NextRequest;
   actor: Actor;
@@ -293,20 +332,12 @@ export async function handleReceiptUploadPost(params: {
       err instanceof Prisma.PrismaClientKnownRequestError &&
       err.code === "P2002"
     ) {
-      const dup =
-        (await findExactDuplicate(params.actor, sha, params.clientReceiptId)) ??
-        (await prisma.snaptaxReceipt.findUnique({
-          where: { id: params.clientReceiptId },
-        }));
-      if (dup) {
-        try {
-          assertReceiptAccess(dup, params.actor);
-        } catch {
-          throw new Error("NOT_FOUND");
-        }
-        return uploadJsonResponse(dup, 200);
-      }
-      throw new Error("DUPLICATE_RECEIPT");
+      const resolved = await resolveUniqueConflictUpload({
+        actor: params.actor,
+        clientReceiptId: params.clientReceiptId,
+        sha,
+      });
+      if (resolved) return resolved;
     }
     throw err;
   }

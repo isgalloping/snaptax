@@ -92,6 +92,31 @@ Query: `limit=3`（默认最近 3 条）
 
 `taxSavedEstimate` = `SUM(tax_amount)` where `status=done`。**禁止** 客户端 `amount×0.25`。
 
+### `GET /api/receipts/sync`
+
+分页拉取小票元数据（换机恢复 / cloud restore）。Auth：Ghost HMAC 或 Google session；`receiptWhereForActor`。
+
+Query:
+
+| 参数 | 说明 |
+|------|------|
+| `since` | UTC ISO 8601（须含 `Z` 或 offset）；缺省 = now − **18 months** |
+| `cursor` | opaque keyset cursor（`updatedAt` + `id`，base64url JSON） |
+| `limit` | 每页条数，1–50，缺省 50 |
+
+**Response 200**
+```json
+{
+  "receipts": [ { "id": "rcpt_...", "status": "done", "updatedAt": "2026-06-05T11:30:00.000Z", "...": "..." } ],
+  "nextCursor": "eyJ1cGRhdGVkQXQiOi...",
+  "hasMore": true
+}
+```
+
+- 排序：`updatedAt desc`, `id desc`（keyset pagination）
+- 过滤：`captured_at >= since`
+- **不**返回 Blob bytes；图片走 `GET /api/receipts/:id/image`
+
 ### `POST /api/receipts`
 
 `multipart/form-data`: `file` (image/jpeg) · 可选 `ocrDraft`（JSON string，客户端本地 OCR 草稿）

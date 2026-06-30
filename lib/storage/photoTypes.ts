@@ -19,3 +19,14 @@ export type ReceiptPhotoMeta = {
   fullPurged?: boolean;
   fullPurgedAtMs?: number;
 };
+
+export function hasMigratedPhotoPayload(
+  meta: ReceiptPhotoMeta | null | undefined,
+): meta is ReceiptPhotoMeta {
+  if (!meta) return false;
+  if (meta.thumbIvB64.length === 0 || meta.opfsThumbPath.length === 0) {
+    return false;
+  }
+  if (meta.fullPurged === true) return true;
+  return meta.fullIvB64.length > 0 && meta.opfsFullPath.length > 0;
+}

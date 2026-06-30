@@ -1285,7 +1285,7 @@ export function HomeScreen() {
         requestSoftGoogleSheet={requestSoftGoogleSheet}
         onSoftGoogleSheetConsumed={() => setRequestSoftGoogleSheet(false)}
         onSoftGuideDismiss={handleSoftGuideDismiss}
-        onRestored={refreshListFromLocal}
+        onRestored={() => void refreshListFromLocal()}
       />
       {taxExport.overlays}
     </>

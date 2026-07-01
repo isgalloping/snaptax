@@ -109,6 +109,8 @@ export function PrivacyDataSection({
             label={copy.terms}
             onClick={() => setLegalDoc("terms")}
           />
+          <SettingsRow label={copy.dataRetention} href="/data-retention" />
+          <SettingsRow label={copy.security} href="/security" />
           <div className="rounded-xl border-2 border-zinc-600 bg-zinc-800 p-4">
             <p className="text-xs font-bold uppercase tracking-wider text-zinc-400">
               {copy.dataStorage}

@@ -162,6 +162,9 @@ export function TaxExportCard({
             ✓ {cardCopy.trustLine}
           </p>
         )}
+        <p className="mt-3 text-center text-xs text-zinc-400">
+          {cardCopy.taxEstimateDisclaimer}
+        </p>
       </div>
     </section>
   );

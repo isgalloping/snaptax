@@ -271,6 +271,7 @@ Next.js 16 · React 19 · Tailwind 4 · Serwist · **PostgreSQL（美国）** ·
 | DSR 30 天 SLA + playbook | ✅ | ✅（`docs/ops/dsr-playbook.md`） |
 | Data Retention 文档 = 代码常量 | ✅ | ✅（`docs/legal/data-retention.md` · 18mo/90d/24h） |
 | Security Baseline 控制矩阵 | ✅ | ✅（`docs/tech/SECURITY-BASELINE.md`） |
+| WCAG 2.2 AA 核心路径 | ✅ | ✅（axe 0 critical/serious · `docs/accessibility/`） |
 | Google + Ghost 绑定（后端） | ✅ | ✅ |
 | Paddle（后端 Webhook） | ✅ | ✅（需配置 `PADDLE_*` / `NEXT_PUBLIC_PADDLE_*`） |
 | Ghost 小票 API（美国） | ✅ | ✅（HMAC Cookie + 限流） |
@@ -311,6 +312,7 @@ Next.js 16 · React 19 · Tailwind 4 · Serwist · **PostgreSQL（美国）** ·
 | [legal/security-incident.md](../legal/security-incident.md) | 安全与事件响应摘要 |
 | [ops/dsr-playbook.md](../ops/dsr-playbook.md) | DSR 内部处理流程 |
 | [tech/SECURITY-BASELINE.md](../tech/SECURITY-BASELINE.md) | 安全基线控制矩阵 |
+| [accessibility/WCAG-22-AA-summary.md](../accessibility/WCAG-22-AA-summary.md) | WCAG 2.2 AA 符合性摘要 |
 | [legal/privacy.fr.md](../legal/privacy.fr.md) | 隐私政策（法文） |
 | [legal/privacy.de.md](../legal/privacy.de.md) | 隐私政策（德文） |
 | [legal/terms.md](../legal/terms.md) | 服务条款（英文） |

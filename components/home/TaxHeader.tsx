@@ -95,6 +95,8 @@ export function TaxHeader({
               className={`text-4xl font-black tracking-tight text-yellow-400 ${
                 animating ? "animate-tax-bounce text-green-400" : ""
               }`}
+              aria-live="polite"
+              aria-atomic="true"
             >
               {headerTaxSaved === null ? "$- - -" : formatCurrency(headerTaxSaved)}
             </p>

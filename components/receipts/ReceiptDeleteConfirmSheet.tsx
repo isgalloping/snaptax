@@ -1,6 +1,7 @@
 "use client";
 
 import { useUserCopy } from "@/components/i18n/I18nProvider";
+import { useDialogEscape } from "@/lib/ui/useDialogEscape";
 
 interface ReceiptDeleteConfirmSheetProps {
   open: boolean;
@@ -17,6 +18,8 @@ export function ReceiptDeleteConfirmSheet({
 }: ReceiptDeleteConfirmSheetProps) {
   const copy = useUserCopy().receiptDetail;
 
+  useDialogEscape(open, onCancel);
+
   if (!open) return null;
 
   return (
@@ -28,6 +31,7 @@ export function ReceiptDeleteConfirmSheet({
       <div
         className="w-full rounded-t-3xl border-t-4 border-yellow-500 bg-zinc-900 px-6 pb-10 pt-6"
         role="dialog"
+        aria-modal="true"
         aria-labelledby="delete-receipt-title"
         onClick={(e) => e.stopPropagation()}
       >

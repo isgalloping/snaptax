@@ -291,6 +291,7 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
           <button
             type="button"
             onClick={openCamera}
+            aria-label={copy.home.snapButton.title}
             className={`flex ${homeVisual.snap.height} ${homeVisual.snap.maxHeight} w-full cursor-pointer flex-row items-center justify-between rounded-2xl border-4 border-white bg-yellow-500 px-5 text-black shadow-xl transition-all active:scale-[0.99] active:bg-yellow-400`}
           >
             <CameraIcon className="h-10 w-10 shrink-0 stroke-[2.5]" />

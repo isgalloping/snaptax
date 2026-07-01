@@ -19,7 +19,6 @@ export function TaxYearProgressWidget({ data, onOpenDetails }: TaxYearProgressWi
       type="button"
       onClick={onOpenDetails}
       className={`${card} flex flex-col ${visual.bg} ${visual.border} text-left transition-transform active:scale-[0.98]`}
-      role="listitem"
     >
       <p className={`text-[9px] font-bold uppercase tracking-wider leading-none ${visual.accent}`}>
         {copy.label.replace("{year}", String(data.year))}

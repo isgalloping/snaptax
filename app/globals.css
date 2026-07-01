@@ -141,6 +141,12 @@ html.landing-done #landing-ssr-layer {
     animation: none;
   }
 
+  .animate-tax-bounce,
+  .animate-pulse,
+  .animate-spin {
+    animation: none !important;
+  }
+
   .snap-focus-ring__pulse {
     animation: none !important;
     opacity: 1;
@@ -156,4 +162,16 @@ html.landing-done #landing-ssr-layer {
   .snap-focus-ring {
     box-shadow: 0 0 0 2px rgba(234, 179, 8, 0.8);
   }
+}
+
+/* WCAG 2.4.7 — visible focus (yellow ring, PRODUCT palette) */
+:focus-visible {
+  outline: 2px solid #eab308;
+  outline-offset: 2px;
+}
+
+button:focus:not(:focus-visible),
+a:focus:not(:focus-visible),
+[role="button"]:focus:not(:focus-visible) {
+  outline: none;
 }

@@ -34,7 +34,7 @@
 | 8 | **Terms of Service** | `terms.md` 8 节骨架 | 缺完整订阅/IP/终止/争议解决 | Terms ≥12 节（见 P1） | en/fr/de 同步；Legal Sheet 同源 | P1 | M1 |
 | 9 | **Privacy Policy** | en/fr/de + 路由 | 缺 Retention/Incident 引用；权利不全 | 正式版 Privacy（见 P1 目录） | 四语结构一致；与 `/privacy` 渲染一致 | P1 | M1 |
 | 10 | **Data Retention** | 代码：18mo 小票、90d OPFS、rate-limit GC 24h | — | `docs/legal/data-retention.md` + Privacy 链接 | 文档周期 = 代码常量；Delete Account 说明 | P2 | **M2 ✓** |
-| 11 | **Accessibility** | 黑黄 AAA 配色； scattered `aria-*` | **未** WCAG 2.2 AA 程序；无键盘/读屏/大字体策略 | P4 审计 + 修复 P0 路径 | 核心流程 axe 0 critical；VPAT 摘要 1 页 | P4 | M3 |
+| 11 | **Accessibility** | 黑黄 AAA 配色； scattered `aria-*` | — | P4 审计 + P0 修复 | 核心路径 axe 0 critical/serious；VPAT 摘要 | P4 | **M3 ✓** |
 | 12 | **Security incident** | 结构化日志 | 无 72h 通知、IRP、备份/回滚 Runbook | P5 ops 文档 + 对外摘要 | 桌面演练 1 次；`security-incident.md` 公开承诺 | P5 | M4 |
 
 ---

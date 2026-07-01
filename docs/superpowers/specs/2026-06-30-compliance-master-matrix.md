@@ -38,7 +38,7 @@
 | 9 | **Privacy Policy** | ✅ Implemented | `privacy.md` 12 节 · `/privacy` `/data-retention` `/security` | P1 | M1 · `66a9f54` |
 | 10 | **Data Retention** | ✅ Implemented | [`data-retention.md`](../../legal/data-retention.md) = code constants | P2 | M2 · `65490db` |
 | 11 | **Accessibility** | ✅ Implemented | axe 0 critical/serious · [`WCAG-22-AA-summary.md`](../../accessibility/WCAG-22-AA-summary.md) | P4 | M3 · `6ddc1a8` |
-| 12 | **Security incident** | ✅ Implemented | [`security-incident.md`](../../legal/security-incident.md) · IRP · tabletop | P5 | M4 · (this commit) |
+| 12 | **Security incident** | ✅ Implemented | [`security-incident.md`](../../legal/security-incident.md) · IRP · tabletop | P5 | M4 · `1b6564d` `44de499` |
 
 **Waived:** EU Frankfurt regional hosting — documented non-goal; US + DPF/SCC only.
 

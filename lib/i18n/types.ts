@@ -391,6 +391,7 @@ export type UserCopy = {
       compatLine: string;
       formatLine: string;
       trustLine: string;
+      taxEstimateDisclaimer: string;
       snap1099Nec: string;
       snap1099K: string;
       mostPopular: string;
@@ -451,6 +452,8 @@ export type UserCopy = {
       dataStorage: string;
       dataStorageValue: string;
       contactPrefix: string;
+      dataRetention: string;
+      security: string;
       deleteAccount: string;
       deleteFailed: string;
       deleteRequiresOnline: string;

@@ -70,7 +70,7 @@ export function ReceiptList({
       </div>
 
       <div className="mb-2 flex items-center justify-between gap-2">
-        <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-500">
+        <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-400">
           {copy.recentReceipts}
         </h2>
         {onSyncClick && (
@@ -79,7 +79,7 @@ export function ReceiptList({
             onClick={onSyncClick}
             disabled={syncDisabled || syncing}
             aria-label={copy.pullToRefresh}
-            className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-blue-400 disabled:opacity-40"
+            className="flex min-h-11 min-w-11 items-center justify-center gap-1 rounded-lg px-2 text-[10px] font-bold uppercase tracking-wider text-blue-400 disabled:opacity-40"
           >
             {copy.pullToRefresh}
             <RefreshIcon
@@ -92,7 +92,7 @@ export function ReceiptList({
       <div className="space-y-1.5 pr-1">
         {listHeader}
         {visible.length === 0 ? (
-          <p className="py-4 text-center text-sm text-zinc-500">
+          <p className="py-4 text-center text-sm text-zinc-400">
             {receipts.length === 0
               ? copy.emptyFirst
               : copy.emptyFilter}

@@ -17,7 +17,7 @@ export const settingsVisual = {
     container: "rounded-2xl border border-yellow-500/40 bg-zinc-900 p-4",
     subtitleCompat: "text-xs font-bold text-blue-400",
     subtitleFormat: "text-xs font-bold text-zinc-400",
-    trustFootnote: "mt-3 text-xs font-bold text-zinc-500",
+    trustFootnote: "mt-3 text-xs font-bold text-zinc-400",
     badgePopular: "rounded-full bg-blue-600 px-2 py-0.5 text-[10px] font-black uppercase text-white",
     price: "text-xl font-black text-yellow-500",
   },

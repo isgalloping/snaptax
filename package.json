@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test:unit": "node --import tsx --test lib/**/*.test.ts components/**/*.test.ts",
+    "a11y:audit": "node scripts/a11y-audit.mjs",
     "postinstall": "prisma generate && node scripts/copy-tesseract-assets.mjs",
     "db:migrate:deploy": "node scripts/migrate-deploy.mjs",
     "db:migrate:deploy:production": "node scripts/migrate-deploy.mjs .env.production.local",
@@ -37,6 +38,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
     "@serwist/turbopack": "^9.5.11",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",

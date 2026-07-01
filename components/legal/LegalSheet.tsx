@@ -3,6 +3,7 @@
 import type { LegalDoc } from "@/lib/legal/content";
 import { getLegalBundle, getLegalSections, getLegalTitle } from "@/lib/legal/content";
 import { useI18n } from "@/components/i18n/I18nProvider";
+import { useDialogEscape } from "@/lib/ui/useDialogEscape";
 
 interface LegalSheetProps {
   doc: LegalDoc | null;
@@ -11,6 +12,7 @@ interface LegalSheetProps {
 
 export function LegalSheet({ doc, onClose }: LegalSheetProps) {
   const { locale } = useI18n();
+  useDialogEscape(doc != null, onClose);
   if (!doc) return null;
 
   const bundle = getLegalBundle(locale);
@@ -18,11 +20,17 @@ export function LegalSheet({ doc, onClose }: LegalSheetProps) {
   const title = getLegalTitle(doc, locale);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end bg-black/70">
+    <div
+      className="fixed inset-0 z-50 flex items-end bg-black/70"
+      onClick={onClose}
+      role="presentation"
+    >
       <div
         className="flex max-h-[85vh] w-full flex-col rounded-t-3xl border-t-4 border-yellow-500 bg-zinc-900"
         role="dialog"
+        aria-modal="true"
         aria-labelledby="legal-sheet-title"
+        onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-zinc-700 p-4">
           <h2
@@ -35,6 +43,7 @@ export function LegalSheet({ doc, onClose }: LegalSheetProps) {
             type="button"
             onClick={onClose}
             className="min-h-12 min-w-12 rounded-xl border-2 border-zinc-600 bg-zinc-800 px-4 text-sm font-black uppercase tracking-wider transition-transform active:scale-95"
+            aria-label={bundle.close}
           >
             {bundle.close}
           </button>

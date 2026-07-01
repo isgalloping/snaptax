@@ -131,7 +131,7 @@ export function WidgetPager({
       <div
         ref={viewportRef}
         className={paginated ? pager.viewportPaginated : pager.viewport}
-        role="list"
+        role="region"
         aria-label="Tax insights"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}

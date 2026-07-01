@@ -1,6 +1,6 @@
 "use client";
 
-import type { ComponentProps, MouseEvent } from "react";
+import type { ComponentProps, KeyboardEvent, MouseEvent } from "react";
 import type { Receipt } from "@/lib/types";
 import {
   formatLocalDate,
@@ -64,17 +64,32 @@ function CardShell({
   className = "",
   onClick,
   receiptId,
+  ariaLabel,
   ...props
 }: ComponentProps<"div"> & {
   className?: string;
   onClick?: () => void;
   receiptId?: string;
+  ariaLabel?: string;
 }) {
+  const interactive = onClick != null;
+  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (!onClick) return;
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onClick();
+    }
+  };
+
   return (
     <div
       onClick={onClick}
+      onKeyDown={interactive ? handleKeyDown : undefined}
       data-receipt-id={receiptId}
-      className={`flex w-full items-center gap-3 rounded-xl border border-zinc-700/80 bg-zinc-800/90 text-left transition-transform active:scale-[0.98] ${onClick ? "cursor-pointer" : ""} ${className}`}
+      role={interactive ? "button" : undefined}
+      tabIndex={interactive ? 0 : undefined}
+      aria-label={interactive ? ariaLabel : undefined}
+      className={`flex w-full items-center gap-3 rounded-xl border border-zinc-700/80 bg-zinc-800/90 text-left transition-transform active:scale-[0.98] ${interactive ? "cursor-pointer" : ""} ${className}`}
       {...props}
     >
       {children}
@@ -84,15 +99,18 @@ function CardShell({
 
 function ListDeleteButton({
   label,
+  merchant,
   onClick,
 }: {
   label: string;
+  merchant: string;
   onClick: (event: MouseEvent<HTMLButtonElement>) => void;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
+      aria-label={`${label} ${merchant}`}
       className="shrink-0 min-h-12 min-w-16 rounded-md bg-red-600 px-2.5 text-[10px] font-black uppercase tracking-wide text-white active:scale-95"
     >
       {label}
@@ -115,6 +133,7 @@ export function ReceiptListCard({
   const region = receipt.dataRegion ?? "us";
   const timeZone = clientTimeZone();
   const listDate = formatLocalDate(receipt.timestamp, timeZone, region);
+  const merchantLabel = receipt.merchant ?? copy.unknownMerchant;
 
   const handleDelete = (event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
@@ -127,6 +146,7 @@ export function ReceiptListCard({
         receiptId={receipt.id}
         className={`p-3 ring-2 ring-yellow-500/60 animate-pulse shadow-[0_0_16px_rgba(234,179,8,0.45)]${duplicateHighlightClass(highlighted)}`}
         onClick={() => onSelect(receipt)}
+        ariaLabel={`${merchantLabel}, ${receipt.subtitle ?? copy.processing}`}
       >
         <CircularStatusIcon state="analyzing" />
         <div className="min-w-0 flex-1">
@@ -150,6 +170,7 @@ export function ReceiptListCard({
           receiptId={receipt.id}
           className={`p-3${duplicateHighlightClass(highlighted)}`}
           onClick={() => onResnap(receipt.id)}
+          ariaLabel={`${merchantLabel}, ${copy.photoMissingTitle}`}
         >
           <CircularStatusIcon state="paused" />
           <div className="min-w-0 flex-1">
@@ -163,7 +184,7 @@ export function ReceiptListCard({
           <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
             {copy.photoMissingTitle}
           </span>
-          <ListDeleteButton label={copy.delete} onClick={handleDelete} />
+          <ListDeleteButton label={copy.delete} merchant={merchantLabel} onClick={handleDelete} />
           <ChevronRightIcon className="h-5 w-5 shrink-0 text-zinc-500" />
         </CardShell>
       );
@@ -184,6 +205,7 @@ export function ReceiptListCard({
           if (syncStuck) onRetrySync(receipt.id);
           else onSelect(receipt);
         }}
+        ariaLabel={`${merchantLabel}, ${title}`}
       >
         <CircularStatusIcon state={state} />
         <div className="min-w-0 flex-1">
@@ -196,7 +218,7 @@ export function ReceiptListCard({
         </div>
         <div className="flex shrink-0 items-center gap-1">
           <StatusPill variant={pill} />
-          <ListDeleteButton label={copy.delete} onClick={handleDelete} />
+          <ListDeleteButton label={copy.delete} merchant={merchantLabel} onClick={handleDelete} />
           <ChevronRightIcon className="h-5 w-5 text-zinc-500" />
         </div>
       </CardShell>
@@ -205,10 +227,11 @@ export function ReceiptListCard({
 
   if (receipt.status === "blurry") {
     return (
-      <div
-        data-receipt-id={receipt.id}
+      <CardShell
+        receiptId={receipt.id}
+        className={`border-red-900/50 p-3${duplicateHighlightClass(highlighted)}`}
         onClick={() => onSelect(receipt)}
-        className={`flex w-full cursor-pointer items-center gap-3 rounded-xl border border-red-900/50 bg-zinc-800/90 p-3 text-left transition-transform active:scale-[0.98]${duplicateHighlightClass(highlighted)}`}
+        ariaLabel={`${merchantLabel}, ${copy.receiptBlurry}`}
       >
         <CircularStatusIcon state="blurry" />
         <div className="min-w-0 flex-1">
@@ -225,12 +248,13 @@ export function ReceiptListCard({
             e.stopPropagation();
             onResnap(receipt.id);
           }}
+          aria-label={`${copy.resnap} ${merchantLabel}`}
           className="shrink-0 min-h-12 rounded-md bg-red-600 px-2.5 text-[10px] font-black uppercase tracking-wide text-white active:scale-95"
         >
           {copy.resnap}
         </button>
-        <ListDeleteButton label={copy.delete} onClick={handleDelete} />
-      </div>
+        <ListDeleteButton label={copy.delete} merchant={merchantLabel} onClick={handleDelete} />
+      </CardShell>
     );
   }
 
@@ -249,6 +273,7 @@ export function ReceiptListCard({
           if (ahaCoach && demoDone) onAhaCoachDismiss?.();
           onSelect(receipt);
         }}
+        ariaLabel={`${merchantLabel}, ${tax.label}`}
       >
       <CircularStatusIcon state="done" emoji={categoryEmoji} />
       <div className="min-w-0 flex-1">

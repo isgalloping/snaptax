@@ -474,6 +474,8 @@ export const EN_US_COPY: UserCopy = {
         snap1099Nec: "Snap 1099-NEC",
         snap1099K: "Snap 1099-K",
         trustLine: "Used by thousands of self-employed pros",
+        taxEstimateDisclaimer:
+          "Est. Tax Saved is an estimate, not tax advice. See Terms §6.",
         mostPopular: "Most Popular",
         price: "$49",
         states: {
@@ -568,6 +570,8 @@ export const EN_US_COPY: UserCopy = {
         dataStorageValue:
           "Processed and stored in the United States. See Privacy Policy for international transfers.",
         contactPrefix: "Contact",
+        dataRetention: "Data Retention",
+        security: "Security & Incidents",
         deleteAccount: "Delete Account",
         deleteFailed: "Delete failed. Please try again.",
         deleteRequiresOnline:

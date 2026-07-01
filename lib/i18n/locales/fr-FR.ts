@@ -484,6 +484,8 @@ export const FR_FR_COPY: UserCopy = {
       snap1099Nec: "Photo 1099-NEC",
       snap1099K: "Photo 1099-K",
       trustLine: "Utilisé par des milliers de travailleurs indépendants",
+      taxEstimateDisclaimer:
+        "Est. Tax Saved est une estimation, pas un conseil fiscal. Voir Conditions §6.",
       mostPopular: "Le plus populaire",
       price: "49 $",
       states: {
@@ -578,6 +580,8 @@ export const FR_FR_COPY: UserCopy = {
       dataStorageValue:
         "Traitées et stockées aux États-Unis. Voir la Politique de confidentialité pour les transferts internationaux.",
       contactPrefix: "Contact",
+      dataRetention: "Conservation des données",
+      security: "Sécurité & incidents",
       deleteAccount: "Supprimer le compte",
       deleteFailed: "Échec de la suppression. Veuillez réessayer.",
       deleteRequiresOnline:

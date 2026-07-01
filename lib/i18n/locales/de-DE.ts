@@ -483,6 +483,8 @@ export const DE_DE_COPY: UserCopy = {
       snap1099Nec: "1099-NEC fotografieren",
       snap1099K: "1099-K fotografieren",
       trustLine: "Von Tausenden Selbstständigen genutzt",
+      taxEstimateDisclaimer:
+        "Est. Tax Saved ist nur eine Schätzung, keine Steuerberatung. Siehe Bedingungen §6.",
       mostPopular: "Am beliebtesten",
       price: "49 $",
       states: {
@@ -577,6 +579,8 @@ export const DE_DE_COPY: UserCopy = {
       dataStorageValue:
         "Verarbeitung und Speicherung in den Vereinigten Staaten. Internationale Übermittlungen siehe Datenschutzerklärung.",
       contactPrefix: "Kontakt",
+      dataRetention: "Datenaufbewahrung",
+      security: "Sicherheit & Vorfälle",
       deleteAccount: "Konto löschen",
       deleteFailed: "Löschen fehlgeschlagen. Bitte erneut versuchen.",
       deleteRequiresOnline:

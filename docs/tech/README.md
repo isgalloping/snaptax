@@ -33,6 +33,8 @@
 | 9 | [08-export.md](./08-export.md) | Excel 导出 |
 | 10 | [09-deployment-vercel.md](./09-deployment-vercel.md) | 部署与环境变量 |
 | 11 | [10-testing-observability.md](./10-testing-observability.md) | 测试与监控 |
+| 12 | [SECURITY-BASELINE.md](./SECURITY-BASELINE.md) | **安全基线控制矩阵（合规 M2）** |
+| 13 | [../ops/README.md](../ops/README.md) | **安全运营 Runbook（合规 M4）** |
 
 ## 设计决策 ADR
 

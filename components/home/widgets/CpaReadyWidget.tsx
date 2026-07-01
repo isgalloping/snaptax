@@ -18,7 +18,6 @@ export function CpaReadyWidget({ count, onExport }: CpaReadyWidgetProps) {
       type="button"
       onClick={onExport}
       className={`${card} flex flex-col ${visual.bg} ${visual.border} text-left transition-transform active:scale-[0.98]`}
-      role="listitem"
     >
       <p className={`text-[9px] font-bold uppercase tracking-wider leading-none ${visual.accent}`}>
         {copy.label}

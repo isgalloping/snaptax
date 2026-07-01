@@ -67,8 +67,9 @@
 | **相机界面脚注（snap 时）** | `By snapping, you agree to our Terms & Privacy Policy. Online processing stores data in the United States.`（`CameraOverlay` 底部；首页 Snap 按钮下与 Trust Bar 内均不重复） |
 | **Trust Bar（常驻）** | 单行隐私 reassurance 条（`Your receipts stay private…` + 🛡）；**Learn more** → 全屏 Trust overlay（4 条信任点 + **Got it**），非居中 Modal、非首张票阻挡卡片 |
 | **Terms / Privacy 链接** | Bottom Sheet 或 `/privacy` `/terms` |
+| **Data Retention / Security** | Settings → Privacy & Data 链至 `/data-retention`、`/security` |
 | **Settings → Data storage** | 固定：`Processed and stored in the United States. See Privacy Policy for international transfers.` |
-| **Privacy Policy §4** | 国际传输与美国存储完整表述（canonical：`docs/legal/privacy.md`） |
+| **Privacy Policy §6** | 国际传输与美国存储完整表述（canonical：`docs/legal/privacy.md`） |
 
 **不做：** Cookie 追踪横幅 · 首张票安全卡片 · Paywall 勾选 · 首次打开阻挡弹窗  
 
@@ -76,7 +77,7 @@
 
 #### 2.3.3 设置页 Privacy & Data
 
-Privacy Policy · Terms · **Data storage（美国）** · legal@snap1099.com · **Delete Account**（Sheet 确认；未登录清本地+Ghost 服务端数据；已登录 `DELETE /api/users/me`）
+Privacy Policy · Terms · **Data Retention** · **Security** · **Data storage（美国）** · legal@snap1099.com · **Delete Account**（Sheet 确认；未登录清本地+Ghost 服务端数据；已登录 `DELETE /api/users/me`）
 
 #### 2.3.4 子处理方（Privacy 必披露）
 
@@ -84,7 +85,7 @@ Privacy Policy · Terms · **Data storage（美国）** · legal@snap1099.com ·
 
 #### 2.3.5 用户权利
 
-访问/导出 · Delete Account · legal@snap1099.com（48h 目标响应）
+访问/导出 · Delete Account · legal@snap1099.com（**30 天**法定响应；**48 小时**内确认收悉）· DSR 内部流程见 `docs/ops/dsr-playbook.md`
 
 ### 2.4 账户与身份
 
@@ -265,7 +266,11 @@ Next.js 16 · React 19 · Tailwind 4 · Serwist · **PostgreSQL（美国）** ·
 | Google 软/硬引导 UI | ✅ | ✅（GIS + 后端绑定；T1 Nudge + T2 首次 Settings Sheet） |
 | 蓝领新人引导（Aha onboarding） | ✅ | ✅（Hero Stage 0 + shadow/sandbox/Aha + Stage 1 SNAP focus ring） |
 | 设置页账户区 + 多端 + Paywall UI | ✅ | ✅（Paddle.js Overlay；无 env 时阻断，不假成功） |
-| Privacy §4 国际传输 | ✅ | ✅ |
+| Privacy §6 国际传输 + SCC/CPRA | ✅ | ✅（`docs/legal/privacy.md` 12 节；`/data-retention` `/security`） |
+| Terms §6 Est. Tax Saved 免责 | ✅ | ✅（Settings Export 卡脚注） |
+| DSR 30 天 SLA + playbook | ✅ | ✅（`docs/ops/dsr-playbook.md`） |
+| Data Retention 文档 = 代码常量 | ✅ | ✅（`docs/legal/data-retention.md` · 18mo/90d/24h） |
+| Security Baseline 控制矩阵 | ✅ | ✅（`docs/tech/SECURITY-BASELINE.md`） |
 | Google + Ghost 绑定（后端） | ✅ | ✅ |
 | Paddle（后端 Webhook） | ✅ | ✅（需配置 `PADDLE_*` / `NEXT_PUBLIC_PADDLE_*`） |
 | Ghost 小票 API（美国） | ✅ | ✅（HMAC Cookie + 限流） |
@@ -285,7 +290,9 @@ Next.js 16 · React 19 · Tailwind 4 · Serwist · **PostgreSQL（美国）** ·
 - [ ] **联网 Ghost** 是否走 OpenAI/API，而非仅 mock？  
 - [ ] **离线** 是否不调 OpenAI、仅队列？  
 - [ ] 脚注与 Settings 是否告知 **美国存储/处理**？  
-- [ ] Privacy §4 与 `privacy.updated.md` 一致？  
+- [ ] Privacy §6 与 `docs/legal/privacy.md` 一致？  
+- [ ] Settings 是否链至 **Data Retention** / **Security**？  
+- [ ] Export 卡是否含 **Est. Tax Saved 免责**？  
 - [ ] 未登录小票是否用 `ghost_id` 写美国云？  
 - [ ] Google 登录后是否迁移 Ghost 数据？  
 - [ ] Ghost 是否用 **HMAC token**，而非裸 `X-Ghost-Id`？  
@@ -300,6 +307,10 @@ Next.js 16 · React 19 · Tailwind 4 · Serwist · **PostgreSQL（美国）** ·
 | 文档 | 用途 |
 |------|------|
 | [legal/privacy.md](../legal/privacy.md) | 隐私政策 canonical（英文） |
+| [legal/data-retention.md](../legal/data-retention.md) | 数据保留政策 |
+| [legal/security-incident.md](../legal/security-incident.md) | 安全与事件响应摘要 |
+| [ops/dsr-playbook.md](../ops/dsr-playbook.md) | DSR 内部处理流程 |
+| [tech/SECURITY-BASELINE.md](../tech/SECURITY-BASELINE.md) | 安全基线控制矩阵 |
 | [legal/privacy.fr.md](../legal/privacy.fr.md) | 隐私政策（法文） |
 | [legal/privacy.de.md](../legal/privacy.de.md) | 隐私政策（德文） |
 | [legal/terms.md](../legal/terms.md) | 服务条款（英文） |

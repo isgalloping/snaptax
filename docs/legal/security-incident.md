@@ -18,4 +18,5 @@ We do not request your password or full payment card details by email.
 ## Related policies
 
 - [Privacy Policy](/privacy)  
-- [Terms of Service](/terms)
+- [Terms of Service](/terms)  
+- [Data Retention Policy](/data-retention)

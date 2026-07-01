@@ -65,7 +65,7 @@ Local and server retention periods are documented in [data-retention.md](../lega
 
 Public commitment: [security-incident.md](../legal/security-incident.md) (72h high-risk breach notification where required).
 
-Internal IRP and runbooks: M4 deliverables under `docs/ops/` (see compliance program M4).
+Internal IRP and runbooks: [docs/ops/security-incident-response.md](../ops/security-incident-response.md) · [docs/ops/README.md](../ops/README.md).
 
 ---
 

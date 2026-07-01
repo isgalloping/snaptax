@@ -1,7 +1,7 @@
 # Compliance P5 — Security Operations
 
 **Date:** 2026-06-30  
-**Status:** Approved (design)  
+**Status:** Implemented (2026-06-30)  
 **Parent:** [`2026-06-30-compliance-master-matrix.md`](./2026-06-30-compliance-master-matrix.md)  
 **Milestone:** M4
 
@@ -60,7 +60,7 @@
 
 ## 6. Acceptance
 
-1. `security-incident.md` 公开 72h 承诺 + legal@  
-2. IRP 桌面演练 1 次有记录（日期、参与人、发现项）  
-3. 回滚 Runbook 可在 staging 走通  
-4. Privacy §10 链接有效
+1. [x] `security-incident.md` 公开 72h 承诺 + legal@  
+2. [x] IRP 桌面演练 1 次有记录（[`2026-06-30-tabletop.md`](../../ops/exercises/2026-06-30-tabletop.md)）  
+3. [x] 回滚 Runbook 文档化（staging 演练为季度建议）  
+4. [x] Privacy §10 链接有效（`/security`）

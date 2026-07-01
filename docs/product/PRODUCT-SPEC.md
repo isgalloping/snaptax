@@ -272,6 +272,7 @@ Next.js 16 · React 19 · Tailwind 4 · Serwist · **PostgreSQL（美国）** ·
 | Data Retention 文档 = 代码常量 | ✅ | ✅（`docs/legal/data-retention.md` · 18mo/90d/24h） |
 | Security Baseline 控制矩阵 | ✅ | ✅（`docs/tech/SECURITY-BASELINE.md`） |
 | WCAG 2.2 AA 核心路径 | ✅ | ✅（axe 0 critical/serious · `docs/accessibility/`） |
+| Security incident IRP + 72h | ✅ | ✅（`docs/ops/` · `/security` · tabletop 2026-06-30） |
 | Google + Ghost 绑定（后端） | ✅ | ✅ |
 | Paddle（后端 Webhook） | ✅ | ✅（需配置 `PADDLE_*` / `NEXT_PUBLIC_PADDLE_*`） |
 | Ghost 小票 API（美国） | ✅ | ✅（HMAC Cookie + 限流） |
@@ -294,6 +295,7 @@ Next.js 16 · React 19 · Tailwind 4 · Serwist · **PostgreSQL（美国）** ·
 - [ ] Privacy §6 与 `docs/legal/privacy.md` 一致？  
 - [ ] Settings 是否链至 **Data Retention** / **Security**？  
 - [ ] Export 卡是否含 **Est. Tax Saved 免责**？  
+- [ ] IRP / 72h 是否链自 `/security` 与 `docs/ops/security-incident-response.md`？  
 - [ ] 未登录小票是否用 `ghost_id` 写美国云？  
 - [ ] Google 登录后是否迁移 Ghost 数据？  
 - [ ] Ghost 是否用 **HMAC token**，而非裸 `X-Ghost-Id`？  
@@ -313,6 +315,7 @@ Next.js 16 · React 19 · Tailwind 4 · Serwist · **PostgreSQL（美国）** ·
 | [ops/dsr-playbook.md](../ops/dsr-playbook.md) | DSR 内部处理流程 |
 | [tech/SECURITY-BASELINE.md](../tech/SECURITY-BASELINE.md) | 安全基线控制矩阵 |
 | [accessibility/WCAG-22-AA-summary.md](../accessibility/WCAG-22-AA-summary.md) | WCAG 2.2 AA 符合性摘要 |
+| [ops/README.md](../ops/README.md) | 安全事件 IRP · 备份 · 回滚 · DSR |
 | [legal/privacy.fr.md](../legal/privacy.fr.md) | 隐私政策（法文） |
 | [legal/privacy.de.md](../legal/privacy.de.md) | 隐私政策（德文） |
 | [legal/terms.md](../legal/terms.md) | 服务条款（英文） |

@@ -1,7 +1,7 @@
 # Compliance P2 — Data Lifecycle & Retention
 
 **Date:** 2026-06-30  
-**Status:** Approved (design)  
+**Status:** Implemented (2026-06-30)  
 **Parent:** [`2026-06-30-compliance-master-matrix.md`](./2026-06-30-compliance-master-matrix.md)  
 **Milestone:** M2
 
@@ -42,9 +42,9 @@
 
 ## 4. Code alignment tasks (M2)
 
-- [ ] 文档常量与 `lib/client/receiptRetention.ts` · `photoRetention.ts` · `dbRateLimit.ts` 一致
-- [ ] Delete Account 路径文档化 server 删 Blob+PG（已有 spec：`delete-account-full-cleanup`）
-- [ ] **可携带权：** Export Tax Pack = 结构化可携带格式（CSV/XLSX）；Privacy 明示
+- [x] 文档常量与 `lib/client/receiptRetention.ts` · `photoRetention.ts` · `dbRateLimit.ts` 一致
+- [x] Delete Account 路径文档化 server 删 Blob+PG（已有 spec：`delete-account-full-cleanup`）
+- [x] **可携带权：** Export Tax Pack = 结构化可携带格式（CSV/XLSX）；Privacy 明示
 
 ---
 

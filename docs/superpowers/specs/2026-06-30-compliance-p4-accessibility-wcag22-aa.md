@@ -1,7 +1,7 @@
 # Compliance P4 — Accessibility (WCAG 2.2 AA)
 
 **Date:** 2026-06-30  
-**Status:** Approved (design)  
+**Status:** Implemented (2026-06-30)  
 **Parent:** [`2026-06-30-compliance-master-matrix.md`](./2026-06-30-compliance-master-matrix.md)  
 **Milestone:** M3
 

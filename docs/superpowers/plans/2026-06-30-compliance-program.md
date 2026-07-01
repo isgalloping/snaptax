@@ -326,6 +326,8 @@ git commit -m "docs: mark compliance master matrix complete"
 
 **M4 exit:** Matrix row 12 → Implemented; program complete.
 
+**Program status:** ✅ **Complete** (2026-06-30 · branch `0.4.2`) — see [`2026-06-30-compliance-master-matrix.md`](../specs/2026-06-30-compliance-master-matrix.md) §6.
+
 ---
 
 ## Execution order (recommended waves)

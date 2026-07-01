@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { describe, it } from "node:test";
+import { afterEach, beforeEach, describe, it } from "node:test";
 import {
   buildTextClassifyResult,
   ocrDraftToStructured,
@@ -19,6 +19,34 @@ const goodDraft: OcrDraftPayload = {
     signals: { merchantMissing: false, totalMissing: false, garbleRatio: 0 },
   },
 };
+
+const ENV_KEYS = [
+  "TAX_US_MARGINAL_RATE",
+  "RECEIPT_ACTION_THRESHOLD",
+  "RECEIPT_CONFIDENCE_THRESHOLD",
+] as const;
+
+let previousEnv: Partial<Record<(typeof ENV_KEYS)[number], string | undefined>>;
+
+beforeEach(() => {
+  previousEnv = Object.fromEntries(
+    ENV_KEYS.map((key) => [key, process.env[key]]),
+  ) as typeof previousEnv;
+  process.env.TAX_US_MARGINAL_RATE = "0.25";
+  process.env.RECEIPT_ACTION_THRESHOLD = "0.5";
+  process.env.RECEIPT_CONFIDENCE_THRESHOLD = "0.7";
+});
+
+afterEach(() => {
+  for (const key of ENV_KEYS) {
+    const value = previousEnv[key];
+    if (value == null) {
+      delete process.env[key];
+    } else {
+      process.env[key] = value;
+    }
+  }
+});
 
 describe("pickReceiptTaxRoute", () => {
   it("uses text classify when ocrDraft passes gate", () => {

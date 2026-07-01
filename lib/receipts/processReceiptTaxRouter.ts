@@ -72,24 +72,18 @@ function blurryFromTextClassify(
   };
 }
 
-export async function runTextClassifyPath(params: {
-  ocrDraft: OcrDraftPayload;
+export function buildTextClassifyResult(params: {
+  classified: Awaited<ReturnType<typeof classifyReceiptText>>;
   dataRegion: TaxRegion;
-  industry?: string | null;
-}): Promise<VisionProcessResult> {
-  const structured = ocrDraftToStructured(params.ocrDraft);
-  const model = getOpenAiClassifyModel();
-  const classified = await classifyReceiptText({
-    structured,
-    dataRegion: params.dataRegion,
-    industry: params.industry,
-  });
-
-  if (classified.region === "eu") {
-    const f = classified.fields;
+  model: string;
+  ocrDraft: OcrDraftPayload;
+  structured: StructuredReceipt;
+}): VisionProcessResult {
+  if (params.classified.region === "eu") {
+    const f = params.classified.fields;
     const tier = visionConfidenceTier(f.confidence, f.amount);
     if (tier === "action") {
-      return blurryFromTextClassify(params.dataRegion, model, {
+      return blurryFromTextClassify(params.dataRegion, params.model, {
         lowConfidence: true,
         fields: f,
       });
@@ -110,19 +104,19 @@ export async function runTextClassifyPath(params: {
         vat_rate: f.vat_rate,
         vat_amount: f.vat_amount,
         computed_vat: f.vat_amount == null && computedVat != null,
-        model,
-        classificationModel: model,
+        model: params.model,
+        classificationModel: params.model,
         extractionSource: "local_ocr",
         ocrDraft: summarizeOcrDraftForAiRaw(params.ocrDraft),
-        rawText: structured.rawText.slice(0, 2000),
+        rawText: params.structured.rawText.slice(0, 2000),
       },
     };
   }
 
-  const f = classified.fields;
+  const f = params.classified.fields;
   const tier = visionConfidenceTier(f.confidence, f.amount);
   if (tier === "action") {
-    return blurryFromTextClassify(params.dataRegion, model, {
+    return blurryFromTextClassify(params.dataRegion, params.model, {
       lowConfidence: true,
       fields: f,
     });
@@ -142,13 +136,35 @@ export async function runTextClassifyPath(params: {
       deduction_ratio: f.deduction_ratio,
       marginal_rate: usMarginalRate(),
       deductible_base: usDeductibleBase(f),
-      model,
-      classificationModel: model,
+      model: params.model,
+      classificationModel: params.model,
       extractionSource: "local_ocr",
       ocrDraft: summarizeOcrDraftForAiRaw(params.ocrDraft),
-      rawText: structured.rawText.slice(0, 2000),
+      rawText: params.structured.rawText.slice(0, 2000),
     },
   };
+}
+
+export async function runTextClassifyPath(params: {
+  ocrDraft: OcrDraftPayload;
+  dataRegion: TaxRegion;
+  industry?: string | null;
+}): Promise<VisionProcessResult> {
+  const structured = ocrDraftToStructured(params.ocrDraft);
+  const model = getOpenAiClassifyModel();
+  const classified = await classifyReceiptText({
+    structured,
+    dataRegion: params.dataRegion,
+    industry: params.industry,
+  });
+
+  return buildTextClassifyResult({
+    classified,
+    dataRegion: params.dataRegion,
+    model,
+    ocrDraft: params.ocrDraft,
+    structured,
+  });
 }
 
 export async function runVisionPath(params: {

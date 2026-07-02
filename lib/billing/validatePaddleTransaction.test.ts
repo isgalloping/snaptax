@@ -40,6 +40,25 @@ describe("validatePaddleTransaction", () => {
     }
   });
 
+  it("passes through founder custom_data fields", () => {
+    const result = validatePaddleTransaction({
+      ...basePayload,
+      data: {
+        ...basePayload.data!,
+        custom_data: {
+          intentId: "intent-uuid",
+          founderPurchase: true,
+          skuTier: "FOUNDER_LEVEL_SUPER",
+        },
+      },
+    });
+    assert.equal(result.ok, true);
+    if (result.ok) {
+      assert.equal(result.customData?.founderPurchase, true);
+      assert.equal(result.customData?.skuTier, "FOUNDER_LEVEL_SUPER");
+    }
+  });
+
   it("rejects non-completed status", () => {
     const result = validatePaddleTransaction({
       ...basePayload,

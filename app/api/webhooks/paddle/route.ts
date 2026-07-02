@@ -9,9 +9,22 @@ import {
   resolveWebhookGrantTarget,
 } from "@/lib/billing/checkoutIntent";
 import { grantPaddleSeasonEntitlement } from "@/lib/billing/grantSeasonEntitlement";
+import type { FounderTier } from "@/lib/founder/types";
+import { prisma } from "@/lib/prisma";
+import { assignFounderSeatOnFirstPurchase } from "@/lib/server/assignFounderSeat";
 import { currentTaxSeason } from "@/lib/tax/season";
 import { withRequestLog } from "@/lib/server/log/withRequestLog";
 import { logEvent } from "@/lib/server/log/logEvent";
+
+function isFounderSkuTier(
+  tier: string | undefined,
+): tier is Exclude<FounderTier, "DEFAULT"> {
+  return (
+    tier === "FOUNDER_LEVEL_SUPER" ||
+    tier === "EARLY" ||
+    tier === "FOUNDER"
+  );
+}
 
 export const POST = withRequestLog("api.webhook", async (request, _context) => {
   const rawBody = await request.text();
@@ -146,6 +159,38 @@ export const POST = withRequestLog("api.webhook", async (request, _context) => {
 
   if (grant.intentId) {
     await markCheckoutIntentConsumed(grant.intentId, validated.transactionId);
+  }
+
+  const customData = validated.customData;
+  const founderPurchase = customData?.founderPurchase === true;
+  const skuTier = customData?.skuTier;
+
+  if (founderPurchase && isFounderSkuTier(skuTier)) {
+    const seatResult = await assignFounderSeatOnFirstPurchase(grant.userId);
+
+    if (!seatResult.assigned && seatResult.founderNumber != null) {
+      await prisma.snaptaxUser.update({
+        where: { id: grant.userId },
+        data: { founderStatus: "active" },
+      });
+    }
+
+    logEvent({
+      ts: new Date().toISOString(),
+      level: "info",
+      module: "biz.founder",
+      success: true,
+      durationMs: 0,
+      userId: grant.userId,
+      meta: {
+        event: "founder_purchase_success",
+        founderNumber: seatResult.founderNumber,
+        tier: seatResult.tier ?? skuTier,
+        founderPurchase: true,
+        transactionId: validated.transactionId,
+        taxSeason,
+      },
+    });
   }
 
   logEvent({

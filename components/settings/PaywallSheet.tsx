@@ -104,7 +104,7 @@ export function PaywallSheet({
       const intentRes = await apiFetch("/api/billing/checkout-intent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ taxSeason: seasonLabel }),
+        body: JSON.stringify({ taxSeason: seasonLabel, skuTier: "DEFAULT" }),
       });
 
       if (!intentRes.ok) {

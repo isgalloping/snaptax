@@ -12,6 +12,7 @@ export type LogModule =
   | "biz.blob"
   | "biz.ghost"
   | "biz.paddle"
+  | "biz.founder"
   | "biz.export"
   | "biz.verify";
 
@@ -42,6 +43,10 @@ export type LogMeta = {
   stage?: string;
   extractionSource?: string;
   engine?: string;
+  event?: string;
+  founderNumber?: number | null;
+  tier?: string;
+  founderPurchase?: boolean;
 };
 
 export type LogEntry = {

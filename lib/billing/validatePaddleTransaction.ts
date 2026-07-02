@@ -7,6 +7,8 @@ export type PaddleWebhookPayload = {
       intentId?: string;
       userId?: string;
       taxSeason?: string;
+      founderPurchase?: boolean;
+      skuTier?: string;
     };
     details?: {
       totals?: {

@@ -141,11 +141,12 @@ export async function assignFounderSeatOnFirstPurchase(
         tx.snaptaxUser.count({
           where: { founderNumber: { not: null } },
         }),
-      assignSeat: (id, data) =>
-        tx.snaptaxUser.update({
+      assignSeat: async (id, data) => {
+        await tx.snaptaxUser.update({
           where: { id },
           data,
-        }),
+        });
+      },
       now: deps.now ?? utcNow,
       maxAttempts: deps.maxAttempts,
     };

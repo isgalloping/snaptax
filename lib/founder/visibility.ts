@@ -1,5 +1,5 @@
-import type { FounderStatus } from "./types.ts";
-import { FOUNDER_SEATS_TOTAL } from "./types.ts";
+import type { FounderStatus } from "./types";
+import { FOUNDER_SEATS_TOTAL } from "./types";
 
 export type FounderVisibilityInput = {
   enabled: boolean;

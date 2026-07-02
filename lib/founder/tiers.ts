@@ -1,4 +1,4 @@
-import { FOUNDER_SEATS_TOTAL, type FounderTier } from "./types.ts";
+import { FOUNDER_SEATS_TOTAL, type FounderTier } from "./types";
 export { FOUNDER_SEATS_TOTAL };
 
 export function tierForSeat(seat: number): FounderTier | null {

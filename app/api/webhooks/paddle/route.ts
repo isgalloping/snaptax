@@ -190,7 +190,7 @@ export const POST = withRequestLog("api.webhook", async (request, _context) => {
         meta: {
           event: "founder_seat_unavailable_after_payment",
           transactionId: validated.transactionId,
-          skuTier: founderSkuTier,
+          tier: founderSkuTier,
           taxSeason,
         },
       });
@@ -206,7 +206,7 @@ export const POST = withRequestLog("api.webhook", async (request, _context) => {
           event: "founder_purchase_success",
           founderNumber: seatResult.founderNumber,
           tier: seatResult.tier ?? founderSkuTier,
-          assigned: seatResult.assigned,
+          reason: seatResult.assigned ? "new_seat_assigned" : "existing_founder_seat",
           transactionId: validated.transactionId,
           taxSeason,
         },

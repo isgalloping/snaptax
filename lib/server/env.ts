@@ -129,6 +129,19 @@ export function getPaddlePriceId(): string {
   );
 }
 
+export function getPaddlePriceIdForFounderTier(tier: string): string {
+  switch (tier) {
+    case "FOUNDER_LEVEL_SUPER":
+      return firstDefined(process.env.PADDLE_PRICE_ID_FOUNDER_SUPER, "");
+    case "EARLY":
+      return firstDefined(process.env.PADDLE_PRICE_ID_FOUNDER_EARLY, "");
+    case "FOUNDER":
+      return firstDefined(process.env.PADDLE_PRICE_ID_FOUNDER, "");
+    default:
+      return getPaddlePriceId();
+  }
+}
+
 export function getPaddleWebhookSecret(): string {
   return firstDefined(process.env.PADDLE_WEBHOOK_SECRET);
 }

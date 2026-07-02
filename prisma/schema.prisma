@@ -24,6 +24,10 @@ model SnaptaxUser {
   dataRegionLockedAt DateTime @default(now()) @map("data_region_locked_at") @db.Timestamptz(3)
   createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  founderNumber      Int?     @map("founder_number")
+  founderTier        String?  @map("founder_tier") @db.VarChar(32)
+  founderStatus      String?  @map("founder_status") @db.VarChar(16)
+  founderLockedAt    DateTime? @map("founder_locked_at") @db.Timestamptz(3)
 
   ghostAccount       SnaptaxGhostAccount?
   receipts           SnaptaxReceipt[]
@@ -32,6 +36,7 @@ model SnaptaxUser {
 
   @@unique([authChannel, userId], map: "snaptax_users_auth_channel_user_id_key")
   @@index([userEmail], map: "snaptax_users_user_email_idx")
+  @@index([founderNumber], map: "snaptax_users_founder_number_idx")
   @@map("snaptax_users")
 }
 

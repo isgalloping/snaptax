@@ -109,6 +109,20 @@ describe("buildWidgetPageKeys", () => {
       ["missing", "deadline", "progress", "cpa"],
     );
   });
+
+  it("prepends founder when showFounder is true", () => {
+    assert.deepEqual(
+      buildWidgetPageKeys(mockData(), 0, { showFounder: true }),
+      ["founder", "deadline", "progress"],
+    );
+  });
+
+  it("omits founder when showFounder is false", () => {
+    assert.deepEqual(
+      buildWidgetPageKeys(mockData(), 0, { showFounder: false }),
+      ["deadline", "progress"],
+    );
+  });
 });
 
 describe("buildWidgetPages", () => {

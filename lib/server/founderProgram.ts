@@ -84,6 +84,7 @@ export async function getFounderProgramState(userId?: string) {
   const founderStatus = normalizeFounderStatus(user?.founderStatus);
 
   return {
+    enabled: config.enabled,
     seatsTotal: FOUNDER_SEATS_TOTAL,
     claimedCount,
     remaining: Math.max(0, FOUNDER_SEATS_TOTAL - claimedCount),

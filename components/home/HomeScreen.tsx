@@ -92,6 +92,7 @@ import { ReceiptList } from "./ReceiptList";
 import { InlinePrivacyNote } from "./InlinePrivacyNote";
 import { HomeScrollRegion } from "./HomeScrollRegion";
 import { WidgetStack } from "./widgets/WidgetStack";
+import { FounderProgramSheet } from "./sheets/FounderProgramSheet";
 import {
   HomeOverlayHost,
   type HomeOverlay,
@@ -179,6 +180,8 @@ export function HomeScreen() {
   );
   const [seasonExportTick, setSeasonExportTick] = useState(0);
   const [homeOverlay, setHomeOverlay] = useState<HomeOverlay>(null);
+  const [founderSheetOpen, setFounderSheetOpen] = useState(false);
+  const [founderRefreshTick, setFounderRefreshTick] = useState(0);
   const [exitConfirmOpen, setExitConfirmOpen] = useState(false);
   const [settingsViewState, setSettingsViewState] =
     useState<SettingsViewState>("main");
@@ -1346,6 +1349,10 @@ export function HomeScreen() {
       <WidgetStack
         data={widgetsData}
         actionCount={actionCount}
+        isSignedIn={auth.isSignedIn}
+        authHydrated={auth.hydrated}
+        founderRefreshTick={founderRefreshTick}
+        onFounderOpen={() => setFounderSheetOpen(true)}
         onDeadlineDetails={() => showOverlay("deadline-detail")}
         onMissingReview={() => showOverlay("missing-deductions")}
         onProgressDetails={() => showOverlay("tax-year-detail")}
@@ -1419,6 +1426,21 @@ export function HomeScreen() {
       )}
 
       {taxExport.overlays}
+
+      {founderSheetOpen && (
+        <FounderProgramSheet
+          onClose={() => setFounderSheetOpen(false)}
+          isSignedIn={auth.isSignedIn}
+          onRequestGoogleSignIn={() => void auth.signInWithGoogle()}
+          userEmail={auth.googleUser?.email}
+          seasonLabel={auth.currentSeason}
+          onPaid={async () => {
+            setFounderSheetOpen(false);
+            await auth.refreshSeasonPaid();
+            setFounderRefreshTick((tick) => tick + 1);
+          }}
+        />
+      )}
 
       <ExitConfirmSheet
         open={exitConfirmOpen}

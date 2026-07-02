@@ -1,21 +1,31 @@
 import type { HomeWidgetsData } from "./computeHomeWidgets";
 
 export type WidgetPageKey =
+  | "founder"
   | "deadline"
   | "missing"
   | "progress"
   | "cpa"
   | "needAction";
 
+export type BuildWidgetPageOptions = {
+  showFounder?: boolean;
+};
+
 /** Visible widgets; Need Action #2 and CPA #3 when ACTION + tax season. */
 export function buildWidgetPageKeys(
   data: HomeWidgetsData,
   actionCount = 0,
+  options?: BuildWidgetPageOptions,
 ): WidgetPageKey[] {
   const hasMissing = data.missing.missing.length > 0;
   const hasAction = actionCount > 0;
   const hasCpa = data.showCpaReady;
   const keys: WidgetPageKey[] = [];
+
+  if (options?.showFounder) {
+    keys.push("founder");
+  }
 
   if (hasMissing) {
     keys.push("missing");
@@ -55,8 +65,9 @@ export function chunkPages<T>(keys: T[], maxPerPage = 3): T[][] {
 export function buildWidgetPages(
   data: HomeWidgetsData,
   actionCount = 0,
+  options?: BuildWidgetPageOptions,
 ): WidgetPageKey[][] {
-  return chunkPages(buildWidgetPageKeys(data, actionCount));
+  return chunkPages(buildWidgetPageKeys(data, actionCount, options));
 }
 
 export function pageColumnFlexClass(count: number): string {

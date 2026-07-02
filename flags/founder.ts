@@ -19,30 +19,31 @@ export const founderProgramEnabledFlag = flag<boolean>({
   ],
 });
 
-export const founderPriceSuperCentsFlag = flag<number>({
-  key: "founderPriceSuperCents",
+/** Season price in USD (e.g. 5 = $5.00). */
+export const founderPriceSuperFlag = flag<number>({
+  key: "founderPriceSuper",
   adapter: vercelAdapter(),
   identify,
-  defaultValue: 100,
+  defaultValue: 5,
 });
 
-export const founderPriceEarlyCentsFlag = flag<number>({
-  key: "founderPriceEarlyCents",
+export const founderPriceEarlyFlag = flag<number>({
+  key: "founderPriceEarly",
   adapter: vercelAdapter(),
   identify,
-  defaultValue: 500,
+  defaultValue: 10,
 });
 
-export const founderPriceFounderCentsFlag = flag<number>({
-  key: "founderPriceFounderCents",
+export const founderPriceFounderFlag = flag<number>({
+  key: "founderPriceFounder",
   adapter: vercelAdapter(),
   identify,
-  defaultValue: 2900,
+  defaultValue: 15,
 });
 
-export const founderPriceDefaultCentsFlag = flag<number>({
-  key: "founderPriceDefaultCents",
+export const founderPriceDefaultFlag = flag<number>({
+  key: "founderPriceDefault",
   adapter: vercelAdapter(),
   identify,
-  defaultValue: 4900,
+  defaultValue: 29,
 });

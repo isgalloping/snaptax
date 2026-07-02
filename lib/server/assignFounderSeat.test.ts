@@ -63,6 +63,7 @@ describe("assignFounderSeatOnFirstPurchase", () => {
       assigned: false,
       founderNumber: null,
       tier: null,
+      seatUnavailable: true,
     });
     assert.deepEqual(assignCalls, []);
   });
@@ -94,5 +95,30 @@ describe("assignFounderSeatOnFirstPurchase", () => {
     });
     assert.deepEqual(countCalls, []);
     assert.deepEqual(assignCalls, []);
+  });
+
+  it("retries after founder_number unique conflict when program becomes full", async () => {
+    let assignAttempts = 0;
+    const { Prisma } = await import("@prisma/client");
+
+    const result = await assignFounderSeatOnFirstPurchase("user-race", {
+      runTransaction: async (fn) => fn(),
+      findUser: async () => ({ founderNumber: null }),
+      countClaimedSeats: async () => (assignAttempts === 0 ? 49 : 50),
+      assignSeat: async () => {
+        assignAttempts++;
+        throw new Prisma.PrismaClientKnownRequestError("Unique constraint", {
+          code: "P2002",
+          clientVersion: "test",
+          meta: { target: ["founder_number"] },
+        });
+      },
+      now: () => new Date("2026-06-13T12:00:00.000Z"),
+    });
+
+    assert.equal(result.assigned, false);
+    assert.equal(result.founderNumber, null);
+    assert.equal(result.seatUnavailable, true);
+    assert.equal(assignAttempts, 1);
   });
 });

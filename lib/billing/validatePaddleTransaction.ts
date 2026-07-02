@@ -36,9 +36,9 @@ export type PaddleTransactionValidation =
 
 function envMinAmountCents(): number {
   const raw = process.env.PADDLE_MIN_AMOUNT_CENTS;
-  if (raw == null || raw.trim() === "") return 4900;
+  if (raw == null || raw.trim() === "") return 500; // lowest founder tier ($5)
   const parsed = Number(raw);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 4900;
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 500;
 }
 
 function envCurrency(): string {

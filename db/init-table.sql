@@ -34,6 +34,10 @@ CREATE INDEX snaptax_users_founder_number_idx
   ON snaptax_users (founder_number)
   WHERE founder_number IS NOT NULL;
 
+CREATE UNIQUE INDEX snaptax_users_founder_number_uidx
+  ON snaptax_users (founder_number)
+  WHERE founder_number IS NOT NULL;
+
 -- ---------------------------------------------------------------------------
 -- snaptax_ghost_account
 -- ---------------------------------------------------------------------------
@@ -265,6 +269,7 @@ COMMENT ON COLUMN snaptax_checkout_intents.updated_at IS '记录最后更新时�
 COMMENT ON INDEX snaptax_users_auth_channel_user_id_key IS '登录 upsert：(auth_channel, user_id) 唯一';
 COMMENT ON INDEX snaptax_users_user_email_idx IS '按邮箱查用户';
 COMMENT ON INDEX snaptax_users_founder_number_idx IS 'Founder 席位计数与查重；部分索引（仅 founder_number 非空）';
+COMMENT ON INDEX snaptax_users_founder_number_uidx IS 'Founder 席位编号唯一；防止第 50 席并发重复分配';
 COMMENT ON INDEX snaptax_ghost_account_ghost_id_key IS 'Ghost 绑定查 ghost_id';
 COMMENT ON INDEX snaptax_ghost_account_user_id_key IS '查用户对应的 Ghost 绑定';
 COMMENT ON INDEX snaptax_receipts_user_captured_idx IS '主界面最近小票：user_id + captured_at DESC';

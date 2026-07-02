@@ -68,6 +68,22 @@ describe("validatePaddleTransaction", () => {
     if (!result.ok) assert.equal(result.reason, "invalid_status");
   });
 
+  it("accepts founder super tier amount ($5)", () => {
+    const result = validatePaddleTransaction({
+      ...basePayload,
+      data: {
+        ...basePayload.data!,
+        details: { totals: { total: "500", currency_code: "USD" } },
+        custom_data: { intentId: "intent-uuid", founderPurchase: true, skuTier: "FOUNDER_LEVEL_SUPER" },
+      },
+    });
+    assert.equal(result.ok, true);
+    if (result.ok) {
+      assert.equal(result.totalCents, 500);
+      assert.equal(result.amountUsd, 5);
+    }
+  });
+
   it("rejects amount below minimum", () => {
     const result = validatePaddleTransaction({
       ...basePayload,

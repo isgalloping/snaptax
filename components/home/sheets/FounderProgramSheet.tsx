@@ -14,6 +14,7 @@ import { useDialogEscape } from "@/lib/ui/useDialogEscape";
 type FounderSheetPhase = "offer" | "confirming";
 
 type FounderTierConfig = {
+  priceUsd: number;
   priceCents: number;
   paddlePriceId: string;
   seatRange: [number, number] | null;
@@ -226,8 +227,8 @@ export function FounderProgramSheet({
   }
 
   const displayTier = program ? resolveDisplayTier(program) : null;
-  const priceCents =
-    displayTier && program ? program.tiers[displayTier]?.priceCents : null;
+  const priceUsd =
+    displayTier && program ? program.tiers[displayTier]?.priceUsd : null;
   const alreadyEntitled = program?.user?.currentSeasonEntitled === true;
 
   return (
@@ -280,12 +281,9 @@ export function FounderProgramSheet({
                   .replace("{total}", String(program.seatsTotal))}
               </p>
             )}
-            {priceCents != null && (
+            {priceUsd != null && (
               <p className="mt-4 text-lg font-black text-white">
-                {copy.seasonPrice.replace(
-                  "{price}",
-                  formatCurrency(priceCents / 100),
-                )}
+                {copy.seasonPrice.replace("{price}", formatCurrency(priceUsd))}
               </p>
             )}
             <button

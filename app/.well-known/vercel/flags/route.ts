@@ -1,10 +1,10 @@
 import { getProviderData } from "flags/next";
 import { NextResponse } from "next/server";
 import {
-  founderPriceDefaultCentsFlag,
-  founderPriceEarlyCentsFlag,
-  founderPriceFounderCentsFlag,
-  founderPriceSuperCentsFlag,
+  founderPriceDefaultFlag,
+  founderPriceEarlyFlag,
+  founderPriceFounderFlag,
+  founderPriceSuperFlag,
   founderProgramEnabledFlag,
 } from "@/flags/founder";
 import {
@@ -22,10 +22,10 @@ export async function GET() {
       isNeedPayFlag,
       isMockAIFlag,
       founderProgramEnabledFlag,
-      founderPriceSuperCentsFlag,
-      founderPriceEarlyCentsFlag,
-      founderPriceFounderCentsFlag,
-      founderPriceDefaultCentsFlag,
+      founderPriceSuperFlag,
+      founderPriceEarlyFlag,
+      founderPriceFounderFlag,
+      founderPriceDefaultFlag,
     }),
   );
 }

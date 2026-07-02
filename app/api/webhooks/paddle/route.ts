@@ -161,11 +161,15 @@ export const POST = withRequestLog("api.webhook", async (request, _context) => {
     await markCheckoutIntentConsumed(grant.intentId, validated.transactionId);
   }
 
-  const customData = validated.customData;
-  const founderPurchase = customData?.founderPurchase === true;
-  const skuTier = customData?.skuTier;
+  const skuTierFromIntent = grant.skuTier ?? undefined;
+  const skuTierFromCustomData = validated.customData?.skuTier;
+  const founderSkuTier = isFounderSkuTier(skuTierFromIntent)
+    ? skuTierFromIntent
+    : isFounderSkuTier(skuTierFromCustomData)
+      ? skuTierFromCustomData
+      : undefined;
 
-  if (founderPurchase && isFounderSkuTier(skuTier)) {
+  if (founderSkuTier) {
     const seatResult = await assignFounderSeatOnFirstPurchase(grant.userId);
 
     if (!seatResult.assigned && seatResult.founderNumber != null) {
@@ -175,22 +179,39 @@ export const POST = withRequestLog("api.webhook", async (request, _context) => {
       });
     }
 
-    logEvent({
-      ts: new Date().toISOString(),
-      level: "info",
-      module: "biz.founder",
-      success: true,
-      durationMs: 0,
-      userId: grant.userId,
-      meta: {
-        event: "founder_purchase_success",
-        founderNumber: seatResult.founderNumber,
-        tier: seatResult.tier ?? skuTier,
-        founderPurchase: true,
-        transactionId: validated.transactionId,
-        taxSeason,
-      },
-    });
+    if (seatResult.seatUnavailable) {
+      logEvent({
+        ts: new Date().toISOString(),
+        level: "warn",
+        module: "biz.founder",
+        success: false,
+        durationMs: 0,
+        userId: grant.userId,
+        meta: {
+          event: "founder_seat_unavailable_after_payment",
+          transactionId: validated.transactionId,
+          skuTier: founderSkuTier,
+          taxSeason,
+        },
+      });
+    } else {
+      logEvent({
+        ts: new Date().toISOString(),
+        level: "info",
+        module: "biz.founder",
+        success: true,
+        durationMs: 0,
+        userId: grant.userId,
+        meta: {
+          event: "founder_purchase_success",
+          founderNumber: seatResult.founderNumber,
+          tier: seatResult.tier ?? founderSkuTier,
+          assigned: seatResult.assigned,
+          transactionId: validated.transactionId,
+          taxSeason,
+        },
+      });
+    }
   }
 
   logEvent({

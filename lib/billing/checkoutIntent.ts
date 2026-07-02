@@ -123,6 +123,7 @@ export type WebhookGrantResolution =
       userId: string;
       taxSeason: string;
       intentId?: string;
+      skuTier?: string | null;
       legacyUserIdPath?: boolean;
       intentExpiredAtGrant?: boolean;
     }
@@ -161,6 +162,7 @@ export async function resolveWebhookGrantTarget(customData: {
       userId: intent.userId,
       taxSeason: intent.taxSeason,
       intentId: intent.id,
+      skuTier: intent.skuTier,
       intentExpiredAtGrant: evaluation.intentExpiredAtGrant,
     };
   }

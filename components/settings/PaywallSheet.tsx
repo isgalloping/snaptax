@@ -9,12 +9,13 @@ import { formatCurrency } from "@/lib/format";
 type PaywallPhase = "offer" | "confirming";
 
 type SeasonOffer = {
+  priceUsd: number;
   priceCents: number;
   priceLabel: string;
   taxSeason: string;
 };
 
-const DEFAULT_PRICE_CENTS = 4900;
+const DEFAULT_PRICE_USD = 29;
 
 function withPrice(template: string, priceLabel: string): string {
   return template.replace("{price}", priceLabel);
@@ -63,7 +64,7 @@ export function PaywallSheet({
 }: PaywallSheetProps) {
   const copy = useUserCopy().paywall;
   const [phase, setPhase] = useState<PaywallPhase>("offer");
-  const [priceCents, setPriceCents] = useState(DEFAULT_PRICE_CENTS);
+  const [priceUsd, setPriceUsd] = useState(DEFAULT_PRICE_USD);
   const [paying, setPaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const paddleRef = useRef<Paddle | null>(null);
@@ -82,8 +83,10 @@ export function PaywallSheet({
         const res = await apiFetch("/api/billing/season-offer");
         if (!res.ok) return;
         const data = (await res.json()) as SeasonOffer;
-        if (!cancelled && typeof data.priceCents === "number" && data.priceCents > 0) {
-          setPriceCents(data.priceCents);
+        if (!cancelled && typeof data.priceUsd === "number" && data.priceUsd > 0) {
+          setPriceUsd(data.priceUsd);
+        } else if (!cancelled && typeof data.priceCents === "number" && data.priceCents > 0) {
+          setPriceUsd(data.priceCents / 100);
         }
       } catch {
         // Keep default flag price for display
@@ -128,10 +131,9 @@ export function PaywallSheet({
     setPaying(true);
     setError(null);
     try {
-      const priceId = process.env.NEXT_PUBLIC_PADDLE_PRICE_ID;
       const paddle = paddleRef.current;
 
-      if (!paddle || !priceId) {
+      if (!paddle) {
         setError(copy.paymentUnavailable);
         return;
       }
@@ -147,14 +149,17 @@ export function PaywallSheet({
         return;
       }
 
-      const intentData = (await intentRes.json()) as { intentId?: string };
-      if (!intentData.intentId) {
+      const intentData = (await intentRes.json()) as {
+        intentId?: string;
+        paddlePriceId?: string;
+      };
+      if (!intentData.intentId || !intentData.paddlePriceId) {
         setError(copy.paymentUnavailable);
         return;
       }
 
       paddle.Checkout.open({
-        items: [{ priceId, quantity: 1 }],
+        items: [{ priceId: intentData.paddlePriceId, quantity: 1 }],
         customData: {
           intentId: intentData.intentId,
         },
@@ -172,7 +177,7 @@ export function PaywallSheet({
     onClose();
   };
 
-  const priceLabel = formatCurrency(priceCents / 100);
+  const priceLabel = formatCurrency(priceUsd);
 
   if (phase === "confirming") {
     return (

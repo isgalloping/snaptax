@@ -349,9 +349,9 @@ export const EN_US_COPY: UserCopy = {
       },
     },
     paywall: {
-      unlockTitle: "Unlock Your Full Tax Pack — $49",
+      unlockTitle: "Unlock Your Full Tax Pack — {price}",
       maybeLater: "Maybe later",
-      unlockNow: "Unlock now — $49",
+      unlockNow: "Unlock now — {price}",
       features: [
         "Export unlimited receipts",
         "CPA-ready Excel tax pack",

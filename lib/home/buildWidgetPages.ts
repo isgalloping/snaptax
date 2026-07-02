@@ -12,13 +12,17 @@ export type BuildWidgetPageOptions = {
   showFounder?: boolean;
 };
 
+/** Product gate: set true to restore Find More Savings widget. */
+export const SHOW_MISSING_DEDUCTIONS_WIDGET = false;
+
 /** Visible widgets; Need Action #2 and CPA #3 when ACTION + tax season. */
 export function buildWidgetPageKeys(
   data: HomeWidgetsData,
   actionCount = 0,
   options?: BuildWidgetPageOptions,
 ): WidgetPageKey[] {
-  const hasMissing = data.missing.missing.length > 0;
+  const effectiveHasMissing =
+    SHOW_MISSING_DEDUCTIONS_WIDGET && data.missing.missing.length > 0;
   const hasAction = actionCount > 0;
   const hasCpa = data.showCpaReady;
   const keys: WidgetPageKey[] = [];
@@ -27,19 +31,19 @@ export function buildWidgetPageKeys(
     keys.push("founder");
   }
 
-  if (hasMissing) {
+  if (effectiveHasMissing) {
     keys.push("missing");
   }
 
   if (hasAction) {
-    if (!hasMissing) {
+    if (!effectiveHasMissing) {
       keys.push("deadline");
     }
     keys.push("needAction");
     if (hasCpa) {
       keys.push("cpa");
     }
-    if (hasMissing) {
+    if (effectiveHasMissing) {
       keys.push("deadline", "progress");
     } else {
       keys.push("progress");

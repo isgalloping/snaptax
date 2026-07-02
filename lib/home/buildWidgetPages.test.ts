@@ -51,9 +51,8 @@ describe("buildWidgetPageKeys", () => {
     assert.deepEqual(buildWidgetPageKeys(mockData()), ["deadline", "progress"]);
   });
 
-  it("prepends missing when hints exist", () => {
+  it("omits missing when SHOW_MISSING_DEDUCTIONS_WIDGET is false", () => {
     assert.deepEqual(buildWidgetPageKeys(mockData({ missing: missingResult() })), [
-      "missing",
       "deadline",
       "progress",
     ]);
@@ -67,10 +66,10 @@ describe("buildWidgetPageKeys", () => {
     ]);
   });
 
-  it("places needAction second after missing", () => {
+  it("places needAction second when missing widget hidden but hints exist", () => {
     assert.deepEqual(
       buildWidgetPageKeys(mockData({ missing: missingResult() }), 1),
-      ["missing", "needAction", "deadline", "progress"],
+      ["deadline", "needAction", "progress"],
     );
   });
 
@@ -83,13 +82,13 @@ describe("buildWidgetPageKeys", () => {
     ]);
   });
 
-  it("places missing needAction cpa on tax season with action", () => {
+  it("orders needAction cpa without missing when widget hidden", () => {
     assert.deepEqual(
       buildWidgetPageKeys(
         mockData({ missing: missingResult(), showCpaReady: true }),
         1,
       ),
-      ["missing", "needAction", "cpa", "deadline", "progress"],
+      ["deadline", "needAction", "cpa", "progress"],
     );
   });
 
@@ -101,12 +100,12 @@ describe("buildWidgetPageKeys", () => {
     ]);
   });
 
-  it("keeps cpa fourth with missing and no action", () => {
+  it("keeps cpa fourth with missing hints but widget hidden", () => {
     assert.deepEqual(
       buildWidgetPageKeys(
         mockData({ missing: missingResult(), showCpaReady: true }),
       ),
-      ["missing", "deadline", "progress", "cpa"],
+      ["deadline", "progress", "cpa"],
     );
   });
 
@@ -137,19 +136,20 @@ describe("buildWidgetPages", () => {
     assert.deepEqual(pages[1], ["progress"]);
   });
 
-  it("splits five widgets across two pages", () => {
+  it("paginates four widgets without missing when widget hidden", () => {
     const pages = buildWidgetPages(
       mockData({ missing: missingResult(), showCpaReady: true }),
       1,
     );
-    assert.deepEqual(pages[0], ["missing", "needAction", "cpa"]);
-    assert.deepEqual(pages[1], ["deadline", "progress"]);
+    assert.deepEqual(pages[0], ["deadline", "needAction", "cpa"]);
+    assert.deepEqual(pages[1], ["progress"]);
   });
 
-  it("keeps three widgets on one page when missing only", () => {
+  it("keeps two widgets on one page when missing hints but widget hidden", () => {
     const pages = buildWidgetPages(mockData({ missing: missingResult() }));
     assert.equal(pages.length, 1);
-    assert.equal(pages[0]?.length, 3);
+    assert.equal(pages[0]?.length, 2);
+    assert.deepEqual(pages[0], ["deadline", "progress"]);
   });
 });
 

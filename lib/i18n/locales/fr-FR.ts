@@ -239,6 +239,24 @@ export const FR_FR_COPY: UserCopy = {
         actionCount: "{count} reçu(s) à traiter",
         resnap: "RESNAP NOW",
       },
+      founder: {
+        label: "Founder Program",
+        subtitle: "Be one of the first 50 founders",
+        view: "View",
+        newBadge: "NEW",
+      },
+    },
+    founderSheet: {
+      title: "Founder Program",
+      seatsRemaining: "{remaining} of {total} founder seats left",
+      becomeFounder: "Become Founder",
+      signInFirst: "Sign in with Google to become a Founder",
+      seasonPrice: "{price} for this tax season",
+      alreadyEntitled:
+        "You already have Export access for this tax season — no extra charge.",
+      paymentUnavailable: "Payment unavailable. Paddle is not configured.",
+      paymentFailed: "Payment failed. Please try again.",
+      confirmingPayment: "Confirming payment…",
     },
     overlays: {
       back: "< BACK",

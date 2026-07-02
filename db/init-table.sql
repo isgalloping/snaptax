@@ -139,6 +139,30 @@ CREATE TABLE snaptax_season_entitlements (
 );
 
 -- ---------------------------------------------------------------------------
+-- snaptax_checkout_intents
+-- ---------------------------------------------------------------------------
+
+CREATE TABLE snaptax_checkout_intents (
+  id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id        UUID NOT NULL,
+  tax_season     VARCHAR(255) NOT NULL,
+  status         VARCHAR(32) NOT NULL DEFAULT 'pending',
+  expires_at     TIMESTAMPTZ(3) NOT NULL,
+  transaction_id VARCHAR(128),
+  sku_tier       VARCHAR(32),
+  created_at     TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at     TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  CONSTRAINT snaptax_checkout_intents_transaction_id_key
+    UNIQUE (transaction_id),
+  CONSTRAINT snaptax_checkout_intents_user_id_fkey
+    FOREIGN KEY (user_id) REFERENCES snaptax_users (id) ON DELETE CASCADE
+);
+
+CREATE INDEX snaptax_checkout_intents_user_season_idx
+  ON snaptax_checkout_intents (user_id, tax_season);
+
+-- ---------------------------------------------------------------------------
 -- Comments: tables
 -- ---------------------------------------------------------------------------
 
@@ -146,6 +170,7 @@ COMMENT ON TABLE snaptax_users IS 'OAuth 登录用户（多通道预留，MVP �
 COMMENT ON TABLE snaptax_ghost_account IS 'Ghost 与正式用户的一对一绑定；仅 Google 登录成功时 INSERT，非 Ghost 注册表';
 COMMENT ON TABLE snaptax_receipts IS '小票元数据（image_url 存 Vercel Blob pathname）';
 COMMENT ON TABLE snaptax_season_entitlements IS '报税季付费权益（每用户每季一条）';
+COMMENT ON TABLE snaptax_checkout_intents IS 'Paddle checkout intent — 绑定支付到会话用户（SEC-03）';
 
 -- ---------------------------------------------------------------------------
 -- Comments: snaptax_users columns
@@ -220,6 +245,20 @@ COMMENT ON COLUMN snaptax_season_entitlements.created_at IS '记录创建时间�
 COMMENT ON COLUMN snaptax_season_entitlements.updated_at IS '记录最后更新时间（TIMESTAMPTZ UTC）';
 
 -- ---------------------------------------------------------------------------
+-- Comments: snaptax_checkout_intents columns
+-- ---------------------------------------------------------------------------
+
+COMMENT ON COLUMN snaptax_checkout_intents.id IS 'Checkout intent 主键 UUID';
+COMMENT ON COLUMN snaptax_checkout_intents.user_id IS '发起 checkout 的用户 snaptax_users.id';
+COMMENT ON COLUMN snaptax_checkout_intents.tax_season IS '报税季标识，如 2026';
+COMMENT ON COLUMN snaptax_checkout_intents.status IS 'Intent 状态；应用层枚举：pending, consumed, expired';
+COMMENT ON COLUMN snaptax_checkout_intents.expires_at IS 'Intent 过期时间（TIMESTAMPTZ UTC）；默认创建后 15 分钟';
+COMMENT ON COLUMN snaptax_checkout_intents.transaction_id IS 'Paddle 交易号；consumed 时写入，Webhook 幂等辅助';
+COMMENT ON COLUMN snaptax_checkout_intents.sku_tier IS 'SKU 档位；应用层枚举：FOUNDER_LEVEL_SUPER, EARLY, FOUNDER, DEFAULT；null 表示默认 $49 季票';
+COMMENT ON COLUMN snaptax_checkout_intents.created_at IS '记录创建时间（TIMESTAMPTZ UTC）';
+COMMENT ON COLUMN snaptax_checkout_intents.updated_at IS '记录最后更新时间（TIMESTAMPTZ UTC）';
+
+-- ---------------------------------------------------------------------------
 -- Comments: indexes
 -- ---------------------------------------------------------------------------
 
@@ -234,5 +273,7 @@ COMMENT ON INDEX snaptax_receipts_user_snap_idx IS '按拍照时间排序的小�
 COMMENT ON INDEX snaptax_receipts_processing_idx IS 'AI 处理中队列（部分索引，仅 status=processing）';
 COMMENT ON INDEX snaptax_season_entitlements_user_season_key IS 'Export 权益检查：每用户每报税季一条';
 COMMENT ON INDEX snaptax_season_entitlements_transaction_id_key IS 'Paddle Webhook 幂等：transaction_id 唯一';
+COMMENT ON INDEX snaptax_checkout_intents_user_season_idx IS 'Checkout intent 复用查询：user_id + tax_season';
+COMMENT ON INDEX snaptax_checkout_intents_transaction_id_key IS 'Paddle Webhook 关联：transaction_id 唯一';
 
 COMMIT;

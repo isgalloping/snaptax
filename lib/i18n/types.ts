@@ -206,6 +206,23 @@ export type UserCopy = {
         actionCount: string;
         resnap: string;
       };
+      founder: {
+        label: string;
+        subtitle: string;
+        view: string;
+        newBadge: string;
+      };
+    };
+    founderSheet: {
+      title: string;
+      seatsRemaining: string;
+      becomeFounder: string;
+      signInFirst: string;
+      seasonPrice: string;
+      alreadyEntitled: string;
+      paymentUnavailable: string;
+      paymentFailed: string;
+      confirmingPayment: string;
     };
     overlays: {
       back: string;

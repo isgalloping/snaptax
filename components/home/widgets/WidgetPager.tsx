@@ -13,10 +13,14 @@ import { MissingDeductionsWidget } from "./MissingDeductionsWidget";
 import { TaxYearProgressWidget } from "./TaxYearProgressWidget";
 import { CpaReadyWidget } from "./CpaReadyWidget";
 import { NeedActionWidget } from "./NeedActionWidget";
+import { FounderProgramWidget } from "./FounderProgramWidget";
 
 interface WidgetPagerProps {
   data: HomeWidgetsData;
   actionCount: number;
+  showFounder?: boolean;
+  showFounderNewBadge?: boolean;
+  onFounderOpen?: () => void;
   onDeadlineDetails: () => void;
   onMissingReview: () => void;
   onProgressDetails: () => void;
@@ -28,9 +32,20 @@ function renderWidget(
   key: WidgetPageKey,
   data: HomeWidgetsData,
   actionCount: number,
-  handlers: Omit<WidgetPagerProps, "data" | "actionCount">,
+  handlers: Omit<
+    WidgetPagerProps,
+    "data" | "actionCount" | "showFounder" | "showFounderNewBadge"
+  >,
+  founderUi: { showNewBadge: boolean; onOpen?: () => void },
 ) {
   switch (key) {
+    case "founder":
+      return (
+        <FounderProgramWidget
+          onOpen={() => founderUi.onOpen?.()}
+          showNewBadge={founderUi.showNewBadge}
+        />
+      );
     case "deadline":
       return (
         <TaxDeadlineWidget data={data.deadline} onViewDetails={handlers.onDeadlineDetails} />
@@ -58,13 +73,16 @@ function renderWidget(
 export function WidgetPager({
   data,
   actionCount,
+  showFounder = false,
+  showFounderNewBadge = false,
+  onFounderOpen,
   onDeadlineDetails,
   onMissingReview,
   onProgressDetails,
   onExport,
   onNeedActionResnap,
 }: WidgetPagerProps) {
-  const pages = buildWidgetPages(data, actionCount);
+  const pages = buildWidgetPages(data, actionCount, { showFounder });
   const paginated = pages.length > 1;
   const viewportRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef(0);
@@ -124,7 +142,10 @@ export function WidgetPager({
     onProgressDetails,
     onExport,
     onNeedActionResnap,
+    onFounderOpen,
   };
+
+  const founderUi = { showNewBadge: showFounderNewBadge, onOpen: onFounderOpen };
 
   return (
     <div className={pager.container}>
@@ -140,7 +161,7 @@ export function WidgetPager({
           <div key={pageIndex} className={pager.page} aria-label={`Widget page ${pageIndex + 1}`}>
             {pageKeys.map((key) => (
               <div key={key} className={pageColumnFlexClass(pageKeys.length)}>
-                {renderWidget(key, data, actionCount, handlers)}
+                {renderWidget(key, data, actionCount, handlers, founderUi)}
               </div>
             ))}
           </div>

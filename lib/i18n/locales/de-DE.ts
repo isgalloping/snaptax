@@ -354,9 +354,9 @@ export const DE_DE_COPY: UserCopy = {
     },
   },
   paywall: {
-    unlockTitle: "Unlock Your Full Tax Pack — $49",
+    unlockTitle: "Unlock Your Full Tax Pack — {price}",
     maybeLater: "Maybe later",
-    unlockNow: "Unlock now — $49",
+    unlockNow: "Unlock now — {price}",
     features: [
       "Export unlimited receipts",
       "CPA-ready Excel tax pack",
@@ -504,7 +504,6 @@ export const DE_DE_COPY: UserCopy = {
       taxEstimateDisclaimer:
         "Est. Tax Saved ist nur eine Schätzung, keine Steuerberatung. Siehe Bedingungen §6.",
       mostPopular: "Am beliebtesten",
-      price: "49 $",
       states: {
         final_deadline: {
           title: "Finaler Steuerpaket bereit",
@@ -516,7 +515,7 @@ export const DE_DE_COPY: UserCopy = {
         },
         unpaid: {
           title: "{season} IRS-Steuerpaket exportieren",
-          cta: "Für 49 $ freischalten",
+          cta: "Für {price} freischalten",
         },
         paid_new: {
           title: "{season} IRS-Steuerpaket freigeschaltet",

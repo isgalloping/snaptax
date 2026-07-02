@@ -3,23 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import { initializePaddle, Paddle } from "@paddle/paddle-js";
 import { useUserCopy } from "@/components/i18n/I18nProvider";
+import { useSeasonOffer } from "@/lib/client/useSeasonOffer";
 import { apiFetch } from "@/lib/client/ghostClient";
 import { formatCurrency } from "@/lib/format";
 
 type PaywallPhase = "offer" | "confirming";
-
-type SeasonOffer = {
-  priceUsd: number;
-  priceCents: number;
-  priceLabel: string;
-  taxSeason: string;
-};
-
-const DEFAULT_PRICE_USD = 29;
-
-function withPrice(template: string, priceLabel: string): string {
-  return template.replace("{price}", priceLabel);
-}
 
 interface PaywallSheetProps {
   seasonLabel: string;
@@ -63,8 +51,8 @@ export function PaywallSheet({
   onPaid,
 }: PaywallSheetProps) {
   const copy = useUserCopy().paywall;
+  const { priceUsd } = useSeasonOffer();
   const [phase, setPhase] = useState<PaywallPhase>("offer");
-  const [priceUsd, setPriceUsd] = useState(DEFAULT_PRICE_USD);
   const [paying, setPaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const paddleRef = useRef<Paddle | null>(null);
@@ -74,29 +62,6 @@ export function PaywallSheet({
   useEffect(() => {
     onPaidRef.current = onPaid;
   });
-
-  useEffect(() => {
-    let cancelled = false;
-
-    void (async () => {
-      try {
-        const res = await apiFetch("/api/billing/season-offer");
-        if (!res.ok) return;
-        const data = (await res.json()) as SeasonOffer;
-        if (!cancelled && typeof data.priceUsd === "number" && data.priceUsd > 0) {
-          setPriceUsd(data.priceUsd);
-        } else if (!cancelled && typeof data.priceCents === "number" && data.priceCents > 0) {
-          setPriceUsd(data.priceCents / 100);
-        }
-      } catch {
-        // Keep default flag price for display
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   useEffect(() => {
     const token = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN;
@@ -141,7 +106,7 @@ export function PaywallSheet({
       const intentRes = await apiFetch("/api/billing/checkout-intent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ taxSeason: seasonLabel, skuTier: "DEFAULT" }),
+        body: JSON.stringify({ taxSeason: seasonLabel }),
       });
 
       if (!intentRes.ok) {
@@ -179,6 +144,10 @@ export function PaywallSheet({
 
   const priceLabel = formatCurrency(priceUsd);
 
+  function withPrice(template: string): string {
+    return template.replace("{price}", priceLabel);
+  }
+
   if (phase === "confirming") {
     return (
       <div className="fixed inset-0 z-50 flex items-end bg-black/70">
@@ -202,7 +171,7 @@ export function PaywallSheet({
       <div className="max-h-[90vh] w-full overflow-y-auto rounded-t-3xl border-t-4 border-yellow-500 bg-zinc-900 p-6 pb-10">
         <BalanceScaleIllustration />
         <p className="text-center text-xl font-black uppercase tracking-wider text-white">
-          {withPrice(copy.unlockTitle, priceLabel)}
+          {withPrice(copy.unlockTitle)}
         </p>
         <p className="mt-2 text-center text-sm text-zinc-400">
           {copy.oneTimeSeason.replace("{season}", seasonLabel)}
@@ -227,7 +196,7 @@ export function PaywallSheet({
           onClick={() => void handlePay()}
           className="mt-6 w-full min-h-16 rounded-xl border-4 border-white bg-yellow-500 py-4 text-lg font-black uppercase tracking-wider text-black transition-transform active:scale-95 disabled:opacity-60"
         >
-          {paying ? copy.openingPaddle : withPrice(copy.unlockNow, priceLabel)}
+          {paying ? copy.openingPaddle : withPrice(copy.unlockNow)}
         </button>
         {error && (
           <p className="mt-3 text-center text-sm font-bold text-red-500" role="alert">

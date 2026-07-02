@@ -412,7 +412,6 @@ export type UserCopy = {
       snap1099Nec: string;
       snap1099K: string;
       mostPopular: string;
-      price: string;
       states: {
         final_deadline: { title: string; cta: string };
         anon: { title: string; cta: string };

@@ -354,9 +354,9 @@ export const FR_FR_COPY: UserCopy = {
     },
   },
   paywall: {
-    unlockTitle: "Unlock Your Full Tax Pack — $49",
+    unlockTitle: "Unlock Your Full Tax Pack — {price}",
     maybeLater: "Maybe later",
-    unlockNow: "Unlock now — $49",
+    unlockNow: "Unlock now — {price}",
     features: [
       "Export unlimited receipts",
       "CPA-ready Excel tax pack",
@@ -505,7 +505,6 @@ export const FR_FR_COPY: UserCopy = {
       taxEstimateDisclaimer:
         "Est. Tax Saved est une estimation, pas un conseil fiscal. Voir Conditions §6.",
       mostPopular: "Le plus populaire",
-      price: "49 $",
       states: {
         final_deadline: {
           title: "Dossier fiscal final prêt",
@@ -517,7 +516,7 @@ export const FR_FR_COPY: UserCopy = {
         },
         unpaid: {
           title: "Exporter le dossier IRS {season}",
-          cta: "Débloquer pour 49 $",
+          cta: "Débloquer pour {price}",
         },
         paid_new: {
           title: "Dossier fiscal {season} débloqué",

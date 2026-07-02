@@ -495,7 +495,6 @@ export const EN_US_COPY: UserCopy = {
         taxEstimateDisclaimer:
           "Est. Tax Saved is an estimate, not tax advice. See Terms §6.",
         mostPopular: "Most Popular",
-        price: "$49",
         states: {
           final_deadline: {
             title: "Final Tax Pack Ready",
@@ -507,7 +506,7 @@ export const EN_US_COPY: UserCopy = {
           },
           unpaid: {
             title: "Export {season} IRS Tax Pack",
-            cta: "Unlock for $49",
+            cta: "Unlock for {price}",
           },
           paid_new: {
             title: "{season} IRS Tax Pack Unlocked",

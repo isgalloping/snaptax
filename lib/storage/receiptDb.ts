@@ -823,6 +823,9 @@ export async function clearAllLocalData(): Promise<void> {
     if (db.objectStoreNames.contains(IDB_STORE_RECEIPT_PHOTOS)) {
       stores.push(IDB_STORE_RECEIPT_PHOTOS);
     }
+    if (db.objectStoreNames.contains(IDB_STORE_RECEIPT_SUMMARY)) {
+      stores.push(IDB_STORE_RECEIPT_SUMMARY);
+    }
     if (db.objectStoreNames.contains(cryptoStore)) {
       stores.push(cryptoStore);
     }
@@ -835,6 +838,9 @@ export async function clearAllLocalData(): Promise<void> {
     if (db.objectStoreNames.contains(IDB_STORE_RECEIPT_PHOTOS)) {
       tx.objectStore(IDB_STORE_RECEIPT_PHOTOS).clear();
     }
+    if (db.objectStoreNames.contains(IDB_STORE_RECEIPT_SUMMARY)) {
+      tx.objectStore(IDB_STORE_RECEIPT_SUMMARY).clear();
+    }
     if (db.objectStoreNames.contains(cryptoStore)) {
       tx.objectStore(cryptoStore).clear();
     }
@@ -845,6 +851,7 @@ export async function clearAllLocalData(): Promise<void> {
     tx.onerror = () => reject(tx.error);
   });
   dbOpenPromise = null;
+  summaryBootstrapPromise = null;
   db.close();
   await deleteLegacyIdbIfPresent();
 }

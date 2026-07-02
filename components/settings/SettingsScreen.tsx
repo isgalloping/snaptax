@@ -45,6 +45,7 @@ import {
 import { isLeavingExportCompleted } from "@/lib/client/appNavigationHistory";
 import type { IncomeCaptureKind } from "@/lib/export/incomeCapture";
 import { hasSeasonExportDone } from "@/lib/settings/seasonExportState";
+import type { FounderStatus, FounderTier } from "@/lib/founder/types";
 
 interface SettingsScreenProps {
   industry: Industry | null;
@@ -132,6 +133,9 @@ export function SettingsScreen({
   const [showSampleReady, setShowSampleReady] = useState(false);
   const [showExportBlocked, setShowExportBlocked] = useState(false);
   const firstVisitHandled = useRef(false);
+  const [founderStatus, setFounderStatus] = useState<FounderStatus>("none");
+  const [founderTier, setFounderTier] = useState<FounderTier | null>(null);
+  const [founderNumber, setFounderNumber] = useState<number | null>(null);
 
   const seasonExportDone = useMemo(
     () => hasSeasonExportDone(currentSeason),
@@ -162,6 +166,47 @@ export function SettingsScreen({
       window.removeEventListener("offline", syncOnline);
     };
   }, []);
+
+  useEffect(() => {
+    if (!isSignedIn || !authHydrated) {
+      setFounderStatus("none");
+      setFounderTier(null);
+      setFounderNumber(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        const res = await apiFetch("/api/founder/program");
+        if (!res.ok || cancelled) return;
+
+        const program = (await res.json()) as {
+          user: {
+            founderStatus: FounderStatus;
+            founderTier: FounderTier | null;
+            founderNumber: number | null;
+          } | null;
+        };
+        if (cancelled) return;
+
+        setFounderStatus(program.user?.founderStatus ?? "none");
+        setFounderTier(program.user?.founderTier ?? null);
+        setFounderNumber(program.user?.founderNumber ?? null);
+      } catch {
+        if (!cancelled) {
+          setFounderStatus("none");
+          setFounderTier(null);
+          setFounderNumber(null);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isSignedIn, authHydrated]);
 
   useEffect(() => {
     if (firstVisitHandled.current) return;
@@ -425,6 +470,9 @@ export function SettingsScreen({
           seasonPaid={seasonPaid}
           seasonLabel={currentSeason}
           authHydrated={authHydrated}
+          founderStatus={founderStatus}
+          founderTier={founderTier}
+          founderNumber={founderNumber}
           onSignIn={() => {
             clearError();
             setGoogleSheet("soft");

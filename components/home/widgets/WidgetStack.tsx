@@ -10,9 +10,11 @@ import {
 import { resolveDisplayTier } from "@/lib/founder/resolveDisplayTier";
 import type { FounderStatus, FounderTier } from "@/lib/founder/types";
 import { isFounderWidgetVisible } from "@/lib/founder/visibility";
+import { shouldHoldWidgetPagerForFounderCheck } from "@/lib/founder/widgetPagerGate";
 import { logFounderEvent } from "@/lib/founder/logFounderEvent";
 import type { FounderWidgetPreview } from "./FounderProgramWidget";
 import { WidgetPager } from "./WidgetPager";
+import { WidgetPagerPlaceholder } from "./WidgetPagerPlaceholder";
 
 type FounderTierConfig = {
   priceUsd: number;
@@ -69,12 +71,15 @@ export function WidgetStack({
   const [showFounder, setShowFounder] = useState(false);
   const [showFounderNewBadge, setShowFounderNewBadge] = useState(false);
   const [founderPreview, setFounderPreview] = useState<FounderWidgetPreview | null>(null);
+  const [founderCheckComplete, setFounderCheckComplete] = useState(false);
   const impressionLoggedRef = useRef(false);
   const seenMarkedRef = useRef(false);
   const claimedCountRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!authHydrated) return;
+
+    setFounderCheckComplete(false);
 
     let cancelled = false;
 
@@ -100,6 +105,8 @@ export function WidgetStack({
           setShowFounder(false);
           setFounderPreview(null);
         }
+      } finally {
+        if (!cancelled) setFounderCheckComplete(true);
       }
     })();
 
@@ -124,6 +131,10 @@ export function WidgetStack({
       impressionLoggedRef.current = true;
     }
   }, [showFounder]);
+
+  if (shouldHoldWidgetPagerForFounderCheck(authHydrated, founderCheckComplete)) {
+    return <WidgetPagerPlaceholder />;
+  }
 
   return (
     <WidgetPager

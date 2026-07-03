@@ -31,6 +31,7 @@ export function GoogleSignInButtonHost({
   className = "mt-6",
 }: GoogleSignInButtonHostProps) {
   const authCopy = useUserCopy().auth.googleSignIn;
+  const googleCtaLabel = useUserCopy().settings.account.googleCta;
   const [preparing, setPreparing] = useState(true);
   const [signingIn, setSigningIn] = useState(false);
   const [inlineError, setInlineError] = useState<string | null>(null);
@@ -137,18 +138,22 @@ export function GoogleSignInButtonHost({
   return (
     <div className={className}>
       <div className="relative min-h-16 w-full">
-        <ContinueWithGoogleButton
-          onClick={() => {}}
-          disabled={busy}
-          className="pointer-events-none"
-        />
+        <div aria-hidden="true">
+          <ContinueWithGoogleButton
+            onClick={() => {}}
+            disabled={busy}
+            className="pointer-events-none"
+          />
+        </div>
         <div
           ref={hostRef}
           className={`absolute inset-0 flex items-center justify-center overflow-hidden ${
             busy ? "pointer-events-none opacity-60" : "cursor-pointer opacity-0"
           }`}
+          role="button"
+          tabIndex={busy ? -1 : 0}
           aria-busy={busy}
-          aria-label="Continue with Google"
+          aria-label={googleCtaLabel}
         />
       </div>
       {preparing && !signingIn && (

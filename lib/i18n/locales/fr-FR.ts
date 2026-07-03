@@ -604,6 +604,8 @@ export const FR_FR_COPY: UserCopy = {
       deleteFailed: "Échec de la suppression. Veuillez réessayer.",
       deleteRequiresOnline:
         "Connectez-vous à Internet pour supprimer votre compte et vos données cloud.",
+      deleteSessionExpired:
+        "Votre session Google a expiré. Reconnectez-vous avec Google, puis supprimez votre compte.",
       deleteTitle: "Supprimer le compte",
       deleteSignedInWarning:
         "Cette action est irréversible. Tous les reçus cloud et les données du compte seront définitivement supprimés.",

@@ -235,18 +235,23 @@ export const EN_US_COPY: UserCopy = {
           resnap: "RESNAP NOW",
         },
         founder: {
-          label: "Founder Program",
-          subtitle: "Be one of the first 50 founders",
-          view: "View",
+          label: "FIRST 50 ONLY",
+          subtitle: "{price} export this season",
+          subtitleLoading: "This season · first 50 only",
+          scarcity: "{remaining} spots left",
+          view: "See deal",
           newBadge: "NEW",
         },
       },
       founderSheet: {
-        title: "Founder Program",
+        title: "First 50 Deal",
         seatsRemaining: "{remaining} of {total} founder seats left",
-        becomeFounder: "Become Founder",
-        signInFirst: "Sign in with Google to become a Founder",
+        becomeFounder: "Claim my spot — {price}",
+        signInFirst: "Sign in with Google to claim your spot",
+        notNow: "Not now",
         seasonPrice: "{price} for this tax season",
+        offerEnds: "Offer ends when {total} spots are gone",
+        programFull: "All {total} founder spots are taken",
         alreadyEntitled:
           "You already have Export access for this tax season — no extra charge.",
         paymentUnavailable: "Payment unavailable. Paddle is not configured.",
@@ -495,7 +500,6 @@ export const EN_US_COPY: UserCopy = {
         taxEstimateDisclaimer:
           "Est. Tax Saved is an estimate, not tax advice. See Terms §6.",
         mostPopular: "Most Popular",
-        price: "$49",
         states: {
           final_deadline: {
             title: "Final Tax Pack Ready",
@@ -507,7 +511,7 @@ export const EN_US_COPY: UserCopy = {
           },
           unpaid: {
             title: "Export {season} IRS Tax Pack",
-            cta: "Unlock for $49",
+            cta: "Unlock for {price}",
           },
           paid_new: {
             title: "{season} IRS Tax Pack Unlocked",

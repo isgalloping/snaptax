@@ -240,18 +240,23 @@ export const FR_FR_COPY: UserCopy = {
         resnap: "RESNAP NOW",
       },
       founder: {
-        label: "Founder Program",
-        subtitle: "Be one of the first 50 founders",
-        view: "View",
+        label: "FIRST 50 ONLY",
+        subtitle: "{price} export this season",
+        subtitleLoading: "This season · first 50 only",
+        scarcity: "{remaining} spots left",
+        view: "See deal",
         newBadge: "NEW",
       },
     },
     founderSheet: {
-      title: "Founder Program",
+      title: "First 50 Deal",
       seatsRemaining: "{remaining} of {total} founder seats left",
-      becomeFounder: "Become Founder",
-      signInFirst: "Sign in with Google to become a Founder",
+      becomeFounder: "Claim my spot — {price}",
+      signInFirst: "Sign in with Google to claim your spot",
+      notNow: "Not now",
       seasonPrice: "{price} for this tax season",
+      offerEnds: "Offer ends when {total} spots are gone",
+      programFull: "All {total} founder spots are taken",
       alreadyEntitled:
         "You already have Export access for this tax season — no extra charge.",
       paymentUnavailable: "Payment unavailable. Paddle is not configured.",
@@ -354,9 +359,9 @@ export const FR_FR_COPY: UserCopy = {
     },
   },
   paywall: {
-    unlockTitle: "Unlock Your Full Tax Pack — $49",
+    unlockTitle: "Unlock Your Full Tax Pack — {price}",
     maybeLater: "Maybe later",
-    unlockNow: "Unlock now — $49",
+    unlockNow: "Unlock now — {price}",
     features: [
       "Export unlimited receipts",
       "CPA-ready Excel tax pack",
@@ -505,7 +510,6 @@ export const FR_FR_COPY: UserCopy = {
       taxEstimateDisclaimer:
         "Est. Tax Saved est une estimation, pas un conseil fiscal. Voir Conditions §6.",
       mostPopular: "Le plus populaire",
-      price: "49 $",
       states: {
         final_deadline: {
           title: "Dossier fiscal final prêt",
@@ -517,7 +521,7 @@ export const FR_FR_COPY: UserCopy = {
         },
         unpaid: {
           title: "Exporter le dossier IRS {season}",
-          cta: "Débloquer pour 49 $",
+          cta: "Débloquer pour {price}",
         },
         paid_new: {
           title: "Dossier fiscal {season} débloqué",

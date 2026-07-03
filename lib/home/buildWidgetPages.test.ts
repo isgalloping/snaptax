@@ -151,6 +151,19 @@ describe("buildWidgetPages", () => {
     assert.equal(pages[0]?.length, 2);
     assert.deepEqual(pages[0], ["deadline", "progress"]);
   });
+
+  it("puts founder alone on page one when showFounder", () => {
+    const pages = buildWidgetPages(mockData(), 2, { showFounder: true });
+    assert.deepEqual(pages[0], ["founder"]);
+    assert.deepEqual(pages[1], ["deadline", "needAction", "progress"]);
+  });
+
+  it("paginates founder page before deadline and progress", () => {
+    const pages = buildWidgetPages(mockData(), 0, { showFounder: true });
+    assert.deepEqual(pages[0], ["founder"]);
+    assert.deepEqual(pages[1], ["deadline", "progress"]);
+    assert.equal(pages.length, 2);
+  });
 });
 
 describe("chunkPages", () => {

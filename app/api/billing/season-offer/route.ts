@@ -1,25 +1,32 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { mapErrorToResponse } from "@/lib/api/errors";
-import { founderPriceDefaultFlag } from "@/flags/founder";
-import { founderPriceUsdToCents } from "@/lib/founder/pricing";
+import { getActor } from "@/lib/auth/getActor";
 import { formatCurrency } from "@/lib/format";
+import { getSeasonOffer } from "@/lib/server/seasonOffer";
 import { withRequestLog } from "@/lib/server/log/withRequestLog";
-import { currentTaxSeason } from "@/lib/tax/season";
 
-export const GET = withRequestLog("api.entitlement", async (_request, _context) => {
-  try {
-    const taxSeason = currentTaxSeason();
-    const priceUsd = await founderPriceDefaultFlag();
-    const priceCents = founderPriceUsdToCents(priceUsd);
-    const priceLabel = formatCurrency(priceUsd);
+export const GET = withRequestLog(
+  "api.entitlement",
+  async (request: NextRequest, _context) => {
+    try {
+      let userId: string | undefined;
+      try {
+        const actor = await getActor(request);
+        if (actor.kind === "user") {
+          userId = actor.userId;
+        }
+      } catch {
+        // Guest / ghost-only: resolve price from global seat count.
+      }
 
-    return NextResponse.json({
-      priceUsd,
-      priceCents,
-      priceLabel,
-      taxSeason,
-    });
-  } catch (err) {
-    return mapErrorToResponse(err);
-  }
-});
+      const offer = await getSeasonOffer(userId);
+
+      return NextResponse.json({
+        ...offer,
+        priceLabel: formatCurrency(offer.priceUsd),
+      });
+    } catch (err) {
+      return mapErrorToResponse(err);
+    }
+  },
+);

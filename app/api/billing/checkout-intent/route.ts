@@ -9,6 +9,7 @@ import {
   getFounderProgramState,
   resolveFounderCheckoutSkuTier,
 } from "@/lib/server/founderProgram";
+import { resolveSeasonOfferFromState } from "@/lib/server/seasonOffer";
 import { currentTaxSeason } from "@/lib/tax/season";
 import { withRequestLog } from "@/lib/server/log/withRequestLog";
 
@@ -49,8 +50,20 @@ export const POST = withRequestLog(
           throw new Error(resolution.error);
         }
         resolvedSkuTier = resolution.skuTier;
+      } else if (body.skuTier != null) {
+        resolvedSkuTier = body.skuTier;
       } else {
-        resolvedSkuTier = body.skuTier ?? "DEFAULT";
+        const config = await resolveFounderProgramConfig();
+        const state = await getFounderProgramState(actor.userId);
+        const offer = resolveSeasonOfferFromState({
+          enabled: config.enabled,
+          tiers: config.tiers,
+          user: state.user,
+          claimedCount: state.claimedCount,
+          programOpen: state.programOpen,
+          taxSeason,
+        });
+        resolvedSkuTier = offer.skuTier;
       }
 
       const config = await resolveFounderProgramConfig();

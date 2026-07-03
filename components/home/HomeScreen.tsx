@@ -93,6 +93,7 @@ import { InlinePrivacyNote } from "./InlinePrivacyNote";
 import { HomeScrollRegion } from "./HomeScrollRegion";
 import { WidgetStack } from "./widgets/WidgetStack";
 import { FounderProgramSheet } from "./sheets/FounderProgramSheet";
+import { waitForFounderActive } from "@/lib/founder/waitForFounderActive";
 import {
   HomeOverlayHost,
   type HomeOverlay,
@@ -1431,12 +1432,19 @@ export function HomeScreen() {
         <FounderProgramSheet
           onClose={() => setFounderSheetOpen(false)}
           isSignedIn={auth.isSignedIn}
-          onRequestGoogleSignIn={() => void auth.signInWithGoogle()}
+          onGoogleSignedIn={async (result) => {
+            auth.applyGoogleSignIn(result);
+          }}
           userEmail={auth.googleUser?.email}
           seasonLabel={auth.currentSeason}
+          onProgramFull={() => {
+            setFounderSheetOpen(false);
+            setFounderRefreshTick((tick) => tick + 1);
+          }}
           onPaid={async () => {
             setFounderSheetOpen(false);
             await auth.refreshSeasonPaid();
+            await waitForFounderActive();
             setFounderRefreshTick((tick) => tick + 1);
           }}
         />

@@ -71,7 +71,13 @@ export function buildWidgetPages(
   actionCount = 0,
   options?: BuildWidgetPageOptions,
 ): WidgetPageKey[][] {
-  return chunkPages(buildWidgetPageKeys(data, actionCount, options));
+  const keys = buildWidgetPageKeys(data, actionCount, options);
+  if (options?.showFounder && keys[0] === "founder") {
+    const rest = keys.slice(1);
+    if (rest.length === 0) return [["founder"]];
+    return [["founder"], ...chunkPages(rest)];
+  }
+  return chunkPages(keys);
 }
 
 export function pageColumnFlexClass(count: number): string {

@@ -209,6 +209,8 @@ export type UserCopy = {
       founder: {
         label: string;
         subtitle: string;
+        subtitleLoading: string;
+        scarcity: string;
         view: string;
         newBadge: string;
       };
@@ -218,7 +220,10 @@ export type UserCopy = {
       seatsRemaining: string;
       becomeFounder: string;
       signInFirst: string;
+      notNow: string;
       seasonPrice: string;
+      offerEnds: string;
+      programFull: string;
       alreadyEntitled: string;
       paymentUnavailable: string;
       paymentFailed: string;
@@ -412,7 +417,6 @@ export type UserCopy = {
       snap1099Nec: string;
       snap1099K: string;
       mostPopular: string;
-      price: string;
       states: {
         final_deadline: { title: string; cta: string };
         anon: { title: string; cta: string };

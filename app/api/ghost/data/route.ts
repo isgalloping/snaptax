@@ -9,6 +9,7 @@ export const DELETE = withRequestLog("api.user", async (request, _context) => {
   try {
     const actor = await getActor(request);
     if (actor.kind !== "ghost") throw new Error("UNAUTHORIZED");
+    if (actor.bound) throw new Error("GOOGLE_LOGIN_REQUIRED");
 
     await deleteGhostReceipts(actor.ghostId);
 

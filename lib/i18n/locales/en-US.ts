@@ -594,6 +594,8 @@ export const EN_US_COPY: UserCopy = {
         deleteFailed: "Delete failed. Please try again.",
         deleteRequiresOnline:
           "Connect to the internet to delete your account and cloud data.",
+        deleteSessionExpired:
+          "Your Google session expired. Sign in again with Google, then delete your account.",
         deleteTitle: "Delete Account",
         deleteSignedInWarning:
           "This is irreversible. All cloud receipts, export records, and account data will be permanently deleted.",

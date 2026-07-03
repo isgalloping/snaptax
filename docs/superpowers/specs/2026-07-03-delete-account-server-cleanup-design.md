@@ -268,3 +268,13 @@ Settings → Privacy & Data → Delete Account
 | `docs/legal/privacy.md` §6 | Delete Account removes server + local |
 | `2026-06-30-compliance-p6-dsr-governance.md` | In-app delete satisfies erasure right |
 | `2026-06-30-compliance-p2-data-lifecycle.md` | Delete triggers PG + Blob removal |
+
+---
+
+## 14. Implementation status
+
+| Item | Status |
+|------|--------|
+| Design | ✅ Approved 2026-07-03 |
+| Plan | ✅ `docs/superpowers/plans/2026-07-03-delete-account-server-cleanup.md` |
+| Code | ✅ Implemented 2026-07-03 |

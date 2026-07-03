@@ -474,6 +474,7 @@ export type UserCopy = {
       deleteAccount: string;
       deleteFailed: string;
       deleteRequiresOnline: string;
+      deleteSessionExpired: string;
       deleteTitle: string;
       deleteSignedInWarning: string;
       deleteGhostWarning: string;

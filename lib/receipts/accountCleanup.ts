@@ -7,13 +7,20 @@ import { blobCommandOptions } from "@/lib/server/blob";
 export function userAccountReceiptFilter(
   userId: string,
   boundGhostId: string | null,
+  historicalGhostIds: string[] = [],
 ): Prisma.SnaptaxReceiptWhereInput {
-  if (boundGhostId) {
-    return {
-      OR: [{ userId }, { ghostId: boundGhostId }],
-    };
+  const ghostIds = new Set<string>(historicalGhostIds);
+  if (boundGhostId) ghostIds.add(boundGhostId);
+
+  if (ghostIds.size === 0) {
+    return { userId };
   }
-  return { userId };
+
+  const or: Prisma.SnaptaxReceiptWhereInput[] = [{ userId }];
+  for (const ghostId of ghostIds) {
+    or.push({ ghostId, userId: null });
+  }
+  return { OR: or };
 }
 
 export async function deleteReceiptBlobs(pathnames: string[]): Promise<void> {
@@ -55,9 +62,19 @@ export async function deleteUserAccount(userId: string): Promise<void> {
     where: { userId },
     select: { ghostId: true },
   });
+  const boundGhostId = binding?.ghostId ?? null;
+  const receiptGhostRows = await prisma.snaptaxReceipt.findMany({
+    where: { userId, ghostId: { not: null } },
+    select: { ghostId: true },
+    distinct: ["ghostId"],
+  });
+  const historicalGhostIds = receiptGhostRows
+    .map((row) => row.ghostId)
+    .filter((ghostId): ghostId is string => ghostId != null);
   const receiptFilter = userAccountReceiptFilter(
     userId,
-    binding?.ghostId ?? null,
+    boundGhostId,
+    historicalGhostIds,
   );
 
   const receipts = await prisma.snaptaxReceipt.findMany({

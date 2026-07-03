@@ -8,6 +8,7 @@ import { LegalSheet } from "@/components/legal/LegalSheet";
 import {
   deleteAccountAndLocalData,
   isDeleteAccountOfflineError,
+  isDeleteAccountSessionExpiredError,
 } from "@/lib/client/deleteAccountFlow";
 import { useDialogEscape } from "@/lib/ui/useDialogEscape";
 
@@ -92,6 +93,8 @@ export function PrivacyDataSection({
     } catch (err) {
       if (isDeleteAccountOfflineError(err)) {
         setError(copy.deleteRequiresOnline);
+      } else if (isDeleteAccountSessionExpiredError(err)) {
+        setError(copy.deleteSessionExpired);
       } else {
         setError(copy.deleteFailed);
       }

@@ -603,6 +603,8 @@ export const DE_DE_COPY: UserCopy = {
       deleteFailed: "Löschen fehlgeschlagen. Bitte erneut versuchen.",
       deleteRequiresOnline:
         "Verbinden Sie sich mit dem Internet, um Ihr Konto und Cloud-Daten zu löschen.",
+      deleteSessionExpired:
+        "Ihre Google-Sitzung ist abgelaufen. Melden Sie sich erneut mit Google an und löschen Sie dann Ihr Konto.",
       deleteTitle: "Konto löschen",
       deleteSignedInWarning:
         "Dies ist unwiderruflich. Alle Cloud-Belege und Kontodaten werden dauerhaft gelöscht.",

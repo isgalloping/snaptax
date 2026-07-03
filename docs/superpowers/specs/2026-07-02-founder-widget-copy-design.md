@@ -4,7 +4,7 @@
 **Status:** Approved (brainstorming + grill-me「一颗雷」)  
 **Scope:** Replace SaaS-style Founder Program label with blue-collar hook + dynamic price/scarcity on the home widget.
 
-**References:** `docs/superpowers/specs/2026-07-02-founder-widget-pager-layout-design.md`, `docs/superpowers/specs/2026-06-30-founder-program-widget-design.md`
+**References:** `docs/superpowers/specs/2026-07-03-founder-widget-marking-v1-design.md`, `docs/superpowers/specs/2026-07-02-founder-widget-pager-layout-design.md`, `docs/superpowers/specs/2026-06-30-founder-program-widget-design.md`
 
 ---
 

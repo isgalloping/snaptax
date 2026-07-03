@@ -2,6 +2,7 @@
 
 import { useUserCopy } from "@/components/i18n/I18nProvider";
 import { logFounderEvent } from "@/lib/founder/logFounderEvent";
+import { FOUNDER_SCARCITY_URGENT_THRESHOLD } from "@/lib/founder/types";
 import { formatCurrency } from "@/lib/format";
 import { homeVisual } from "@/lib/ui/homeVisual";
 
@@ -35,6 +36,11 @@ export function FounderProgramWidget({
       ? copy.scarcity.replace("{remaining}", String(preview.remaining))
       : null;
 
+  const scarcityUrgent =
+    preview != null &&
+    preview.remaining > 0 &&
+    preview.remaining <= FOUNDER_SCARCITY_URGENT_THRESHOLD;
+
   const handleOpen = () => {
     logFounderEvent("founder_widget_tap");
     onOpen();
@@ -62,7 +68,13 @@ export function FounderProgramWidget({
       </p>
       <p className="mt-1 line-clamp-2 text-sm font-black leading-tight text-white">{priceLine}</p>
       {scarcityLine && (
-        <p className="text-[9px] font-bold leading-tight text-zinc-400">{scarcityLine}</p>
+        <p
+          className={`text-[9px] font-bold leading-tight ${
+            scarcityUrgent ? "text-red-400" : "text-zinc-400"
+          }`}
+        >
+          {scarcityLine}
+        </p>
       )}
       <span className="mt-auto text-[9px] font-bold text-zinc-300 underline decoration-zinc-600 underline-offset-2">
         {copy.view} &gt;

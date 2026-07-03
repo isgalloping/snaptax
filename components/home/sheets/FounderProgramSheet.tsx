@@ -256,6 +256,11 @@ export function FounderProgramSheet({
                 {copy.seasonPrice.replace("{price}", formatCurrency(priceUsd))}
               </p>
             )}
+            {program && (
+              <p className="mt-2 text-xs font-bold text-zinc-400">
+                {copy.offerEnds.replace("{total}", String(program.seatsTotal))}
+              </p>
+            )}
             <button
               type="button"
               disabled={paying || !program?.programOpen}

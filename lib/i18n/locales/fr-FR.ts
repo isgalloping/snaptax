@@ -242,7 +242,7 @@ export const FR_FR_COPY: UserCopy = {
       founder: {
         label: "FIRST 50 ONLY",
         subtitle: "{price} export this season",
-        subtitleLoading: "Lock export price · first 50",
+        subtitleLoading: "This season · first 50 only",
         scarcity: "{remaining} spots left",
         view: "See deal",
         newBadge: "NEW",
@@ -254,6 +254,7 @@ export const FR_FR_COPY: UserCopy = {
       becomeFounder: "Become Founder",
       signInFirst: "Sign in with Google to become a Founder",
       seasonPrice: "{price} for this tax season",
+      offerEnds: "Offer ends when {total} spots are gone",
       alreadyEntitled:
         "You already have Export access for this tax season — no extra charge.",
       paymentUnavailable: "Payment unavailable. Paddle is not configured.",

@@ -221,6 +221,7 @@ export type UserCopy = {
       becomeFounder: string;
       signInFirst: string;
       seasonPrice: string;
+      offerEnds: string;
       alreadyEntitled: string;
       paymentUnavailable: string;
       paymentFailed: string;

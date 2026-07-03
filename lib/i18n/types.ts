@@ -222,6 +222,7 @@ export type UserCopy = {
       signInFirst: string;
       seasonPrice: string;
       offerEnds: string;
+      programFull: string;
       alreadyEntitled: string;
       paymentUnavailable: string;
       paymentFailed: string;

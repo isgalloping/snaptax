@@ -246,10 +246,11 @@ export const EN_US_COPY: UserCopy = {
       founderSheet: {
         title: "First 50 Deal",
         seatsRemaining: "{remaining} of {total} founder seats left",
-        becomeFounder: "Become Founder",
+        becomeFounder: "Claim my spot — {price}",
         signInFirst: "Sign in with Google to become a Founder",
         seasonPrice: "{price} for this tax season",
         offerEnds: "Offer ends when {total} spots are gone",
+        programFull: "All {total} founder spots are taken",
         alreadyEntitled:
           "You already have Export access for this tax season — no extra charge.",
         paymentUnavailable: "Payment unavailable. Paddle is not configured.",

@@ -3,7 +3,6 @@ import type { FounderStatus, FounderTier } from "./types";
 
 export type FounderDisplayTierInput = {
   claimedCount: number;
-  programOpen: boolean;
   user: {
     founderStatus: FounderStatus;
     founderTier: FounderTier | null;

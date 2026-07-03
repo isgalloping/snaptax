@@ -10,3 +10,7 @@ export const FOUNDER_SEATS_TOTAL = 50;
 
 /** When remaining seats ≤ this, widget scarcity line turns red (no fake countdown). */
 export const FOUNDER_SCARCITY_URGENT_THRESHOLD = 10;
+
+export function isFounderScarcityUrgent(remaining: number): boolean {
+  return remaining > 0 && remaining <= FOUNDER_SCARCITY_URGENT_THRESHOLD;
+}

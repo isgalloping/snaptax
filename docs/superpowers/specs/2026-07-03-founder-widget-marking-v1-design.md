@@ -78,6 +78,12 @@ flowchart LR
 
 - [x] Home copy：`export this season`（2026-07-02）  
 - [x] Sheet：`{price} for this tax season`  
-- [x] Scarcity urgent red：`remaining ≤ 10` on Widget  
+- [x] Scarcity urgent red：`remaining ≤ 10` on Widget + Sheet  
 - [x] Sheet line：`Offer ends when {total} spots are gone`  
+- [x] Sheet CTA：`Claim my spot — {price}`（mock 金按钮风格）  
+- [x] Guest Sheet：未登录也展示席位/当季价/offerEnds，再 Google gate  
+- [x] Widget：mock 折叠布局（label + 主句 + scarcity + 右侧 `>`）  
+- [x] Sheet re-fetch before checkout + on FOUNDER_PROGRAM_FULL  
+- [x] 满员专用文案 `programFull` + 关闭 Sheet / refresh Widget  
+- [x] 付后 poll `waitForFounderActive` 再 refresh Widget  
 - [ ] Sheet tier ladder（Phase 2，非 MVP）

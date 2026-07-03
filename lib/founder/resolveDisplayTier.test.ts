@@ -6,7 +6,6 @@ test("resolveDisplayTier uses next seat tier for new viewers", () => {
   assert.equal(
     resolveDisplayTier({
       claimedCount: 0,
-      programOpen: true,
       user: null,
     }),
     "FOUNDER_LEVEL_SUPER",
@@ -15,7 +14,6 @@ test("resolveDisplayTier uses next seat tier for new viewers", () => {
   assert.equal(
     resolveDisplayTier({
       claimedCount: 10,
-      programOpen: true,
       user: null,
     }),
     "EARLY",
@@ -26,7 +24,6 @@ test("resolveDisplayTier uses locked tier for active founders", () => {
   assert.equal(
     resolveDisplayTier({
       claimedCount: 20,
-      programOpen: true,
       user: {
         founderNumber: 3,
         founderStatus: "active",

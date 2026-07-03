@@ -1,37 +1,26 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { initializePaddle, Paddle } from "@paddle/paddle-js";
 import { ContinueWithGoogleButton } from "@/components/auth/ContinueWithGoogleButton";
 import { useUserCopy } from "@/components/i18n/I18nProvider";
+import { apiFetch } from "@/lib/client/ghostClient";
+import {
+  fetchFounderProgramClient,
+  type FounderProgramClientState,
+} from "@/lib/founder/fetchFounderProgramClient";
 import { logFounderEvent } from "@/lib/founder/logFounderEvent";
 import { resolveDisplayTier } from "@/lib/founder/resolveDisplayTier";
-import type { FounderStatus, FounderTier } from "@/lib/founder/types";
+import { isFounderScarcityUrgent } from "@/lib/founder/types";
 import { formatCurrency } from "@/lib/format";
-import { apiFetch } from "@/lib/client/ghostClient";
 import { useDialogEscape } from "@/lib/ui/useDialogEscape";
 
 type FounderSheetPhase = "offer" | "confirming";
 
-type FounderTierConfig = {
-  priceUsd: number;
-  priceCents: number;
-  paddlePriceId: string;
-  seatRange: [number, number] | null;
-};
-
-type FounderProgramState = {
-  seatsTotal: number;
-  claimedCount: number;
-  remaining: number;
-  programOpen: boolean;
-  tiers: Record<FounderTier, FounderTierConfig>;
-  user: {
-    founderStatus: FounderStatus;
-    founderTier: FounderTier | null;
-    founderNumber: number | null;
-    currentSeasonEntitled: boolean;
-  } | null;
+type CheckoutIntentBody = {
+  intentId?: string;
+  paddlePriceId?: string;
+  error?: { code?: string };
 };
 
 export interface FounderProgramSheetProps {
@@ -39,8 +28,13 @@ export interface FounderProgramSheetProps {
   isSignedIn: boolean;
   onRequestGoogleSignIn: () => void;
   onPaid: () => void | Promise<void>;
+  onProgramFull?: () => void;
   seasonLabel: string;
   userEmail?: string;
+}
+
+function formatProgramFull(template: string, seatsTotal: number): string {
+  return template.replace("{total}", String(seatsTotal));
 }
 
 export function FounderProgramSheet({
@@ -48,6 +42,7 @@ export function FounderProgramSheet({
   isSignedIn,
   onRequestGoogleSignIn,
   onPaid,
+  onProgramFull,
   seasonLabel,
   userEmail,
 }: FounderProgramSheetProps) {
@@ -55,34 +50,50 @@ export function FounderProgramSheet({
   const paywallCopy = useUserCopy().paywall;
   const [phase, setPhase] = useState<FounderSheetPhase>("offer");
   const [loading, setLoading] = useState(true);
-  const [program, setProgram] = useState<FounderProgramState | null>(null);
+  const [program, setProgram] = useState<FounderProgramClientState | null>(null);
   const [paying, setPaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const paddleRef = useRef<Paddle | null>(null);
   const onPaidRef = useRef(onPaid);
+  const onProgramFullRef = useRef(onProgramFull);
   const checkoutCompletedRef = useRef(false);
 
   useDialogEscape(true, onClose);
 
   useEffect(() => {
     onPaidRef.current = onPaid;
+    onProgramFullRef.current = onProgramFull;
   });
+
+  const refreshProgram = useCallback(async (): Promise<FounderProgramClientState | null> => {
+    const data = await fetchFounderProgramClient();
+    if (data) {
+      setProgram(data);
+    }
+    return data;
+  }, []);
+
+  const notifyProgramFull = useCallback(
+    (seatsTotal: number) => {
+      setError(formatProgramFull(copy.programFull, seatsTotal));
+      onProgramFullRef.current?.();
+    },
+    [copy.programFull],
+  );
 
   useEffect(() => {
     let cancelled = false;
 
     void (async () => {
       try {
-        const res = await apiFetch("/api/founder/program");
-        if (!res.ok) {
-          if (!cancelled) setError(copy.paymentUnavailable);
+        const data = await fetchFounderProgramClient();
+        if (cancelled) return;
+        if (!data) {
+          setError(copy.paymentUnavailable);
           return;
         }
-        const data = (await res.json()) as FounderProgramState;
-        if (!cancelled) {
-          setProgram(data);
-          logFounderEvent("founder_sheet_view", { claimedCount: data.claimedCount });
-        }
+        setProgram(data);
+        logFounderEvent("founder_sheet_view", { claimedCount: data.claimedCount });
       } catch {
         if (!cancelled) setError(copy.paymentUnavailable);
       } finally {
@@ -143,22 +154,36 @@ export function FounderProgramSheet({
         return;
       }
 
+      const fresh = await refreshProgram();
+      if (!fresh) {
+        logFounderEvent("founder_purchase_fail");
+        setError(copy.paymentUnavailable);
+        return;
+      }
+      if (!fresh.programOpen) {
+        logFounderEvent("founder_purchase_fail");
+        notifyProgramFull(fresh.seatsTotal);
+        return;
+      }
+
       const intentRes = await apiFetch("/api/billing/checkout-intent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ taxSeason: seasonLabel, founderPurchase: true }),
       });
 
+      const intentData = (await intentRes.json()) as CheckoutIntentBody;
+
       if (!intentRes.ok) {
         logFounderEvent("founder_purchase_fail");
+        if (intentData.error?.code === "FOUNDER_PROGRAM_FULL") {
+          const updated = await refreshProgram();
+          notifyProgramFull(updated?.seatsTotal ?? fresh.seatsTotal);
+          return;
+        }
         setError(copy.paymentUnavailable);
         return;
       }
-
-      const intentData = (await intentRes.json()) as {
-        intentId?: string;
-        paddlePriceId?: string;
-      };
 
       if (!intentData.intentId || !intentData.paddlePriceId) {
         logFounderEvent("founder_purchase_fail");
@@ -200,6 +225,34 @@ export function FounderProgramSheet({
   const priceUsd =
     displayTier && program ? program.tiers[displayTier]?.priceUsd : null;
   const alreadyEntitled = program?.user?.currentSeasonEntitled === true;
+  const seatsUrgent = program != null && isFounderScarcityUrgent(program.remaining);
+  const programFull =
+    program != null ? formatProgramFull(copy.programFull, program.seatsTotal) : null;
+  const claimLabel =
+    priceUsd != null
+      ? copy.becomeFounder.replace("{price}", formatCurrency(priceUsd))
+      : copy.becomeFounder.replace("{price}", "…");
+
+  const offerBlock =
+    program && !alreadyEntitled ? (
+      <>
+        <p
+          className={`text-sm font-bold ${seatsUrgent ? "text-red-400" : "text-yellow-400"}`}
+        >
+          {copy.seatsRemaining
+            .replace("{remaining}", String(program.remaining))
+            .replace("{total}", String(program.seatsTotal))}
+        </p>
+        {priceUsd != null && (
+          <p className="mt-4 text-lg font-black text-white">
+            {copy.seasonPrice.replace("{price}", formatCurrency(priceUsd))}
+          </p>
+        )}
+        <p className="mt-2 text-xs font-bold text-zinc-400">
+          {copy.offerEnds.replace("{total}", String(program.seatsTotal))}
+        </p>
+      </>
+    ) : null;
 
   return (
     <div
@@ -237,37 +290,32 @@ export function FounderProgramSheet({
           </p>
         ) : !isSignedIn ? (
           <>
-            <p className="text-sm leading-relaxed text-zinc-300">{copy.signInFirst}</p>
+            {offerBlock}
+            {!program?.programOpen && programFull && (
+              <p className="mt-4 text-sm font-bold text-red-400">{programFull}</p>
+            )}
+            <p className={`text-sm leading-relaxed text-zinc-300 ${offerBlock ? "mt-4" : ""}`}>
+              {copy.signInFirst}
+            </p>
             <ContinueWithGoogleButton onClick={handleGoogleSignIn} className="mt-6" />
           </>
         ) : alreadyEntitled ? (
           <p className="text-sm leading-relaxed text-zinc-300">{copy.alreadyEntitled}</p>
+        ) : !program?.programOpen ? (
+          <>
+            {offerBlock}
+            <p className="mt-4 text-sm font-bold text-red-400">{programFull}</p>
+          </>
         ) : (
           <>
-            {program && (
-              <p className="text-sm font-bold text-yellow-400">
-                {copy.seatsRemaining
-                  .replace("{remaining}", String(program.remaining))
-                  .replace("{total}", String(program.seatsTotal))}
-              </p>
-            )}
-            {priceUsd != null && (
-              <p className="mt-4 text-lg font-black text-white">
-                {copy.seasonPrice.replace("{price}", formatCurrency(priceUsd))}
-              </p>
-            )}
-            {program && (
-              <p className="mt-2 text-xs font-bold text-zinc-400">
-                {copy.offerEnds.replace("{total}", String(program.seatsTotal))}
-              </p>
-            )}
+            {offerBlock}
             <button
               type="button"
-              disabled={paying || !program?.programOpen}
+              disabled={paying}
               onClick={() => void handleBecomeFounder()}
               className="mt-6 w-full min-h-16 rounded-xl border-4 border-white bg-yellow-500 py-4 text-lg font-black uppercase tracking-wider text-black transition-transform active:scale-95 disabled:opacity-60"
             >
-              {paying ? paywallCopy.openingPaddle : copy.becomeFounder}
+              {paying ? paywallCopy.openingPaddle : claimLabel}
             </button>
           </>
         )}

@@ -48,7 +48,6 @@ interface WidgetStackProps {
 function buildFounderPreview(program: FounderProgramResponse): FounderWidgetPreview {
   const displayTier = resolveDisplayTier({
     claimedCount: program.claimedCount,
-    programOpen: program.programOpen,
     user: program.user,
   });
   const priceUsd = program.tiers[displayTier]?.priceUsd ?? program.tiers.DEFAULT.priceUsd;

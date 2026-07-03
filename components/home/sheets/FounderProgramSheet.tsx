@@ -5,7 +5,7 @@ import { initializePaddle, Paddle } from "@paddle/paddle-js";
 import { ContinueWithGoogleButton } from "@/components/auth/ContinueWithGoogleButton";
 import { useUserCopy } from "@/components/i18n/I18nProvider";
 import { logFounderEvent } from "@/lib/founder/logFounderEvent";
-import { nextSeatNumber, tierForSeat } from "@/lib/founder/tiers";
+import { resolveDisplayTier } from "@/lib/founder/resolveDisplayTier";
 import type { FounderStatus, FounderTier } from "@/lib/founder/types";
 import { formatCurrency } from "@/lib/format";
 import { apiFetch } from "@/lib/client/ghostClient";
@@ -41,36 +41,6 @@ export interface FounderProgramSheetProps {
   onPaid: () => void | Promise<void>;
   seasonLabel: string;
   userEmail?: string;
-}
-
-function resolveDisplayTier(state: FounderProgramState): FounderTier {
-  const user = state.user;
-
-  if (user?.founderNumber != null) {
-    const status = user.founderStatus;
-    if (
-      (status === "active" || status === "lapsed") &&
-      user.founderTier != null
-    ) {
-      return user.founderTier;
-    }
-  }
-
-  if (user?.founderNumber == null) {
-    const nextSeat = nextSeatNumber(state.claimedCount);
-    if (nextSeat != null) {
-      const tier = tierForSeat(nextSeat);
-      if (tier != null) {
-        return tier;
-      }
-    }
-    if (!state.programOpen) {
-      return "DEFAULT";
-    }
-    return "DEFAULT";
-  }
-
-  return "DEFAULT";
 }
 
 export function FounderProgramSheet({

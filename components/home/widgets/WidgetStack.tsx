@@ -7,16 +7,27 @@ import {
   markFounderWidgetSeen,
   readFounderWidgetSeen,
 } from "@/lib/founder/founderStorage";
+import { resolveDisplayTier } from "@/lib/founder/resolveDisplayTier";
+import type { FounderStatus, FounderTier } from "@/lib/founder/types";
 import { isFounderWidgetVisible } from "@/lib/founder/visibility";
 import { logFounderEvent } from "@/lib/founder/logFounderEvent";
-import type { FounderStatus } from "@/lib/founder/types";
+import type { FounderWidgetPreview } from "./FounderProgramWidget";
 import { WidgetPager } from "./WidgetPager";
+
+type FounderTierConfig = {
+  priceUsd: number;
+};
 
 type FounderProgramResponse = {
   enabled: boolean;
   claimedCount: number;
+  remaining: number;
+  programOpen: boolean;
+  tiers: Record<FounderTier, FounderTierConfig>;
   user: {
     founderStatus: FounderStatus;
+    founderTier: FounderTier | null;
+    founderNumber: number | null;
   } | null;
 };
 
@@ -34,6 +45,20 @@ interface WidgetStackProps {
   onNeedActionResnap: () => void;
 }
 
+function buildFounderPreview(program: FounderProgramResponse): FounderWidgetPreview {
+  const displayTier = resolveDisplayTier({
+    claimedCount: program.claimedCount,
+    programOpen: program.programOpen,
+    user: program.user,
+  });
+  const priceUsd = program.tiers[displayTier]?.priceUsd ?? program.tiers.DEFAULT.priceUsd;
+
+  return {
+    priceUsd,
+    remaining: program.remaining,
+  };
+}
+
 export function WidgetStack({
   isSignedIn,
   authHydrated,
@@ -43,6 +68,7 @@ export function WidgetStack({
 }: WidgetStackProps) {
   const [showFounder, setShowFounder] = useState(false);
   const [showFounderNewBadge, setShowFounderNewBadge] = useState(false);
+  const [founderPreview, setFounderPreview] = useState<FounderWidgetPreview | null>(null);
   const impressionLoggedRef = useRef(false);
   const seenMarkedRef = useRef(false);
   const claimedCountRef = useRef<number | null>(null);
@@ -67,8 +93,12 @@ export function WidgetStack({
           founderStatus: program.user?.founderStatus ?? "none",
         });
         setShowFounder(visible);
+        setFounderPreview(visible ? buildFounderPreview(program) : null);
       } catch {
-        if (!cancelled) setShowFounder(false);
+        if (!cancelled) {
+          setShowFounder(false);
+          setFounderPreview(null);
+        }
       }
     })();
 
@@ -99,6 +129,7 @@ export function WidgetStack({
       {...pagerProps}
       showFounder={showFounder}
       showFounderNewBadge={showFounderNewBadge}
+      founderPreview={founderPreview}
       onFounderOpen={onFounderOpen}
     />
   );

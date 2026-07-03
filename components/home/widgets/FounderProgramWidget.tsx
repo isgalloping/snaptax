@@ -2,17 +2,38 @@
 
 import { useUserCopy } from "@/components/i18n/I18nProvider";
 import { logFounderEvent } from "@/lib/founder/logFounderEvent";
+import { formatCurrency } from "@/lib/format";
 import { homeVisual } from "@/lib/ui/homeVisual";
+
+export type FounderWidgetPreview = {
+  priceUsd: number;
+  remaining: number;
+};
 
 interface FounderProgramWidgetProps {
   onOpen: () => void;
   showNewBadge: boolean;
+  preview?: FounderWidgetPreview | null;
 }
 
-export function FounderProgramWidget({ onOpen, showNewBadge }: FounderProgramWidgetProps) {
+export function FounderProgramWidget({
+  onOpen,
+  showNewBadge,
+  preview,
+}: FounderProgramWidgetProps) {
   const copy = useUserCopy().home.widgets.founder;
   const visual = homeVisual.widgets.founder;
   const card = homeVisual.widgetPager.cardBase;
+
+  const priceLine =
+    preview != null
+      ? copy.subtitle.replace("{price}", formatCurrency(preview.priceUsd))
+      : copy.subtitleLoading;
+
+  const scarcityLine =
+    preview != null && preview.remaining > 0
+      ? copy.scarcity.replace("{remaining}", String(preview.remaining))
+      : null;
 
   const handleOpen = () => {
     logFounderEvent("founder_widget_tap");
@@ -23,7 +44,7 @@ export function FounderProgramWidget({ onOpen, showNewBadge }: FounderProgramWid
     <button
       type="button"
       onClick={handleOpen}
-      aria-label={`${copy.label}. ${copy.subtitle}`}
+      aria-label={`${copy.label}. ${priceLine}${scarcityLine ? `. ${scarcityLine}` : ""}`}
       className={`${card} flex min-h-16 flex-col ${visual.bg} ${visual.border} text-left transition-transform active:scale-[0.98]`}
     >
       <div className="flex items-center gap-1.5">
@@ -33,12 +54,17 @@ export function FounderProgramWidget({ onOpen, showNewBadge }: FounderProgramWid
             {copy.newBadge}
           </span>
         )}
-        <p className={`text-xs font-semibold ${visual.accent}`}>{copy.label}</p>
       </div>
-      <p className="mt-auto line-clamp-2 text-sm font-black leading-tight text-white">
-        {copy.subtitle}
+      <p
+        className={`text-[9px] font-bold uppercase tracking-wider leading-none ${visual.accent}`}
+      >
+        {copy.label}
       </p>
-      <span className="mt-0.5 text-[9px] font-bold text-zinc-300 underline decoration-zinc-600 underline-offset-2">
+      <p className="mt-1 line-clamp-2 text-sm font-black leading-tight text-white">{priceLine}</p>
+      {scarcityLine && (
+        <p className="text-[9px] font-bold leading-tight text-zinc-400">{scarcityLine}</p>
+      )}
+      <span className="mt-auto text-[9px] font-bold text-zinc-300 underline decoration-zinc-600 underline-offset-2">
         {copy.view} &gt;
       </span>
     </button>

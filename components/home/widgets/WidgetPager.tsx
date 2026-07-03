@@ -13,13 +13,14 @@ import { MissingDeductionsWidget } from "./MissingDeductionsWidget";
 import { TaxYearProgressWidget } from "./TaxYearProgressWidget";
 import { CpaReadyWidget } from "./CpaReadyWidget";
 import { NeedActionWidget } from "./NeedActionWidget";
-import { FounderProgramWidget } from "./FounderProgramWidget";
+import { FounderProgramWidget, type FounderWidgetPreview } from "./FounderProgramWidget";
 
 interface WidgetPagerProps {
   data: HomeWidgetsData;
   actionCount: number;
   showFounder?: boolean;
   showFounderNewBadge?: boolean;
+  founderPreview?: FounderWidgetPreview | null;
   onFounderOpen?: () => void;
   onDeadlineDetails: () => void;
   onMissingReview: () => void;
@@ -36,7 +37,11 @@ function renderWidget(
     WidgetPagerProps,
     "data" | "actionCount" | "showFounder" | "showFounderNewBadge"
   >,
-  founderUi: { showNewBadge: boolean; onOpen?: () => void },
+  founderUi: {
+    showNewBadge: boolean;
+    preview?: FounderWidgetPreview | null;
+    onOpen?: () => void;
+  },
 ) {
   switch (key) {
     case "founder":
@@ -44,6 +49,7 @@ function renderWidget(
         <FounderProgramWidget
           onOpen={() => founderUi.onOpen?.()}
           showNewBadge={founderUi.showNewBadge}
+          preview={founderUi.preview}
         />
       );
     case "deadline":
@@ -75,6 +81,7 @@ export function WidgetPager({
   actionCount,
   showFounder = false,
   showFounderNewBadge = false,
+  founderPreview = null,
   onFounderOpen,
   onDeadlineDetails,
   onMissingReview,
@@ -145,7 +152,11 @@ export function WidgetPager({
     onFounderOpen,
   };
 
-  const founderUi = { showNewBadge: showFounderNewBadge, onOpen: onFounderOpen };
+  const founderUi = {
+    showNewBadge: showFounderNewBadge,
+    preview: founderPreview,
+    onOpen: onFounderOpen,
+  };
 
   return (
     <div className={pager.container}>

@@ -35,6 +35,6 @@ When Founder + 3 operational widgets share one pager row (33% width each), subti
 
 ## Out of scope
 
-- Shorter i18n subtitle
-- Dynamic `{remaining} seats` on widget
+- ~~Shorter i18n subtitle~~ → see `2026-07-02-founder-widget-copy-design.md`
+- ~~Dynamic `{remaining} seats` on widget~~ → implemented in copy spec
 - Increasing card height above 104px

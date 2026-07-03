@@ -209,6 +209,8 @@ export type UserCopy = {
       founder: {
         label: string;
         subtitle: string;
+        subtitleLoading: string;
+        scarcity: string;
         view: string;
         newBadge: string;
       };

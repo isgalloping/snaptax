@@ -157,12 +157,12 @@ Settings **Export Paywall** 与 Founder Sheet 使用 **同一套** `resolveFound
 
 ## Implementation checklist
 
-- [ ] 扩展 `isFounderWidgetVisible` + tests（`currentSeasonEntitled`）
-- [ ] `WidgetStack` 传入 entitled；entitled 时 `showFounder=false`
-- [ ] `FounderProgramSheet` 方案 3 布局 + `notNow` + 文案更新
-- [ ] 替换 `GoogleSignInButtonHost` 为 overlay GIS + `ContinueWithGoogleButton`
-- [ ] PaywallSheet：`FOUNDER_PROGRAM_FULL` 文案（与 Sheet 一致）
-- [ ] 确认 Paywall checkout 路径 webhook 占席与 Founder Sheet 一致（集成测试或文档注释）
+- [x] 扩展 `isFounderWidgetVisible` + tests（`currentSeasonEntitled`）
+- [x] `WidgetStack` 传入 entitled；entitled 时 `showFounder=false`
+- [x] `FounderProgramSheet` 方案 3 布局 + `notNow` + 文案更新
+- [x] GIS overlay + `ContinueWithGoogleButton`（`GoogleSignInButtonHost`）
+- [x] Paywall checkout 保持 season-offer 路径（满员自动 DEFAULT，无需 409 文案）
+- [x] Settings / webhook 占席与 Founder Sheet 一致（已有 `resolveSeasonOffer` + webhook tier）
 
 ---
 

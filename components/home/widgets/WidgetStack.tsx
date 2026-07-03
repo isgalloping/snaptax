@@ -28,6 +28,7 @@ type FounderProgramResponse = {
     founderStatus: FounderStatus;
     founderTier: FounderTier | null;
     founderNumber: number | null;
+    currentSeasonEntitled: boolean;
   } | null;
 };
 
@@ -90,6 +91,7 @@ export function WidgetStack({
           enabled: program.enabled,
           claimedCount: program.claimedCount,
           founderStatus: program.user?.founderStatus ?? "none",
+          currentSeasonEntitled: program.user?.currentSeasonEntitled ?? false,
         });
         setShowFounder(visible);
         setFounderPreview(visible ? buildFounderPreview(program) : null);

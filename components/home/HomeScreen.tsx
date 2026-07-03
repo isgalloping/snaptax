@@ -1432,7 +1432,9 @@ export function HomeScreen() {
         <FounderProgramSheet
           onClose={() => setFounderSheetOpen(false)}
           isSignedIn={auth.isSignedIn}
-          onRequestGoogleSignIn={() => void auth.signInWithGoogle()}
+          onGoogleSignedIn={async (result) => {
+            auth.applyGoogleSignIn(result);
+          }}
           userEmail={auth.googleUser?.email}
           seasonLabel={auth.currentSeason}
           onProgramFull={() => {

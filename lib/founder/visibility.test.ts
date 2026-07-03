@@ -35,6 +35,18 @@ test("hidden when founderStatus=active", () => {
   );
 });
 
+test("hidden when currentSeasonEntitled", () => {
+  assert.equal(
+    isFounderWidgetVisible({
+      enabled: true,
+      claimedCount: 10,
+      founderStatus: "none",
+      currentSeasonEntitled: true,
+    }),
+    false,
+  );
+});
+
 test("visible for guest (none) when seats remain", () => {
   assert.equal(
     isFounderWidgetVisible({

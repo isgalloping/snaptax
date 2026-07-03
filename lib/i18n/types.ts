@@ -220,6 +220,7 @@ export type UserCopy = {
       seatsRemaining: string;
       becomeFounder: string;
       signInFirst: string;
+      notNow: string;
       seasonPrice: string;
       offerEnds: string;
       programFull: string;

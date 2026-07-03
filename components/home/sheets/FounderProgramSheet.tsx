@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { initializePaddle, Paddle } from "@paddle/paddle-js";
-import { ContinueWithGoogleButton } from "@/components/auth/ContinueWithGoogleButton";
+import { GoogleSignInButtonHost } from "@/components/auth/GoogleSignInButtonHost";
 import { useUserCopy } from "@/components/i18n/I18nProvider";
+import type { GoogleAuthResponse } from "@/lib/client/authApi";
 import { apiFetch } from "@/lib/client/ghostClient";
 import {
   fetchFounderProgramClient,
@@ -26,7 +27,7 @@ type CheckoutIntentBody = {
 export interface FounderProgramSheetProps {
   onClose: () => void;
   isSignedIn: boolean;
-  onRequestGoogleSignIn: () => void;
+  onGoogleSignedIn: (result: GoogleAuthResponse) => void | Promise<void>;
   onPaid: () => void | Promise<void>;
   onProgramFull?: () => void;
   seasonLabel: string;
@@ -40,7 +41,7 @@ function formatProgramFull(template: string, seatsTotal: number): string {
 export function FounderProgramSheet({
   onClose,
   isSignedIn,
-  onRequestGoogleSignIn,
+  onGoogleSignedIn,
   onPaid,
   onProgramFull,
   seasonLabel,
@@ -136,10 +137,13 @@ export function FounderProgramSheet({
     });
   }, [copy.paymentFailed]);
 
-  const handleGoogleSignIn = () => {
-    logFounderEvent("founder_google_gate");
-    onRequestGoogleSignIn();
-  };
+  const handleGoogleSignedIn = useCallback(
+    async (result: GoogleAuthResponse) => {
+      await onGoogleSignedIn(result);
+      await refreshProgram();
+    },
+    [onGoogleSignedIn, refreshProgram],
+  );
 
   const handleBecomeFounder = async () => {
     setPaying(true);
@@ -288,34 +292,38 @@ export function FounderProgramSheet({
           <p className="py-8 text-center text-sm font-bold text-zinc-400" aria-live="polite">
             …
           </p>
-        ) : !isSignedIn ? (
+        ) : alreadyEntitled ? (
+          <p className="text-sm leading-relaxed text-zinc-300">{copy.alreadyEntitled}</p>
+        ) : (
           <>
             {offerBlock}
             {!program?.programOpen && programFull && (
               <p className="mt-4 text-sm font-bold text-red-400">{programFull}</p>
             )}
-            <p className={`text-sm leading-relaxed text-zinc-300 ${offerBlock ? "mt-4" : ""}`}>
-              {copy.signInFirst}
-            </p>
-            <ContinueWithGoogleButton onClick={handleGoogleSignIn} className="mt-6" />
-          </>
-        ) : alreadyEntitled ? (
-          <p className="text-sm leading-relaxed text-zinc-300">{copy.alreadyEntitled}</p>
-        ) : !program?.programOpen ? (
-          <>
-            {offerBlock}
-            <p className="mt-4 text-sm font-bold text-red-400">{programFull}</p>
-          </>
-        ) : (
-          <>
-            {offerBlock}
+            {program?.programOpen && !isSignedIn && (
+              <GoogleSignInButtonHost
+                active={!loading && !isSignedIn}
+                onGate={() => logFounderEvent("founder_google_gate")}
+                onSignedIn={handleGoogleSignedIn}
+              />
+            )}
+            {program?.programOpen && isSignedIn && (
+              <button
+                type="button"
+                disabled={paying}
+                onClick={() => void handleBecomeFounder()}
+                className="mt-6 w-full min-h-16 rounded-xl border-4 border-white bg-yellow-500 py-4 text-lg font-black uppercase tracking-wider text-black transition-transform active:scale-95 disabled:opacity-60"
+              >
+                {paying ? paywallCopy.openingPaddle : claimLabel}
+              </button>
+            )}
             <button
               type="button"
               disabled={paying}
-              onClick={() => void handleBecomeFounder()}
-              className="mt-6 w-full min-h-16 rounded-xl border-4 border-white bg-yellow-500 py-4 text-lg font-black uppercase tracking-wider text-black transition-transform active:scale-95 disabled:opacity-60"
+              onClick={onClose}
+              className="mt-3 w-full min-h-12 py-3 text-sm font-bold text-zinc-400 transition-transform active:scale-95 disabled:opacity-60"
             >
-              {paying ? paywallCopy.openingPaddle : claimLabel}
+              {copy.notNow}
             </button>
           </>
         )}

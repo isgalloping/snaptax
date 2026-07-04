@@ -17,7 +17,7 @@
 
 | 渠道 | 处理 |
 |------|------|
-| **legal@snap1099.com** | 主渠道 |
+| **snaptax.lightxforge@gmail.com** | 主渠道 |
 | **In-app Delete Account** | 自动满足删除权 |
 | **In-app Export** | 自动满足访问/可携带（报税季 Export） |
 

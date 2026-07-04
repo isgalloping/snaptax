@@ -109,7 +109,7 @@ Je nach Standort haben Sie das Recht auf:
 - **Einschränkung der Verarbeitung** — uns kontaktieren, wo anwendbar.
 - **Widerspruch** — App-Nutzung beenden oder Konto löschen.
 
-Wir antworten auf verifizierte Anfragen an **legal@snap1099.com** innerhalb von **30 Tagen** (Bestätigung innerhalb von 48 Stunden angestrebt). Verlängerung um 60 Tage, wo gesetzlich erlaubt, mit Mitteilung.
+Wir antworten auf verifizierte Anfragen an **snaptax.lightxforge@gmail.com** innerhalb von **30 Tagen** (Bestätigung innerhalb von 48 Stunden angestrebt). Verlängerung um 60 Tage, wo gesetzlich erlaubt, mit Mitteilung.
 
 ## 10. Sicherheit
 
@@ -123,4 +123,4 @@ Die App richtet sich nicht an Kinder unter 13 Jahren. Wir erheben wissentlich ke
 
 Wir können diese Erklärung aktualisieren. Wesentliche Änderungen werden im Datum „Zuletzt aktualisiert" reflektiert. Fortgesetzte Nutzung gilt als Zustimmung, wo gesetzlich zulässig.
 
-**Kontakt:** **legal@snap1099.com**
+**Kontakt:** **snaptax.lightxforge@gmail.com**

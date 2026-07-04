@@ -676,7 +676,7 @@ export const DE_DE_COPY: UserCopy = {
     backToApp: "< BACK",
     backToTopics: "< BACK",
     allTopics: "Alle Themen",
-    contact: "Weitere Fragen? legal@snap1099.com",
+    contact: "Weitere Fragen? snaptax.lightxforge@gmail.com",
     tocTitle: "Themen",
     toc: {
       quickStart: "Schnellstart (30 Sek.)",

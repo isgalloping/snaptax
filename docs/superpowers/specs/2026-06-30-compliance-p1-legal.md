@@ -28,7 +28,7 @@
 | 9 | Your Rights (GDPR & CPRA) | 访问、更正、删除、可携带、限制、反对；**30 天内响应**；联系 legal@ |
 | 10 | Security | 摘要 + 链接 incident 摘要 |
 | 11 | Children | 不面向 13 岁以下 |
-| 12 | Changes & Contact | 更新通知；legal@snap1099.com |
+| 12 | Changes & Contact | 更新通知；snaptax.lightxforge@gmail.com |
 
 ---
 

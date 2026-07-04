@@ -50,4 +50,4 @@ Structured logs exclude receipt image bytes and mask email where applicable (see
 | `PHOTO_FULL_RETENTION_MS` | 90 days | `lib/client/photoRetention.ts` |
 | `GC_RETENTION_MS` | 24 hours | `lib/api/dbRateLimit.ts` |
 
-Questions: **legal@snap1099.com**
+Questions: **snaptax.lightxforge@gmail.com**

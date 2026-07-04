@@ -46,7 +46,7 @@ We may suspend or terminate access for violations of these Terms or to protect t
 
 ## 10. Dispute Resolution & Governing Law
 
-These Terms are governed by the laws of the **State of Delaware, United States**, excluding conflict-of-law rules. EU consumers retain mandatory rights under local law and GDPR. Disputes should first be sent to **legal@snap1099.com**.
+These Terms are governed by the laws of the **State of Delaware, United States**, excluding conflict-of-law rules. EU consumers retain mandatory rights under local law and GDPR. Disputes should first be sent to **snaptax.lightxforge@gmail.com**.
 
 ## 11. Privacy
 
@@ -54,4 +54,4 @@ Your use is governed by our [Privacy Policy](/privacy). By snapping a receipt wh
 
 ## 12. Contact
 
-**legal@snap1099.com**
+**snaptax.lightxforge@gmail.com**

@@ -9,4 +9,4 @@ We have completed your **{REQUEST_TYPE}** request received on {DATE}.
 If you believe we have not fully addressed your request, reply to this email within 14 days and reference ticket **#{ID}**.
 
 Snap1099 Privacy Team  
-legal@snap1099.com
+snaptax.lightxforge@gmail.com

@@ -122,7 +122,7 @@ App 内 Bottom Sheet 与公开页 **同源文案**（避免双源漂移）。
 1. **登录前本地存储** — Ghost 阶段数据仅存在用户设备，不上传服务器  
 2. **登录后区域驻留** — 按 `data_region` 存入 Frankfurt 或 US；不再暗示未登录即上云  
 3. **子处理方清单** — Google OAuth、OpenAI Vision、Paddle、Vercel、Neon  
-4. **用户权利** — 访问、导出、删除（Delete Account）；联系 **legal@snap1099.com**，48h 内响应目标  
+4. **用户权利** — 访问、导出、删除（Delete Account）；联系 **snaptax.lightxforge@gmail.com**，48h 内响应目标  
 5. **零广告 / 不卖数据** — 保留现有 §5 表述  
 6. **非税务建议免责声明** — 工具非 CPA/律师建议（可在 Terms 详述）
 
@@ -133,7 +133,7 @@ App 内 Bottom Sheet 与公开页 **同源文案**（避免双源漂移）。
 - 账户与 Google 登录；Ghost 与换机数据丢失告知  
 - Paddle 一次性付费、退款政策占位（按 Paddle 政策）  
 - 责任限制、终止服务、适用法律（US 主体 + EU 用户 GDPR 权利不受影响）  
-- 联系 legal@snap1099.com
+- 联系 snaptax.lightxforge@gmail.com
 
 ---
 
@@ -164,7 +164,7 @@ By snapping, you agree to our Terms & Privacy Policy.
 | Privacy Policy | Sheet / `/privacy` | 同左 |
 | Terms of Service | Sheet / `/terms` | 同左 |
 | Data storage | `On this device only until you sign in with Google` | `Stored in EU (Frankfurt)` 或 `Stored in US` |
-| Contact | `legal@snap1099.com` mailto | 同左 |
+| Contact | `snaptax.lightxforge@gmail.com` mailto | 同左 |
 | Delete Account | 清本地数据 | 云 + 本地全删 |
 
 **视觉：** 与现有设置页一致 — 黑底、 zinc 卡片、热区 ≥ 64px、无细灰字。

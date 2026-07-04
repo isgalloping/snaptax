@@ -14,4 +14,4 @@ For faster self-service:
 If you did not submit this request, please reply to this email immediately.
 
 Snap1099 Privacy Team  
-legal@snap1099.com
+snaptax.lightxforge@gmail.com

@@ -11,7 +11,7 @@ We protect your data with industry-standard encryption and monitoring. If a secu
 
 ## How to report a security concern
 
-Email **legal@snap1099.com** with subject line **Security Report**.
+Email **snaptax.lightxforge@gmail.com** with subject line **Security Report**.
 
 We do not request your password or full payment card details by email.
 

@@ -46,7 +46,7 @@ Nous pouvons suspendre ou résilier l'accès en cas de violation de ces Conditio
 
 ## 10. Règlement des litiges & droit applicable
 
-Ces Conditions sont régies par les lois de l'**État du Delaware, États-Unis**, à l'exclusion des règles de conflit de lois. Les consommateurs de l'UE conservent leurs droits impératifs locaux et RGPD. Les litiges doivent d'abord être adressés à **legal@snap1099.com**.
+Ces Conditions sont régies par les lois de l'**État du Delaware, États-Unis**, à l'exclusion des règles de conflit de lois. Les consommateurs de l'UE conservent leurs droits impératifs locaux et RGPD. Les litiges doivent d'abord être adressés à **snaptax.lightxforge@gmail.com**.
 
 ## 11. Confidentialité
 
@@ -54,4 +54,4 @@ Votre utilisation est régie par notre [Politique de confidentialité](/privacy)
 
 ## 12. Contact
 
-**legal@snap1099.com**
+**snaptax.lightxforge@gmail.com**

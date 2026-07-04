@@ -27,15 +27,14 @@ import {
 } from "@/lib/client/duplicateReceiptNotice";
 import { prepareReceiptCapture } from "@/lib/client/prepareReceiptCapture";
 import {
-  deferBatchOcrUpload,
+  flushSessionPendingUploads,
+} from "@/lib/client/batchCaptureFlush";
+import {
   isBatchOcrUploadDeferred,
-  shouldBlockUploadForOcr,
   preloadOcrEngine,
-  releaseBatchOcrUpload,
   resumePendingOcrJobsFromStorage,
   scheduleOcrJob,
   setOcrCompleteHandler,
-  waitForOcrJobs,
 } from "@/lib/client/scheduleOcrJob";
 import {
   deleteReceiptLocalAndRemote,
@@ -191,12 +190,21 @@ export function HomeScreen() {
   const filterBarRef = useRef<HTMLDivElement>(null);
   const watcherRef = useRef<ProcessingReceiptWatcher | null>(null);
   const queueRef = useRef<ProcessingQueue | null>(null);
-  const flushPendingUploadsRef = useRef<() => Promise<void>>(async () => {});
+  const flushPendingUploadsRef = useRef<
+    (opts?: { batchCapture?: boolean; skipGhostEnsure?: boolean }) => Promise<void>
+  >(async () => {});
   const flushPendingDeletesRef = useRef<() => Promise<void>>(async () => {});
   const uploadPendingInnerRef = useRef<
-    (receipt: StoredReceipt) => Promise<void>
+    (
+      receipt: StoredReceipt,
+      opts?: { batchCapture?: boolean },
+    ) => Promise<void>
   >(async () => {});
   const uploadInFlightRef = useRef(new Set<string>());
+  const [uploadInFlightIds, setUploadInFlightIds] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const batchFlushActiveRef = useRef(false);
   const receiptsRef = useRef<Receipt[]>([]);
   const cameraOpenRef = useRef(false);
   const pendingMergeRef = useRef<{
@@ -513,14 +521,15 @@ export function HomeScreen() {
     [showDuplicateReceiptNotice, refreshTaxSaved],
   );
 
-  const uploadPendingInner = async (receipt: StoredReceipt) => {
+  const uploadPendingInner = async (
+    receipt: StoredReceipt,
+    opts?: { batchCapture?: boolean },
+  ) => {
     if (shouldSkipUploadAttempt(receipt)) return;
     if (uploadInFlightRef.current.has(receipt.id)) return;
-    if (shouldBlockUploadForOcr(receipt)) return;
 
     const latest = await loadReceipt(receipt.id);
     if (!latest?.pendingUpload || shouldSkipUploadAttempt(latest)) return;
-    if (shouldBlockUploadForOcr(latest)) return;
 
     let photo: Blob | null = null;
     try {
@@ -537,6 +546,7 @@ export function HomeScreen() {
     }
 
     uploadInFlightRef.current.add(latest.id);
+    setUploadInFlightIds(new Set(uploadInFlightRef.current));
     try {
       const uploaded = await uploadReceipt(
         photo,
@@ -544,6 +554,10 @@ export function HomeScreen() {
         latest.timestamp,
         undefined,
         latest.ocrDraft,
+        {
+          batchCapture:
+            opts?.batchCapture === true || batchFlushActiveRef.current,
+        },
       );
       const updated = await persistUploadedReceipt(latest, uploaded);
       if (updated.status === "done" && updated.taxAmount != null) {
@@ -571,33 +585,36 @@ export function HomeScreen() {
       throw failed;
     } finally {
       uploadInFlightRef.current.delete(latest.id);
+      setUploadInFlightIds(new Set(uploadInFlightRef.current));
     }
   };
 
   uploadPendingInnerRef.current = uploadPendingInner;
 
-  const flushPendingUploads = useCallback(async () => {
+  const flushPendingUploads = useCallback(
+    async (opts?: { batchCapture?: boolean; skipGhostEnsure?: boolean }) => {
     await ensureConvertedDemoUploadReady();
-    try {
-      await ensureGhostSession();
-    } catch {
-      return;
+    if (!opts?.skipGhostEnsure) {
+      try {
+        await ensureGhostSession();
+      } catch {
+        return;
+      }
     }
     const stored = await loadAllReceipts();
     const pending = stored.filter(
-      (r) =>
-        r.pendingUpload &&
-        !shouldSkipUploadAttempt(r) &&
-        !shouldBlockUploadForOcr(r),
+      (r) => r.pendingUpload && !shouldSkipUploadAttempt(r),
     );
     for (const receipt of pending) {
       try {
-        await uploadPendingInnerRef.current(receipt);
+        await uploadPendingInnerRef.current(receipt, opts);
       } catch {
         // budget updated in uploadPendingInner
       }
     }
-  }, []);
+  },
+  [],
+  );
 
   flushPendingUploadsRef.current = flushPendingUploads;
 
@@ -612,6 +629,8 @@ export function HomeScreen() {
         }
         const receipt = await loadReceipt(receiptId);
         if (!receipt?.pendingUpload || shouldSkipUploadAttempt(receipt)) return;
+        if (uploadInFlightRef.current.has(receiptId)) return;
+        if (batchFlushActiveRef.current) return;
         if (isBatchOcrUploadDeferred(receiptId)) return;
         try {
           await uploadPendingInnerRef.current(receipt);
@@ -1114,7 +1133,7 @@ export function HomeScreen() {
         return null;
       }
       const { receipt } = result;
-      deferBatchOcrUpload([receipt.id]);
+      setReceipts((prev) => top100ByUpdatedAt([receipt, ...prev]));
       scheduleOcrJob(receipt.id);
       return receipt.id;
     },
@@ -1122,41 +1141,64 @@ export function HomeScreen() {
   );
 
   const handleBatchClose = useCallback(async (sessionIds: string[]) => {
-    releaseBatchOcrUpload(sessionIds);
-    await refreshListFromLocal();
-    if (navigator.onLine && sessionIds.length > 0) {
-      try {
-        await ensureGhostSession();
-        await flushPendingUploadsRef.current();
-      } catch {
-        // pending rows remain until next flush
+    batchFlushActiveRef.current = true;
+    try {
+      await refreshListFromLocal();
+      if (navigator.onLine && sessionIds.length > 0) {
+        try {
+          await ensureGhostSession();
+          await flushSessionPendingUploads(sessionIds, () =>
+            flushPendingUploadsRef.current({
+              batchCapture: true,
+              skipGhostEnsure: true,
+            }),
+          );
+        } catch {
+          // pending rows remain until next flush
+        }
       }
+    } finally {
+      batchFlushActiveRef.current = false;
     }
   }, [refreshListFromLocal]);
 
   const handleBatchDone = useCallback(
     async (sessionIds: string[]) => {
-      await waitForOcrJobs(sessionIds);
-      releaseBatchOcrUpload(sessionIds);
-      await refreshListFromLocal();
-      if (navigator.onLine) {
-        try {
-          await ensureGhostSession();
-          await flushPendingUploadsRef.current();
-        } catch {
-          // Local pending rows remain until next flush
+      batchFlushActiveRef.current = true;
+      try {
+        if (navigator.onLine && sessionIds.length > 0) {
+          try {
+            await ensureGhostSession();
+            await flushSessionPendingUploads(sessionIds, () =>
+              flushPendingUploadsRef.current({
+                batchCapture: true,
+                skipGhostEnsure: true,
+              }),
+            );
+          } catch {
+            // Local pending rows remain until next flush
+          }
         }
+        const visible = await loadTopByUpdatedAt(UI_RECEIPT_LIMIT);
+        setReceipts(visible);
+        refreshTaxSaved(visible);
+        setSyncStuckIds(stuckIdsFromReceipts(visible));
+        for (const id of sessionIds) {
+          const row = visible.find((r) => r.id === id);
+          if (
+            row &&
+            row.status === "processing" &&
+            !row.pendingUpload &&
+            !row.isOnboardingDemo
+          ) {
+            queueRef.current?.enqueue(id);
+          }
+        }
+      } finally {
+        batchFlushActiveRef.current = false;
       }
-      const visible = await loadTopByUpdatedAt(UI_RECEIPT_LIMIT);
-      setReceipts(visible);
-      refreshTaxSaved(visible);
-      const stuck = stuckIdsFromReceipts(visible);
-      setSyncStuckIds(stuck);
-      queueRef.current?.bootstrapFromList(
-        visible.filter((r) => r.status === "processing" && !stuck.has(r.id)),
-      );
     },
-    [refreshListFromLocal, refreshTaxSaved],
+    [refreshTaxSaved],
   );
 
   const handleDeleteReceipt = useCallback(
@@ -1201,6 +1243,21 @@ export function HomeScreen() {
         return top100ByUpdatedAt([processingReceipt, ...without]);
       });
       scheduleOcrJob(processingReceipt.id);
+
+      if (navigator.onLine) {
+        void (async () => {
+          try {
+            await ensureGhostSession();
+          } catch {
+            return;
+          }
+          try {
+            await uploadPendingInnerRef.current(processingReceipt);
+          } catch {
+            // budget updated in uploadPendingInner
+          }
+        })();
+      }
 
       if (replaceId) {
         watcherRef.current?.unwatch(replaceId);
@@ -1365,6 +1422,7 @@ export function HomeScreen() {
         <ReceiptList
           receipts={displayReceipts}
           syncStuckIds={syncStuckIds}
+          uploadInFlightIds={uploadInFlightIds}
           highlightReceiptId={highlightReceiptId}
           filter={listFilter}
           onFilterChange={setListFilter}

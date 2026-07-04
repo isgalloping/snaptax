@@ -13,7 +13,7 @@ import {
   receiptCategoryDisplayLabel,
   receiptTaxDisplay,
 } from "@/lib/receipts/receiptCategoryDisplay";
-import type { ReceiptVisualState } from "@/lib/ui/homeVisual";
+import { resolveReceiptListVisualState } from "@/lib/receipts/receiptListVisualState";
 import { CircularStatusIcon } from "./CircularStatusIcon";
 import { StatusPill } from "./StatusPill";
 import { ChevronRightIcon } from "@/components/icons/ChevronRightIcon";
@@ -23,6 +23,7 @@ import { CoachPulseOverlay } from "@/components/onboarding/CoachPulseOverlay";
 interface ReceiptListCardProps {
   receipt: Receipt;
   syncStuck?: boolean;
+  uploadInFlight?: boolean;
   highlighted?: boolean;
   ahaCoach?: boolean;
   onAhaCoachDismiss?: () => void;
@@ -38,25 +39,6 @@ function duplicateHighlightClass(highlighted: boolean): string {
 
 function listSubtitle(receipt: Receipt, contextLabel: string): string {
   return `${formatReceiptTime(receipt.timestamp, receipt.dataRegion ?? "us")} · ${contextLabel}`;
-}
-
-function resolveVisualState(
-  receipt: Receipt,
-  syncStuck: boolean,
-): {
-  state: ReceiptVisualState;
-  pill: "analyzing" | "uploading" | "paused" | "none";
-} {
-  if (receipt.status !== "processing") {
-    return { state: "done", pill: "none" };
-  }
-  if (syncStuck) {
-    return { state: "paused", pill: "paused" };
-  }
-  if (receipt.pendingUpload) {
-    return { state: "uploading", pill: "uploading" };
-  }
-  return { state: "analyzing", pill: "analyzing" };
 }
 
 function CardShell({
@@ -121,6 +103,7 @@ function ListDeleteButton({
 export function ReceiptListCard({
   receipt,
   syncStuck = false,
+  uploadInFlight = false,
   highlighted = false,
   ahaCoach = false,
   onAhaCoachDismiss,
@@ -189,12 +172,17 @@ export function ReceiptListCard({
         </CardShell>
       );
     }
-    const { state, pill } = resolveVisualState(receipt, syncStuck);
+    const { state, pill } = resolveReceiptListVisualState(receipt, {
+      syncStuck,
+      uploadInFlight,
+    });
     const title = syncStuck
       ? pending
         ? copy.uploadPaused
         : copy.analysisPaused
-      : copy.uploading;
+      : pill === "uploading"
+        ? copy.uploading
+        : (receipt.merchant ?? copy.processing);
     const contextLabel = syncStuck ? copy.tapToRetry : copy.processing;
 
     return (

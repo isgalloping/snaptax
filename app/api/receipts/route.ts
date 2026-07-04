@@ -20,6 +20,7 @@ import {
 } from "@/lib/receipts/uploadValidation";
 import { withRequestLog } from "@/lib/server/log/withRequestLog";
 import { parseCaptureKindHeader } from "@/lib/export/incomeCapture";
+import { parseCaptureModeHeader } from "@/lib/receipts/captureMode";
 import { parseOcrDraftJson } from "@/lib/ocr/ocrDraftSchema";
 import { parseUtcISOString } from "@/lib/time/utc";
 
@@ -146,6 +147,9 @@ export const POST = withRequestLog(
         industry,
         captureKind: parseCaptureKindHeader(
           request.headers.get("X-Capture-Kind"),
+        ),
+        captureMode: parseCaptureModeHeader(
+          request.headers.get("X-Capture-Mode"),
         ),
         ocrDraft,
       });

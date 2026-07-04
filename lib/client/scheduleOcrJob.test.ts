@@ -4,10 +4,10 @@ import { buildOcrDraft } from "@/lib/ocr/runLocalOcr";
 import {
   OCR_MAX_QUEUE_DEPTH,
   activeOcrQueueDepth,
-  deferBatchOcrUpload,
+  beginBatchCaptureDefer,
+  endBatchCaptureDefer,
   isBatchOcrUploadDeferred,
   isOcrJobPending,
-  releaseBatchOcrUpload,
   resetOcrJobStateForTests,
   shouldBlockUploadForOcr,
   shouldEnqueueOcrJob,
@@ -15,17 +15,26 @@ import {
   waitForOcrJobs,
 } from "@/lib/client/scheduleOcrJob";
 
-describe("scheduleOcrJob batch defer", () => {
-  it("tracks defer and release for batch session ids", () => {
+describe("batch capture defer session", () => {
+  it("defers all receipts while batch camera session is open", () => {
     resetOcrJobStateForTests();
-    deferBatchOcrUpload(["a", "b"]);
+    assert.equal(isBatchOcrUploadDeferred("a"), false);
+    beginBatchCaptureDefer();
     assert.equal(isBatchOcrUploadDeferred("a"), true);
     assert.equal(isBatchOcrUploadDeferred("b"), true);
-    releaseBatchOcrUpload(["a"]);
+    endBatchCaptureDefer();
     assert.equal(isBatchOcrUploadDeferred("a"), false);
-    assert.equal(isBatchOcrUploadDeferred("b"), true);
-    releaseBatchOcrUpload(["b"]);
     assert.equal(isBatchOcrUploadDeferred("b"), false);
+  });
+
+  it("end clears defer even for receipts saved after an earlier per-id release", () => {
+    resetOcrJobStateForTests();
+    beginBatchCaptureDefer();
+    endBatchCaptureDefer();
+    beginBatchCaptureDefer();
+    assert.equal(isBatchOcrUploadDeferred("late-save-id"), true);
+    endBatchCaptureDefer();
+    assert.equal(isBatchOcrUploadDeferred("late-save-id"), false);
   });
 });
 

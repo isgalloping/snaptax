@@ -16,6 +16,7 @@ import {
   findSimilarFingerprintMatch,
   receiptImagePathname,
 } from "@/lib/receipts/imageFingerprint";
+import { shouldRunSimilarDuplicateCheck } from "@/lib/receipts/captureMode";
 import { blobCommandOptions } from "@/lib/server/blob";
 import { utcNow } from "@/lib/time/utc";
 import { resolveVerifyContext } from "@/lib/verify/context";
@@ -157,6 +158,7 @@ async function replaceReceiptImage(params: {
   await put(pathname, params.bytes, {
     access: "private",
     contentType: params.mime,
+    allowOverwrite: true,
     ...blobCommandOptions(),
   });
 
@@ -249,6 +251,7 @@ export async function handleReceiptUploadPost(params: {
   snapAt: Date | null;
   industry: string | null;
   captureKind?: "1099-NEC" | "1099-K" | null;
+  captureMode?: import("@/lib/receipts/captureMode").ReceiptCaptureMode;
   ocrDraft?: import("@/lib/ocr/types").OcrDraftPayload | null;
 }) {
   const mime = mimeForKind(params.kind);
@@ -292,19 +295,22 @@ export async function handleReceiptUploadPost(params: {
     return duplicateResponse(exactDup.id, "exact");
   }
 
-  const similarDup = await findSimilarDuplicate(
-    params.actor,
-    fingerprint,
-    params.clientReceiptId,
-  );
-  if (similarDup) {
-    return duplicateResponse(similarDup.id, "similar");
+  if (shouldRunSimilarDuplicateCheck(params.captureMode ?? "single")) {
+    const similarDup = await findSimilarDuplicate(
+      params.actor,
+      fingerprint,
+      params.clientReceiptId,
+    );
+    if (similarDup) {
+      return duplicateResponse(similarDup.id, "similar");
+    }
   }
 
   const pathname = receiptImagePathname(params.clientReceiptId, params.kind);
   await put(pathname, params.bytes, {
     access: "private",
     contentType: mime,
+    allowOverwrite: true,
     ...blobCommandOptions(),
   });
 

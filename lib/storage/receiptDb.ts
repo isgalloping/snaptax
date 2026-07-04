@@ -706,7 +706,7 @@ export async function deletePhoto(id: string): Promise<void> {
 export async function reconcileServerPrimaryPhotos(
   receipts: Pick<Receipt, "id" | "hasRemoteImage">[],
 ): Promise<void> {
-  const db = await openDb();
+  const db = await warmReceiptDb();
   await Promise.all(
     receipts
       .filter((r) => r.hasRemoteImage)
@@ -717,7 +717,7 @@ export async function reconcileServerPrimaryPhotos(
 export async function markRemoteSyncedPhotos(
   receiptIds: string[],
 ): Promise<void> {
-  const db = await openDb();
+  const db = await warmReceiptDb();
   await Promise.all(
     receiptIds.map((id) => markPhotoRemoteSynced(db, id)),
   );

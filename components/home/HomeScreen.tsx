@@ -662,8 +662,10 @@ export function HomeScreen() {
           if (cancelled()) return;
           if (await shouldAutoRestoreFromCloud()) {
             try {
-              await restoreReceiptsFromCloud({ downloadImages: true });
-              await markCloudRestoreAttempted();
+              const result = await restoreReceiptsFromCloud({
+                downloadImages: true,
+              });
+              await markCloudRestoreAttempted(result);
             } catch {
               // allow retry on next startup if restore fails
             }

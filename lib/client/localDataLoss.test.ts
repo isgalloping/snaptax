@@ -1,9 +1,15 @@
+import "fake-indexeddb/auto";
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   CLOUD_RESTORE_ATTEMPTED_KEY,
+  markCloudRestoreAttempted,
   shouldAutoRestoreFromCloud,
 } from "./localDataLoss.ts";
+import {
+  clearAllLocalData,
+  readSystemMeta,
+} from "@/lib/storage/receiptDb";
 
 describe("shouldAutoRestoreFromCloud", () => {
   it("returns false when local receipts exist", async () => {
@@ -41,5 +47,19 @@ describe("shouldAutoRestoreFromCloud", () => {
       isOnline: () => true,
     });
     assert.equal(result, true);
+  });
+
+  it("does not mark a zero-row restore as attempted", async () => {
+    await clearAllLocalData();
+
+    await markCloudRestoreAttempted({ restoredCount: 0 });
+
+    const result = await shouldAutoRestoreFromCloud({
+      loadAllReceipts: async () => [],
+      readSystemMeta,
+      isOnline: () => true,
+    });
+    assert.equal(result, true);
+    await clearAllLocalData();
   });
 });

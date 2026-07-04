@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ParsedLegalMarkdown } from "@/lib/legal/markdownDoc";
+import { slugifyLegalHeading } from "@/lib/legal/slugifyLegalHeading";
 
 export function LegalMarkdownView({
   doc,
@@ -25,7 +26,10 @@ export function LegalMarkdownView({
       <main className="mx-auto max-w-2xl p-6 pb-16">
         {doc.sections.map((section) => (
           <section key={section.title} className="mb-8">
-            <h2 className="mb-3 text-sm font-bold uppercase tracking-wider text-yellow-400">
+            <h2
+              id={slugifyLegalHeading(section.title)}
+              className="mb-3 text-sm font-bold uppercase tracking-wider text-yellow-400"
+            >
               {section.title}
             </h2>
             {section.body.map((paragraph) => (

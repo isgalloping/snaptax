@@ -57,6 +57,57 @@ export async function deleteGhostReceipts(ghostId: string): Promise<void> {
   }
 }
 
+export type UserAccountDeleteCounts = {
+  receiptCount: number;
+  entitlementCount: number;
+  checkoutIntentCount: number;
+};
+
+export type UserAccountDbCleanupClient = {
+  snaptaxReceipt: {
+    deleteMany: (args: {
+      where: Prisma.SnaptaxReceiptWhereInput;
+    }) => Promise<{ count: number }>;
+  };
+  snaptaxSeasonEntitlement: {
+    deleteMany: (args: {
+      where: { userId: string };
+    }) => Promise<{ count: number }>;
+  };
+  snaptaxCheckoutIntent: {
+    deleteMany: (args: {
+      where: { userId: string };
+    }) => Promise<{ count: number }>;
+  };
+  snaptaxUser: {
+    delete: (args: { where: { id: string } }) => Promise<unknown>;
+  };
+};
+
+/** DB rows for account delete — receipts, billing, then user (ghost binding cascades). */
+export async function deleteUserAccountDbRecords(
+  client: UserAccountDbCleanupClient,
+  userId: string,
+  receiptFilter: Prisma.SnaptaxReceiptWhereInput,
+): Promise<UserAccountDeleteCounts> {
+  const receiptResult = await client.snaptaxReceipt.deleteMany({
+    where: receiptFilter,
+  });
+  const entitlementResult = await client.snaptaxSeasonEntitlement.deleteMany({
+    where: { userId },
+  });
+  const checkoutResult = await client.snaptaxCheckoutIntent.deleteMany({
+    where: { userId },
+  });
+  await client.snaptaxUser.delete({ where: { id: userId } });
+
+  return {
+    receiptCount: receiptResult.count,
+    entitlementCount: entitlementResult.count,
+    checkoutIntentCount: checkoutResult.count,
+  };
+}
+
 export async function deleteUserAccount(userId: string): Promise<void> {
   const binding = await prisma.snaptaxGhostAccount.findUnique({
     where: { userId },
@@ -83,11 +134,9 @@ export async function deleteUserAccount(userId: string): Promise<void> {
   });
   await deleteReceiptBlobs(receipts.map((r) => r.imageUrl));
 
-  if (receipts.length > 0) {
-    await prisma.snaptaxReceipt.deleteMany({ where: receiptFilter });
-  }
-
-  await prisma.snaptaxUser.delete({ where: { id: userId } });
+  const counts = await prisma.$transaction((tx) =>
+    deleteUserAccountDbRecords(tx, userId, receiptFilter),
+  );
 
   logEvent({
     ts: new Date().toISOString(),
@@ -99,7 +148,9 @@ export async function deleteUserAccount(userId: string): Promise<void> {
     ghostId: binding?.ghostId ?? null,
     meta: {
       reason: "account_deleted",
-      receiptCount: receipts.length,
+      receiptCount: counts.receiptCount,
+      entitlementCount: counts.entitlementCount,
+      checkoutIntentCount: counts.checkoutIntentCount,
     },
   });
 }

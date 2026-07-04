@@ -19,7 +19,7 @@ import { buildTurboTaxCsv } from "@/lib/tax/exportCsv";
 import { buildCpaPackZip } from "@/lib/export/buildCpaPack";
 import { buildScheduleCMirrorPdf } from "@/lib/export/buildScheduleCMirrorPdf";
 import { buildAuditDetailCsv } from "@/lib/export/buildAuditDetailCsv";
-import { auditEligibleRows } from "@/lib/export/auditEligibleRows";
+import { auditEligibleRows, hasAuditExportContent } from "@/lib/export/auditEligibleRows";
 import { assignAuditTrailMeta } from "@/lib/export/assignAuditTrailMeta";
 import { buildTxfExport } from "@/lib/export/buildTxf";
 import { finalizeExportRows } from "@/lib/export/mapping/finalizeExportRows";
@@ -127,6 +127,16 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
     const responseHeaders: Record<string, string> = {
       "X-Export-Receipt-Count": String(yearReceipts.length),
     };
+
+    if (body.format === "cpa_pack" || body.format === "cpa_pdf") {
+      if (!hasAuditExportContent(auditRows, incomeRows)) {
+        return apiError(
+          "NO_RECEIPTS",
+          "No tax-deductible receipts or 1099 income forms to export",
+          422,
+        );
+      }
+    }
 
     if (body.format === "csv") {
       if (enrichedExpenseRows.length === 0) {

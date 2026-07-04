@@ -37,11 +37,6 @@ function appendixRows(auditRows: ExportExpenseRow[]): ExportExpenseRow[] {
     rows.sort((a, b) => b.dateIso.localeCompare(a.dateIso));
     sorted.push(...rows);
   }
-  const other = groups.get("Line 27a");
-  if (other && !sorted.some((r) => r.scheduleCLine === "Line 27a")) {
-    other.sort((a, b) => b.dateIso.localeCompare(a.dateIso));
-    sorted.push(...other);
-  }
   return sorted;
 }
 

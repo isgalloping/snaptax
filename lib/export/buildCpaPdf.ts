@@ -10,6 +10,7 @@ export type CpaSummaryPdfInput = {
   incomeRows?: ExportIncomeRow[];
 };
 
+/** @deprecated Export route uses buildScheduleCMirrorPdf; kept for legacy tests. */
 export async function buildCpaSummaryPdf(
   taxYear: string,
   expenseRows: ExportExpenseRow[],

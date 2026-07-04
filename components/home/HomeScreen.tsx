@@ -144,6 +144,10 @@ import {
 } from "@/lib/tax/taxYearStats";
 import { clientTimeZone } from "@/lib/time/timeZone";
 import { useI18n } from "@/components/i18n/I18nProvider";
+import {
+  type CameraReturnView,
+  viewAfterCameraClose,
+} from "@/lib/client/cameraReturnNavigation";
 
 type View = "home" | "settings";
 
@@ -209,6 +213,7 @@ export function HomeScreen() {
   const batchFlushActiveRef = useRef(false);
   const receiptsRef = useRef<Receipt[]>([]);
   const cameraOpenRef = useRef(false);
+  const cameraReturnViewRef = useRef<CameraReturnView | null>(null);
   const pendingMergeRef = useRef<{
     receipts: Receipt[];
   } | null>(null);
@@ -337,6 +342,25 @@ export function HomeScreen() {
   useEffect(() => {
     cameraOpenRef.current = cameraOpen;
   }, [cameraOpen]);
+
+  const openIncomeCapture = useCallback((returnView: CameraReturnView) => {
+    cameraReturnViewRef.current = returnView;
+    setView("home");
+    deferAfterPaint(() => {
+      snapButtonRef.current?.openCamera();
+    });
+  }, []);
+
+  const handleCameraOpenChange = useCallback((open: boolean) => {
+    setCameraOpen(open);
+    if (open) return;
+    const returnView = cameraReturnViewRef.current;
+    cameraReturnViewRef.current = null;
+    const nextView = viewAfterCameraClose(returnView);
+    if (nextView === "settings") {
+      setView("settings");
+    }
+  }, []);
 
   const refreshTaxAndSummary = useCallback(async () => {
     const summary = await readCurrentSeasonSummary();
@@ -870,12 +894,7 @@ export function HomeScreen() {
     onReceiptUpdated: (updated) => {
       void applyReceiptUpdate(updated as StoredReceipt);
     },
-    onSnap1099: (kind) => {
-      setView("home");
-      window.requestAnimationFrame(() => {
-        snapButtonRef.current?.openCamera();
-      });
-    },
+    onSnap1099: () => openIncomeCapture(view),
   });
 
   useEffect(() => {
@@ -1340,12 +1359,7 @@ export function HomeScreen() {
         exportEmptyTip={taxExport.exportEmptyTip}
         exportEmptyTipKey={taxExport.exportEmptyTipKey}
         onExportEmptyTipDismiss={taxExport.clearExportEmptyTip}
-        onSnap1099={(kind) => {
-          setView("home");
-          window.requestAnimationFrame(() => {
-            snapButtonRef.current?.openCamera();
-          });
-        }}
+        onSnap1099={() => openIncomeCapture("settings")}
         isSignedIn={auth.isSignedIn}
         authHydrated={auth.hydrated}
         requestSoftGoogleSheet={requestSoftGoogleSheet}
@@ -1388,7 +1402,7 @@ export function HomeScreen() {
             onBatchClose={handleBatchClose}
             onReviewDelete={handleDeleteReceipt}
             resnapId={resnapId}
-            onCameraOpenChange={setCameraOpen}
+            onCameraOpenChange={handleCameraOpenChange}
             onSyncClick={handleManualListSync}
             onSettingsClick={handleOpenSettings}
             syncing={listSyncing}

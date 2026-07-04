@@ -46,7 +46,7 @@ Wir können den Zugang bei Verstößen gegen diese Bedingungen oder zum Schutz d
 
 ## 10. Streitbeilegung & anwendbares Recht
 
-Diese Bedingungen unterliegen dem Recht des **Bundesstaates Delaware, USA**, unter Ausschluss kollisionsrechtlicher Regeln. EU-Verbraucher behalten zwingende lokale Rechte und DSGVO-Rechte. Streitigkeiten zuerst an **legal@snap1099.com**.
+Diese Bedingungen unterliegen dem Recht des **Bundesstaates Delaware, USA**, unter Ausschluss kollisionsrechtlicher Regeln. EU-Verbraucher behalten zwingende lokale Rechte und DSGVO-Rechte. Streitigkeiten zuerst an **snaptax.lightxforge@gmail.com**.
 
 ## 11. Datenschutz
 
@@ -54,4 +54,4 @@ Ihre Nutzung unterliegt unserer [Datenschutzerklärung](/privacy). Mit dem Onlin
 
 ## 12. Kontakt
 
-**legal@snap1099.com**
+**snaptax.lightxforge@gmail.com**

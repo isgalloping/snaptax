@@ -3,7 +3,7 @@
 **Owner:** Engineering + Legal  
 **Last Updated:** June 2026  
 **Public summary:** [security-incident.md](../legal/security-incident.md) · `/security`  
-**Contact:** legal@snap1099.com · subject **Security Report**
+**Contact:** snaptax.lightxforge@gmail.com · subject **Security Report**
 
 ---
 

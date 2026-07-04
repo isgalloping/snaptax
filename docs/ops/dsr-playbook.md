@@ -2,7 +2,7 @@
 
 **Owner:** Legal / Engineering  
 **Last Updated:** June 2026  
-**Contact:** legal@snap1099.com
+**Contact:** snaptax.lightxforge@gmail.com
 
 ## Scope
 
@@ -28,7 +28,7 @@ Handles GDPR, CPRA, and similar privacy requests from Snap1099 users and their a
 
 ## Intake workflow
 
-1. **Receive** — email to legal@snap1099.com or in-app Delete Account.
+1. **Receive** — email to snaptax.lightxforge@gmail.com or in-app Delete Account.
 2. **Log** — ticket ID, date received, request type, jurisdiction hint.
 3. **Verify identity**
    - Signed-in user: reply from registered Google email, or confirm recent receipt metadata.

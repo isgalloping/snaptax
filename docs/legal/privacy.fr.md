@@ -109,7 +109,7 @@ Selon votre localisation, vous pouvez :
 - **Limiter le traitement** — nous contacter pour limiter certains traitements le cas échéant.
 - **Vous opposer** — cesser d'utiliser l'Application ou supprimer votre compte.
 
-Nous répondons aux demandes vérifiées à **legal@snap1099.com** sous **30 jours** (accusé de réception visé sous 48 heures). Nous pouvons prolonger de 60 jours lorsque la loi le permet, avec notification.
+Nous répondons aux demandes vérifiées à **snaptax.lightxforge@gmail.com** sous **30 jours** (accusé de réception visé sous 48 heures). Nous pouvons prolonger de 60 jours lorsque la loi le permet, avec notification.
 
 ## 10. Sécurité
 
@@ -123,4 +123,4 @@ L'Application n'est pas destinée aux enfants de moins de 13 ans. Nous ne collec
 
 Nous pouvons mettre à jour cette Politique. Les changements importants seront reflétés dans la date « Dernière mise à jour ». L'utilisation continue après modification vaut acceptation lorsque la loi le permet.
 
-**Contact :** **legal@snap1099.com**
+**Contact :** **snaptax.lightxforge@gmail.com**

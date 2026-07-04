@@ -18,7 +18,7 @@ export interface LegalBundle {
   dataStorageLabel: string;
 }
 
-export const LEGAL_CONTACT_EMAIL = "legal@snap1099.com";
+export const LEGAL_CONTACT_EMAIL = "snaptax.lightxforge@gmail.com";
 
 const EN: LegalBundle = {
   privacyTitle: "Privacy Policy",
@@ -73,7 +73,7 @@ const EN: LegalBundle = {
     {
       title: "Your Rights",
       body: [
-        "Access, rectification, erasure (Delete Account), portability (Export), restrict processing, and object — contact legal@snap1099.com.",
+        "Access, rectification, erasure (Delete Account), portability (Export), restrict processing, and object — contact snaptax.lightxforge@gmail.com.",
         "We respond within 30 days (acknowledgment targeted within 48 hours).",
       ],
     },
@@ -102,7 +102,7 @@ const EN: LegalBundle = {
       title: "Privacy & Contact",
       body: [
         "Governed by our Privacy Policy. U.S. processing when snapping online.",
-        "Contact: legal@snap1099.com",
+        "Contact: snaptax.lightxforge@gmail.com",
       ],
     },
   ],
@@ -161,7 +161,7 @@ const FR: LegalBundle = {
     {
       title: "Vos droits",
       body: [
-        "Accès, rectification, effacement (Supprimer le compte), portabilité (Export), limitation et opposition — legal@snap1099.com.",
+        "Accès, rectification, effacement (Supprimer le compte), portabilité (Export), limitation et opposition — snaptax.lightxforge@gmail.com.",
         "Réponse sous 30 jours (accusé visé sous 48 heures).",
       ],
     },
@@ -190,7 +190,7 @@ const FR: LegalBundle = {
       title: "Confidentialité & contact",
       body: [
         "Régi par notre Politique de confidentialité. Traitement aux États-Unis lors d'une photo en ligne.",
-        "Contact : legal@snap1099.com",
+        "Contact : snaptax.lightxforge@gmail.com",
       ],
     },
   ],
@@ -249,7 +249,7 @@ const DE: LegalBundle = {
     {
       title: "Ihre Rechte",
       body: [
-        "Auskunft, Berichtigung, Löschung (Konto löschen), Übertragbarkeit (Export), Einschränkung und Widerspruch — legal@snap1099.com.",
+        "Auskunft, Berichtigung, Löschung (Konto löschen), Übertragbarkeit (Export), Einschränkung und Widerspruch — snaptax.lightxforge@gmail.com.",
         "Antwort innerhalb von 30 Tagen (Bestätigung innerhalb von 48 Stunden angestrebt).",
       ],
     },
@@ -278,7 +278,7 @@ const DE: LegalBundle = {
       title: "Datenschutz & Kontakt",
       body: [
         "Unterliegt unserer Datenschutzerklärung. US-Verarbeitung beim Online-Fotografieren.",
-        "Kontakt: legal@snap1099.com",
+        "Kontakt: snaptax.lightxforge@gmail.com",
       ],
     },
   ],

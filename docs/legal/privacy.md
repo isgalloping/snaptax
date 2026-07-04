@@ -109,7 +109,7 @@ Depending on your location, you may have the right to:
 - **Restrict processing** — contact us to limit certain processing where applicable.
 - **Object** — stop using the App or delete your account.
 
-We will respond to verified requests at **legal@snap1099.com** within **30 days** (we aim to acknowledge within 48 hours). We may extend by 60 days where permitted by law, with notice.
+We will respond to verified requests at **snaptax.lightxforge@gmail.com** within **30 days** (we aim to acknowledge within 48 hours). We may extend by 60 days where permitted by law, with notice.
 
 ## 10. Security
 
@@ -123,4 +123,4 @@ The App is not directed to children under 13. We do not knowingly collect person
 
 We may update this Policy. Material changes will be reflected in the "Last Updated" date. Continued use after changes constitutes acceptance where permitted by law.
 
-**Contact:** **legal@snap1099.com**
+**Contact:** **snaptax.lightxforge@gmail.com**

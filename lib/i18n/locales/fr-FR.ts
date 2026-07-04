@@ -384,6 +384,34 @@ export const FR_FR_COPY: UserCopy = {
     openingExport: "Ouverture de l'export…",
     back: "< RETOUR",
   },
+  paymentSuccess: {
+    export: {
+      confirmingTitle: "Paiement réussi",
+      confirmingHint: "Confirmation de votre dossier fiscal {season}…",
+      readyTitle: "Dossier fiscal {season} débloqué",
+      readyHint: "Export illimité pour cette saison fiscale.",
+      download: "Télécharger le dossier fiscal",
+      notNow: "Plus tard",
+      errorTitle: "Confirmation en cours",
+      errorHint:
+        "Votre paiement a peut-être abouti. Réessayez ou consultez Réglages dans un instant.",
+      retry: "Réessayer",
+      close: "Fermer",
+    },
+    founder: {
+      confirmingTitle: "Paiement réussi",
+      confirmingHint: "Activation de vos avantages Founder…",
+      readyTitle: "Vous êtes Super Founder !",
+      readyHint: "{season} payé · Super Founder n°{number}",
+      readyHintNoNumber: "{season} payé",
+      gotIt: "Compris",
+      errorTitle: "Confirmation en cours",
+      errorHint:
+        "Votre achat Founder a peut-être abouti. Réessayez ou consultez Réglages dans un instant.",
+      retry: "Réessayer",
+      close: "Fermer",
+    },
+  },
   auth: {
     googleSignIn: {
       soft: {

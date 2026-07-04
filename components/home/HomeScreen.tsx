@@ -1504,15 +1504,15 @@ export function HomeScreen() {
             setFounderSheetOpen(false);
             setFounderRefreshTick((tick) => tick + 1);
           }}
-          onPaid={async () => {
-            setFounderSheetOpen(false);
-            await finalizeFounderPurchase({
+          onPaid={() => {
+            void finalizeFounderPurchase({
               season: auth.currentSeason,
               pollEntitlementReady,
               refreshSeasonPaid: auth.refreshSeasonPaid,
               waitForFounderActive,
+            }).then(() => {
+              setFounderRefreshTick((tick) => tick + 1);
             });
-            setFounderRefreshTick((tick) => tick + 1);
           }}
         />
       )}

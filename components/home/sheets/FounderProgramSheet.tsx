@@ -15,8 +15,11 @@ import { resolveDisplayTier } from "@/lib/founder/resolveDisplayTier";
 import { isFounderScarcityUrgent } from "@/lib/founder/types";
 import { formatCurrency } from "@/lib/format";
 import { useDialogEscape } from "@/lib/ui/useDialogEscape";
-
-type FounderSheetPhase = "offer" | "confirming";
+import {
+  isPaddleCheckoutClosed,
+  isPaddleCheckoutCompleted,
+  runPaddleCheckoutCompletedFlow,
+} from "@/lib/billing/paddleCheckoutFlow";
 
 type CheckoutIntentBody = {
   intentId?: string;
@@ -49,13 +52,13 @@ export function FounderProgramSheet({
 }: FounderProgramSheetProps) {
   const copy = useUserCopy().home.founderSheet;
   const paywallCopy = useUserCopy().paywall;
-  const [phase, setPhase] = useState<FounderSheetPhase>("offer");
   const [loading, setLoading] = useState(true);
   const [program, setProgram] = useState<FounderProgramClientState | null>(null);
   const [paying, setPaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const paddleRef = useRef<Paddle | null>(null);
   const onPaidRef = useRef(onPaid);
+  const onCloseRef = useRef(onClose);
   const onProgramFullRef = useRef(onProgramFull);
   const checkoutCompletedRef = useRef(false);
 
@@ -63,6 +66,7 @@ export function FounderProgramSheet({
 
   useEffect(() => {
     onPaidRef.current = onPaid;
+    onCloseRef.current = onClose;
     onProgramFullRef.current = onProgramFull;
   });
 
@@ -115,27 +119,32 @@ export function FounderProgramSheet({
       environment: token.startsWith("test_") ? "sandbox" : "production",
       token,
       eventCallback: (event) => {
-        if (event.name !== "checkout.completed" || checkoutCompletedRef.current) {
+        if (isPaddleCheckoutClosed(event)) {
+          setPaying(false);
           return;
         }
-        checkoutCompletedRef.current = true;
-        setPhase("confirming");
-        setError(null);
-        void (async () => {
-          try {
-            await onPaidRef.current();
-          } catch {
+
+        if (!isPaddleCheckoutCompleted(event)) return;
+
+        const handled = runPaddleCheckoutCompletedFlow({
+          alreadyHandled: checkoutCompletedRef.current,
+          closeCheckout: () => paddleRef.current?.Checkout.close(),
+          returnToApp: () => onCloseRef.current(),
+          onPaid: () => onPaidRef.current(),
+          onPaidError: () => {
             checkoutCompletedRef.current = false;
-            setPhase("offer");
             logFounderEvent("founder_purchase_fail");
-            setError(copy.paymentFailed);
-          }
-        })();
+          },
+        });
+
+        if (handled) {
+          checkoutCompletedRef.current = true;
+        }
       },
     }).then((instance) => {
       paddleRef.current = instance ?? null;
     });
-  }, [copy.paymentFailed]);
+  }, []);
 
   const handleGoogleSignedIn = useCallback(
     async (result: GoogleAuthResponse) => {
@@ -209,21 +218,6 @@ export function FounderProgramSheet({
       setPaying(false);
     }
   };
-
-  if (phase === "confirming") {
-    return (
-      <div className="fixed inset-0 z-50 flex items-end bg-black/70">
-        <div className="w-full rounded-t-3xl border-t-4 border-yellow-500 bg-zinc-900 p-6 pb-10">
-          <p className="text-lg font-black uppercase tracking-wider text-white">
-            {copy.confirmingPayment}
-          </p>
-          <p className="mt-4 text-sm leading-relaxed text-zinc-300">
-            {paywallCopy.confirmingPaymentHint}
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   const displayTier = program ? resolveDisplayTier(program) : null;
   const priceUsd =

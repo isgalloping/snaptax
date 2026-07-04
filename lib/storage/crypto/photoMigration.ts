@@ -15,6 +15,7 @@ import {
 } from "@/lib/storage/idbStores";
 import { getPhotoMeta } from "@/lib/storage/photoMetadata";
 import { isOpfsAvailable } from "@/lib/storage/opfs/photoFiles";
+import { hasMigratedPhotoPayload } from "@/lib/storage/photoTypes";
 
 export const PHOTO_OPFS_MIGRATION_KEY = "photo_opfs_migration_v1";
 export type PhotoOpfsMigrationState = "pending" | "done";
@@ -176,7 +177,7 @@ function readLegacyEncryptedPhotos(db: IDBDatabase): Promise<LegacyPhotoRow[]> {
 async function hasUnmigratedLegacyPhotos(db: IDBDatabase): Promise<boolean> {
   const legacy = await readLegacyEncryptedPhotos(db);
   for (const row of legacy) {
-    if (!(await getPhotoMeta(db, row.id))) return true;
+    if (!hasMigratedPhotoPayload(await getPhotoMeta(db, row.id))) return true;
   }
   return false;
 }
@@ -185,7 +186,7 @@ async function purgeMigratedLegacyBlobs(db: IDBDatabase): Promise<void> {
   if (!db.objectStoreNames.contains(PHOTOS_STORE)) return;
   const remaining = await readLegacyEncryptedPhotos(db);
   for (const row of remaining) {
-    if (!(await getPhotoMeta(db, row.id))) continue;
+    if (!hasMigratedPhotoPayload(await getPhotoMeta(db, row.id))) continue;
     await new Promise<void>((resolve, reject) => {
       const tx = db.transaction(PHOTOS_STORE, "readwrite");
       tx.objectStore(PHOTOS_STORE).delete(row.id);
@@ -209,7 +210,7 @@ export async function migrateLegacyPhotosToOpfs(db: IDBDatabase): Promise<void> 
 
   const legacy = await readLegacyEncryptedPhotos(db);
   for (const row of legacy) {
-    if (await getPhotoMeta(db, row.id)) continue;
+    if (hasMigratedPhotoPayload(await getPhotoMeta(db, row.id))) continue;
     const blob = await loadEncryptedPhoto(db, row.id);
     if (!blob) continue;
     await saveEncryptedPhoto(db, row.id, blob);

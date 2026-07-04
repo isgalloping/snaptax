@@ -895,12 +895,12 @@ export const FR_FR_COPY: UserCopy = {
     savedToPhoneHint:
       "Enregistré sur votre téléphone. Consultez Téléchargements pour joindre ou envoyer.",
     yearSummary: "{year} · {amount} · {count} reçus",
-    formatCsvTitle: "CSV pour TurboTax / logiciel fiscal",
+    formatCsvTitle: "CSV TurboTax",
     formatCsvHint:
       "Format matriciel optimisé pour un import instantané dans les logiciels fiscaux.",
-    formatCpaTitle: "Pack d'audit CPA (ZIP + images de reçus)",
+    formatCpaTitle: "Pack de reçus d'audit 1099 (ZIP)",
     formatCpaHint:
-      "Piste d'audit conforme à l'IRS avec vos photos de reçus originales.",
+      "Photos originales classées par ligne IRS — votre filet de sécurité en cas d'audit.",
     sharing: "Ouverture du menu de partage…",
     imagesComplete: "{included} sur {eligible} images de reçus incluses",
     imagesMissing: "{missing} images de reçus n'ont pas pu être incluses",
@@ -912,15 +912,15 @@ export const FR_FR_COPY: UserCopy = {
     reviewSaving: "Enregistrement…",
     reviewSaveFailed:
       "Impossible d'enregistrer la catégorie. Réessayez.",
-    formatCpaPdfTitle: "PDF récapitulatif CPA (liens vers les reçus)",
+    formatCpaPdfTitle: "PDF miroir Schedule C",
     formatCpaPdfHint:
-      "Récapitulatif conforme à l'IRS avec liens cliquables vers vos photos de reçus.",
+      "Toutes les lignes Part II du Schedule C IRS — à recopier dans FreeTaxUSA ou sur papier.",
     formatTxfTitle: "TXF pour logiciel fiscal",
     formatTxfHint:
       "Format assistant comptable pour outils fiscaux (blocs V042).",
     snap1099Title: "Formulaires 1099 (revenus)",
     snap1099Hint:
-      "Photographiez votre 1099-NEC ou 1099-K — inclus dans le pack CPA sous 01_Income_Documents.",
+      "Photographiez votre 1099-NEC ou 1099-K — inclus dans le pack d'audit sous 01_Income_Documents.",
     snap1099NecButton: "1099-NEC →",
     snap1099KButton: "1099-K →",
     incomeFormsLabel: "{count} formulaires revenus (1099)",

@@ -3,7 +3,7 @@ export type CategoryExportMapping = {
   displayName: string;
   /** e.g. `Line 22` */
   scheduleCLine: string;
-  /** CPA ZIP folder under `02_Expenses_Receipts_Book/`. */
+  /** PRD audit ZIP folder at zip root (Line_NN_*). */
   zipFolderName: string;
 };
 
@@ -11,7 +11,7 @@ const CATEGORY_EXPORT: Record<string, CategoryExportMapping> = {
   "TRUCK GAS": {
     displayName: "Car & Truck",
     scheduleCLine: "Line 9",
-    zipFolderName: "Line_09_Car_and_Truck",
+    zipFolderName: "Line_09_Car_and_truck_expenses",
   },
   TOOLS: {
     displayName: "Supplies",
@@ -31,12 +31,12 @@ const CATEGORY_EXPORT: Record<string, CategoryExportMapping> = {
   EQUIPMENT: {
     displayName: "Equipment",
     scheduleCLine: "Line 13",
-    zipFolderName: "Line_13_Depreciation_and_Equipment",
+    zipFolderName: "Line_13_Depreciation",
   },
   MEALS: {
     displayName: "Meals",
     scheduleCLine: "Line 24b",
-    zipFolderName: "Line_24b_Meals",
+    zipFolderName: "Line_24b_Deductible_meals",
   },
   OTHER: {
     displayName: "Other expenses",

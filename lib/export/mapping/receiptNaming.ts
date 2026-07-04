@@ -34,5 +34,5 @@ export function buildReceiptArchivePath(input: {
   const mapping = categoryExportMapping(input.category);
   if (!mapping.zipFolderName) return "";
   const alias = buildReceiptAlias(input);
-  return `02_Expenses_Receipts_Book/${mapping.zipFolderName}/${alias}`;
+  return `${mapping.zipFolderName}/${alias}`;
 }

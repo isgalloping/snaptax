@@ -15,12 +15,14 @@ import {
   filterReceiptsByTaxYear,
   summarizeByIrsLine,
 } from "@/lib/tax/exportRows";
-import { buildExpensesCsv, buildTurboTaxCsv } from "@/lib/tax/exportCsv";
+import { buildTurboTaxCsv } from "@/lib/tax/exportCsv";
 import { buildCpaPackZip } from "@/lib/export/buildCpaPack";
-import { buildCpaSummaryPdf } from "@/lib/export/buildCpaPdf";
+import { buildScheduleCMirrorPdf } from "@/lib/export/buildScheduleCMirrorPdf";
+import { buildAuditDetailCsv } from "@/lib/export/buildAuditDetailCsv";
+import { auditEligibleRows } from "@/lib/export/auditEligibleRows";
+import { assignAuditTrailMeta } from "@/lib/export/assignAuditTrailMeta";
 import { buildTxfExport } from "@/lib/export/buildTxf";
 import { finalizeExportRows } from "@/lib/export/mapping/finalizeExportRows";
-import { enrichExportRowsWithImageUrls } from "@/lib/export/receiptImageUrl";
 import {
   buildExportIncomeRow,
   isIncomeDocument,
@@ -67,7 +69,7 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
     const [user, binding] = await Promise.all([
       prisma.snaptaxUser.findUnique({
         where: { id: actor.userId },
-        select: { industry: true, dataRegion: true },
+        select: { industry: true, dataRegion: true, userName: true },
       }),
       prisma.snaptaxGhostAccount.findUnique({
         where: { userId: actor.userId },
@@ -108,6 +110,9 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
       buildExportExpenseRow(r, timeZone, region),
     );
     const enrichedExpenseRows = finalizeExportRows(expenseRows);
+    const auditRows = assignAuditTrailMeta(
+      auditEligibleRows(enrichedExpenseRows),
+    );
     const summaryLines = summarizeByIrsLine(enrichedExpenseRows);
     const totalExpenses = enrichedExpenseRows.reduce((sum, r) => sum + r.amount, 0);
     const totalDeductible = enrichedExpenseRows.reduce(
@@ -148,22 +153,24 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
       contentType = "text/plain; charset=utf-8";
       filename = `Snap1099-${taxYear}-Expenses.txf`;
     } else if (body.format === "cpa_pack") {
-      const csv = buildExpensesCsv(enrichedExpenseRows, "archive");
-      const summaryPdf = await buildCpaSummaryPdf(
+      const detailCsv = buildAuditDetailCsv(auditRows);
+      const summaryPdf = await buildScheduleCMirrorPdf({
         taxYear,
-        enrichedExpenseRows,
-        summaryLines,
+        taxpayerName: user.userName ?? "SnapTax User",
+        businessIndustry: "Independent Contractor",
+        auditRows,
         incomeRows,
-      );
+      });
       const pack = await buildCpaPackZip(
-        csv,
+        detailCsv,
         summaryPdf,
-        enrichedExpenseRows,
+        auditRows,
         incomeRows,
+        taxYear,
       );
       buffer = pack.buffer;
       contentType = "application/zip";
-      filename = `Snap1099-${taxYear}-CPA-Audit-Pack.zip`;
+      filename = `Snap1099-${taxYear}-Audit-Trail.zip`;
       responseHeaders["X-Export-Images-Included"] = String(
         pack.imageStats.imagesIncluded,
       );
@@ -175,13 +182,13 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
       );
     } else if (body.format === "cpa_pdf") {
       try {
-        const pdfRows = await enrichExportRowsWithImageUrls(enrichedExpenseRows);
-        buffer = await buildCpaSummaryPdf(
+        buffer = await buildScheduleCMirrorPdf({
           taxYear,
-          pdfRows,
-          summaryLines,
+          taxpayerName: user.userName ?? "SnapTax User",
+          businessIndustry: "Independent Contractor",
+          auditRows,
           incomeRows,
-        );
+        });
       } catch (pdfErr) {
         logEvent({
           ts: utcNow().toISOString(),
@@ -200,7 +207,7 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
         throw new Error("PDF_GENERATION_FAILED");
       }
       contentType = "application/pdf";
-      filename = `Snap1099-${taxYear}-CPA-Summary.pdf`;
+      filename = `Snap1099-${taxYear}-Schedule-C-Mirror.pdf`;
     } else if (body.format === "xlsx") {
       const workbook = new ExcelJS.Workbook();
       const expenses = workbook.addWorksheet("Expenses");

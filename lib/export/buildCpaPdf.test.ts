@@ -25,8 +25,7 @@ function sampleRow(overrides: Partial<ExportExpenseRow> = {}): ExportExpenseRow 
     businessPercent: "100%",
     exportAmount: 120,
     receiptAlias: "REC_20260315_HomeDepot_120.00.jpg",
-    receiptArchivePath:
-      "02_Expenses_Receipts_Book/Line_22_Supplies/REC_20260315_HomeDepot_120.00.jpg",
+    receiptArchivePath: "Line_22_Supplies/REC_20260315_HomeDepot_120.00.jpg",
     ...overrides,
   };
 }

@@ -323,6 +323,32 @@ export type UserCopy = {
     openingExport: string;
     back: string;
   };
+  paymentSuccess: {
+    export: {
+      confirmingTitle: string;
+      confirmingHint: string;
+      readyTitle: string;
+      readyHint: string;
+      download: string;
+      notNow: string;
+      errorTitle: string;
+      errorHint: string;
+      retry: string;
+      close: string;
+    };
+    founder: {
+      confirmingTitle: string;
+      confirmingHint: string;
+      readyTitle: string;
+      readyHint: string;
+      readyHintNoNumber: string;
+      gotIt: string;
+      errorTitle: string;
+      errorHint: string;
+      retry: string;
+      close: string;
+    };
+  };
   auth: {
     googleSignIn: {
       soft: { title: string; body: string };

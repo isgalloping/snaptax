@@ -379,6 +379,34 @@ export const EN_US_COPY: UserCopy = {
       openingExport: "Opening export…",
       back: "< BACK",
     },
+    paymentSuccess: {
+      export: {
+        confirmingTitle: "Payment successful",
+        confirmingHint: "Confirming your {season} Tax Pack…",
+        readyTitle: "{season} Tax Pack unlocked",
+        readyHint: "You can export unlimited times this tax season.",
+        download: "Download Tax Pack",
+        notNow: "Not now",
+        errorTitle: "Still confirming payment",
+        errorHint:
+          "Your payment may have gone through. Tap Try again or check Settings in a moment.",
+        retry: "Try again",
+        close: "Close",
+      },
+      founder: {
+        confirmingTitle: "Payment successful",
+        confirmingHint: "Setting up your Founder benefits…",
+        readyTitle: "You're a Super Founder!",
+        readyHint: "{season} paid · Super Founder #{number}",
+        readyHintNoNumber: "{season} paid",
+        gotIt: "Got it",
+        errorTitle: "Still confirming payment",
+        errorHint:
+          "Your Founder purchase may have gone through. Tap Try again or check Settings in a moment.",
+        retry: "Try again",
+        close: "Close",
+      },
+    },
     auth: {
       googleSignIn: {
         soft: {

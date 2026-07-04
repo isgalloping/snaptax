@@ -442,40 +442,6 @@ export function ExportEngineSheet({
             <div className="space-y-3">
               <button
                 type="button"
-                onClick={() => setFormat("csv")}
-                className={`w-full min-h-[88px] rounded-xl border-2 p-4 text-left transition-transform active:scale-95 ${
-                  format === "csv"
-                    ? "border-yellow-500 bg-yellow-950"
-                    : "border-zinc-600 bg-zinc-800"
-                }`}
-              >
-                <p className="text-sm font-black uppercase tracking-wider text-white">
-                  {format === "csv" ? "✓ " : ""}
-                  {t.formatCsvTitle}
-                </p>
-                <p className="mt-2 text-xs leading-relaxed text-zinc-400">
-                  {t.formatCsvHint}
-                </p>
-              </button>
-              <button
-                type="button"
-                onClick={() => setFormat("cpa_pack")}
-                className={`w-full min-h-[88px] rounded-xl border-2 p-4 text-left transition-transform active:scale-95 ${
-                  format === "cpa_pack"
-                    ? "border-yellow-500 bg-yellow-950"
-                    : "border-zinc-600 bg-zinc-800"
-                }`}
-              >
-                <p className="text-sm font-black uppercase tracking-wider text-white">
-                  {format === "cpa_pack" ? "✓ " : ""}
-                  {t.formatCpaTitle}
-                </p>
-                <p className="mt-2 text-xs leading-relaxed text-zinc-400">
-                  {t.formatCpaHint}
-                </p>
-              </button>
-              <button
-                type="button"
                 onClick={() => setFormat("cpa_pdf")}
                 className={`w-full min-h-[88px] rounded-xl border-2 p-4 text-left transition-transform active:scale-95 ${
                   format === "cpa_pdf"
@@ -506,6 +472,40 @@ export function ExportEngineSheet({
                 </p>
                 <p className="mt-2 text-xs leading-relaxed text-zinc-400">
                   {t.formatTxfHint}
+                </p>
+              </button>
+              <button
+                type="button"
+                onClick={() => setFormat("csv")}
+                className={`w-full min-h-[88px] rounded-xl border-2 p-4 text-left transition-transform active:scale-95 ${
+                  format === "csv"
+                    ? "border-yellow-500 bg-yellow-950"
+                    : "border-zinc-600 bg-zinc-800"
+                }`}
+              >
+                <p className="text-sm font-black uppercase tracking-wider text-white">
+                  {format === "csv" ? "✓ " : ""}
+                  {t.formatCsvTitle}
+                </p>
+                <p className="mt-2 text-xs leading-relaxed text-zinc-400">
+                  {t.formatCsvHint}
+                </p>
+              </button>
+              <button
+                type="button"
+                onClick={() => setFormat("cpa_pack")}
+                className={`w-full min-h-[88px] rounded-xl border-2 p-4 text-left transition-transform active:scale-95 ${
+                  format === "cpa_pack"
+                    ? "border-yellow-500 bg-yellow-950"
+                    : "border-zinc-600 bg-zinc-800"
+                }`}
+              >
+                <p className="text-sm font-black uppercase tracking-wider text-white">
+                  {format === "cpa_pack" ? "✓ " : ""}
+                  {t.formatCpaTitle}
+                </p>
+                <p className="mt-2 text-xs leading-relaxed text-zinc-400">
+                  {t.formatCpaHint}
                 </p>
               </button>
             </div>

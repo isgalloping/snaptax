@@ -894,12 +894,12 @@ export const DE_DE_COPY: UserCopy = {
     savedToPhoneHint:
       "Auf Ihrem Handy gespeichert. Prüfen Sie Downloads zum Anhängen oder Senden.",
     yearSummary: "{year} · {amount} · {count} Belege",
-    formatCsvTitle: "CSV für TurboTax / Steuersoftware",
+    formatCsvTitle: "TurboTax CSV",
     formatCsvHint:
       "Optimiertes Matrixformat für sofortigen Import in Steuersoftware.",
-    formatCpaTitle: "CPA-Prüfpaket (ZIP + Belegbilder)",
+    formatCpaTitle: "1099-Prüfbelegpaket (ZIP)",
     formatCpaHint:
-      "IRS-konformer Prüfpfad mit Ihren originalen Belegfotos.",
+      "Originalbelege nach IRS-Zeile sortiert — Ihr Audit-Sicherheitsnetz.",
     sharing: "Teilen-Menü wird geöffnet…",
     imagesComplete: "{included} von {eligible} Belegbildern enthalten",
     imagesMissing: "{missing} Belegbilder konnten nicht eingeschlossen werden",
@@ -911,15 +911,15 @@ export const DE_DE_COPY: UserCopy = {
     reviewSaving: "Wird gespeichert…",
     reviewSaveFailed:
       "Kategorie konnte nicht gespeichert werden. Erneut versuchen.",
-    formatCpaPdfTitle: "CPA-Zusammenfassung PDF (Links zu Belegen)",
+    formatCpaPdfTitle: "Schedule-C-Spiegel-PDF",
     formatCpaPdfHint:
-      "IRS-konforme Zusammenfassung mit anklickbaren Links zu Ihren Belegfotos.",
+      "Alle IRS Schedule C Part II-Zeilen — zum Übertragen in FreeTaxUSA oder Papierformulare.",
     formatTxfTitle: "TXF für Steuersoftware",
     formatTxfHint:
       "Buchhaltungsformat für Desktop-Steuertools (V042-Blöcke).",
     snap1099Title: "1099-Einkommensformulare",
     snap1099Hint:
-      "1099-NEC oder 1099-K fotografieren — im CPA-Paket unter 01_Income_Documents.",
+      "1099-NEC oder 1099-K fotografieren — im Prüfpaket unter 01_Income_Documents.",
     snap1099NecButton: "1099-NEC →",
     snap1099KButton: "1099-K →",
     incomeFormsLabel: "{count} Einkommensformulare (1099)",

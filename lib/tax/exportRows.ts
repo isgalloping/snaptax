@@ -37,6 +37,10 @@ export type ExportExpenseRow = {
   exportAmount: number;
   receiptAlias: string;
   receiptArchivePath: string;
+  /** Audit pack only — 001..NNN */
+  auditIndex?: string;
+  /** Audit pack only — ZIP-relative path */
+  auditImagePath?: string;
 };
 
 export function extractAiDeductionRatio(

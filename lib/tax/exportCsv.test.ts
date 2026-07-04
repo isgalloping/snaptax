@@ -54,7 +54,7 @@ describe("buildExpensesCsv", () => {
     assert.match(csv, /Receipt Image URL/);
     assert.match(
       csv,
-      /02_Expenses_Receipts_Book\/Line_22_Supplies\/REC_20250301_HomeDepot_120\.00\.jpg/,
+      /Line_22_Supplies\/REC_20250301_HomeDepot_120\.00\.jpg/,
     );
   });
 });

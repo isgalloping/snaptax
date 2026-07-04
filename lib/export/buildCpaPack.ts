@@ -80,6 +80,7 @@ export async function buildCpaPackZip(
   summaryPdf: Buffer,
   expenseRows: ExportExpenseRow[],
   incomeRows: ExportIncomeRow[] = [],
+  taxYear: string,
   onProgress?: (progress: CpaPackProgress) => void,
 ): Promise<CpaPackResult> {
   const archive = new ZipArchive({ zlib: { level: 6 } });
@@ -109,8 +110,8 @@ export async function buildCpaPackZip(
   });
 
   archive.pipe(stream);
-  archive.append(summaryPdf, { name: "00_READ_ME_Summary.pdf" });
-  archive.append(detailCsv, { name: "Expenses-Detail.csv" });
+  archive.append(summaryPdf, { name: `${taxYear}_Tax_Report_Summary.pdf` });
+  archive.append(detailCsv, { name: `${taxYear}_Tax_Report_Data.csv` });
 
   let completed = 0;
   const fetched = await mapWithConcurrency(

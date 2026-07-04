@@ -881,12 +881,12 @@ export const EN_US_COPY: UserCopy = {
       shareFailedHint: "Could not open share. Tap Save to Phone instead.",
       savedToPhoneHint: "Saved to your phone. Check Downloads to attach or send.",
       yearSummary: "{year} · {amount} · {count} receipts",
-      formatCsvTitle: "CSV for TurboTax / Tax Software",
+      formatCsvTitle: "TurboTax CSV",
       formatCsvHint:
         "Optimized matrix format for instant tax software uploading.",
-      formatCpaTitle: "CPA Audit Pack (ZIP + Receipt Images)",
+      formatCpaTitle: "1099 Audit Receipt Pack (ZIP)",
       formatCpaHint:
-        "IRS-compliant audit trail with your original receipt photos.",
+        "Original receipt photos organized by IRS line — your audit safety net.",
       sharing: "Opening share sheet…",
       imagesComplete: "{included} of {eligible} receipt images included",
       imagesMissing: "{missing} receipt images could not be included",
@@ -896,15 +896,15 @@ export const EN_US_COPY: UserCopy = {
       reviewUnknownMerchant: "Unknown merchant",
       reviewSaving: "Saving…",
       reviewSaveFailed: "Could not ocr category. Try again.",
-      formatCpaPdfTitle: "CPA Summary PDF (Links to Receipts)",
+      formatCpaPdfTitle: "Schedule C Mirror PDF",
       formatCpaPdfHint:
-        "IRS-compliant summary with clickable links to your receipt photos.",
+        "Full IRS Schedule C Part II lines — copy into FreeTaxUSA or paper forms.",
       formatTxfTitle: "TXF for Tax Software",
       formatTxfHint:
         "Accounting assistant format for desktop tax tools (V042 blocks).",
       snap1099Title: "1099 income forms",
       snap1099Hint:
-        "Snap your 1099-NEC or 1099-K — included in CPA Audit Pack under 01_Income_Documents.",
+        "Snap 1099-NEC / 1099-K — included in Audit Pack under 01_Income_Documents.",
       snap1099NecButton: "1099-NEC →",
       snap1099KButton: "1099-K →",
       incomeFormsLabel: "{count} income forms (1099)",

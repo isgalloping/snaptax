@@ -4,7 +4,11 @@ import type { TaxRegion } from "@/lib/tax/types";
 import { parseUtcISOString, toUtcISOString } from "@/lib/time/utc";
 import { isPersistedReceiptId } from "@/lib/receipts/receiptId";
 import { apiFetch } from "@/lib/client/ghostClient";
-import { consumePendingIncomeCapture } from "@/lib/export/incomeCapture";
+import {
+  clearPendingIncomeCapture,
+  peekPendingIncomeCapture,
+  type IncomeCaptureKind,
+} from "@/lib/export/incomeCapture";
 
 export type ApiReceipt = {
   id: string;
@@ -222,11 +226,21 @@ export function apiReceiptFromUploadResponse(
   };
 }
 
+export function resolveUploadCaptureKind(
+  captureKind: IncomeCaptureKind | null | undefined,
+): { captureKind: IncomeCaptureKind | null; fromPending: boolean } {
+  if (captureKind !== undefined) {
+    return { captureKind, fromPending: false };
+  }
+  const pending = peekPendingIncomeCapture();
+  return { captureKind: pending, fromPending: pending != null };
+}
+
 export async function uploadReceipt(
   file: Blob,
   clientReceiptId: string,
   snapAt?: Date,
-  captureKind?: "1099-NEC" | "1099-K" | null,
+  captureKind?: IncomeCaptureKind | null,
   ocrDraft?: import("@/lib/ocr/types").OcrDraftPayload | null,
   opts?: { batchCapture?: boolean },
 ): Promise<ApiReceipt> {
@@ -243,7 +257,8 @@ export async function uploadReceipt(
     form.append("ocrDraft", JSON.stringify(ocrDraft));
   }
   const headers: Record<string, string> = {};
-  const resolvedCaptureKind = captureKind ?? consumePendingIncomeCapture();
+  const resolved = resolveUploadCaptureKind(captureKind);
+  const resolvedCaptureKind = resolved.captureKind;
   if (resolvedCaptureKind) {
     headers["X-Capture-Kind"] = resolvedCaptureKind;
   }
@@ -268,6 +283,7 @@ export async function uploadReceipt(
     body?.error?.code === "DUPLICATE_RECEIPT" &&
     body.existingReceiptId
   ) {
+    if (resolved.fromPending) clearPendingIncomeCapture();
     throw new DuplicateReceiptError(
       body.existingReceiptId,
       body.matchType ?? "exact",
@@ -278,6 +294,7 @@ export async function uploadReceipt(
     const code = body?.error?.code ?? "UPLOAD_FAILED";
     throw new Error(code);
   }
+  if (resolved.fromPending) clearPendingIncomeCapture();
   const created = body as UploadCreateResponse | ApiReceipt;
   if (!created.id || !("status" in created) || !created.status) {
     throw new Error("UPLOAD_FAILED");

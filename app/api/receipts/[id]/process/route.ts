@@ -1,6 +1,6 @@
 import { get } from "@vercel/blob";
 import { NextResponse } from "next/server";
-import { apiError, mapErrorToResponse, rateLimitError } from "@/lib/api/errors";
+import { mapErrorToResponse, rateLimitError } from "@/lib/api/errors";
 import {
   checkActorProcessLimit,
   checkReceiptProcessCooldown,
@@ -20,6 +20,7 @@ import { baseLogEntry } from "@/lib/server/log/context";
 import { blobCommandOptions } from "@/lib/server/blob";
 import { ocrDraftFromAiRaw } from "@/lib/ocr/ocrDraftSchema";
 import { resolveVerifyContext } from "@/lib/verify/context";
+import { incomeFormTypeFromReceipt } from "@/lib/export/incomeDocuments";
 
 export const maxDuration = 60;
 
@@ -98,6 +99,7 @@ export const POST = withRequestLog(
           mime,
           industry,
           canMockAi: verify.canMockAi,
+          captureKind: incomeFormTypeFromReceipt(receipt),
           ocrDraft,
           logContext: { request, actor },
         });

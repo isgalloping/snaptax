@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import { afterEach, describe, it } from "node:test";
 import { setPendingIncomeCapture } from "@/lib/export/incomeCapture";
-import { apiReceiptFromUploadResponse, uploadReceipt } from "./receiptApi.ts";
+import {
+  apiReceiptFromUploadResponse,
+  resolveUploadCaptureKind,
+  uploadReceipt,
+} from "./receiptApi.ts";
 
 const originalFetchDescriptor = Object.getOwnPropertyDescriptor(
   globalThis,
@@ -86,6 +90,32 @@ function installUploadFetchRecorder(
   });
 }
 
+describe("resolveUploadCaptureKind", () => {
+  it("does not use legacy pending capture when caller passes explicit null", () => {
+    installSessionStorage();
+    setPendingIncomeCapture("1099-NEC");
+
+    const resolved = resolveUploadCaptureKind(null);
+
+    assert.deepEqual(resolved, { captureKind: null, fromPending: false });
+    assert.equal(
+      (globalThis.sessionStorage as MemoryStorage).getItem(
+        "snap1099_capture_kind",
+      ),
+      "1099-NEC",
+    );
+  });
+
+  it("uses legacy pending capture only when capture kind is omitted", () => {
+    installSessionStorage();
+    setPendingIncomeCapture("1099-K");
+
+    const resolved = resolveUploadCaptureKind(undefined);
+
+    assert.deepEqual(resolved, { captureKind: "1099-K", fromPending: true });
+  });
+});
+
 describe("apiReceiptFromUploadResponse", () => {
   it("maps slim 201 upload body without requiring GET", () => {
     const snapAt = new Date("2026-06-14T12:00:00.000Z");
@@ -163,6 +193,26 @@ describe("uploadReceipt", () => {
     assert.equal(
       (seen.init?.headers as Record<string, string>)["X-Capture-Kind"],
       undefined,
+    );
+  });
+
+  it("does not send pending capture kind when caller passes explicit null", async () => {
+    const seen: { input?: string | URL | Request; init?: RequestInit } = {};
+    installSessionStorage();
+    installUploadFetchRecorder(seen);
+    setPendingIncomeCapture("1099-NEC");
+
+    await uploadReceipt(new Blob(["receipt"]), receiptId, undefined, null);
+
+    assert.equal(
+      (seen.init?.headers as Record<string, string>)["X-Capture-Kind"],
+      undefined,
+    );
+    assert.equal(
+      (globalThis.sessionStorage as MemoryStorage).getItem(
+        "snap1099_capture_kind",
+      ),
+      "1099-NEC",
     );
   });
 });

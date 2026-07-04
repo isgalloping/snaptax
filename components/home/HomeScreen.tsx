@@ -57,6 +57,7 @@ import {
 } from "@/lib/client/receiptSync";
 import {
   applyPhotoMissingState,
+  captureKindForUpload,
   shouldSkipUploadAttempt,
 } from "@/lib/client/receiptUploadFlow";
 import {
@@ -552,7 +553,7 @@ export function HomeScreen() {
         photo,
         latest.id,
         latest.timestamp,
-        undefined,
+        captureKindForUpload(latest),
         latest.ocrDraft,
         {
           batchCapture:

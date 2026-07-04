@@ -1,4 +1,5 @@
 import type { TaxRegion } from "@/lib/tax/types";
+import type { IncomeCaptureKind } from "@/lib/export/incomeCapture";
 
 export type ReceiptStatus = "processing" | "done" | "blurry";
 
@@ -42,6 +43,8 @@ export interface Receipt {
   aiConfidence?: number;
   /** 1099 form tax year from Vision (may differ from capture calendar year). */
   incomeTaxYear?: number | null;
+  /** Capture intent stored per local receipt so offline retries keep 1099 routing. */
+  captureKind?: IncomeCaptureKind | null;
   isOnboardingDemo?: boolean;
 }
 

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   applyPhotoMissingState,
+  captureKindForUpload,
   isPhotoMissingUpload,
   shouldSkipUploadAttempt,
 } from "./receiptUploadFlow.ts";
@@ -38,5 +39,27 @@ describe("shouldSkipUploadAttempt", () => {
 
   it("allows normal pending uploads", () => {
     assert.equal(shouldSkipUploadAttempt(baseReceipt()), false);
+  });
+});
+
+describe("captureKindForUpload", () => {
+  it("uses the per-receipt pending capture kind for offline upload flushes", () => {
+    assert.equal(
+      captureKindForUpload({
+        ...baseReceipt(),
+        captureKind: "1099-NEC",
+      }),
+      "1099-NEC",
+    );
+  });
+
+  it("infers capture kind from an existing 1099 category on resnap", () => {
+    assert.equal(
+      captureKindForUpload({
+        ...baseReceipt(),
+        category: "1099-K",
+      }),
+      "1099-K",
+    );
   });
 });

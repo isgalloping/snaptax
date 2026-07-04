@@ -15,6 +15,7 @@ import { ReceiptListCard } from "./ReceiptListCard";
 interface ReceiptListProps {
   receipts: Receipt[];
   syncStuckIds: Set<string>;
+  uploadInFlightIds?: Set<string>;
   filter: ReceiptListFilter;
   onFilterChange: (filter: ReceiptListFilter) => void;
   listHeader?: ReactNode;
@@ -34,6 +35,7 @@ interface ReceiptListProps {
 export function ReceiptList({
   receipts,
   syncStuckIds,
+  uploadInFlightIds,
   filter,
   onFilterChange,
   listHeader,
@@ -103,6 +105,7 @@ export function ReceiptList({
               key={receipt.id}
               receipt={receipt}
               syncStuck={syncStuckIds.has(receipt.id)}
+              uploadInFlight={uploadInFlightIds?.has(receipt.id) ?? false}
               highlighted={highlightReceiptId === receipt.id}
               ahaCoach={ahaCoachActive}
               onAhaCoachDismiss={onAhaCoachDismiss}

@@ -228,6 +228,7 @@ export async function uploadReceipt(
   snapAt?: Date,
   captureKind?: "1099-NEC" | "1099-K" | null,
   ocrDraft?: import("@/lib/ocr/types").OcrDraftPayload | null,
+  opts?: { batchCapture?: boolean },
 ): Promise<ApiReceipt> {
   if (!isPersistedReceiptId(clientReceiptId)) {
     throw new Error("INVALID_CLIENT_RECEIPT_ID");
@@ -245,6 +246,9 @@ export async function uploadReceipt(
   const resolvedCaptureKind = captureKind ?? consumePendingIncomeCapture();
   if (resolvedCaptureKind) {
     headers["X-Capture-Kind"] = resolvedCaptureKind;
+  }
+  if (opts?.batchCapture) {
+    headers["X-Capture-Mode"] = "batch";
   }
   const res = await apiFetch("/api/receipts", {
     method: "POST",

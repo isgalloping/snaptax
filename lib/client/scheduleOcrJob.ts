@@ -11,14 +11,15 @@ import type {
 } from "@/lib/workers/ocrWorkerProtocol";
 
 export const OCR_MAX_QUEUE_DEPTH = 3;
-const OCR_WORKER_TIMEOUT_MS = 45_000;
-const DEFAULT_WAIT_FOR_OCR_MS = 120_000;
+export const OCR_WORKER_TIMEOUT_MS = 45_000;
+export const DEFAULT_WAIT_FOR_OCR_MS = 120_000;
 const pending: string[] = [];
 const queued = new Set<string>();
 const inFlight = new Set<string>();
 const ocrFinished = new Set<string>();
 const ocrScheduled = new Set<string>();
-const batchDeferUploadIds = new Set<string>();
+/** True while batch camera overlay is open — gates auto-upload until session ends. */
+let batchCaptureSessionActive = false;
 let running = 0;
 let worker: Worker | null = null;
 let ocrCompleteHandler: ((receiptId: string) => void) | null = null;
@@ -38,7 +39,7 @@ export function isOcrJobPending(receiptId: string): boolean {
   return ocrScheduled.has(receiptId) && !ocrFinished.has(receiptId);
 }
 
-/** Gate upload until local OCR finishes (or is skipped / already persisted). */
+/** @deprecated Do not gate upload flush; OCR runs in parallel with upload. */
 export function shouldBlockUploadForOcr(
   receipt: Pick<StoredReceipt, "id" | "ocrDraft">,
 ): boolean {
@@ -194,22 +195,28 @@ function pumpQueue(): void {
   }
 }
 
-/** Defer per-receipt auto-upload while a batch camera session is open. */
-export function deferBatchOcrUpload(receiptIds: string[]): void {
-  for (const id of receiptIds) {
-    batchDeferUploadIds.add(id);
-  }
+/** Begin deferring auto-upload for all receipts until batch camera closes. */
+export function beginBatchCaptureDefer(): void {
+  batchCaptureSessionActive = true;
 }
 
-/** Release batch deferral (Done flush or Back without blocking upload). */
-export function releaseBatchOcrUpload(receiptIds: string[]): void {
-  for (const id of receiptIds) {
-    batchDeferUploadIds.delete(id);
-  }
+/** End batch deferral — call when batch camera closes (Done / Back). */
+export function endBatchCaptureDefer(): void {
+  batchCaptureSessionActive = false;
 }
 
-export function isBatchOcrUploadDeferred(receiptId: string): boolean {
-  return batchDeferUploadIds.has(receiptId);
+/** @deprecated Use beginBatchCaptureDefer / endBatchCaptureDefer (session-scoped). */
+export function deferBatchOcrUpload(_receiptIds: string[]): void {
+  beginBatchCaptureDefer();
+}
+
+/** @deprecated Use endBatchCaptureDefer (session-scoped). */
+export function releaseBatchOcrUpload(_receiptIds: string[]): void {
+  endBatchCaptureDefer();
+}
+
+export function isBatchOcrUploadDeferred(_receiptId: string): boolean {
+  return batchCaptureSessionActive;
 }
 
 /** Wait until scheduled OCR jobs for these receipts finish (or timeout). */
@@ -323,6 +330,6 @@ export function resetOcrJobStateForTests(): void {
   inFlight.clear();
   ocrFinished.clear();
   ocrScheduled.clear();
-  batchDeferUploadIds.clear();
+  batchCaptureSessionActive = false;
   running = 0;
 }

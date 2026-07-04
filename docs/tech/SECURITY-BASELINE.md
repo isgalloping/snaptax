@@ -53,7 +53,7 @@ This document maps **Security by Default** controls to implementation. It must s
 
 ## 4. Data retention cross-reference
 
-Local and server retention periods are documented in [data-retention.md](../legal/data-retention.md) and enforced by:
+Local and server retention periods are documented for users in [data-retention.md](../legal/data-retention.md) (`/data-retention`). Code-to-constant alignment for audits is in [data-retention-code-alignment.md](../ops/data-retention-code-alignment.md). Enforcement:
 
 - `lib/client/receiptRetention.ts` — 18-month IndexedDB prune  
 - `lib/client/photoRetention.ts` — 90-day OPFS full-image purge  
@@ -86,4 +86,5 @@ Internal IRP and runbooks: [docs/ops/security-incident-response.md](../ops/secur
 | [2026-06-05-api-security-design.md](../superpowers/specs/2026-06-05-api-security-design.md) | Ghost HMAC · OpenAI · IDOR · rate limits |
 | [2026-06-06-logging-design.md](../superpowers/specs/2026-06-06-logging-design.md) | Log format and redaction |
 | [2026-06-30-compliance-p3-security-baseline.md](../superpowers/specs/2026-06-30-compliance-p3-security-baseline.md) | Compliance spec (P3) |
-| [data-retention.md](../legal/data-retention.md) | Retention periods |
+| [data-retention.md](../legal/data-retention.md) | Public retention periods (`/data-retention`) |
+| [data-retention-code-alignment.md](../ops/data-retention-code-alignment.md) | Internal code constant audit |

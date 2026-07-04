@@ -1,6 +1,6 @@
 import type { Locale } from "@/lib/i18n";
 
-export type LegalDoc = "privacy" | "terms";
+export type LegalDoc = "privacy" | "terms" | "data-retention" | "security";
 
 export interface LegalSection {
   title: string;

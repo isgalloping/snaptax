@@ -120,20 +120,35 @@ export function PrivacyDataSection({
             label={copy.terms}
             onClick={() => setLegalDoc("terms")}
           />
-          <SettingsRow label={copy.dataRetention} href="/data-retention" />
-          <SettingsRow label={copy.security} href="/security" />
-          <div className="rounded-xl border-2 border-zinc-600 bg-zinc-800 p-4">
+          <SettingsRow
+            label={copy.dataRetention}
+            onClick={() => setLegalDoc("data-retention")}
+          />
+          <SettingsRow
+            label={copy.security}
+            onClick={() => setLegalDoc("security")}
+          />
+          <SettingsRow label={copy.allPolicies} href="/policies" />
+          <button
+            type="button"
+            onClick={() => setLegalDoc("privacy")}
+            aria-label={copy.dataStorageOpenPrivacy}
+            className="w-full rounded-xl border-2 border-zinc-600 bg-zinc-800 p-4 text-left transition-transform active:scale-95"
+          >
             <p className="text-xs font-bold uppercase tracking-wider text-zinc-400">
               {copy.dataStorage}
             </p>
             <p className="mt-2 text-sm font-bold text-yellow-400">
               {copy.dataStorageValue}
             </p>
-          </div>
+          </button>
           <SettingsRow
             label={`${copy.contactPrefix}: ${LEGAL_CONTACT_EMAIL}`}
             href={`mailto:${LEGAL_CONTACT_EMAIL}`}
           />
+          <p className="px-1 text-xs leading-relaxed text-zinc-500">
+            {copy.contactDsrNote}
+          </p>
           <SettingsRow
             label={copy.deleteAccount}
             destructive

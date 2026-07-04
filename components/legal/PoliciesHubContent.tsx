@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { LEGAL_CONTACT_EMAIL } from "@/lib/legal/content";
 
 const POLICY_LINKS = [
@@ -35,15 +38,26 @@ const POLICY_LINKS = [
 ] as const;
 
 export function PoliciesHubContent() {
+  const router = useRouter();
+
+  const handleBack = () => {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.back();
+      return;
+    }
+    router.push("/");
+  };
+
   return (
     <div className="min-h-screen bg-black text-white">
       <header className="border-b-4 border-yellow-500 bg-zinc-900 p-6">
-        <Link
-          href="/"
+        <button
+          type="button"
+          onClick={handleBack}
           className="mb-4 inline-flex min-h-12 items-center text-sm font-black uppercase tracking-wider text-yellow-400"
         >
           &lt; Back to Snap1099
-        </Link>
+        </button>
         <h1 className="text-2xl font-black uppercase tracking-wider">
           Terms &amp; Policies
         </h1>

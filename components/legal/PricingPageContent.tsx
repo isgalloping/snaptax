@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ParsedLegalMarkdown } from "@/lib/legal/markdownDoc";
+import { LegalMarkdownInline } from "@/components/legal/LegalMarkdownSections";
 import { slugifyLegalHeading } from "@/lib/legal/slugifyLegalHeading";
 import type { PricingPageLiveData } from "@/lib/legal/pricingPageData";
 
@@ -94,7 +95,7 @@ export function PricingPageContent({
                 key={paragraph.slice(0, 48)}
                 className="mb-3 text-sm leading-relaxed text-zinc-300"
               >
-                {paragraph}
+                <LegalMarkdownInline text={paragraph} />
               </p>
             ))}
           </section>

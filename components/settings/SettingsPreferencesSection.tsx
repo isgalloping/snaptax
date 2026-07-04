@@ -5,21 +5,16 @@ import Link from "next/link";
 import type { Industry } from "@/lib/types";
 import { INDUSTRIES } from "@/lib/types";
 import { useI18n } from "@/components/i18n/I18nProvider";
-import { PrivacyDataSection } from "@/components/settings/PrivacyDataSection";
 import { SUPPORTED_LOCALES, type Locale } from "@/lib/i18n";
 
 interface SettingsPreferencesSectionProps {
   industry: Industry | null;
   onIndustryChange: (industry: Industry) => void;
-  isSignedIn: boolean;
-  onAccountDeleted?: () => void;
 }
 
 export function SettingsPreferencesSection({
   industry,
   onIndustryChange,
-  isSignedIn,
-  onAccountDeleted,
 }: SettingsPreferencesSectionProps) {
   const { locale, setLocale, copy } = useI18n();
   const [expanded, setExpanded] = useState(false);
@@ -130,11 +125,6 @@ export function SettingsPreferencesSection({
               </span>
             </Link>
           </div>
-
-          <PrivacyDataSection
-            isSignedIn={isSignedIn}
-            onAccountDeleted={onAccountDeleted}
-          />
         </div>
       )}
     </section>

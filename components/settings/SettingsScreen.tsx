@@ -79,6 +79,7 @@ interface SettingsScreenProps {
   skipSoftGoogleSheet?: boolean;
   exportBlockedTick?: number;
   seasonExportTick?: number;
+  onRefreshSeasonPaid?: () => Promise<void>;
   onboardingAha?: boolean;
   onSampleExportAhaComplete?: () => Promise<void>;
   onRestored?: () => void | Promise<void>;
@@ -115,6 +116,7 @@ export function SettingsScreen({
   skipSoftGoogleSheet = false,
   exportBlockedTick = 0,
   seasonExportTick = 0,
+  onRefreshSeasonPaid,
   onboardingAha = false,
   onSampleExportAhaComplete,
   onRestored,
@@ -187,6 +189,7 @@ export function SettingsScreen({
             founderStatus: FounderStatus;
             founderTier: FounderTier | null;
             founderNumber: number | null;
+            currentSeasonEntitled: boolean;
           } | null;
         };
         if (cancelled) return;
@@ -194,6 +197,10 @@ export function SettingsScreen({
         setFounderStatus(program.user?.founderStatus ?? "none");
         setFounderTier(program.user?.founderTier ?? null);
         setFounderNumber(program.user?.founderNumber ?? null);
+
+        if (program.user?.currentSeasonEntitled) {
+          await onRefreshSeasonPaid?.();
+        }
       } catch {
         if (!cancelled) {
           setFounderStatus("none");
@@ -206,7 +213,7 @@ export function SettingsScreen({
     return () => {
       cancelled = true;
     };
-  }, [isSignedIn, authHydrated]);
+  }, [isSignedIn, authHydrated, onRefreshSeasonPaid]);
 
   useEffect(() => {
     if (firstVisitHandled.current) return;

@@ -40,7 +40,7 @@ import {
   deleteReceiptLocalAndRemote,
   flushPendingDeletes,
 } from "@/lib/client/receiptDeleteFlow";
-import { pollTaxRecalc } from "@/lib/client/authApi";
+import { pollEntitlementReady, pollTaxRecalc } from "@/lib/client/authApi";
 import { prepareExportSync } from "@/lib/client/exportPrepareFlow";
 import { restoreReceiptsFromCloud } from "@/lib/client/cloudRestoreFlow";
 import {
@@ -93,6 +93,7 @@ import { InlinePrivacyNote } from "./InlinePrivacyNote";
 import { HomeScrollRegion } from "./HomeScrollRegion";
 import { WidgetStack } from "./widgets/WidgetStack";
 import { FounderProgramSheet } from "./sheets/FounderProgramSheet";
+import { finalizeFounderPurchase } from "@/lib/founder/finalizeFounderPurchase";
 import { waitForFounderActive } from "@/lib/founder/waitForFounderActive";
 import {
   HomeOverlayHost,
@@ -1322,6 +1323,7 @@ export function HomeScreen() {
         googleUser={auth.googleUser}
         seasonPaid={auth.seasonPaid}
         currentSeason={auth.currentSeason}
+        onRefreshSeasonPaid={auth.refreshSeasonPaid}
         onUserSignedIn={auth.applyGoogleSignIn}
         onPostLoginSync={handlePostLoginSync}
         onSignOut={auth.signOut}
@@ -1504,8 +1506,12 @@ export function HomeScreen() {
           }}
           onPaid={async () => {
             setFounderSheetOpen(false);
-            await auth.refreshSeasonPaid();
-            await waitForFounderActive();
+            await finalizeFounderPurchase({
+              season: auth.currentSeason,
+              pollEntitlementReady,
+              refreshSeasonPaid: auth.refreshSeasonPaid,
+              waitForFounderActive,
+            });
             setFounderRefreshTick((tick) => tick + 1);
           }}
         />

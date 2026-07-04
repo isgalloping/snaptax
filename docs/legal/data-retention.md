@@ -1,7 +1,7 @@
 # Snap1099 Data Retention Policy
 
 **Last Updated:** June 2026  
-**Related:** [Privacy Policy](/privacy) · [Terms of Service](/terms) · [Security](/security)
+**Related:** [Privacy Policy](/privacy) · [Terms of Service](/terms) · [Pricing](/pricing) · [Refund Policy](/refund) · [All policies](/policies) · [Security](/security)
 
 This summary describes how long Snap1099 keeps different types of data. Technical details may be updated as our infrastructure evolves; material changes will be reflected in our Privacy Policy.
 

@@ -1,7 +1,11 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
-export type LegalMarkdownFile = "data-retention.md" | "security-incident.md";
+export type LegalMarkdownFile =
+  | "data-retention.md"
+  | "security-incident.md"
+  | "pricing.md"
+  | "refund.md";
 
 export type LegalMarkdownSection = {
   title: string;

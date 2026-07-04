@@ -20,7 +20,7 @@ You must be able to form a binding contract in your jurisdiction. You agree not 
 
 ## 4. Subscriptions & Payments
 
-Tax-season **Export Tax Pack** requires a one-time fee processed by **Paddle** ($49 per season unless otherwise shown in the App). Refunds follow Paddle's policies and applicable law. Paid seasons include unlimited re-export for that tax season as described in the App.
+Tax-season **Export Tax Pack** requires a one-time fee processed by **Paddle** ($49 per season unless otherwise shown in the App). Refunds follow Paddle's policies and applicable law. Paid seasons include unlimited re-export for that tax season as described in the App. See our [Refund Policy](/refund) and [Pricing](/pricing).
 
 ## 5. Intellectual Property
 

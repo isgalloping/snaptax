@@ -20,7 +20,7 @@ Vous devez pouvoir conclure un contrat contraignant dans votre juridiction. Vous
 
 ## 4. Abonnements & paiements
 
-L'**export Tax Pack** de saison fiscale requiert des frais uniques traités par **Paddle** (49 $ par saison sauf indication contraire). Les remboursements suivent les politiques Paddle et la loi applicable. Les saisons payées incluent des réexportations illimitées pour cette saison fiscale.
+L'**export Tax Pack** de saison fiscale requiert des frais uniques traités par **Paddle** (49 $ par saison sauf indication contraire). Les remboursements suivent les politiques Paddle et la loi applicable. Les saisons payées incluent des réexportations illimitées pour cette saison fiscale. Voir notre [Politique de remboursement](/refund) et [Tarification](/pricing).
 
 ## 5. Propriété intellectuelle
 

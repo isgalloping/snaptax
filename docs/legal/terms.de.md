@@ -20,7 +20,7 @@ Sie müssen in Ihrer Rechtsordnung einen verbindlichen Vertrag schließen könne
 
 ## 4. Abonnements & Zahlungen
 
-Der Steuersaison-**Tax-Pack-Export** erfordert eine Einmalgebühr über **Paddle** (49 $ pro Saison, sofern in der App nicht anders angezeigt). Erstattungen folgen Paddle-Richtlinien und geltendem Recht. Bezahlte Saisons umfassen unbegrenzte Re-Exporte für diese Steuersaison.
+Der Steuersaison-**Tax-Pack-Export** erfordert eine Einmalgebühr über **Paddle** (49 $ pro Saison, sofern in der App nicht anders angezeigt). Erstattungen folgen Paddle-Richtlinien und geltendem Recht. Bezahlte Saisons umfassen unbegrenzte Re-Exporte für diese Steuersaison. Siehe [Erstattungsrichtlinie](/refund) und [Preise](/pricing).
 
 ## 5. Geistiges Eigentum
 

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { LegalDoc } from "@/lib/legal/content";
 import { getLegalBundle, getLegalSections, getLegalTitle } from "@/lib/legal/content";
+import { slugifyLegalHeading } from "@/lib/legal/slugifyLegalHeading";
 import { useI18n } from "@/components/i18n/I18nProvider";
 
 const LEGAL_DOC_PATH: Record<LegalDoc, Record<string, string>> = {
@@ -40,7 +41,10 @@ export function LegalPageContent({ doc }: { doc: LegalDoc }) {
       <main className="mx-auto max-w-2xl p-6 pb-16">
         {sections.map((section) => (
           <section key={section.title} className="mb-8">
-            <h2 className="mb-3 text-sm font-bold uppercase tracking-wider text-yellow-400">
+            <h2
+              id={slugifyLegalHeading(section.title)}
+              className="mb-3 text-sm font-bold uppercase tracking-wider text-yellow-400"
+            >
               {section.title}
             </h2>
             {section.body.map((paragraph) => (

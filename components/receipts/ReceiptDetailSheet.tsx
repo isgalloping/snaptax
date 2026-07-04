@@ -24,6 +24,7 @@ import { ReceiptDetailStepper } from "@/components/receipts/ReceiptDetailStepper
 import { ReceiptCaptureSection } from "@/components/receipts/ReceiptCaptureSection";
 import { ReceiptCaptureActions } from "@/components/receipts/ReceiptCaptureActions";
 import { ReceiptDeleteConfirmSheet } from "@/components/receipts/ReceiptDeleteConfirmSheet";
+import { useDialogEscape } from "@/lib/ui/useDialogEscape";
 
 interface ReceiptDetailSheetProps {
   receipt: Receipt;
@@ -211,6 +212,8 @@ export function ReceiptDetailSheet({
         ? "blurry"
         : "processing";
 
+  useDialogEscape(true, onClose);
+
   return (
     <>
       <div
@@ -221,6 +224,7 @@ export function ReceiptDetailSheet({
         <div
           className="flex max-h-[75vh] w-full flex-col rounded-t-3xl border-t-4 border-yellow-500 bg-black"
           role="dialog"
+          aria-modal="true"
           aria-labelledby="receipt-detail-title"
           onClick={(e) => e.stopPropagation()}
           onTouchStart={handleTouchStart}

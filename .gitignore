@@ -47,4 +47,8 @@ next-env.d.ts
 # Serwist
 public/sw*
 public/swe-worker*
+public/tesseract/
 /.tmp/
+
+# git worktrees (subagent-driven development)
+.worktrees/

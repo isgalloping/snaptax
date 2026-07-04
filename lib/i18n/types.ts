@@ -158,6 +158,7 @@ export type UserCopy = {
       delete: string;
       unknownMerchant: string;
       duplicateReceipt: string;
+      duplicateReceiptSimilar: string;
       status: {
         analyzing: string;
         uploading: string;
@@ -205,6 +206,28 @@ export type UserCopy = {
         actionCount: string;
         resnap: string;
       };
+      founder: {
+        label: string;
+        subtitle: string;
+        subtitleLoading: string;
+        scarcity: string;
+        view: string;
+        newBadge: string;
+      };
+    };
+    founderSheet: {
+      title: string;
+      seatsRemaining: string;
+      becomeFounder: string;
+      signInFirst: string;
+      notNow: string;
+      seasonPrice: string;
+      offerEnds: string;
+      programFull: string;
+      alreadyEntitled: string;
+      paymentUnavailable: string;
+      paymentFailed: string;
+      confirmingPayment: string;
     };
     overlays: {
       back: string;
@@ -390,10 +413,10 @@ export type UserCopy = {
       compatLine: string;
       formatLine: string;
       trustLine: string;
+      taxEstimateDisclaimer: string;
       snap1099Nec: string;
       snap1099K: string;
       mostPopular: string;
-      price: string;
       states: {
         final_deadline: { title: string; cta: string };
         anon: { title: string; cta: string };
@@ -450,9 +473,12 @@ export type UserCopy = {
       dataStorage: string;
       dataStorageValue: string;
       contactPrefix: string;
+      dataRetention: string;
+      security: string;
       deleteAccount: string;
       deleteFailed: string;
       deleteRequiresOnline: string;
+      deleteSessionExpired: string;
       deleteTitle: string;
       deleteSignedInWarning: string;
       deleteGhostWarning: string;

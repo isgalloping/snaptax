@@ -1,59 +1,120 @@
 import assert from "node:assert/strict";
-import { describe, it } from "node:test";
+import { afterEach, describe, it } from "node:test";
 import { setPendingIncomeCapture } from "@/lib/export/incomeCapture";
-import { resolveUploadCaptureKind } from "./receiptApi.ts";
+import {
+  apiReceiptFromUploadResponse,
+  resolveUploadCaptureKind,
+  uploadReceipt,
+} from "./receiptApi.ts";
 
-function withSessionStorage(fn: () => void): void {
-  const original = globalThis.sessionStorage;
-  const values = new Map<string, string>();
+const originalFetchDescriptor = Object.getOwnPropertyDescriptor(
+  globalThis,
+  "fetch",
+);
+const originalSessionStorageDescriptor = Object.getOwnPropertyDescriptor(
+  globalThis,
+  "sessionStorage",
+);
+
+class MemoryStorage {
+  private readonly values = new Map<string, string>();
+
+  get length() {
+    return this.values.size;
+  }
+
+  clear() {
+    this.values.clear();
+  }
+
+  getItem(key: string) {
+    return this.values.get(key) ?? null;
+  }
+
+  key(index: number) {
+    return [...this.values.keys()][index] ?? null;
+  }
+
+  removeItem(key: string) {
+    this.values.delete(key);
+  }
+
+  setItem(key: string, value: string) {
+    this.values.set(key, value);
+  }
+}
+
+const receiptId = "550e8400-e29b-41d4-a716-446655440000";
+
+afterEach(() => {
+  restoreGlobalProperty("fetch", originalFetchDescriptor);
+  restoreGlobalProperty("sessionStorage", originalSessionStorageDescriptor);
+});
+
+function restoreGlobalProperty(
+  key: "fetch" | "sessionStorage",
+  descriptor: PropertyDescriptor | undefined,
+) {
+  if (descriptor) {
+    Object.defineProperty(globalThis, key, descriptor);
+  } else {
+    Reflect.deleteProperty(globalThis, key);
+  }
+}
+
+function installSessionStorage() {
   Object.defineProperty(globalThis, "sessionStorage", {
     configurable: true,
-    value: {
-      getItem(key: string) {
-        return values.get(key) ?? null;
-      },
-      setItem(key: string, value: string) {
-        values.set(key, value);
-      },
-      removeItem(key: string) {
-        values.delete(key);
-      },
+    value: new MemoryStorage() as Storage,
+  });
+}
+
+function installUploadFetchRecorder(
+  seen: { input?: string | URL | Request; init?: RequestInit },
+) {
+  Object.defineProperty(globalThis, "fetch", {
+    configurable: true,
+    value: async (input: string | URL | Request, init?: RequestInit) => {
+      seen.input = input;
+      seen.init = init;
+      return new Response(
+        JSON.stringify({
+          id: receiptId,
+          status: "processing",
+          taxAmount: 0,
+          dataRegion: "us",
+        }),
+        { status: 201 },
+      );
     },
   });
-  try {
-    fn();
-  } finally {
-    Object.defineProperty(globalThis, "sessionStorage", {
-      configurable: true,
-      value: original,
-    });
-  }
 }
 
 describe("resolveUploadCaptureKind", () => {
   it("does not use legacy pending capture when caller passes explicit null", () => {
-    withSessionStorage(() => {
-      setPendingIncomeCapture("1099-NEC");
+    installSessionStorage();
+    setPendingIncomeCapture("1099-NEC");
 
-      const resolved = resolveUploadCaptureKind(null);
+    const resolved = resolveUploadCaptureKind(null);
 
-      assert.deepEqual(resolved, { captureKind: null, fromPending: false });
-    });
+    assert.deepEqual(resolved, { captureKind: null, fromPending: false });
+    assert.equal(
+      (globalThis.sessionStorage as MemoryStorage).getItem(
+        "snap1099_capture_kind",
+      ),
+      "1099-NEC",
+    );
   });
 
   it("uses legacy pending capture only when capture kind is omitted", () => {
-    withSessionStorage(() => {
-      setPendingIncomeCapture("1099-K");
+    installSessionStorage();
+    setPendingIncomeCapture("1099-K");
 
-      const resolved = resolveUploadCaptureKind(undefined);
+    const resolved = resolveUploadCaptureKind(undefined);
 
-      assert.deepEqual(resolved, { captureKind: "1099-K", fromPending: true });
-    });
+    assert.deepEqual(resolved, { captureKind: "1099-K", fromPending: true });
   });
 });
-import assert from "node:assert/strict";
-import { describe, it } from "node:test";
-import { apiReceiptFromUploadResponse } from "./receiptApi.ts";
 
 describe("apiReceiptFromUploadResponse", () => {
   it("maps slim 201 upload body without requiring GET", () => {
@@ -96,5 +157,62 @@ describe("apiReceiptFromUploadResponse", () => {
     assert.equal(receipt.category, "OTHER");
     assert.equal(receipt.amount, 14.75);
     assert.equal(receipt.updatedAt, "2026-06-16T12:00:05.000Z");
+  });
+});
+
+describe("uploadReceipt", () => {
+  it("sends explicit income capture kind as X-Capture-Kind", async () => {
+    const seen: { input?: string | URL | Request; init?: RequestInit } = {};
+    installUploadFetchRecorder(seen);
+
+    await uploadReceipt(new Blob(["receipt"]), receiptId, undefined, "1099-K");
+
+    assert.equal(seen.input, "/api/receipts");
+    assert.equal(seen.init?.method, "POST");
+    assert.equal(
+      (seen.init?.headers as Record<string, string>)["X-Capture-Kind"],
+      "1099-K",
+    );
+  });
+
+  it("consumes pending income capture kind for the next upload only", async () => {
+    const seen: { input?: string | URL | Request; init?: RequestInit } = {};
+    installSessionStorage();
+    installUploadFetchRecorder(seen);
+    setPendingIncomeCapture("1099-NEC");
+
+    await uploadReceipt(new Blob(["receipt"]), receiptId);
+
+    assert.equal(
+      (seen.init?.headers as Record<string, string>)["X-Capture-Kind"],
+      "1099-NEC",
+    );
+
+    await uploadReceipt(new Blob(["receipt"]), receiptId);
+
+    assert.equal(
+      (seen.init?.headers as Record<string, string>)["X-Capture-Kind"],
+      undefined,
+    );
+  });
+
+  it("does not send pending capture kind when caller passes explicit null", async () => {
+    const seen: { input?: string | URL | Request; init?: RequestInit } = {};
+    installSessionStorage();
+    installUploadFetchRecorder(seen);
+    setPendingIncomeCapture("1099-NEC");
+
+    await uploadReceipt(new Blob(["receipt"]), receiptId, undefined, null);
+
+    assert.equal(
+      (seen.init?.headers as Record<string, string>)["X-Capture-Kind"],
+      undefined,
+    );
+    assert.equal(
+      (globalThis.sessionStorage as MemoryStorage).getItem(
+        "snap1099_capture_kind",
+      ),
+      "1099-NEC",
+    );
   });
 });

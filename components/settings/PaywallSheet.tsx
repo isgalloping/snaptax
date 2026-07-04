@@ -3,7 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import { initializePaddle, Paddle } from "@paddle/paddle-js";
 import { useUserCopy } from "@/components/i18n/I18nProvider";
+import { useSeasonOffer } from "@/lib/client/useSeasonOffer";
 import { apiFetch } from "@/lib/client/ghostClient";
+import { formatCurrency } from "@/lib/format";
 
 type PaywallPhase = "offer" | "confirming";
 
@@ -49,6 +51,7 @@ export function PaywallSheet({
   onPaid,
 }: PaywallSheetProps) {
   const copy = useUserCopy().paywall;
+  const { priceUsd } = useSeasonOffer();
   const [phase, setPhase] = useState<PaywallPhase>("offer");
   const [paying, setPaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -93,10 +96,9 @@ export function PaywallSheet({
     setPaying(true);
     setError(null);
     try {
-      const priceId = process.env.NEXT_PUBLIC_PADDLE_PRICE_ID;
       const paddle = paddleRef.current;
 
-      if (!paddle || !priceId) {
+      if (!paddle) {
         setError(copy.paymentUnavailable);
         return;
       }
@@ -112,14 +114,17 @@ export function PaywallSheet({
         return;
       }
 
-      const intentData = (await intentRes.json()) as { intentId?: string };
-      if (!intentData.intentId) {
+      const intentData = (await intentRes.json()) as {
+        intentId?: string;
+        paddlePriceId?: string;
+      };
+      if (!intentData.intentId || !intentData.paddlePriceId) {
         setError(copy.paymentUnavailable);
         return;
       }
 
       paddle.Checkout.open({
-        items: [{ priceId, quantity: 1 }],
+        items: [{ priceId: intentData.paddlePriceId, quantity: 1 }],
         customData: {
           intentId: intentData.intentId,
         },
@@ -136,6 +141,12 @@ export function PaywallSheet({
     onDismissWithoutPay?.();
     onClose();
   };
+
+  const priceLabel = formatCurrency(priceUsd);
+
+  function withPrice(template: string): string {
+    return template.replace("{price}", priceLabel);
+  }
 
   if (phase === "confirming") {
     return (
@@ -160,7 +171,7 @@ export function PaywallSheet({
       <div className="max-h-[90vh] w-full overflow-y-auto rounded-t-3xl border-t-4 border-yellow-500 bg-zinc-900 p-6 pb-10">
         <BalanceScaleIllustration />
         <p className="text-center text-xl font-black uppercase tracking-wider text-white">
-          {copy.unlockTitle}
+          {withPrice(copy.unlockTitle)}
         </p>
         <p className="mt-2 text-center text-sm text-zinc-400">
           {copy.oneTimeSeason.replace("{season}", seasonLabel)}
@@ -185,7 +196,7 @@ export function PaywallSheet({
           onClick={() => void handlePay()}
           className="mt-6 w-full min-h-16 rounded-xl border-4 border-white bg-yellow-500 py-4 text-lg font-black uppercase tracking-wider text-black transition-transform active:scale-95 disabled:opacity-60"
         >
-          {paying ? copy.openingPaddle : copy.unlockNow}
+          {paying ? copy.openingPaddle : withPrice(copy.unlockNow)}
         </button>
         {error && (
           <p className="mt-3 text-center text-sm font-bold text-red-500" role="alert">

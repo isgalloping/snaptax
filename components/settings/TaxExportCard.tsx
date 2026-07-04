@@ -2,6 +2,8 @@
 
 import { ExportEmptyTip } from "@/components/export/ExportEmptyTip";
 import { useUserCopy } from "@/components/i18n/I18nProvider";
+import { useSeasonOffer } from "@/lib/client/useSeasonOffer";
+import { formatCurrency } from "@/lib/format";
 import { resolveExportCardState } from "@/lib/settings/resolveExportCardState";
 import { settingsVisual } from "@/lib/ui/settingsVisual";
 import type { IncomeCaptureKind } from "@/lib/export/incomeCapture";
@@ -72,6 +74,8 @@ export function TaxExportCard({
   const copy = useUserCopy().settings;
   const cardCopy = copy.exportCard;
   const exportCopy = copy.export;
+  const { priceUsd } = useSeasonOffer();
+  const priceLabel = formatCurrency(priceUsd);
 
   const state = resolveExportCardState({
     isSignedIn,
@@ -85,7 +89,12 @@ export function TaxExportCard({
   const showPricing = state === "anon" || state === "unpaid";
   const showUnlockedIcon = state === "paid_new" || state === "paid_exported" || state === "final_deadline";
 
-  const ctaLabel = exportBusy ? exportCopy.exporting : stateCopy.cta;
+  const ctaLabel =
+    exportBusy
+      ? exportCopy.exporting
+      : state === "unpaid"
+        ? stateCopy.cta.replace("{price}", priceLabel)
+        : stateCopy.cta;
 
   return (
     <section className="mb-6">
@@ -110,7 +119,7 @@ export function TaxExportCard({
                     {cardCopy.mostPopular}
                   </span>
                   <span className={settingsVisual.exportCard.price}>
-                    {cardCopy.price}
+                    {priceLabel}
                   </span>
                 </div>
               )}
@@ -162,6 +171,9 @@ export function TaxExportCard({
             ✓ {cardCopy.trustLine}
           </p>
         )}
+        <p className="mt-3 text-center text-xs text-zinc-400">
+          {cardCopy.taxEstimateDisclaimer}
+        </p>
       </div>
     </section>
   );

@@ -190,6 +190,8 @@ export const DE_DE_COPY: UserCopy = {
       delete: "Löschen",
       unknownMerchant: "Unbekannter Händler",
       duplicateReceipt: "Dieser Beleg ist bereits in Ihrer Liste.",
+      duplicateReceiptSimilar:
+        "Dieser Beleg ähnelt einem Beleg, den Sie bereits gescannt haben.",
       status: {
         analyzing: "ANALYSE",
         uploading: "UPLOAD",
@@ -237,6 +239,29 @@ export const DE_DE_COPY: UserCopy = {
         actionCount: "{count} Beleg(e) erfordern Aktion",
         resnap: "RESNAP NOW",
       },
+      founder: {
+        label: "FIRST 50 ONLY",
+        subtitle: "{price} export this season",
+        subtitleLoading: "This season · first 50 only",
+        scarcity: "{remaining} spots left",
+        view: "See deal",
+        newBadge: "NEW",
+      },
+    },
+    founderSheet: {
+      title: "First 50 Deal",
+      seatsRemaining: "{remaining} of {total} founder seats left",
+      becomeFounder: "Claim my spot — {price}",
+      signInFirst: "Sign in with Google to claim your spot",
+      notNow: "Not now",
+      seasonPrice: "{price} for this tax season",
+      offerEnds: "Offer ends when {total} spots are gone",
+      programFull: "All {total} founder spots are taken",
+      alreadyEntitled:
+        "You already have Export access for this tax season — no extra charge.",
+      paymentUnavailable: "Payment unavailable. Paddle is not configured.",
+      paymentFailed: "Payment failed. Please try again.",
+      confirmingPayment: "Confirming payment…",
     },
     overlays: {
       back: "< BACK",
@@ -334,9 +359,9 @@ export const DE_DE_COPY: UserCopy = {
     },
   },
   paywall: {
-    unlockTitle: "Unlock Your Full Tax Pack — $49",
+    unlockTitle: "Unlock Your Full Tax Pack — {price}",
     maybeLater: "Maybe later",
-    unlockNow: "Unlock now — $49",
+    unlockNow: "Unlock now — {price}",
     features: [
       "Export unlimited receipts",
       "CPA-ready Excel tax pack",
@@ -481,8 +506,9 @@ export const DE_DE_COPY: UserCopy = {
       snap1099Nec: "1099-NEC fotografieren",
       snap1099K: "1099-K fotografieren",
       trustLine: "Von Tausenden Selbstständigen genutzt",
+      taxEstimateDisclaimer:
+        "Est. Tax Saved ist nur eine Schätzung, keine Steuerberatung. Siehe Bedingungen §6.",
       mostPopular: "Am beliebtesten",
-      price: "49 $",
       states: {
         final_deadline: {
           title: "Finaler Steuerpaket bereit",
@@ -494,7 +520,7 @@ export const DE_DE_COPY: UserCopy = {
         },
         unpaid: {
           title: "{season} IRS-Steuerpaket exportieren",
-          cta: "Für 49 $ freischalten",
+          cta: "Für {price} freischalten",
         },
         paid_new: {
           title: "{season} IRS-Steuerpaket freigeschaltet",
@@ -575,10 +601,14 @@ export const DE_DE_COPY: UserCopy = {
       dataStorageValue:
         "Verarbeitung und Speicherung in den Vereinigten Staaten. Internationale Übermittlungen siehe Datenschutzerklärung.",
       contactPrefix: "Kontakt",
+      dataRetention: "Datenaufbewahrung",
+      security: "Sicherheit & Vorfälle",
       deleteAccount: "Konto löschen",
       deleteFailed: "Löschen fehlgeschlagen. Bitte erneut versuchen.",
       deleteRequiresOnline:
         "Verbinden Sie sich mit dem Internet, um Ihr Konto und Cloud-Daten zu löschen.",
+      deleteSessionExpired:
+        "Ihre Google-Sitzung ist abgelaufen. Melden Sie sich erneut mit Google an und löschen Sie dann Ihr Konto.",
       deleteTitle: "Konto löschen",
       deleteSignedInWarning:
         "Dies ist unwiderruflich. Alle Cloud-Belege und Kontodaten werden dauerhaft gelöscht.",

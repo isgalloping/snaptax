@@ -16,6 +16,7 @@ import {
   findSimilarFingerprintMatch,
   receiptImagePathname,
 } from "@/lib/receipts/imageFingerprint";
+import { shouldRunSimilarDuplicateCheck } from "@/lib/receipts/captureMode";
 import { blobCommandOptions } from "@/lib/server/blob";
 import { utcNow } from "@/lib/time/utc";
 import { resolveVerifyContext } from "@/lib/verify/context";
@@ -101,6 +102,7 @@ async function runVisionForReceipt(params: {
   mime: "image/jpeg" | "image/png";
   industry: string | null;
   captureKind?: IncomeFormType | null;
+  ocrDraft?: import("@/lib/ocr/types").OcrDraftPayload | null;
 }) {
   const verify = await logVerifyBypass(params.request, params.actor);
   try {
@@ -112,6 +114,8 @@ async function runVisionForReceipt(params: {
       industry: params.industry,
       canMockAi: verify.canMockAi,
       captureKind: params.captureKind ?? null,
+      ocrDraft: params.ocrDraft ?? null,
+      logContext: { request: params.request, actor: params.actor },
     });
     return { processFailed: false as const, result };
   } catch {
@@ -152,11 +156,13 @@ async function replaceReceiptImage(params: {
   sha: string;
   fingerprint: string;
   captureKind?: IncomeFormType | null;
+  ocrDraft?: import("@/lib/ocr/types").OcrDraftPayload | null;
 }) {
   const pathname = receiptImagePathname(params.receipt.id, params.kind);
   await put(pathname, params.bytes, {
     access: "private",
     contentType: params.mime,
+    allowOverwrite: true,
     ...blobCommandOptions(),
   });
 
@@ -192,6 +198,7 @@ async function replaceReceiptImage(params: {
     mime: params.mime,
     industry: params.industry,
     captureKind: params.captureKind,
+    ocrDraft: params.ocrDraft,
   });
 
   const updated = await prisma.snaptaxReceipt.findUnique({
@@ -199,6 +206,45 @@ async function replaceReceiptImage(params: {
   });
   if (!updated) throw new Error("NOT_FOUND");
   return uploadJsonResponse(updated, 200, vision.processFailed);
+}
+
+async function resolveUniqueConflictUpload(params: {
+  actor: Actor;
+  clientReceiptId: string;
+  sha: string;
+}): Promise<ReturnType<typeof duplicateResponse> | ReturnType<typeof uploadJsonResponse> | null> {
+  const byId = await prisma.snaptaxReceipt.findUnique({
+    where: { id: params.clientReceiptId },
+  });
+  if (byId) {
+    try {
+      assertReceiptAccess(byId, params.actor);
+    } catch {
+      throw new Error("NOT_FOUND");
+    }
+    return uploadJsonResponse(byId, 200);
+  }
+
+  const exactDup =
+    (await findExactDuplicate(
+      params.actor,
+      params.sha,
+      params.clientReceiptId,
+    )) ??
+    (await prisma.snaptaxReceipt.findFirst({
+      where: {
+        ...receiptWhereForActor(params.actor),
+        ...unfiledReceiptWhere(),
+        contentSha256: params.sha,
+        NOT: { id: params.clientReceiptId },
+      },
+    }));
+
+  if (exactDup) {
+    return duplicateResponse(exactDup.id, "exact");
+  }
+
+  return null;
 }
 
 export async function handleReceiptUploadPost(params: {
@@ -211,6 +257,8 @@ export async function handleReceiptUploadPost(params: {
   snapAt: Date | null;
   industry: string | null;
   captureKind?: IncomeFormType | null;
+  captureMode?: import("@/lib/receipts/captureMode").ReceiptCaptureMode;
+  ocrDraft?: import("@/lib/ocr/types").OcrDraftPayload | null;
 }) {
   const mime = mimeForKind(params.kind);
   const sha = contentSha256(params.bytes);
@@ -259,6 +307,7 @@ export async function handleReceiptUploadPost(params: {
       sha,
       fingerprint,
       captureKind,
+      ocrDraft: params.ocrDraft,
     });
   }
 
@@ -267,19 +316,22 @@ export async function handleReceiptUploadPost(params: {
     return duplicateResponse(exactDup.id, "exact");
   }
 
-  const similarDup = await findSimilarDuplicate(
-    params.actor,
-    fingerprint,
-    params.clientReceiptId,
-  );
-  if (similarDup) {
-    return duplicateResponse(similarDup.id, "similar");
+  if (shouldRunSimilarDuplicateCheck(params.captureMode ?? "single")) {
+    const similarDup = await findSimilarDuplicate(
+      params.actor,
+      fingerprint,
+      params.clientReceiptId,
+    );
+    if (similarDup) {
+      return duplicateResponse(similarDup.id, "similar");
+    }
   }
 
   const pathname = receiptImagePathname(params.clientReceiptId, params.kind);
   await put(pathname, params.bytes, {
     access: "private",
     contentType: mime,
+    allowOverwrite: true,
     ...blobCommandOptions(),
   });
 
@@ -314,20 +366,12 @@ export async function handleReceiptUploadPost(params: {
       err instanceof Prisma.PrismaClientKnownRequestError &&
       err.code === "P2002"
     ) {
-      const dup =
-        (await findExactDuplicate(params.actor, sha, params.clientReceiptId)) ??
-        (await prisma.snaptaxReceipt.findUnique({
-          where: { id: params.clientReceiptId },
-        }));
-      if (dup) {
-        try {
-          assertReceiptAccess(dup, params.actor);
-        } catch {
-          throw new Error("NOT_FOUND");
-        }
-        return uploadJsonResponse(dup, 200);
-      }
-      throw new Error("DUPLICATE_RECEIPT");
+      const resolved = await resolveUniqueConflictUpload({
+        actor: params.actor,
+        clientReceiptId: params.clientReceiptId,
+        sha,
+      });
+      if (resolved) return resolved;
     }
     throw err;
   }
@@ -341,6 +385,7 @@ export async function handleReceiptUploadPost(params: {
     mime,
     industry: params.industry,
     captureKind: params.captureKind,
+    ocrDraft: params.ocrDraft,
   });
 
   const created = await prisma.snaptaxReceipt.findUnique({

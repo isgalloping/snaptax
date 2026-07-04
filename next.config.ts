@@ -17,6 +17,8 @@ const nextConfig: NextConfig = {
       "",
     NEXT_PUBLIC_PADDLE_PRICE_ID:
       process.env.NEXT_PUBLIC_PADDLE_PRICE_ID ??
+      process.env.PADDLE_PRICE_ID ??
+      process.env.FOUNDER_LEVEL_DEFAULT ??
       process.env.PADDLE_SNAPTAX_PRICE_KEY ??
       "",
   },

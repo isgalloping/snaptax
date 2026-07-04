@@ -13,7 +13,7 @@ description: >-
 
 1. Read `docs/product/PRODUCT-SPEC.md` (canonical summary)
 2. For backend/API work, read `docs/tech/README.md` and relevant module
-3. For database/schema changes, read `docs/tech/DB-DESIGN-SPEC.md` first
+3. For database/schema changes, read `docs/tech/DB-DESIGN-SPEC.md` first (PG **and** IndexedDB `snaptax_*` stores)
 4. For copy/interaction details, read `docs/prd/0.0.1.md` relevant section
 5. Check §12 **实现状态** — backend/OpenAI/Google/Paddle 已落地；改功能前仍对照 spec
 6. **MVP 落地顺序：** `docs/superpowers/plans/2026-06-07-mvp-master-implementation.md`
@@ -45,8 +45,30 @@ Export clicked + Google OK?
 ## Receipt state (client)
 
 `processing` → (online) → `done` | `blurry`  
-Offline: stay `processing` with `Uploading`; persist photo in IndexedDB.  
+Offline: stay `processing` with `Uploading`; persist **compressed** photo (1280×960 JPEG 75%, ~200–300KB) — **OPFS bytes + IDB meta** (`snaptax_receipt_photos`).  
 Online: `POST /api/receipts` → server OpenAI Vision (never client mock).
+
+## IndexedDB (offline)
+
+Database: **`snaptax`** (legacy `snap1099` migrated on first open). Object stores **must** use **`snaptax_` prefix** (aligned with PostgreSQL):
+
+| Store | Purpose |
+|-------|---------|
+| `snaptax_receipts` | Receipt rows + sync fields |
+| `snaptax_receipt_photos` | **Photo metadata only** (paths, sizes, purge flags) |
+| `snaptax_system_meta` | Onboarding, tombstones, KV meta |
+| `snaptax_crypto_meta` | Local encryption DEK |
+| `snaptax_receipt_events` | Phase 2 lifecycle event queue only |
+
+**Image bytes:** OPFS `snaptax/photos/{id}/` (encrypted). **Not** in IDB.
+
+**Retention:** After **sync + 90 days**, delete OPFS full image; keep thumbnail; detail view uses signed URL.
+
+**Capture compress:** Typical 4032×3024 (3–5MB) → max edge **1280** (~1280×960), **JPEG 75%**, target **200–300KB**. Thumb: 480px edge, JPEG 70%.
+
+Canonical: `docs/tech/12-local-image-storage-design.md`
+
+Legacy v4 names (`receipts`, `photos`, `system_meta`, `meta`) — migrate on `DB_VERSION = 5`; do not use in new code. Canonical constants: `lib/storage/idbStores.ts`.
 
 ## Onboarding (wired in HomeScreen)
 
@@ -61,8 +83,8 @@ Online: `POST /api/receipts` → server OpenAI Vision (never client mock).
 |---------|----------|
 | Home flow | `components/home/HomeScreen.tsx` |
 | Settings/export | `components/settings/SettingsScreen.tsx` |
-| Camera | `components/camera/`, `lib/camera/` |
-| Local queue | `lib/storage/receiptDb.ts` |
+| Camera | `components/camera/`, `lib/camera/`（含 `compressReceiptImage`） |
+| Local queue | `lib/storage/receiptDb.ts`, `lib/storage/idbStores.ts`, `lib/storage/opfs/` |
 | Onboarding | `lib/onboarding/onboardingStorage.ts`, `components/onboarding/` |
 | PWA | `app/sw.ts`, `components/pwa/` |
 

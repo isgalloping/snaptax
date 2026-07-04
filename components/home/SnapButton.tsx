@@ -28,19 +28,17 @@ import {
   type BatchThumb,
 } from "@/lib/camera/batchSession";
 import { isCameraSupported, openCameraStream } from "@/lib/camera/capturePhoto";
+import { beginBatchCaptureDefer, endBatchCaptureDefer } from "@/lib/client/scheduleOcrJob";
 import type { LegalDoc } from "@/lib/legal/content";
 
 interface SnapButtonProps {
   onCapture: (file: File) => void;
-  onBatchShot: (file: File) => Promise<string>;
+  onBatchShot: (file: File) => Promise<string | null>;
   onBatchDone: (sessionIds: string[]) => Promise<void>;
   onBatchClose: (sessionIds: string[]) => Promise<void>;
   onReviewDelete: (id: string) => Promise<void>;
   resnapId?: string | null;
-  onCameraOpenChange?: (
-    open: boolean,
-    options?: { keepPendingCaptureKind?: boolean },
-  ) => void;
+  onCameraOpenChange?: (open: boolean) => void;
   onSyncClick?: () => void;
   onSettingsClick?: () => void;
   syncing?: boolean;
@@ -49,7 +47,7 @@ interface SnapButtonProps {
 }
 
 export interface SnapButtonHandle {
-  openCamera: () => boolean;
+  openCamera: () => void;
 }
 
 export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
@@ -74,6 +72,7 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
     const inputRef = useRef<HTMLInputElement>(null);
     const streamPromiseRef = useRef<Promise<MediaStream> | null>(null);
     const sessionIdsRef = useRef<string[]>([]);
+    const batchSaveInFlightRef = useRef(0);
     const resnapSlotIndexRef = useRef<number | null>(null);
     const [cameraOpen, setCameraOpen] = useState(false);
     const [legalDoc, setLegalDoc] = useState<LegalDoc | null>(null);
@@ -99,34 +98,40 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
     }, []);
 
     const setCamera = useCallback(
-      (
-        open: boolean,
-        options?: { keepPendingCaptureKind?: boolean },
-      ) => {
+      (open: boolean) => {
         setCameraOpen(open);
-        onCameraOpenChange?.(open, options);
+        onCameraOpenChange?.(open);
       },
       [onCameraOpenChange],
     );
 
     const openCamera = useCallback(() => {
-      if (onSnapIntent && !onSnapIntent()) return false;
+      if (onSnapIntent && !onSnapIntent()) return;
       if (isCameraSupported()) {
         resetSession();
+        if (!resnapId) {
+          beginBatchCaptureDefer();
+        }
         streamPromiseRef.current = openCameraStream();
         setCamera(true);
       } else {
         inputRef.current?.click();
       }
-      return true;
-    }, [onSnapIntent, resetSession, setCamera]);
+    }, [onSnapIntent, resetSession, resnapId, setCamera]);
+
+    const waitForBatchSavesIdle = useCallback(async () => {
+      while (batchSaveInFlightRef.current > 0) {
+        await new Promise<void>((resolve) => {
+          globalThis.setTimeout(resolve, 50);
+        });
+      }
+    }, []);
 
     useImperativeHandle(ref, () => ({ openCamera }), [openCamera]);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (file) onCapture(file);
-      else onCameraOpenChange?.(false);
       e.target.value = "";
     };
 
@@ -142,12 +147,16 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
     }, []);
 
     const finishSession = useCallback(async () => {
+      await waitForBatchSavesIdle();
       const ids = [...sessionIdsRef.current];
       resetSession();
       streamPromiseRef.current = null;
       setCamera(false);
       await onBatchDone(ids);
-    }, [onBatchDone, resetSession, setCamera]);
+      if (!resnapId) {
+        endBatchCaptureDefer();
+      }
+    }, [onBatchDone, resetSession, resnapId, setCamera, waitForBatchSavesIdle]);
 
     const advanceAfterReviewAction = useCallback(
       async (removedId: string, nextAccepted: Set<string>) => {
@@ -168,32 +177,39 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
     );
 
     const handleBatchShot = async (file: File) => {
-      const id = await onBatchShot(file);
-      const slot = resnapSlotIndexRef.current;
+      batchSaveInFlightRef.current += 1;
+      try {
+        const id = await onBatchShot(file);
+        if (!id) return;
 
-      if (slot !== null) {
-        sessionIdsRef.current = [
-          ...sessionIdsRef.current.slice(0, slot),
-          id,
-          ...sessionIdsRef.current.slice(slot),
-        ];
-        resnapSlotIndexRef.current = null;
+        const slot = resnapSlotIndexRef.current;
+
+        if (slot !== null) {
+          sessionIdsRef.current = [
+            ...sessionIdsRef.current.slice(0, slot),
+            id,
+            ...sessionIdsRef.current.slice(slot),
+          ];
+          resnapSlotIndexRef.current = null;
+          const thumb = createBatchThumb(id, file);
+          setSessionThumbs((prev) => [
+            ...prev.slice(0, slot),
+            thumb,
+            ...prev.slice(slot),
+          ]);
+          setPhase("postReview");
+          setReviewId(id);
+          setSelectedId(id);
+          return;
+        }
+
+        sessionIdsRef.current = [...sessionIdsRef.current, id];
         const thumb = createBatchThumb(id, file);
-        setSessionThumbs((prev) => [
-          ...prev.slice(0, slot),
-          thumb,
-          ...prev.slice(slot),
-        ]);
-        setPhase("postReview");
-        setReviewId(id);
+        setSessionThumbs((prev) => [...prev, thumb]);
         setSelectedId(id);
-        return;
+      } finally {
+        batchSaveInFlightRef.current -= 1;
       }
-
-      sessionIdsRef.current = [...sessionIdsRef.current, id];
-      const thumb = createBatchThumb(id, file);
-      setSessionThumbs((prev) => [...prev, thumb]);
-      setSelectedId(id);
     };
 
     const handleSingleShot = (file: File) => {
@@ -278,16 +294,20 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
     };
 
     const handleClose = async () => {
+      await waitForBatchSavesIdle();
       const ids = [...sessionIdsRef.current];
       resetSession();
       streamPromiseRef.current = null;
       setCamera(false);
       await onBatchClose(ids);
+      if (!resnapId) {
+        endBatchCaptureDefer();
+      }
     };
 
     const handleFallback = () => {
       streamPromiseRef.current = null;
-      setCamera(false, { keepPendingCaptureKind: true });
+      setCamera(false);
       inputRef.current?.click();
     };
 
@@ -297,6 +317,7 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
           <button
             type="button"
             onClick={openCamera}
+            aria-label={copy.home.snapButton.title}
             className={`flex ${homeVisual.snap.height} ${homeVisual.snap.maxHeight} w-full cursor-pointer flex-row items-center justify-between rounded-2xl border-4 border-white bg-yellow-500 px-5 text-black shadow-xl transition-all active:scale-[0.99] active:bg-yellow-400`}
           >
             <CameraIcon className="h-10 w-10 shrink-0 stroke-[2.5]" />
@@ -320,7 +341,6 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
             capture="environment"
             className="hidden"
             onChange={handleFileChange}
-            onCancel={() => onCameraOpenChange?.(false)}
             aria-hidden
           />
         </main>

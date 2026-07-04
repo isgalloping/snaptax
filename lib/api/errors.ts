@@ -72,6 +72,12 @@ export function resolveApiError(err: unknown): ResolvedApiError {
         clientMessage: "This receipt is already in your list",
         status: 409,
       };
+    case "FOUNDER_PROGRAM_FULL":
+      return {
+        code: "FOUNDER_PROGRAM_FULL",
+        clientMessage: "Founder program seats are full",
+        status: 409,
+      };
     case "INVALID_INDUSTRY":
       return {
         code: "INVALID_INDUSTRY",

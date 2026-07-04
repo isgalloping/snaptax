@@ -29,7 +29,6 @@ export function MissingDeductionsWidget({ data, onReview }: MissingDeductionsWid
       type="button"
       onClick={onReview}
       className={`${card} flex flex-col ${visual.bg} ${visual.border} text-left transition-transform active:scale-[0.98]`}
-      role="listitem"
     >
       <p className={`text-xs font-semibold leading-snug ${visual.accent}`}>
         {copy.label}

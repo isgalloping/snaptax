@@ -13,10 +13,15 @@ import { MissingDeductionsWidget } from "./MissingDeductionsWidget";
 import { TaxYearProgressWidget } from "./TaxYearProgressWidget";
 import { CpaReadyWidget } from "./CpaReadyWidget";
 import { NeedActionWidget } from "./NeedActionWidget";
+import { FounderProgramWidget, type FounderWidgetPreview } from "./FounderProgramWidget";
 
 interface WidgetPagerProps {
   data: HomeWidgetsData;
   actionCount: number;
+  showFounder?: boolean;
+  showFounderNewBadge?: boolean;
+  founderPreview?: FounderWidgetPreview | null;
+  onFounderOpen?: () => void;
   onDeadlineDetails: () => void;
   onMissingReview: () => void;
   onProgressDetails: () => void;
@@ -28,9 +33,25 @@ function renderWidget(
   key: WidgetPageKey,
   data: HomeWidgetsData,
   actionCount: number,
-  handlers: Omit<WidgetPagerProps, "data" | "actionCount">,
+  handlers: Omit<
+    WidgetPagerProps,
+    "data" | "actionCount" | "showFounder" | "showFounderNewBadge"
+  >,
+  founderUi: {
+    showNewBadge: boolean;
+    preview?: FounderWidgetPreview | null;
+    onOpen?: () => void;
+  },
 ) {
   switch (key) {
+    case "founder":
+      return (
+        <FounderProgramWidget
+          onOpen={() => founderUi.onOpen?.()}
+          showNewBadge={founderUi.showNewBadge}
+          preview={founderUi.preview}
+        />
+      );
     case "deadline":
       return (
         <TaxDeadlineWidget data={data.deadline} onViewDetails={handlers.onDeadlineDetails} />
@@ -58,13 +79,17 @@ function renderWidget(
 export function WidgetPager({
   data,
   actionCount,
+  showFounder = false,
+  showFounderNewBadge = false,
+  founderPreview = null,
+  onFounderOpen,
   onDeadlineDetails,
   onMissingReview,
   onProgressDetails,
   onExport,
   onNeedActionResnap,
 }: WidgetPagerProps) {
-  const pages = buildWidgetPages(data, actionCount);
+  const pages = buildWidgetPages(data, actionCount, { showFounder });
   const paginated = pages.length > 1;
   const viewportRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef(0);
@@ -124,6 +149,13 @@ export function WidgetPager({
     onProgressDetails,
     onExport,
     onNeedActionResnap,
+    onFounderOpen,
+  };
+
+  const founderUi = {
+    showNewBadge: showFounderNewBadge,
+    preview: founderPreview,
+    onOpen: onFounderOpen,
   };
 
   return (
@@ -131,7 +163,7 @@ export function WidgetPager({
       <div
         ref={viewportRef}
         className={paginated ? pager.viewportPaginated : pager.viewport}
-        role="list"
+        role="region"
         aria-label="Tax insights"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
@@ -140,7 +172,7 @@ export function WidgetPager({
           <div key={pageIndex} className={pager.page} aria-label={`Widget page ${pageIndex + 1}`}>
             {pageKeys.map((key) => (
               <div key={key} className={pageColumnFlexClass(pageKeys.length)}>
-                {renderWidget(key, data, actionCount, handlers)}
+                {renderWidget(key, data, actionCount, handlers, founderUi)}
               </div>
             ))}
           </div>

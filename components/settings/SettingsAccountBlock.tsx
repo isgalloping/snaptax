@@ -5,6 +5,8 @@ import { ContinueWithGoogleButton } from "@/components/auth/ContinueWithGoogleBu
 import type { GoogleUser } from "@/lib/client/authStorage";
 import { maskEmailForDisplay } from "@/lib/client/maskEmail";
 import { displayInitials } from "@/lib/user/displayInitials";
+import { tierDisplayLabel } from "@/lib/founder/tiers";
+import type { FounderTier } from "@/lib/founder/types";
 import { seasonCoverageEndLabel } from "@/lib/settings/seasonCoverage";
 
 interface SettingsAccountBlockProps {
@@ -12,6 +14,9 @@ interface SettingsAccountBlockProps {
   seasonPaid: boolean;
   seasonLabel: string;
   authHydrated?: boolean;
+  founderStatus?: "none" | "active" | "lapsed";
+  founderTier?: string | null;
+  founderNumber?: number | null;
   onSignIn: () => void;
 }
 
@@ -20,6 +25,9 @@ export function SettingsAccountBlock({
   seasonPaid,
   seasonLabel,
   authHydrated = true,
+  founderStatus = "none",
+  founderTier = null,
+  founderNumber = null,
   onSignIn,
 }: SettingsAccountBlockProps) {
   const copy = useUserCopy().settings.account;
@@ -57,6 +65,11 @@ export function SettingsAccountBlock({
         <p className="truncate text-sm font-bold text-zinc-400">
           {maskEmailForDisplay(googleUser.email)}
         </p>
+        {founderStatus === "active" && founderNumber != null && (
+          <p className="text-sm font-bold text-yellow-400">
+            👑 {tierDisplayLabel((founderTier ?? "DEFAULT") as FounderTier)} #{founderNumber}
+          </p>
+        )}
         {seasonPaid && (
           <>
             <p className="text-sm font-bold text-yellow-400">

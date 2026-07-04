@@ -37,6 +37,8 @@ export interface Receipt {
   pendingUpload?: boolean;
   /** Local photo blob unavailable; user must resnap. */
   photoMissing?: boolean;
+  /** SHA-256 hex of compressed upload bytes; local dedup key. */
+  contentSha256?: string;
   /** OpenAI Vision confidence 0–1; mid tier (0.5–0.69) → REVIEW bucket. */
   aiConfidence?: number;
   /** 1099 form tax year from Vision (may differ from capture calendar year). */

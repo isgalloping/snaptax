@@ -15,14 +15,28 @@ export function receiptTaxYear(
   return Number(parts.find((p) => p.type === "year")?.value ?? "0");
 }
 
-function effectiveReceiptTaxYear(
+export function effectiveReceiptTaxYear(
   receipt: Pick<Receipt, "timestamp" | "category" | "incomeTaxYear">,
-  timeZone: string,
+  timeZone: string = clientTimeZone(),
 ): number {
   if (isIncomeFormType(receipt.category) && receipt.incomeTaxYear != null) {
     return receipt.incomeTaxYear;
   }
   return receiptTaxYear(receipt.timestamp, timeZone);
+}
+
+export function countReceiptsInTaxYearAllStatuses(
+  receipts: Receipt[],
+  year: number,
+  timeZone: string = clientTimeZone(),
+): number {
+  return receipts.filter(
+    (r) => effectiveReceiptTaxYear(r, timeZone) === year,
+  ).length;
+}
+
+export function currentTaxYear(timeZone: string = clientTimeZone()): number {
+  return receiptTaxYear(new Date(), timeZone);
 }
 
 export function receiptsInTaxYear(

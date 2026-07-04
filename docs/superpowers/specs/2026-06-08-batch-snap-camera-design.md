@@ -23,7 +23,7 @@ Goal: **continuous capture session** — stay in camera, shoot N receipts, tap *
 | Topic | Choice |
 |-------|--------|
 | Session model | **Batch session** in `CameraOverlay`; HomeScreen owns flush |
-| Persist timing | **Each shot** → IndexedDB photo + receipt row immediately |
+| Persist timing | **Each shot** → compress (1280/q75) → **OPFS** + IDB meta + receipt row immediately（见 [`12-local-image-storage-design.md`](../../tech/12-local-image-storage-design.md)） |
 | Upload timing | **On Done** → sequential flush (online); offline stays pending |
 | Shutter cooldown | **1s** re-enable after capture (PRD) |
 | BACK with partial batch | **A** — keep saved shots, close camera only |

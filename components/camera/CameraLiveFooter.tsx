@@ -30,7 +30,7 @@ export function CameraLiveFooter({
   onFlashDone,
   onFinishCapture,
 }: CameraLiveFooterProps) {
-  const doneDisabled = batchCount === 0;
+  const doneDisabled = batchCount === 0 || capturing;
   const rowMin = homeVisual.snapCamera.footerRowMin;
   const gridCols = homeVisual.snapCamera.footerGridCols;
 

@@ -4,6 +4,8 @@
 **Status:** Approved (design)  
 **Scope:** IDB v2 indexed queries; startup hot load; unfiled-only tax stats; server schema alignment.
 
+**Store 命名（Canonical）：** object store 一律 `snaptax_*` 前缀 — 见 [`DB-DESIGN-SPEC.md`](../../tech/DB-DESIGN-SPEC.md) §2.2。本文档中的 `receipts` / `photos` 指 **legacy v4** 名，v5 迁移后为 `snaptax_receipts` / `snaptax_receipt_photos`。
+
 **Supersedes (partial):** [`2026-06-07-receipt-sliding-window-sync-design.md`](./2026-06-07-receipt-sliding-window-sync-design.md) — window sizes + tax aggregate rules updated.
 
 ---

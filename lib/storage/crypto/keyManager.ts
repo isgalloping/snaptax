@@ -1,4 +1,8 @@
-const META_STORE = "meta";
+import {
+  IDB_LEGACY_CRYPTO_META,
+  IDB_STORE_CRYPTO_META,
+} from "@/lib/storage/idbStores";
+
 const DEK_KEY = "dek";
 
 type DekMetaRecord = {
@@ -7,6 +11,13 @@ type DekMetaRecord = {
   dek: CryptoKey;
   createdAt: string;
 };
+
+function cryptoMetaStoreName(db: IDBDatabase): string {
+  if (db.objectStoreNames.contains(IDB_STORE_CRYPTO_META)) {
+    return IDB_STORE_CRYPTO_META;
+  }
+  return IDB_LEGACY_CRYPTO_META;
+}
 
 export async function getOrCreateDek(db: IDBDatabase): Promise<CryptoKey> {
   const existing = await readDekMeta(db);
@@ -26,26 +37,28 @@ export async function getOrCreateDek(db: IDBDatabase): Promise<CryptoKey> {
 }
 
 export async function clearDek(db: IDBDatabase): Promise<void> {
+  const store = cryptoMetaStoreName(db);
   return new Promise((resolve, reject) => {
-    if (!db.objectStoreNames.contains(META_STORE)) {
+    if (!db.objectStoreNames.contains(store)) {
       resolve();
       return;
     }
-    const tx = db.transaction(META_STORE, "readwrite");
-    tx.objectStore(META_STORE).delete(DEK_KEY);
+    const tx = db.transaction(store, "readwrite");
+    tx.objectStore(store).delete(DEK_KEY);
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
   });
 }
 
 function readDekMeta(db: IDBDatabase): Promise<DekMetaRecord | null> {
+  const store = cryptoMetaStoreName(db);
   return new Promise((resolve, reject) => {
-    if (!db.objectStoreNames.contains(META_STORE)) {
+    if (!db.objectStoreNames.contains(store)) {
       resolve(null);
       return;
     }
-    const tx = db.transaction(META_STORE, "readonly");
-    const request = tx.objectStore(META_STORE).get(DEK_KEY);
+    const tx = db.transaction(store, "readonly");
+    const request = tx.objectStore(store).get(DEK_KEY);
     request.onerror = () => reject(request.error);
     request.onsuccess = () => {
       resolve((request.result as DekMetaRecord | undefined) ?? null);
@@ -54,12 +67,14 @@ function readDekMeta(db: IDBDatabase): Promise<DekMetaRecord | null> {
 }
 
 function writeDekMeta(db: IDBDatabase, record: DekMetaRecord): Promise<void> {
+  const store = cryptoMetaStoreName(db);
   return new Promise((resolve, reject) => {
-    const tx = db.transaction(META_STORE, "readwrite");
-    const request = tx.objectStore(META_STORE).put(record);
+    const tx = db.transaction(store, "readwrite");
+    const request = tx.objectStore(store).put(record);
     request.onerror = () => reject(request.error);
     request.onsuccess = () => resolve();
   });
 }
 
-export const CRYPTO_META_STORE = META_STORE;
+/** @deprecated Use IDB_STORE_CRYPTO_META from idbStores */
+export const CRYPTO_META_STORE = IDB_LEGACY_CRYPTO_META;

@@ -35,6 +35,12 @@ export type ReceiptListResponse = {
   taxSavedEstimate: number;
 };
 
+export type ReceiptSyncPageResponse = {
+  receipts: ApiReceipt[];
+  nextCursor: string | null;
+  hasMore: boolean;
+};
+
 export function apiReceiptToLocal(r: ApiReceipt): Receipt {
   const timestamp = parseUtcISOString(r.snapAt ?? r.capturedAt);
   return {
@@ -97,6 +103,19 @@ export async function fetchReceiptList(
   return (await res.json()) as ReceiptListResponse;
 }
 
+export async function fetchReceiptSyncPage(
+  cursor?: string,
+  since?: string,
+): Promise<ReceiptSyncPageResponse> {
+  const params = new URLSearchParams();
+  if (since) params.set("since", since);
+  if (cursor) params.set("cursor", cursor);
+  const suffix = params.size > 0 ? `?${params.toString()}` : "";
+  const res = await apiFetch(`/api/receipts/sync${suffix}`);
+  if (!res.ok) throw new Error("FETCH_RECEIPT_SYNC_FAILED");
+  return (await res.json()) as ReceiptSyncPageResponse;
+}
+
 export async function fetchReceiptById(id: string): Promise<ApiReceipt> {
   if (!isPersistedReceiptId(id)) throw new Error("FETCH_RECEIPT_FAILED");
   const res = await apiFetch(`/api/receipts/${id}`);
@@ -112,6 +131,22 @@ export async function fetchReceiptByIdIfExists(
   if (res.status === 404) return null;
   if (!res.ok) throw new Error("FETCH_RECEIPT_FAILED");
   return (await res.json()) as ApiReceipt;
+}
+
+export type ReconcileReceiptsResponse = {
+  receipts: ApiReceipt[];
+};
+
+export async function fetchReceiptsReconcile(
+  ids: string[],
+): Promise<ReconcileReceiptsResponse> {
+  const res = await apiFetch("/api/receipts/reconcile", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ids }),
+  });
+  if (!res.ok) throw new Error("RECONCILE_RECEIPTS_FAILED");
+  return (await res.json()) as ReconcileReceiptsResponse;
 }
 
 export type UploadCreateResponse = {
@@ -206,6 +241,8 @@ export async function uploadReceipt(
   clientReceiptId: string,
   snapAt?: Date,
   captureKind?: IncomeCaptureKind | null,
+  ocrDraft?: import("@/lib/ocr/types").OcrDraftPayload | null,
+  opts?: { batchCapture?: boolean },
 ): Promise<ApiReceipt> {
   if (!isPersistedReceiptId(clientReceiptId)) {
     throw new Error("INVALID_CLIENT_RECEIPT_ID");
@@ -216,43 +253,49 @@ export async function uploadReceipt(
   if (snapAt) {
     form.append("snapAt", toUtcISOString(snapAt));
   }
+  if (ocrDraft) {
+    form.append("ocrDraft", JSON.stringify(ocrDraft));
+  }
   const headers: Record<string, string> = {};
   const resolved = resolveUploadCaptureKind(captureKind);
   const resolvedCaptureKind = resolved.captureKind;
   if (resolvedCaptureKind) {
     headers["X-Capture-Kind"] = resolvedCaptureKind;
   }
+  if (opts?.batchCapture) {
+    headers["X-Capture-Mode"] = "batch";
+  }
   const res = await apiFetch("/api/receipts", {
     method: "POST",
     body: form,
     headers,
   });
-  if (res.status === 409) {
+  const body = (await res.json().catch(() => null)) as {
+    error?: { code?: string; message?: string };
+    existingReceiptId?: string;
+    matchType?: "exact" | "similar";
+    id?: string;
+    status?: string;
+  } | null;
+
+  if (
+    res.status === 409 &&
+    body?.error?.code === "DUPLICATE_RECEIPT" &&
+    body.existingReceiptId
+  ) {
     if (resolved.fromPending) clearPendingIncomeCapture();
-    const body = (await res.json().catch(() => null)) as {
-      error?: { code?: string };
-      existingReceiptId?: string;
-      matchType?: "exact" | "similar";
-    } | null;
-    if (
-      body?.error?.code === "DUPLICATE_RECEIPT" &&
-      body.existingReceiptId
-    ) {
-      throw new DuplicateReceiptError(
-        body.existingReceiptId,
-        body.matchType ?? "exact",
-      );
-    }
+    throw new DuplicateReceiptError(
+      body.existingReceiptId,
+      body.matchType ?? "exact",
+    );
   }
+
   if (!res.ok) {
-    const body = (await res.json().catch(() => null)) as {
-      error?: { code?: string };
-    } | null;
     const code = body?.error?.code ?? "UPLOAD_FAILED";
     throw new Error(code);
   }
   if (resolved.fromPending) clearPendingIncomeCapture();
-  const created = (await res.json()) as UploadCreateResponse | ApiReceipt;
+  const created = body as UploadCreateResponse | ApiReceipt;
   if (!created.id || !("status" in created) || !created.status) {
     throw new Error("UPLOAD_FAILED");
   }

@@ -14,13 +14,39 @@ import {
   uploadReceipt,
   type ApiReceipt,
 } from "@/lib/client/receiptApi";
+import { shouldRunHiddenBackgroundSync } from "@/lib/client/backgroundSyncGate";
+import { schedulePhotoRetentionPurge } from "@/lib/client/photoRetentionJob";
+import { scheduleReceiptRetentionPrune } from "@/lib/client/receiptRetention";
+import { scheduleReceiptSummaryVerify } from "@/lib/client/receiptSummaryVerify";
 import { reconcileDuplicateReceipt } from "@/lib/client/reconcileDuplicateReceipt";
+import { reconcileNonDoneWindow } from "@/lib/client/reconcileNonDoneWindow";
+import {
+  DUPLICATE_HIGHLIGHT_MS,
+  duplicateNoticeCopy,
+  scrollReceiptIntoView,
+} from "@/lib/client/duplicateReceiptNotice";
+import { prepareReceiptCapture } from "@/lib/client/prepareReceiptCapture";
+import {
+  flushSessionPendingUploads,
+} from "@/lib/client/batchCaptureFlush";
+import {
+  isBatchOcrUploadDeferred,
+  preloadOcrEngine,
+  resumePendingOcrJobsFromStorage,
+  scheduleOcrJob,
+  setOcrCompleteHandler,
+} from "@/lib/client/scheduleOcrJob";
 import {
   deleteReceiptLocalAndRemote,
   flushPendingDeletes,
 } from "@/lib/client/receiptDeleteFlow";
 import { pollTaxRecalc } from "@/lib/client/authApi";
 import { prepareExportSync } from "@/lib/client/exportPrepareFlow";
+import { restoreReceiptsFromCloud } from "@/lib/client/cloudRestoreFlow";
+import {
+  markCloudRestoreAttempted,
+  shouldAutoRestoreFromCloud,
+} from "@/lib/client/localDataLoss";
 import { prefetchReceiptImageUrl } from "@/lib/client/receiptImageCache";
 import { isPersistedReceiptId } from "@/lib/receipts/receiptId";
 import { mergeServerReceiptsIntoLocal } from "@/lib/client/receiptSyncOrchestrator";
@@ -43,26 +69,31 @@ import {
 } from "@/lib/client/receiptSyncBudget";
 import { ProcessingQueue } from "@/lib/client/processingQueue";
 import { ProcessingReceiptWatcher } from "@/lib/client/processingReceiptWatcher";
-import { clearPendingIncomeCapture } from "@/lib/export/incomeCapture";
+import { resolveHeaderTaxSaved } from "@/lib/client/resolveHeaderTaxSaved";
 import { utcNow } from "@/lib/time/utc";
 import {
   deleteReceipt as deleteStoredReceipt,
-  deletePhoto,
   loadAllReceipts,
   loadPhoto,
+  loadReceipt,
   loadRecentUnfiledReceipts,
   loadTopByUpdatedAt,
-  savePhoto,
   saveReceipt,
-  sumUnfiledLocalTaxSavedIndexed,
+  markRemoteSyncedPhotos,
   type StoredReceipt,
 } from "@/lib/storage/receiptDb";
+import {
+  readCurrentSeasonSummary,
+} from "@/lib/storage/receiptSummary";
+import type { ReceiptSeasonSummary } from "@/lib/storage/receiptSummaryTypes";
 import { TaxHeader } from "./TaxHeader";
 import { SnapButton, type SnapButtonHandle } from "./SnapButton";
 import { ReceiptList } from "./ReceiptList";
 import { InlinePrivacyNote } from "./InlinePrivacyNote";
 import { HomeScrollRegion } from "./HomeScrollRegion";
 import { WidgetStack } from "./widgets/WidgetStack";
+import { FounderProgramSheet } from "./sheets/FounderProgramSheet";
+import { waitForFounderActive } from "@/lib/founder/waitForFounderActive";
 import {
   HomeOverlayHost,
   type HomeOverlay,
@@ -104,7 +135,12 @@ import {
   writeOnboardFlag,
 } from "@/lib/onboarding/onboardingStorage";
 import { visibleReceiptsForOnboarding } from "@/lib/onboarding/onboardingReceipts";
-import { taxYearDeductions, incomeFormsInTaxYear, totalIncomeGrossInTaxYear } from "@/lib/tax/taxYearStats";
+import {
+  currentTaxYear,
+  taxYearDeductions,
+  incomeFormsInTaxYear,
+  totalIncomeGrossInTaxYear,
+} from "@/lib/tax/taxYearStats";
 import { clientTimeZone } from "@/lib/time/timeZone";
 import { useI18n } from "@/components/i18n/I18nProvider";
 
@@ -127,6 +163,9 @@ export function HomeScreen() {
   const [view, setView] = useState<View>("home");
   const [receipts, setReceipts] = useState<Receipt[]>([]);
   const [taxSaved, setTaxSaved] = useState<number | null>(null);
+  const [seasonSummary, setSeasonSummary] = useState<ReceiptSeasonSummary | null>(
+    null,
+  );
   const [industry, setIndustry] = useState<Industry | null>(null);
   const [requestSoftGoogleSheet, setRequestSoftGoogleSheet] = useState(false);
   const [resnapId, setResnapId] = useState<string | null>(null);
@@ -137,8 +176,13 @@ export function HomeScreen() {
   const [listFilter, setListFilter] = useState<ReceiptListFilter>("all");
   const [syncStuckIds, setSyncStuckIds] = useState<Set<string>>(() => new Set());
   const [receiptNotice, setReceiptNotice] = useState<string | null>(null);
+  const [highlightReceiptId, setHighlightReceiptId] = useState<string | null>(
+    null,
+  );
   const [seasonExportTick, setSeasonExportTick] = useState(0);
   const [homeOverlay, setHomeOverlay] = useState<HomeOverlay>(null);
+  const [founderSheetOpen, setFounderSheetOpen] = useState(false);
+  const [founderRefreshTick, setFounderRefreshTick] = useState(0);
   const [exitConfirmOpen, setExitConfirmOpen] = useState(false);
   const [settingsViewState, setSettingsViewState] =
     useState<SettingsViewState>("main");
@@ -147,18 +191,25 @@ export function HomeScreen() {
   const filterBarRef = useRef<HTMLDivElement>(null);
   const watcherRef = useRef<ProcessingReceiptWatcher | null>(null);
   const queueRef = useRef<ProcessingQueue | null>(null);
-  const flushPendingUploadsRef = useRef<() => Promise<void>>(async () => {});
+  const flushPendingUploadsRef = useRef<
+    (opts?: { batchCapture?: boolean; skipGhostEnsure?: boolean }) => Promise<void>
+  >(async () => {});
   const flushPendingDeletesRef = useRef<() => Promise<void>>(async () => {});
   const uploadPendingInnerRef = useRef<
-    (receipt: StoredReceipt) => Promise<void>
+    (
+      receipt: StoredReceipt,
+      opts?: { batchCapture?: boolean },
+    ) => Promise<void>
   >(async () => {});
   const uploadInFlightRef = useRef(new Set<string>());
+  const [uploadInFlightIds, setUploadInFlightIds] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const batchFlushActiveRef = useRef(false);
   const receiptsRef = useRef<Receipt[]>([]);
   const cameraOpenRef = useRef(false);
-  const pendingCaptureKindRef = useRef<Receipt["captureKind"]>(null);
   const pendingMergeRef = useRef<{
     receipts: Receipt[];
-    taxSavedEstimate?: number;
   } | null>(null);
   const snapButtonRef = useRef<SnapButtonHandle>(null);
   const setTaxAnimatingRef = useRef<(value: boolean) => void>(() => {});
@@ -286,29 +337,34 @@ export function HomeScreen() {
     cameraOpenRef.current = cameraOpen;
   }, [cameraOpen]);
 
-  const refreshTaxSaved = useCallback((next: Receipt[], apiEstimate?: number) => {
-    if (apiEstimate != null && navigator.onLine) {
-      setTaxSaved(apiEstimate);
-      return;
-    }
-    void sumUnfiledLocalTaxSavedIndexed().then(setTaxSaved);
+  const refreshTaxAndSummary = useCallback(async () => {
+    const summary = await readCurrentSeasonSummary();
+    setSeasonSummary(summary);
+    setTaxSaved(summary.unfiledTaxSaved);
   }, []);
 
+  const refreshTaxSaved = useCallback(
+    (_next: Receipt[]) => {
+      void refreshTaxAndSummary();
+    },
+    [refreshTaxAndSummary],
+  );
+
   const applyMergeNow = useCallback(
-    (merged: Receipt[], taxSavedEstimate?: number) => {
+    (merged: Receipt[]) => {
       setReceipts(merged);
-      refreshTaxSaved(merged, taxSavedEstimate);
+      refreshTaxSaved(merged);
     },
     [refreshTaxSaved],
   );
 
   const applyMergeOrDefer = useCallback(
-    (merged: Receipt[], taxSavedEstimate?: number) => {
+    (merged: Receipt[]) => {
       if (cameraOpenRef.current) {
-        pendingMergeRef.current = { receipts: merged, taxSavedEstimate };
+        pendingMergeRef.current = { receipts: merged };
         return;
       }
-      applyMergeNow(merged, taxSavedEstimate);
+      applyMergeNow(merged);
     },
     [applyMergeNow],
   );
@@ -317,7 +373,7 @@ export function HomeScreen() {
     if (cameraOpen || !pendingMergeRef.current) return;
     const pending = pendingMergeRef.current;
     pendingMergeRef.current = null;
-    applyMergeNow(pending.receipts, pending.taxSavedEstimate);
+    applyMergeNow(pending.receipts);
   }, [cameraOpen, applyMergeNow]);
 
   const syncFromServer = useCallback(
@@ -330,14 +386,12 @@ export function HomeScreen() {
         return local;
       }
       try {
-        const { visible, taxSavedEstimate } = await mergeServerReceiptsIntoLocal(
-          local,
-        );
+        const { visible } = await mergeServerReceiptsIntoLocal(local);
         if (applyMode === "immediate") {
           pendingMergeRef.current = null;
-          applyMergeNow(visible, taxSavedEstimate);
+          applyMergeNow(visible);
         } else {
-          applyMergeOrDefer(visible, taxSavedEstimate);
+          applyMergeOrDefer(visible);
         }
         return visible;
       } catch {
@@ -352,7 +406,7 @@ export function HomeScreen() {
   );
 
   const applyReceiptUpdate = useCallback(
-    async (updated: StoredReceipt, apiEstimate?: number) => {
+    async (updated: StoredReceipt) => {
       let merged = updated;
       setReceipts((prev) => {
         const existing = prev.find((r) => r.id === updated.id) as
@@ -364,7 +418,7 @@ export function HomeScreen() {
             updated.writeBudgetRemaining ?? existing?.writeBudgetRemaining,
         };
         const next = prev.map((r) => (r.id === merged.id ? merged : r));
-        refreshTaxSaved(top100ByUpdatedAt(next as StoredReceipt[]), apiEstimate);
+        refreshTaxSaved(top100ByUpdatedAt(next as StoredReceipt[]));
         return top100ByUpdatedAt(next as StoredReceipt[]);
       });
       await saveReceipt(merged);
@@ -377,12 +431,12 @@ export function HomeScreen() {
   );
 
   const applyFromApi = useCallback(
-    async (api: ApiReceipt, apiEstimate?: number) => {
+    async (api: ApiReceipt) => {
       const updated: StoredReceipt = {
         ...apiReceiptToLocal(api),
         pendingUpload: false,
       };
-      await applyReceiptUpdate(updated, apiEstimate);
+      await applyReceiptUpdate(updated);
     },
     [applyReceiptUpdate],
   );
@@ -411,7 +465,6 @@ export function HomeScreen() {
         pendingUpload: false,
         writeBudgetRemaining: getBudget(prior),
         photoMissing: undefined,
-        captureKind: prior.captureKind,
       };
       setReceipts((prev) => {
         const next = top100ByUpdatedAt([
@@ -422,9 +475,20 @@ export function HomeScreen() {
         return next;
       });
       await saveReceipt(updated);
+      await markRemoteSyncedPhotos([updated.id]);
       return updated;
     },
     [refreshTaxSaved],
+  );
+
+  const showDuplicateReceiptNotice = useCallback(
+    (existingReceiptId: string, matchType: "exact" | "similar") => {
+      setReceiptNotice(duplicateNoticeCopy(copy.home.receiptList, matchType));
+      setHighlightReceiptId(existingReceiptId);
+      window.setTimeout(() => setHighlightReceiptId(null), DUPLICATE_HIGHLIGHT_MS);
+      requestAnimationFrame(() => scrollReceiptIntoView(existingReceiptId));
+    },
+    [copy.home.receiptList],
   );
 
   const handleDuplicateUpload = useCallback(
@@ -432,6 +496,7 @@ export function HomeScreen() {
       localId: string,
       existingReceiptId: string,
       prior?: StoredReceipt,
+      matchType: "exact" | "similar" = "exact",
     ) => {
       const updated = await reconcileDuplicateReceipt(
         localId,
@@ -448,51 +513,71 @@ export function HomeScreen() {
         refreshTaxSaved(next);
         return next;
       });
-      setReceiptNotice(copy.home.receiptList.duplicateReceipt);
+      showDuplicateReceiptNotice(existingReceiptId, matchType);
       if (updated.status === "processing") {
         queueRef.current?.enqueue(updated.id);
       }
       return updated;
     },
-    [copy.home.receiptList.duplicateReceipt, refreshTaxSaved],
+    [showDuplicateReceiptNotice, refreshTaxSaved],
   );
 
-  const uploadPendingInner = async (receipt: StoredReceipt) => {
+  const uploadPendingInner = async (
+    receipt: StoredReceipt,
+    opts?: { batchCapture?: boolean },
+  ) => {
     if (shouldSkipUploadAttempt(receipt)) return;
     if (uploadInFlightRef.current.has(receipt.id)) return;
 
+    const latest = await loadReceipt(receipt.id);
+    if (!latest?.pendingUpload || shouldSkipUploadAttempt(latest)) return;
+
     let photo: Blob | null = null;
     try {
-      photo = await loadPhoto(receipt.id);
+      photo = await loadPhoto(latest.id);
     } catch {
       photo = null;
     }
     if (!photo) {
-      const marked = applyPhotoMissingState(receipt);
+      const marked = applyPhotoMissingState(latest);
       await saveReceipt(marked);
       setReceipts((prev) => prev.map((r) => (r.id === marked.id ? marked : r)));
       setSyncStuckIds((prev) => new Set(prev).add(marked.id));
       return;
     }
 
-    uploadInFlightRef.current.add(receipt.id);
+    uploadInFlightRef.current.add(latest.id);
+    setUploadInFlightIds(new Set(uploadInFlightRef.current));
     try {
       const uploaded = await uploadReceipt(
         photo,
-        receipt.id,
-        receipt.timestamp,
-        captureKindForUpload(receipt),
+        latest.id,
+        latest.timestamp,
+        captureKindForUpload(latest),
+        latest.ocrDraft,
+        {
+          batchCapture:
+            opts?.batchCapture === true || batchFlushActiveRef.current,
+        },
       );
-      const updated = await persistUploadedReceipt(receipt, uploaded);
+      const updated = await persistUploadedReceipt(latest, uploaded);
+      if (updated.status === "done" && updated.taxAmount != null) {
+        pulseTaxAnimating();
+      }
       if (updated.status === "processing") {
         queueRef.current?.enqueue(updated.id);
       }
     } catch (err) {
       if (isDuplicateReceiptError(err)) {
-        await handleDuplicateUpload(receipt.id, err.existingReceiptId, receipt);
+        await handleDuplicateUpload(
+          latest.id,
+          err.existingReceiptId,
+          latest,
+          err.matchType,
+        );
         return;
       }
-      const failed = recordWriteFailure(receipt);
+      const failed = recordWriteFailure(latest);
       await saveReceipt(failed);
       setReceipts((prev) => prev.map((r) => (r.id === failed.id ? failed : r)));
       if (isSyncStuck(failed)) {
@@ -500,18 +585,22 @@ export function HomeScreen() {
       }
       throw failed;
     } finally {
-      uploadInFlightRef.current.delete(receipt.id);
+      uploadInFlightRef.current.delete(latest.id);
+      setUploadInFlightIds(new Set(uploadInFlightRef.current));
     }
   };
 
   uploadPendingInnerRef.current = uploadPendingInner;
 
-  const flushPendingUploads = useCallback(async () => {
+  const flushPendingUploads = useCallback(
+    async (opts?: { batchCapture?: boolean; skipGhostEnsure?: boolean }) => {
     await ensureConvertedDemoUploadReady();
-    try {
-      await ensureGhostSession();
-    } catch {
-      return;
+    if (!opts?.skipGhostEnsure) {
+      try {
+        await ensureGhostSession();
+      } catch {
+        return;
+      }
     }
     const stored = await loadAllReceipts();
     const pending = stored.filter(
@@ -519,14 +608,40 @@ export function HomeScreen() {
     );
     for (const receipt of pending) {
       try {
-        await uploadPendingInnerRef.current(receipt);
+        await uploadPendingInnerRef.current(receipt, opts);
       } catch {
         // budget updated in uploadPendingInner
       }
     }
-  }, []);
+  },
+  [],
+  );
 
   flushPendingUploadsRef.current = flushPendingUploads;
+
+  useEffect(() => {
+    setOcrCompleteHandler((receiptId) => {
+      void (async () => {
+        if (!navigator.onLine) return;
+        try {
+          await ensureGhostSession();
+        } catch {
+          return;
+        }
+        const receipt = await loadReceipt(receiptId);
+        if (!receipt?.pendingUpload || shouldSkipUploadAttempt(receipt)) return;
+        if (uploadInFlightRef.current.has(receiptId)) return;
+        if (batchFlushActiveRef.current) return;
+        if (isBatchOcrUploadDeferred(receiptId)) return;
+        try {
+          await uploadPendingInnerRef.current(receipt);
+        } catch {
+          // write budget updated in uploadPendingInner
+        }
+      })();
+    });
+    return () => setOcrCompleteHandler(null);
+  }, []);
 
   const flushPendingDeletesCallback = useCallback(async () => {
     await flushPendingDeletes();
@@ -546,6 +661,17 @@ export function HomeScreen() {
             return;
           }
           if (cancelled()) return;
+          if (await shouldAutoRestoreFromCloud()) {
+            try {
+              const result = await restoreReceiptsFromCloud({
+                downloadImages: true,
+              });
+              await markCloudRestoreAttempted(result);
+            } catch {
+              // allow retry on next startup if restore fails
+            }
+          }
+          if (cancelled()) return;
           await flushPendingUploadsRef.current();
           if (cancelled()) return;
           await flushPendingDeletesRef.current();
@@ -560,6 +686,10 @@ export function HomeScreen() {
           queueRef.current?.bootstrapFromList(
             mergedAfter.filter((r) => !stuck.has(r.id)),
           );
+          schedulePhotoRetentionPurge();
+          scheduleReceiptRetentionPrune();
+          scheduleReceiptSummaryVerify();
+          void reconcileNonDoneWindow();
         })();
       });
     },
@@ -604,11 +734,8 @@ export function HomeScreen() {
         setSyncStuckIds((prev) => new Set(prev).add(id));
         queue.onSettled(id);
       },
-      onTaxSaved: (estimate) => {
-        setReceipts((prev) => {
-          refreshTaxSaved(prev, estimate);
-          return prev;
-        });
+      onSummaryRefresh: () => {
+        void refreshTaxAndSummary();
       },
       getWriteBudget: (id) => {
         const r = receiptsRef.current.find((x) => x.id === id) as
@@ -626,7 +753,7 @@ export function HomeScreen() {
       queueRef.current = null;
       watcherRef.current = null;
     };
-  }, [applyFromApi, refreshTaxSaved]);
+  }, [applyFromApi, refreshTaxAndSummary]);
 
   const handleRetrySync = useCallback(
     (id: string) => {
@@ -743,12 +870,9 @@ export function HomeScreen() {
       void applyReceiptUpdate(updated as StoredReceipt);
     },
     onSnap1099: (kind) => {
-      pendingCaptureKindRef.current = kind;
-      clearPendingIncomeCapture();
       setView("home");
       window.requestAnimationFrame(() => {
-        const opened = snapButtonRef.current?.openCamera() ?? false;
-        if (!opened) pendingCaptureKindRef.current = null;
+        snapButtonRef.current?.openCamera();
       });
     },
   });
@@ -770,12 +894,25 @@ export function HomeScreen() {
   }, [runDeferredStartup]);
 
   useEffect(() => {
+    preloadOcrEngine();
+  }, []);
+
+  useEffect(() => {
     if (!navigator.onLine) return;
 
     const retryPending = () => {
-      if (!navigator.onLine || document.visibilityState === "hidden") return;
+      if (!navigator.onLine) return;
+      if (
+        document.visibilityState === "hidden" &&
+        !shouldRunHiddenBackgroundSync()
+      ) {
+        return;
+      }
       void flushPendingUploadsRef.current();
       void flushPendingDeletesRef.current();
+      if (document.visibilityState === "visible") {
+        void reconcileNonDoneWindow();
+      }
     };
 
     const intervalId = window.setInterval(retryPending, 60_000);
@@ -851,30 +988,39 @@ export function HomeScreen() {
     [receipts, onboardingStatus],
   );
 
+  const headerTaxSaved = useMemo(
+    () =>
+      resolveHeaderTaxSaved({
+        displayTaxSaved,
+        seasonUnfiledTaxSaved: seasonSummary?.unfiledTaxSaved,
+        taxSavedFallback: taxSaved,
+      }),
+    [displayTaxSaved, seasonSummary, taxSaved],
+  );
+
   const settingsTaxStats = useMemo((): SettingsTaxStats => {
-    const year = Number(
-      new Intl.DateTimeFormat("en-US", {
-        timeZone: clientTimeZone(),
-        year: "numeric",
-      }).format(new Date()),
-    );
+    if (!seasonSummary) {
+      const year = currentTaxYear();
+      return {
+        taxSaved: headerTaxSaved,
+        receiptCount: displayReceipts.length,
+        totalDeductions: taxYearDeductions(displayReceipts, year, clientTimeZone()),
+        incomeFormCount: incomeFormsInTaxYear(displayReceipts, year, clientTimeZone()),
+        totalIncomeGross: totalIncomeGrossInTaxYear(displayReceipts, year, clientTimeZone()),
+      };
+    }
     return {
-      taxSaved: displayTaxSaved ?? taxSaved,
-      receiptCount: displayReceipts.length,
-      totalDeductions: taxYearDeductions(displayReceipts, year, clientTimeZone()),
-      incomeFormCount: incomeFormsInTaxYear(displayReceipts, year, clientTimeZone()),
-      totalIncomeGross: totalIncomeGrossInTaxYear(displayReceipts, year, clientTimeZone()),
+      taxSaved: headerTaxSaved,
+      receiptCount: seasonSummary.totalReceiptCount,
+      totalDeductions: seasonSummary.totalDeductions,
+      incomeFormCount: seasonSummary.incomeFormCount,
+      totalIncomeGross: seasonSummary.totalIncomeGross,
     };
-  }, [displayReceipts, displayTaxSaved, taxSaved]);
+  }, [seasonSummary, displayReceipts, headerTaxSaved]);
 
   const widgetsData = useMemo(
-    () =>
-      computeHomeWidgets(
-        displayReceipts,
-        displayTaxSaved ?? taxSaved,
-        industry,
-      ),
-    [displayReceipts, displayTaxSaved, taxSaved, industry],
+    () => computeHomeWidgets(displayReceipts, headerTaxSaved, industry),
+    [displayReceipts, headerTaxSaved, industry],
   );
 
   const actionCount = useMemo(
@@ -948,7 +1094,10 @@ export function HomeScreen() {
 
         setReceipts(hot);
         setSyncStuckIds(stuckIdsFromReceipts(hot));
-        setTaxSaved(await sumUnfiledLocalTaxSavedIndexed());
+        await refreshTaxAndSummary();
+
+        await resumePendingOcrJobsFromStorage();
+        if (cancelled) return;
 
         deferAfterPaint(async () => {
           if (cancelled) return;
@@ -966,7 +1115,10 @@ export function HomeScreen() {
         if (!cancelled) {
           setReceipts(visible);
           setSyncStuckIds(stuckIdsFromReceipts(visible));
-          setTaxSaved(await sumUnfiledLocalTaxSavedIndexed().catch(() => 0));
+          await refreshTaxAndSummary().catch(() => setTaxSaved(0));
+          if (navigator.onLine) {
+            runDeferredStartup(() => cancelled);
+          }
         }
       }
     })();
@@ -974,49 +1126,83 @@ export function HomeScreen() {
     return () => {
       cancelled = true;
     };
-  }, [initializeOnboarding, runDeferredStartup]);
+  }, [initializeOnboarding, refreshTaxAndSummary, runDeferredStartup]);
 
-  const handleBatchShot = useCallback(async (file: File): Promise<string> => {
-    const id = crypto.randomUUID();
-    const snapAt = utcNow();
-    const captureKind = pendingCaptureKindRef.current;
-    const processingReceipt: StoredReceipt = withFreshBudget({
-      id,
-      status: "processing",
-      merchant: "Scanning",
-      timestamp: snapAt,
-      updatedAt: snapAt,
-      pendingUpload: true,
-      captureKind,
-    });
-    await savePhoto(id, file);
-    await saveReceipt(processingReceipt);
-    return id;
-  }, []);
+  const handleBatchShot = useCallback(
+    async (file: File): Promise<string | null> => {
+      const result = await prepareReceiptCapture(file);
+      if (result.kind === "duplicate") {
+        showDuplicateReceiptNotice(result.existingReceiptId, "exact");
+        return null;
+      }
+      const { receipt } = result;
+      setReceipts((prev) => top100ByUpdatedAt([receipt, ...prev]));
+      scheduleOcrJob(receipt.id);
+      return receipt.id;
+    },
+    [showDuplicateReceiptNotice],
+  );
 
-  const handleBatchClose = useCallback(async () => {
-    await refreshListFromLocal();
+  const handleBatchClose = useCallback(async (sessionIds: string[]) => {
+    batchFlushActiveRef.current = true;
+    try {
+      await refreshListFromLocal();
+      if (navigator.onLine && sessionIds.length > 0) {
+        try {
+          await ensureGhostSession();
+          await flushSessionPendingUploads(sessionIds, () =>
+            flushPendingUploadsRef.current({
+              batchCapture: true,
+              skipGhostEnsure: true,
+            }),
+          );
+        } catch {
+          // pending rows remain until next flush
+        }
+      }
+    } finally {
+      batchFlushActiveRef.current = false;
+    }
   }, [refreshListFromLocal]);
 
-  const handleBatchDone = useCallback(async () => {
-    await refreshListFromLocal();
-    if (navigator.onLine) {
+  const handleBatchDone = useCallback(
+    async (sessionIds: string[]) => {
+      batchFlushActiveRef.current = true;
       try {
-        await ensureGhostSession();
-        await flushPendingUploadsRef.current();
-      } catch {
-        // Local pending rows remain until next flush
+        if (navigator.onLine && sessionIds.length > 0) {
+          try {
+            await ensureGhostSession();
+            await flushSessionPendingUploads(sessionIds, () =>
+              flushPendingUploadsRef.current({
+                batchCapture: true,
+                skipGhostEnsure: true,
+              }),
+            );
+          } catch {
+            // Local pending rows remain until next flush
+          }
+        }
+        const visible = await loadTopByUpdatedAt(UI_RECEIPT_LIMIT);
+        setReceipts(visible);
+        refreshTaxSaved(visible);
+        setSyncStuckIds(stuckIdsFromReceipts(visible));
+        for (const id of sessionIds) {
+          const row = visible.find((r) => r.id === id);
+          if (
+            row &&
+            row.status === "processing" &&
+            !row.pendingUpload &&
+            !row.isOnboardingDemo
+          ) {
+            queueRef.current?.enqueue(id);
+          }
+        }
+      } finally {
+        batchFlushActiveRef.current = false;
       }
-    }
-    const visible = await loadTopByUpdatedAt(UI_RECEIPT_LIMIT);
-    setReceipts(visible);
-    refreshTaxSaved(visible);
-    const stuck = stuckIdsFromReceipts(visible);
-    setSyncStuckIds(stuck);
-    queueRef.current?.bootstrapFromList(
-      visible.filter((r) => r.status === "processing" && !stuck.has(r.id)),
-    );
-  }, [refreshListFromLocal, refreshTaxSaved]);
+    },
+    [refreshTaxSaved],
+  );
 
   const handleDeleteReceipt = useCallback(
     async (id: string) => {
@@ -1048,39 +1234,33 @@ export function HomeScreen() {
       const replaceId = resnapId;
       setResnapId(null);
 
-      const id = replaceId ?? crypto.randomUUID();
-      const snapAt = utcNow();
-      const existing = replaceId
-        ? (receiptsRef.current.find((r) => r.id === replaceId) as
-            | StoredReceipt
-            | undefined)
-        : undefined;
-      const captureKind = replaceId
-        ? existing
-          ? captureKindForUpload(existing)
-          : null
-        : pendingCaptureKindRef.current;
-      pendingCaptureKindRef.current = null;
-      const processingReceipt: StoredReceipt = withFreshBudget({
-        id,
-        status: "processing",
-        merchant: "Scanning",
-        timestamp: snapAt,
-        updatedAt: snapAt,
-        pendingUpload: !navigator.onLine,
-        photoMissing: undefined,
-        captureKind,
-      });
+      const result = await prepareReceiptCapture(file, { replaceId });
+      if (result.kind === "duplicate") {
+        showDuplicateReceiptNotice(result.existingReceiptId, "exact");
+        return;
+      }
 
+      const { receipt: processingReceipt } = result;
       setReceipts((prev) => {
         const without = replaceId ? prev.filter((r) => r.id !== replaceId) : prev;
         return top100ByUpdatedAt([processingReceipt, ...without]);
       });
-      const originalPhoto = replaceId
-        ? await loadPhoto(id).catch(() => null)
-        : null;
-      await savePhoto(id, file);
-      await saveReceipt(processingReceipt);
+      scheduleOcrJob(processingReceipt.id);
+
+      if (navigator.onLine) {
+        void (async () => {
+          try {
+            await ensureGhostSession();
+          } catch {
+            return;
+          }
+          try {
+            await uploadPendingInnerRef.current(processingReceipt);
+          } catch {
+            // budget updated in uploadPendingInner
+          }
+        })();
+      }
 
       if (replaceId) {
         watcherRef.current?.unwatch(replaceId);
@@ -1092,73 +1272,8 @@ export function HomeScreen() {
           return next;
         });
       }
-
-      if (!navigator.onLine) return;
-
-      if (uploadInFlightRef.current.has(id)) return;
-      uploadInFlightRef.current.add(id);
-      try {
-        await ensureGhostSession();
-        const uploaded = await uploadReceipt(file, id, snapAt, captureKind);
-        const updated = await persistUploadedReceipt(processingReceipt, uploaded);
-
-        if (updated.status === "done" && updated.taxAmount != null) {
-          pulseTaxAnimating();
-        }
-
-        if (updated.status === "processing") {
-          enqueueReceipt(updated.id);
-        }
-      } catch (err) {
-        if (isDuplicateReceiptError(err)) {
-          if (replaceId && existing) {
-            if (originalPhoto) {
-              await savePhoto(id, originalPhoto);
-            } else {
-              await deletePhoto(id).catch(() => undefined);
-            }
-            await saveReceipt(existing);
-            setReceipts((prev) => {
-              const next = top100ByUpdatedAt([
-                existing,
-                ...prev.filter((r) => r.id !== existing.id),
-              ]);
-              refreshTaxSaved(next);
-              return next;
-            });
-            setSelectedReceipt((prev) =>
-              prev?.id === existing.id ? existing : prev,
-            );
-            if (existing.status === "processing") {
-              enqueueReceipt(existing.id);
-            }
-            setReceiptNotice(copy.home.receiptList.duplicateReceipt);
-            return;
-          }
-          await handleDuplicateUpload(id, err.existingReceiptId, processingReceipt);
-          return;
-        }
-        const failed = recordWriteFailure(processingReceipt);
-        await saveReceipt({ ...failed, pendingUpload: true });
-        setReceipts((prev) =>
-          prev.map((r) => (r.id === id ? { ...failed, pendingUpload: true } : r)),
-        );
-        if (isSyncStuck(failed)) {
-          setSyncStuckIds((prev) => new Set(prev).add(id));
-        }
-      } finally {
-        uploadInFlightRef.current.delete(id);
-      }
     },
-    [
-      resnapId,
-      enqueueReceipt,
-      pulseTaxAnimating,
-      persistUploadedReceipt,
-      handleDuplicateUpload,
-      refreshTaxSaved,
-      copy.home.receiptList.duplicateReceipt,
-    ],
+    [resnapId, showDuplicateReceiptNotice],
   );
 
   const handleResnap = useCallback((id: string) => {
@@ -1191,6 +1306,7 @@ export function HomeScreen() {
           void (async () => {
             setReceipts([]);
             setTaxSaved(null);
+            setSeasonSummary(null);
             setSyncStuckIds(new Set());
             queueRef.current?.clear();
             watcherRef.current?.reset();
@@ -1223,12 +1339,9 @@ export function HomeScreen() {
         exportEmptyTipKey={taxExport.exportEmptyTipKey}
         onExportEmptyTipDismiss={taxExport.clearExportEmptyTip}
         onSnap1099={(kind) => {
-          pendingCaptureKindRef.current = kind;
-          clearPendingIncomeCapture();
           setView("home");
           window.requestAnimationFrame(() => {
-            const opened = snapButtonRef.current?.openCamera() ?? false;
-            if (!opened) pendingCaptureKindRef.current = null;
+            snapButtonRef.current?.openCamera();
           });
         }}
         isSignedIn={auth.isSignedIn}
@@ -1236,6 +1349,7 @@ export function HomeScreen() {
         requestSoftGoogleSheet={requestSoftGoogleSheet}
         onSoftGoogleSheetConsumed={() => setRequestSoftGoogleSheet(false)}
         onSoftGuideDismiss={handleSoftGuideDismiss}
+        onRestored={() => void refreshListFromLocal()}
       />
       {taxExport.overlays}
     </>
@@ -1248,8 +1362,7 @@ export function HomeScreen() {
       className="relative flex h-full flex-col overflow-hidden bg-black font-sans text-white select-none"
     >
       <TaxHeader
-        taxSaved={taxSaved}
-        displayTaxSaved={displayTaxSaved}
+        taxSaved={headerTaxSaved}
         totalExpenses={sumDoneExpenses(displayReceipts)}
         receiptCount={displayReceipts.length}
         animating={taxAnimating}
@@ -1273,12 +1386,7 @@ export function HomeScreen() {
             onBatchClose={handleBatchClose}
             onReviewDelete={handleDeleteReceipt}
             resnapId={resnapId}
-            onCameraOpenChange={(open, options) => {
-              setCameraOpen(open);
-              if (!open && !options?.keepPendingCaptureKind) {
-                pendingCaptureKindRef.current = null;
-              }
-            }}
+            onCameraOpenChange={setCameraOpen}
             onSyncClick={handleManualListSync}
             onSettingsClick={handleOpenSettings}
             syncing={listSyncing}
@@ -1302,6 +1410,10 @@ export function HomeScreen() {
       <WidgetStack
         data={widgetsData}
         actionCount={actionCount}
+        isSignedIn={auth.isSignedIn}
+        authHydrated={auth.hydrated}
+        founderRefreshTick={founderRefreshTick}
+        onFounderOpen={() => setFounderSheetOpen(true)}
         onDeadlineDetails={() => showOverlay("deadline-detail")}
         onMissingReview={() => showOverlay("missing-deductions")}
         onProgressDetails={() => showOverlay("tax-year-detail")}
@@ -1313,6 +1425,8 @@ export function HomeScreen() {
         <ReceiptList
           receipts={displayReceipts}
           syncStuckIds={syncStuckIds}
+          uploadInFlightIds={uploadInFlightIds}
+          highlightReceiptId={highlightReceiptId}
           filter={listFilter}
           onFilterChange={setListFilter}
           filterBarRef={filterBarRef}
@@ -1320,7 +1434,10 @@ export function HomeScreen() {
           onAhaCoachDismiss={dismissAhaCoach}
           onSelect={(receipt) => {
             if (isPersistedReceiptId(receipt.id)) {
-              prefetchReceiptImageUrl(receipt.id);
+              prefetchReceiptImageUrl(receipt.id, {
+                hasRemoteImage: receipt.hasRemoteImage,
+                pendingUpload: receipt.pendingUpload,
+              });
             }
             setSelectedReceipt(receipt);
           }}
@@ -1371,6 +1488,28 @@ export function HomeScreen() {
       )}
 
       {taxExport.overlays}
+
+      {founderSheetOpen && (
+        <FounderProgramSheet
+          onClose={() => setFounderSheetOpen(false)}
+          isSignedIn={auth.isSignedIn}
+          onGoogleSignedIn={async (result) => {
+            auth.applyGoogleSignIn(result);
+          }}
+          userEmail={auth.googleUser?.email}
+          seasonLabel={auth.currentSeason}
+          onProgramFull={() => {
+            setFounderSheetOpen(false);
+            setFounderRefreshTick((tick) => tick + 1);
+          }}
+          onPaid={async () => {
+            setFounderSheetOpen(false);
+            await auth.refreshSeasonPaid();
+            await waitForFounderActive();
+            setFounderRefreshTick((tick) => tick + 1);
+          }}
+        />
+      )}
 
       <ExitConfirmSheet
         open={exitConfirmOpen}

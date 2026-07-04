@@ -1,19 +1,63 @@
+import type { OcrDraftPayload } from "@/lib/ocr/types";
 import type { Receipt, ReceiptStatus } from "@/lib/types";
-import { filedFlag } from "@/lib/receipts/filedStatus";
+import { filedFlag, isReceiptFiled } from "@/lib/receipts/filedStatus";
 import { parseUtcISOString, toUtcISOString } from "@/lib/time/utc";
-import { CRYPTO_META_STORE } from "@/lib/storage/crypto/keyManager";
-import { migrateLegacyPlainPhotos } from "@/lib/storage/crypto/photoMigration";
+import {
+  migrateLegacyPhotosToOpfs,
+  migrateLegacyPlainPhotos,
+  PHOTO_OPFS_MIGRATION_KEY,
+} from "@/lib/storage/crypto/photoMigration";
 import {
   deleteEncryptedPhoto,
   loadEncryptedPhoto,
+  loadEncryptedThumbnail,
+  markPhotoRemoteSynced,
   PHOTOS_STORE,
   saveEncryptedPhoto,
 } from "@/lib/storage/crypto/photoStore";
+import {
+  deleteLegacyIdbIfPresent,
+  migrateLegacyIdbDbNameIfNeeded,
+} from "@/lib/storage/idbDbRenameMigration";
+import {
+  IDB_DB_NAME,
+  IDB_DB_VERSION,
+  IDB_LEGACY_CRYPTO_META,
+  IDB_LEGACY_RECEIPTS,
+  IDB_LEGACY_SYSTEM_META,
+  IDB_STORE_CRYPTO_META,
+  IDB_STORE_RECEIPT_PHOTOS,
+  IDB_STORE_RECEIPT_SUMMARY,
+  IDB_STORE_RECEIPTS,
+  IDB_STORE_SYSTEM_META,
+} from "@/lib/storage/idbStores";
+import {
+  applyReceiptSummaryDelta,
+  rebuildCurrentSeasonSummary,
+} from "@/lib/storage/receiptSummary";
+import { RECEIPT_SUMMARY_BOOTSTRAP_KEY } from "@/lib/storage/receiptSummaryTypes";
+import { wipeSnaptaxOpfsTree } from "@/lib/storage/opfs/photoFiles";
 
-const DB_NAME = "snap1099";
-const DB_VERSION = 4;
-const RECEIPTS_STORE = "receipts";
-const SYSTEM_META_STORE = "system_meta";
+const DB_NAME = IDB_DB_NAME;
+const DB_VERSION = IDB_DB_VERSION;
+
+function receiptsStoreName(db: IDBDatabase): string {
+  return db.objectStoreNames.contains(IDB_STORE_RECEIPTS)
+    ? IDB_STORE_RECEIPTS
+    : IDB_LEGACY_RECEIPTS;
+}
+
+function systemMetaStoreName(db: IDBDatabase): string {
+  return db.objectStoreNames.contains(IDB_STORE_SYSTEM_META)
+    ? IDB_STORE_SYSTEM_META
+    : IDB_LEGACY_SYSTEM_META;
+}
+
+function cryptoMetaStoreName(db: IDBDatabase): string {
+  return db.objectStoreNames.contains(IDB_STORE_CRYPTO_META)
+    ? IDB_STORE_CRYPTO_META
+    : IDB_LEGACY_CRYPTO_META;
+}
 
 type SystemMetaRow<T> = { key: string; value: T };
 
@@ -21,6 +65,7 @@ export interface StoredReceipt extends Receipt {
   timestamp: Date;
   pendingUpload?: boolean;
   writeBudgetRemaining?: number;
+  ocrDraft?: OcrDraftPayload;
 }
 
 type SerializedReceipt = Omit<
@@ -103,20 +148,27 @@ function legacyDeserialize(raw: Record<string, unknown>): StoredReceipt {
     pendingUpload: raw.pendingUpload as boolean | undefined,
     writeBudgetRemaining: raw.writeBudgetRemaining as number | undefined,
     isOnboardingDemo: raw.isOnboardingDemo as boolean | undefined,
+    ocrDraft: raw.ocrDraft as OcrDraftPayload | undefined,
   };
 }
 
 function createReceiptIndexes(store: IDBObjectStore): void {
-  store.createIndex("byUpdatedAt", "updatedAtMs", { unique: false });
-  store.createIndex("byCreatedAt", "createdAtMs", { unique: false });
-  store.createIndex("byStatus", "status", { unique: false });
-  store.createIndex("byStatusUpdatedAt", ["status", "updatedAtMs"], {
-    unique: false,
-  });
-  store.createIndex("byFiledUpdatedAt", ["isFiled", "updatedAtMs"], {
-    unique: false,
-  });
-  store.createIndex("byFiledStatus", ["isFiled", "status"], { unique: false });
+  const ensureIndex = (
+    name: string,
+    keyPath: string | string[],
+    options?: IDBIndexParameters,
+  ) => {
+    if (!store.indexNames.contains(name)) {
+      store.createIndex(name, keyPath, options ?? { unique: false });
+    }
+  };
+  ensureIndex("byUpdatedAt", "updatedAtMs");
+  ensureIndex("byCreatedAt", "createdAtMs");
+  ensureIndex("byStatus", "status");
+  ensureIndex("byStatusUpdatedAt", ["status", "updatedAtMs"]);
+  ensureIndex("byFiledUpdatedAt", ["isFiled", "updatedAtMs"]);
+  ensureIndex("byFiledStatus", ["isFiled", "status"]);
+  ensureIndex("byContentSha256", "contentSha256");
 }
 
 function readIndexLimited<T>(
@@ -173,73 +225,314 @@ function migrateReceiptRowV3(raw: Record<string, unknown>): SerializedReceipt {
   return enrichRow(legacy);
 }
 
-function openDb(): Promise<IDBDatabase> {
+function copyObjectStore(
+  tx: IDBTransaction,
+  fromName: string,
+  toName: string,
+  onComplete: () => void,
+  onError: (err: DOMException | null) => void,
+): void {
+  const from = tx.objectStore(fromName);
+  const to = tx.objectStore(toName);
+  const cursorReq = from.openCursor();
+  cursorReq.onerror = () => onError(cursorReq.error);
+  cursorReq.onsuccess = () => {
+    const cursor = cursorReq.result;
+    if (!cursor) {
+      onComplete();
+      return;
+    }
+    const putReq = to.put(cursor.value);
+    putReq.onerror = () => onError(putReq.error);
+    putReq.onsuccess = () => cursor.continue();
+  };
+}
+
+function upgradeReceiptIndexesForV6(
+  db: IDBDatabase,
+  tx: IDBTransaction,
+  oldVersion: number,
+): void {
+  if (oldVersion >= 6) return;
+  if (db.objectStoreNames.contains(IDB_LEGACY_RECEIPTS)) {
+    createReceiptIndexes(tx.objectStore(IDB_LEGACY_RECEIPTS));
+  }
+  if (db.objectStoreNames.contains(IDB_STORE_RECEIPTS)) {
+    createReceiptIndexes(tx.objectStore(IDB_STORE_RECEIPTS));
+  }
+}
+
+function migrateToSnaptaxStores(
+  db: IDBDatabase,
+  tx: IDBTransaction,
+  oldVersion: number,
+  onError: (err: DOMException | null) => void,
+): void {
+  if (oldVersion >= IDB_DB_VERSION) return;
+
+  if (!db.objectStoreNames.contains(IDB_STORE_CRYPTO_META)) {
+    db.createObjectStore(IDB_STORE_CRYPTO_META, { keyPath: "id" });
+  }
+  if (!db.objectStoreNames.contains(IDB_STORE_RECEIPTS)) {
+    const receiptStore = db.createObjectStore(IDB_STORE_RECEIPTS, {
+      keyPath: "id",
+    });
+    createReceiptIndexes(receiptStore);
+  }
+  if (!db.objectStoreNames.contains(IDB_STORE_RECEIPT_PHOTOS)) {
+    db.createObjectStore(IDB_STORE_RECEIPT_PHOTOS, { keyPath: "id" });
+  }
+  if (!db.objectStoreNames.contains(IDB_STORE_SYSTEM_META)) {
+    db.createObjectStore(IDB_STORE_SYSTEM_META, { keyPath: "key" });
+  }
+  if (
+    oldVersion < 7 &&
+    !db.objectStoreNames.contains(IDB_STORE_RECEIPT_SUMMARY)
+  ) {
+    db.createObjectStore(IDB_STORE_RECEIPT_SUMMARY, { keyPath: "scopeKey" });
+  }
+
+  const finishReceiptSummaryBootstrap = (): void => {
+    if (
+      oldVersion < 7 &&
+      db.objectStoreNames.contains(IDB_STORE_SYSTEM_META)
+    ) {
+      tx.objectStore(systemMetaStoreName(db)).put({
+        key: RECEIPT_SUMMARY_BOOTSTRAP_KEY,
+        value: "pending",
+      });
+    }
+  };
+
+  const finishPhotoMigrationFlag = (): void => {
+    if (
+      db.objectStoreNames.contains(PHOTOS_STORE) &&
+      oldVersion < IDB_DB_VERSION
+    ) {
+      const metaStore = systemMetaStoreName(db);
+      tx.objectStore(metaStore).put({
+        key: PHOTO_OPFS_MIGRATION_KEY,
+        value: "pending",
+      });
+    }
+    finishReceiptSummaryBootstrap();
+  };
+
+  const migrateCryptoMeta = (): void => {
+    if (!db.objectStoreNames.contains(IDB_LEGACY_CRYPTO_META)) {
+      finishPhotoMigrationFlag();
+      return;
+    }
+    copyObjectStore(
+      tx,
+      IDB_LEGACY_CRYPTO_META,
+      IDB_STORE_CRYPTO_META,
+      () => {
+        db.deleteObjectStore(IDB_LEGACY_CRYPTO_META);
+        finishPhotoMigrationFlag();
+      },
+      onError,
+    );
+  };
+
+  const migrateSystemMeta = (): void => {
+    if (!db.objectStoreNames.contains(IDB_LEGACY_SYSTEM_META)) {
+      migrateCryptoMeta();
+      return;
+    }
+    copyObjectStore(
+      tx,
+      IDB_LEGACY_SYSTEM_META,
+      IDB_STORE_SYSTEM_META,
+      () => {
+        db.deleteObjectStore(IDB_LEGACY_SYSTEM_META);
+        migrateCryptoMeta();
+      },
+      onError,
+    );
+  };
+
+  const migrateReceipts = (): void => {
+    if (!db.objectStoreNames.contains(IDB_LEGACY_RECEIPTS)) {
+      migrateSystemMeta();
+      return;
+    }
+    copyObjectStore(
+      tx,
+      IDB_LEGACY_RECEIPTS,
+      IDB_STORE_RECEIPTS,
+      () => {
+        db.deleteObjectStore(IDB_LEGACY_RECEIPTS);
+        migrateSystemMeta();
+      },
+      onError,
+    );
+  };
+
+  migrateReceipts();
+}
+
+function runLegacyReceiptRowMigrations(
+  receiptStore: IDBObjectStore,
+  oldVersion: number,
+  onComplete: () => void,
+  onError: (err: DOMException | null) => void,
+): void {
+  const runV3 = (): void => {
+    if (oldVersion >= 3) {
+      onComplete();
+      return;
+    }
+    const migrateV3 = receiptStore.openCursor();
+    migrateV3.onerror = () => onError(migrateV3.error);
+    migrateV3.onsuccess = () => {
+      const cursor = migrateV3.result;
+      if (!cursor) {
+        onComplete();
+        return;
+      }
+      const row = migrateReceiptRowV3(cursor.value as Record<string, unknown>);
+      const updateReq = cursor.update(row);
+      updateReq.onerror = () => onError(updateReq.error);
+      updateReq.onsuccess = () => cursor.continue();
+    };
+  };
+
+  if (oldVersion >= 2) {
+    runV3();
+    return;
+  }
+
+  createReceiptIndexes(receiptStore);
+  const migrateV2 = receiptStore.openCursor();
+  migrateV2.onerror = () => onError(migrateV2.error);
+  migrateV2.onsuccess = () => {
+    const cursor = migrateV2.result;
+    if (!cursor) {
+      runV3();
+      return;
+    }
+    const legacy = legacyDeserialize(cursor.value as Record<string, unknown>);
+    const updateReq = cursor.update(enrichRow(legacy));
+    updateReq.onerror = () => onError(updateReq.error);
+    updateReq.onsuccess = () => cursor.continue();
+  };
+}
+
+let dbOpenPromise: Promise<IDBDatabase> | null = null;
+
+function openDbInner(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
 
-    request.onerror = () => reject(request.error);
+    request.onerror = () => {
+      dbOpenPromise = null;
+      reject(request.error);
+    };
     request.onsuccess = () => resolve(request.result);
 
     request.onupgradeneeded = (event) => {
       const db = request.result;
       const tx = request.transaction!;
+      const oldVersion = event.oldVersion;
       let receiptStore: IDBObjectStore;
+      const legacyReceipts = IDB_LEGACY_RECEIPTS;
 
-      if (!db.objectStoreNames.contains(CRYPTO_META_STORE)) {
-        db.createObjectStore(CRYPTO_META_STORE, { keyPath: "id" });
+      if (!db.objectStoreNames.contains(IDB_LEGACY_CRYPTO_META)) {
+        db.createObjectStore(IDB_LEGACY_CRYPTO_META, { keyPath: "id" });
       }
 
-      if (!db.objectStoreNames.contains(RECEIPTS_STORE)) {
-        receiptStore = db.createObjectStore(RECEIPTS_STORE, { keyPath: "id" });
+      if (!db.objectStoreNames.contains(legacyReceipts)) {
+        receiptStore = db.createObjectStore(legacyReceipts, { keyPath: "id" });
         createReceiptIndexes(receiptStore);
       } else {
-        receiptStore = tx.objectStore(RECEIPTS_STORE);
-        if (event.oldVersion < 2) {
-          createReceiptIndexes(receiptStore);
-          const migrate = receiptStore.openCursor();
-          migrate.onerror = () => reject(migrate.error);
-          migrate.onsuccess = () => {
-            const cursor = migrate.result;
-            if (!cursor) return;
-            const legacy = legacyDeserialize(cursor.value as Record<string, unknown>);
-            cursor.update(enrichRow(legacy));
-            cursor.continue();
-          };
-        }
-        if (event.oldVersion < 3) {
-          const migrateV3 = receiptStore.openCursor();
-          migrateV3.onerror = () => reject(migrateV3.error);
-          migrateV3.onsuccess = () => {
-            const cursor = migrateV3.result;
-            if (!cursor) return;
-            const row = migrateReceiptRowV3(cursor.value as Record<string, unknown>);
-            cursor.update(row);
-            cursor.continue();
-          };
-        }
+        receiptStore = tx.objectStore(legacyReceipts);
       }
 
       if (!db.objectStoreNames.contains(PHOTOS_STORE)) {
         db.createObjectStore(PHOTOS_STORE, { keyPath: "id" });
       }
 
-      if (event.oldVersion < 4) {
-        if (!db.objectStoreNames.contains(SYSTEM_META_STORE)) {
-          db.createObjectStore(SYSTEM_META_STORE, { keyPath: "key" });
+      if (oldVersion < 4) {
+        if (!db.objectStoreNames.contains(IDB_LEGACY_SYSTEM_META)) {
+          db.createObjectStore(IDB_LEGACY_SYSTEM_META, { keyPath: "key" });
         }
+      }
+
+      const startSnaptaxStoreMigration = (): void => {
+        if (oldVersion < IDB_DB_VERSION) {
+          migrateToSnaptaxStores(db, tx, oldVersion, reject);
+        }
+        upgradeReceiptIndexesForV6(db, tx, oldVersion);
+      };
+
+      if (db.objectStoreNames.contains(legacyReceipts) && oldVersion < 4) {
+        runLegacyReceiptRowMigrations(
+          receiptStore,
+          oldVersion,
+          startSnaptaxStoreMigration,
+          reject,
+        );
+      } else {
+        startSnaptaxStoreMigration();
       }
     };
   });
 }
 
+function openDb(): Promise<IDBDatabase> {
+  if (dbOpenPromise) return dbOpenPromise;
+  dbOpenPromise = migrateLegacyIdbDbNameIfNeeded(openDbInner)
+    .then(() => openDbInner())
+    .catch((err) => {
+      dbOpenPromise = null;
+      throw err;
+    });
+  return dbOpenPromise;
+}
+
 let migrationPromise: Promise<void> | null = null;
+let summaryBootstrapPromise: Promise<void> | null = null;
+
+async function getReceiptById(
+  db: IDBDatabase,
+  id: string,
+): Promise<StoredReceipt | null> {
+  const receiptsStore = receiptsStoreName(db);
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(receiptsStore, "readonly");
+    const request = tx.objectStore(receiptsStore).get(id);
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => {
+      const raw = request.result as SerializedReceipt | undefined;
+      resolve(raw ? deserializeReceipt(raw) : null);
+    };
+  });
+}
+
+async function ensureReceiptSummaryBootstrapped(db: IDBDatabase): Promise<void> {
+  if (!summaryBootstrapPromise) {
+    summaryBootstrapPromise = (async () => {
+      const status = await readSystemMeta<string>(RECEIPT_SUMMARY_BOOTSTRAP_KEY);
+      if (status !== "pending") return;
+      await rebuildCurrentSeasonSummary(db);
+      await writeSystemMeta(RECEIPT_SUMMARY_BOOTSTRAP_KEY, "done");
+    })().catch((err) => {
+      summaryBootstrapPromise = null;
+      throw err;
+    });
+  }
+  await summaryBootstrapPromise;
+}
 
 async function ensurePhotoCipherReady(db: IDBDatabase): Promise<void> {
   if (!migrationPromise) {
-    migrationPromise = migrateLegacyPlainPhotos(db).catch((err) => {
-      migrationPromise = null;
-      throw err;
-    });
+    migrationPromise = migrateLegacyPlainPhotos(db)
+      .then(() => migrateLegacyPhotosToOpfs(db))
+      .catch((err) => {
+        migrationPromise = null;
+        throw err;
+      });
   }
   await migrationPromise;
 }
@@ -247,6 +540,7 @@ async function ensurePhotoCipherReady(db: IDBDatabase): Promise<void> {
 export async function warmReceiptDb(): Promise<IDBDatabase> {
   const db = await openDb();
   await ensurePhotoCipherReady(db);
+  await ensureReceiptSummaryBootstrapped(db);
   return db;
 }
 
@@ -254,9 +548,10 @@ export async function loadRecentUnfiledReceipts(
   limit = 30,
 ): Promise<StoredReceipt[]> {
   const db = await openDb();
+  const receiptsStore = receiptsStoreName(db);
   return new Promise((resolve, reject) => {
-    const tx = db.transaction(RECEIPTS_STORE, "readonly");
-    const store = tx.objectStore(RECEIPTS_STORE);
+    const tx = db.transaction(receiptsStore, "readonly");
+    const store = tx.objectStore(receiptsStore);
     const range = IDBKeyRange.bound([0, 0], [0, Number.MAX_SAFE_INTEGER]);
     readIndexLimited<SerializedReceipt>(
       store,
@@ -274,9 +569,10 @@ export async function loadTopByUpdatedAt(
   limit = 100,
 ): Promise<StoredReceipt[]> {
   const db = await openDb();
+  const receiptsStore = receiptsStoreName(db);
   return new Promise((resolve, reject) => {
-    const tx = db.transaction(RECEIPTS_STORE, "readonly");
-    const store = tx.objectStore(RECEIPTS_STORE);
+    const tx = db.transaction(receiptsStore, "readonly");
+    const store = tx.objectStore(receiptsStore);
     readIndexLimited<SerializedReceipt>(
       store,
       "byUpdatedAt",
@@ -291,9 +587,10 @@ export async function loadTopByUpdatedAt(
 
 export async function sumUnfiledLocalTaxSavedIndexed(): Promise<number> {
   const db = await openDb();
+  const receiptsStore = receiptsStoreName(db);
   return new Promise((resolve, reject) => {
-    const tx = db.transaction(RECEIPTS_STORE, "readonly");
-    const store = tx.objectStore(RECEIPTS_STORE);
+    const tx = db.transaction(receiptsStore, "readonly");
+    const store = tx.objectStore(receiptsStore);
     const range = IDBKeyRange.only([0, "done"]);
     readIndexAll<SerializedReceipt>(store, "byFiledStatus", range)
       .then((rows) => {
@@ -312,9 +609,10 @@ export async function queryByStatus(
   limit?: number,
 ): Promise<StoredReceipt[]> {
   const db = await openDb();
+  const receiptsStore = receiptsStoreName(db);
   return new Promise((resolve, reject) => {
-    const tx = db.transaction(RECEIPTS_STORE, "readonly");
-    const store = tx.objectStore(RECEIPTS_STORE);
+    const tx = db.transaction(receiptsStore, "readonly");
+    const store = tx.objectStore(receiptsStore);
     const range = IDBKeyRange.only(status);
     const read = limit
       ? readIndexLimited<SerializedReceipt>(
@@ -334,9 +632,10 @@ export async function queryByStatus(
 /** Full corpus scan — sync merge / export only; not for startup hot path. */
 export async function loadAllReceipts(): Promise<StoredReceipt[]> {
   const db = await openDb();
+  const receiptsStore = receiptsStoreName(db);
   return new Promise((resolve, reject) => {
-    const tx = db.transaction(RECEIPTS_STORE, "readonly");
-    const request = tx.objectStore(RECEIPTS_STORE).getAll();
+    const tx = db.transaction(receiptsStore, "readonly");
+    const request = tx.objectStore(receiptsStore).getAll();
     request.onerror = () => reject(request.error);
     request.onsuccess = () => {
       const rows = (request.result as SerializedReceipt[]) ?? [];
@@ -359,9 +658,10 @@ export async function loadReceipts(): Promise<StoredReceipt[]> {
 
 export async function loadReceipt(id: string): Promise<StoredReceipt | null> {
   const db = await openDb();
+  const receiptsStore = receiptsStoreName(db);
   return new Promise((resolve, reject) => {
-    const tx = db.transaction(RECEIPTS_STORE, "readonly");
-    const request = tx.objectStore(RECEIPTS_STORE).get(id);
+    const tx = db.transaction(receiptsStore, "readonly");
+    const request = tx.objectStore(receiptsStore).get(id);
     request.onerror = () => reject(request.error);
     request.onsuccess = () => {
       const raw = request.result as SerializedReceipt | undefined;
@@ -372,23 +672,29 @@ export async function loadReceipt(id: string): Promise<StoredReceipt | null> {
 
 export async function saveReceipt(receipt: StoredReceipt): Promise<void> {
   const db = await openDb();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(RECEIPTS_STORE, "readwrite");
-    const request = tx.objectStore(RECEIPTS_STORE).put(enrichRow(receipt));
+  const old = await getReceiptById(db, receipt.id);
+  const receiptsStore = receiptsStoreName(db);
+  await new Promise<void>((resolve, reject) => {
+    const tx = db.transaction(receiptsStore, "readwrite");
+    const request = tx.objectStore(receiptsStore).put(enrichRow(receipt));
     request.onerror = () => reject(request.error);
     request.onsuccess = () => resolve();
   });
+  await applyReceiptSummaryDelta(db, old, receipt);
 }
 
 export async function deleteReceipt(id: string): Promise<void> {
   const db = await openDb();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction([RECEIPTS_STORE, PHOTOS_STORE], "readwrite");
-    tx.objectStore(RECEIPTS_STORE).delete(id);
-    tx.objectStore(PHOTOS_STORE).delete(id);
+  const old = await getReceiptById(db, id);
+  await deleteEncryptedPhoto(db, id);
+  const receiptsStore = receiptsStoreName(db);
+  await new Promise<void>((resolve, reject) => {
+    const tx = db.transaction(receiptsStore, "readwrite");
+    tx.objectStore(receiptsStore).delete(id);
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
   });
+  await applyReceiptSummaryDelta(db, old, null);
 }
 
 export async function deletePhoto(id: string): Promise<void> {
@@ -396,15 +702,24 @@ export async function deletePhoto(id: string): Promise<void> {
   await deleteEncryptedPhoto(db, id);
 }
 
-/** Remove redundant local photos when server already holds the image. */
+/** Mark remote sync time on local photos; retain full image up to 90 days. */
 export async function reconcileServerPrimaryPhotos(
   receipts: Pick<Receipt, "id" | "hasRemoteImage">[],
 ): Promise<void> {
-  const db = await openDb();
+  const db = await warmReceiptDb();
   await Promise.all(
     receipts
       .filter((r) => r.hasRemoteImage)
-      .map((r) => deleteEncryptedPhoto(db, r.id)),
+      .map((r) => markPhotoRemoteSynced(db, r.id)),
+  );
+}
+
+export async function markRemoteSyncedPhotos(
+  receiptIds: string[],
+): Promise<void> {
+  const db = await warmReceiptDb();
+  await Promise.all(
+    receiptIds.map((id) => markPhotoRemoteSynced(db, id)),
   );
 }
 
@@ -414,17 +729,57 @@ export async function savePhoto(id: string, file: File | Blob): Promise<void> {
   await saveEncryptedPhoto(db, id, file);
 }
 
+export async function savePhotoCompressed(
+  id: string,
+  compressed: { blob: Blob; width: number; height: number },
+): Promise<void> {
+  const db = await openDb();
+  await ensurePhotoCipherReady(db);
+  await saveEncryptedPhoto(db, id, compressed.blob, compressed);
+}
+
+export async function findReceiptIdByContentSha256(
+  sha: string,
+): Promise<string | null> {
+  const db = await openDb();
+  const storeName = receiptsStoreName(db);
+  const tx = db.transaction(storeName, "readonly");
+  const store = tx.objectStore(storeName);
+  if (!store.indexNames.contains("byContentSha256")) {
+    return null;
+  }
+  const rows = await readIndexAll<SerializedReceipt>(
+    store,
+    "byContentSha256",
+    IDBKeyRange.only(sha),
+  );
+  for (const row of rows) {
+    const receipt = deserializeReceipt(row);
+    if (receipt.isOnboardingDemo) continue;
+    if (isReceiptFiled(receipt)) continue;
+    return receipt.id;
+  }
+  return null;
+}
+
 export async function loadPhoto(id: string): Promise<Blob | null> {
   const db = await openDb();
   await ensurePhotoCipherReady(db);
   return loadEncryptedPhoto(db, id);
 }
 
+export async function loadPhotoThumb(id: string): Promise<Blob | null> {
+  const db = await openDb();
+  await ensurePhotoCipherReady(db);
+  return loadEncryptedThumbnail(db, id);
+}
+
 export async function hasStoredData(): Promise<boolean> {
   const db = await openDb();
+  const receiptsStore = receiptsStoreName(db);
   return new Promise((resolve, reject) => {
-    const tx = db.transaction(RECEIPTS_STORE, "readonly");
-    const request = tx.objectStore(RECEIPTS_STORE).count();
+    const tx = db.transaction(receiptsStore, "readonly");
+    const request = tx.objectStore(receiptsStore).count();
     request.onerror = () => reject(request.error);
     request.onsuccess = () => resolve((request.result ?? 0) > 0);
   });
@@ -432,9 +787,10 @@ export async function hasStoredData(): Promise<boolean> {
 
 export async function readSystemMeta<T>(key: string): Promise<T | null> {
   const db = await openDb();
+  const store = systemMetaStoreName(db);
   return new Promise((resolve, reject) => {
-    const tx = db.transaction(SYSTEM_META_STORE, "readonly");
-    const request = tx.objectStore(SYSTEM_META_STORE).get(key);
+    const tx = db.transaction(store, "readonly");
+    const request = tx.objectStore(store).get(key);
     request.onerror = () => reject(request.error);
     request.onsuccess = () => {
       const row = request.result as SystemMetaRow<T> | undefined;
@@ -445,10 +801,11 @@ export async function readSystemMeta<T>(key: string): Promise<T | null> {
 
 export async function writeSystemMeta<T>(key: string, value: T): Promise<void> {
   const db = await openDb();
+  const store = systemMetaStoreName(db);
   return new Promise((resolve, reject) => {
-    const tx = db.transaction(SYSTEM_META_STORE, "readwrite");
+    const tx = db.transaction(store, "readwrite");
     const request = tx
-      .objectStore(SYSTEM_META_STORE)
+      .objectStore(store)
       .put({ key, value } satisfies SystemMetaRow<T>);
     request.onerror = () => reject(request.error);
     request.onsuccess = () => resolve();
@@ -457,24 +814,44 @@ export async function writeSystemMeta<T>(key: string, value: T): Promise<void> {
 
 export async function clearAllLocalData(): Promise<void> {
   const db = await openDb();
-  return new Promise((resolve, reject) => {
-    const stores = [RECEIPTS_STORE, PHOTOS_STORE];
-    if (db.objectStoreNames.contains(CRYPTO_META_STORE)) {
-      stores.push(CRYPTO_META_STORE);
+  await wipeSnaptaxOpfsTree();
+  const receiptsStore = receiptsStoreName(db);
+  const systemStore = systemMetaStoreName(db);
+  const cryptoStore = cryptoMetaStoreName(db);
+  await new Promise<void>((resolve, reject) => {
+    const stores = [receiptsStore, PHOTOS_STORE];
+    if (db.objectStoreNames.contains(IDB_STORE_RECEIPT_PHOTOS)) {
+      stores.push(IDB_STORE_RECEIPT_PHOTOS);
     }
-    if (db.objectStoreNames.contains(SYSTEM_META_STORE)) {
-      stores.push(SYSTEM_META_STORE);
+    if (db.objectStoreNames.contains(IDB_STORE_RECEIPT_SUMMARY)) {
+      stores.push(IDB_STORE_RECEIPT_SUMMARY);
+    }
+    if (db.objectStoreNames.contains(cryptoStore)) {
+      stores.push(cryptoStore);
+    }
+    if (db.objectStoreNames.contains(systemStore)) {
+      stores.push(systemStore);
     }
     const tx = db.transaction(stores, "readwrite");
-    tx.objectStore(RECEIPTS_STORE).clear();
+    tx.objectStore(receiptsStore).clear();
     tx.objectStore(PHOTOS_STORE).clear();
-    if (db.objectStoreNames.contains(CRYPTO_META_STORE)) {
-      tx.objectStore(CRYPTO_META_STORE).clear();
+    if (db.objectStoreNames.contains(IDB_STORE_RECEIPT_PHOTOS)) {
+      tx.objectStore(IDB_STORE_RECEIPT_PHOTOS).clear();
     }
-    if (db.objectStoreNames.contains(SYSTEM_META_STORE)) {
-      tx.objectStore(SYSTEM_META_STORE).clear();
+    if (db.objectStoreNames.contains(IDB_STORE_RECEIPT_SUMMARY)) {
+      tx.objectStore(IDB_STORE_RECEIPT_SUMMARY).clear();
+    }
+    if (db.objectStoreNames.contains(cryptoStore)) {
+      tx.objectStore(cryptoStore).clear();
+    }
+    if (db.objectStoreNames.contains(systemStore)) {
+      tx.objectStore(systemStore).clear();
     }
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
   });
+  dbOpenPromise = null;
+  summaryBootstrapPromise = null;
+  db.close();
+  await deleteLegacyIdbIfPresent();
 }

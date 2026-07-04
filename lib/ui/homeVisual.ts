@@ -122,6 +122,11 @@ export const homeVisual = {
       border: "border-red-700/60",
       accent: "text-red-300",
     },
+    founder: {
+      bg: "bg-yellow-950/80",
+      border: "border-yellow-500/60",
+      accent: "text-yellow-400",
+    },
   },
 } as const;
 

@@ -126,7 +126,7 @@ export const EN_US_COPY: UserCopy = {
         done: "Added! Est. Tax Saved updates at the top.",
         blurry: "Too blurry — tap the row to resnap.",
       },
-      googleNudge: "New phone? Sign in with Google to save your receipts.",
+      googleNudge: "New phone? Sign in with Google to ocr your receipts.",
       googleNudgeDismiss: "Not now",
       aha: {
         snapTooltip:
@@ -186,6 +186,7 @@ export const EN_US_COPY: UserCopy = {
         delete: "Delete",
         unknownMerchant: "Unknown merchant",
         duplicateReceipt: "This receipt is already in your list.",
+        duplicateReceiptSimilar: "This looks like a receipt you already snapped.",
         status: {
           analyzing: "ANALYZING",
           uploading: "UPLOADING",
@@ -233,6 +234,29 @@ export const EN_US_COPY: UserCopy = {
           actionCount: "{count} receipt(s) need action",
           resnap: "RESNAP NOW",
         },
+        founder: {
+          label: "FIRST 50 ONLY",
+          subtitle: "{price} export this season",
+          subtitleLoading: "This season · first 50 only",
+          scarcity: "{remaining} spots left",
+          view: "See deal",
+          newBadge: "NEW",
+        },
+      },
+      founderSheet: {
+        title: "First 50 Deal",
+        seatsRemaining: "{remaining} of {total} founder seats left",
+        becomeFounder: "Claim my spot — {price}",
+        signInFirst: "Sign in with Google to claim your spot",
+        notNow: "Not now",
+        seasonPrice: "{price} for this tax season",
+        offerEnds: "Offer ends when {total} spots are gone",
+        programFull: "All {total} founder spots are taken",
+        alreadyEntitled:
+          "You already have Export access for this tax season — no extra charge.",
+        paymentUnavailable: "Payment unavailable. Paddle is not configured.",
+        paymentFailed: "Payment failed. Please try again.",
+        confirmingPayment: "Confirming payment…",
       },
       overlays: {
         back: "< BACK",
@@ -330,9 +354,9 @@ export const EN_US_COPY: UserCopy = {
       },
     },
     paywall: {
-      unlockTitle: "Unlock Your Full Tax Pack — $49",
+      unlockTitle: "Unlock Your Full Tax Pack — {price}",
       maybeLater: "Maybe later",
-      unlockNow: "Unlock now — $49",
+      unlockNow: "Unlock now — {price}",
       features: [
         "Export unlimited receipts",
         "CPA-ready Excel tax pack",
@@ -473,8 +497,9 @@ export const EN_US_COPY: UserCopy = {
         snap1099Nec: "Snap 1099-NEC",
         snap1099K: "Snap 1099-K",
         trustLine: "Used by thousands of self-employed pros",
+        taxEstimateDisclaimer:
+          "Est. Tax Saved is an estimate, not tax advice. See Terms §6.",
         mostPopular: "Most Popular",
-        price: "$49",
         states: {
           final_deadline: {
             title: "Final Tax Pack Ready",
@@ -486,7 +511,7 @@ export const EN_US_COPY: UserCopy = {
           },
           unpaid: {
             title: "Export {season} IRS Tax Pack",
-            cta: "Unlock for $49",
+            cta: "Unlock for {price}",
           },
           paid_new: {
             title: "{season} IRS Tax Pack Unlocked",
@@ -554,7 +579,7 @@ export const EN_US_COPY: UserCopy = {
         moreTitle: "More options",
         moreSubtitle: "SMS, Email, AirDrop & more",
         message:
-          "Hey — I've been using Snap1099 to track my 1099 receipts and save on taxes. Free for contractors — thought you'd find it useful:",
+          "Hey — I've been using Snap1099 to track my 1099 receipts and ocr on taxes. Free for contractors — thought you'd find it useful:",
         shareTitle: "Snap1099 — Receipts to IRS tax pack",
         linkCopied: "Link copied",
         shareFailed: "Could not share. Link copied instead.",
@@ -567,10 +592,14 @@ export const EN_US_COPY: UserCopy = {
         dataStorageValue:
           "Processed and stored in the United States. See Privacy Policy for international transfers.",
         contactPrefix: "Contact",
+        dataRetention: "Data Retention",
+        security: "Security & Incidents",
         deleteAccount: "Delete Account",
         deleteFailed: "Delete failed. Please try again.",
         deleteRequiresOnline:
           "Connect to the internet to delete your account and cloud data.",
+        deleteSessionExpired:
+          "Your Google session expired. Sign in again with Google, then delete your account.",
         deleteTitle: "Delete Account",
         deleteSignedInWarning:
           "This is irreversible. All cloud receipts, export records, and account data will be permanently deleted.",
@@ -660,7 +689,7 @@ export const EN_US_COPY: UserCopy = {
             {
               label: "**Est. Tax Saved** (yellow, top)",
               meaning:
-                "Rough guess of tax you might save. **Not official tax advice.**",
+                "Rough guess of tax you might ocr. **Not official tax advice.**",
             },
             {
               label: "**SNAP RECEIPT**",
@@ -730,7 +759,7 @@ export const EN_US_COPY: UserCopy = {
             "Sign in with Google (if not yet).",
             "Pay **$49** once for this tax season (via Paddle).",
             "Pick your tax year and file type.",
-            "Share the file — email, WhatsApp, or save to Files.",
+            "Share the file — email, WhatsApp, or ocr to Files.",
           ],
           afterPayTitle: "After you pay",
           afterPay: [
@@ -838,7 +867,7 @@ export const EN_US_COPY: UserCopy = {
         "These receipts need a category before your CPA or tax software can use them.",
       reviewUnknownMerchant: "Unknown merchant",
       reviewSaving: "Saving…",
-      reviewSaveFailed: "Could not save category. Try again.",
+      reviewSaveFailed: "Could not ocr category. Try again.",
       formatCpaPdfTitle: "CPA Summary PDF (Links to Receipts)",
       formatCpaPdfHint:
         "IRS-compliant summary with clickable links to your receipt photos.",

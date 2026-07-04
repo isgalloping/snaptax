@@ -8,7 +8,9 @@ import { LegalSheet } from "@/components/legal/LegalSheet";
 import {
   deleteAccountAndLocalData,
   isDeleteAccountOfflineError,
+  isDeleteAccountSessionExpiredError,
 } from "@/lib/client/deleteAccountFlow";
+import { useDialogEscape } from "@/lib/ui/useDialogEscape";
 
 interface PrivacyDataSectionProps {
   isSignedIn?: boolean;
@@ -74,6 +76,13 @@ export function PrivacyDataSection({
     };
   }, []);
 
+  useDialogEscape(showDeleteConfirm, () => {
+    if (!deleting) {
+      setShowDeleteConfirm(false);
+      setError(null);
+    }
+  });
+
   const handleDelete = async () => {
     setDeleting(true);
     setError(null);
@@ -84,6 +93,8 @@ export function PrivacyDataSection({
     } catch (err) {
       if (isDeleteAccountOfflineError(err)) {
         setError(copy.deleteRequiresOnline);
+      } else if (isDeleteAccountSessionExpiredError(err)) {
+        setError(copy.deleteSessionExpired);
       } else {
         setError(copy.deleteFailed);
       }
@@ -109,6 +120,8 @@ export function PrivacyDataSection({
             label={copy.terms}
             onClick={() => setLegalDoc("terms")}
           />
+          <SettingsRow label={copy.dataRetention} href="/data-retention" />
+          <SettingsRow label={copy.security} href="/security" />
           <div className="rounded-xl border-2 border-zinc-600 bg-zinc-800 p-4">
             <p className="text-xs font-bold uppercase tracking-wider text-zinc-400">
               {copy.dataStorage}
@@ -141,8 +154,16 @@ export function PrivacyDataSection({
 
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-end bg-black/70">
-          <div className="w-full rounded-t-3xl border-t-4 border-red-600 bg-zinc-900 p-6 pb-10">
-            <p className="text-lg font-black uppercase tracking-wider text-white">
+          <div
+            className="w-full rounded-t-3xl border-t-4 border-red-600 bg-zinc-900 p-6 pb-10"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-account-title"
+          >
+            <p
+              id="delete-account-title"
+              className="text-lg font-black uppercase tracking-wider text-white"
+            >
               {copy.deleteTitle}
             </p>
             <p className="mt-4 text-sm leading-relaxed text-zinc-300">

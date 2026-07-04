@@ -1,0 +1,111 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+import { restoreReceiptsFromCloud } from "@/lib/client/cloudRestoreFlow";
+import { settingsVisual } from "@/lib/ui/settingsVisual";
+
+type RestoreState = "idle" | "restoring" | "success" | "error";
+
+interface RestoreFromCloudSectionProps {
+  onRestored?: () => void | Promise<void>;
+}
+
+function CloudRestoreIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5 shrink-0 text-zinc-300"
+      aria-hidden
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <path
+        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M12 12v9M9 18l3 3 3-3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function RestoreFromCloudSection({ onRestored }: RestoreFromCloudSectionProps) {
+  const [state, setState] = useState<RestoreState>("idle");
+  const [restoredCount, setRestoredCount] = useState(0);
+  const [isOnline, setIsOnline] = useState(
+    () => typeof navigator !== "undefined" && navigator.onLine,
+  );
+
+  useEffect(() => {
+    const syncOnline = () =>
+      setIsOnline(typeof navigator !== "undefined" && navigator.onLine);
+    window.addEventListener("online", syncOnline);
+    window.addEventListener("offline", syncOnline);
+    return () => {
+      window.removeEventListener("online", syncOnline);
+      window.removeEventListener("offline", syncOnline);
+    };
+  }, []);
+
+  const handleRestore = useCallback(async () => {
+    if (!isOnline || state === "restoring") return;
+
+    setState("restoring");
+    setRestoredCount(0);
+
+    try {
+      const { restoredCount: count } = await restoreReceiptsFromCloud({
+        downloadImages: true,
+        onProgress: () => {},
+      });
+      setRestoredCount(count);
+      setState("success");
+      await onRestored?.();
+    } catch {
+      setState("error");
+    }
+  }, [isOnline, onRestored, state]);
+
+  const statusMessage =
+    !isOnline
+      ? "Go online to restore"
+      : state === "restoring"
+        ? "Restoring…"
+        : state === "success"
+          ? `Restored ${restoredCount} receipts`
+          : state === "error"
+            ? "Restore failed. Try again."
+            : null;
+
+  const buttonDisabled = !isOnline || state === "restoring";
+
+  return (
+    <section className="mb-4">
+      <p className={settingsVisual.sectionHeading}>Data &amp; sync</p>
+      <div className={settingsVisual.preferences.container}>
+        <button
+          type="button"
+          disabled={buttonDisabled}
+          onClick={() => void handleRestore()}
+          className={`${settingsVisual.preferences.row} disabled:opacity-60`}
+        >
+          <CloudRestoreIcon />
+          <span className="min-w-0 flex-1 text-sm font-bold text-white">
+            Restore from cloud
+          </span>
+        </button>
+
+        {statusMessage && (
+          <p
+            className={`border-t border-zinc-800 px-4 py-3 text-center text-sm font-bold ${
+              state === "error" ? "text-red-500" : "text-yellow-400"
+            }`}
+            role="status"
+          >
+            {statusMessage}
+          </p>
+        )}
+      </div>
+    </section>
+  );
+}

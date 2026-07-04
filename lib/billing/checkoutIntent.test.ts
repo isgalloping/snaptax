@@ -2,8 +2,10 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   CHECKOUT_INTENT_TTL_MS,
+  createOrReuseCheckoutIntent,
   evaluateIntentGrant,
   isCheckoutIntentExpired,
+  shouldReuseCheckoutIntentBySkuTier,
 } from "./checkoutIntent.ts";
 
 const baseIntent = {
@@ -27,6 +29,82 @@ describe("checkoutIntent helpers", () => {
       isCheckoutIntentExpired(new Date("2026-06-13T12:00:01.000Z"), now),
       false,
     );
+  });
+});
+
+describe("shouldReuseCheckoutIntentBySkuTier", () => {
+  it("reuses when both tiers are null/default", () => {
+    assert.equal(shouldReuseCheckoutIntentBySkuTier(null), true);
+    assert.equal(shouldReuseCheckoutIntentBySkuTier(null, undefined), true);
+  });
+
+  it("reuses when existing and requested tiers match", () => {
+    assert.equal(
+      shouldReuseCheckoutIntentBySkuTier("FOUNDER", "FOUNDER"),
+      true,
+    );
+  });
+
+  it("does not reuse when tiers differ", () => {
+    assert.equal(shouldReuseCheckoutIntentBySkuTier(null, "FOUNDER"), false);
+    assert.equal(
+      shouldReuseCheckoutIntentBySkuTier("DEFAULT", "FOUNDER"),
+      false,
+    );
+    assert.equal(shouldReuseCheckoutIntentBySkuTier("FOUNDER"), false);
+  });
+});
+
+describe("createOrReuseCheckoutIntent sku tier reuse", () => {
+  it("reuses pending intent only when sku tier matches", async () => {
+    const existing = {
+      id: "intent-existing",
+      expiresAt: new Date("2026-06-13T12:10:00.000Z"),
+      skuTier: "FOUNDER" as string | null,
+    };
+    const created: Array<{ skuTier: string | null }> = [];
+
+    const deps = {
+      findFirst: async () => existing,
+      create: async (data: { skuTier: string | null }) => {
+        created.push(data);
+        return {
+          id: "intent-new",
+          expiresAt: new Date("2026-06-13T12:15:00.000Z"),
+        };
+      },
+      now: () => new Date("2026-06-13T12:00:00.000Z"),
+    };
+
+    const reused = await createOrReuseCheckoutIntent(
+      "user-1",
+      "2026",
+      "FOUNDER",
+      deps,
+    );
+    assert.deepEqual(reused, {
+      intentId: "intent-existing",
+      expiresAt: existing.expiresAt,
+    });
+    assert.equal(created.length, 0);
+
+    const freshDeps = {
+      ...deps,
+      findFirst: async () => ({
+        ...existing,
+        skuTier: "FOUNDER",
+      }),
+    };
+
+    const fresh = await createOrReuseCheckoutIntent(
+      "user-1",
+      "2026",
+      "DEFAULT",
+      freshDeps,
+    );
+    assert.equal(fresh.intentId, "intent-new");
+    assert.equal(created.length, 1);
+    assert.equal(created[0]?.skuTier, "DEFAULT");
   });
 });
 

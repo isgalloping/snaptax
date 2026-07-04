@@ -4,36 +4,54 @@
 
 By using Snap1099 ("the App"), you agree to these Terms. If you do not agree, do not use the App.
 
-## 1. Service Description
+## 1. Agreement & Service Description
 
 Snap1099 helps self-employed workers and contractors photograph receipts, categorize expenses with AI assistance, and export spreadsheets for tax preparation. The App is a **tool**, not tax, legal, or accounting advice. Consult a qualified CPA or advisor for your tax obligations.
 
-## 2. Accounts
+## 2. Eligibility & Acceptable Use
+
+You must be able to form a binding contract in your jurisdiction. You agree not to misuse the App, upload unlawful content, attempt to access other users' data, or interfere with our systems.
+
+## 3. Accounts
 
 - You may use the App anonymously (Ghost account) with data stored on your device until you sign in.
 - **Google Sign-In** is the only account method. Linking Google enables cloud backup and multi-device access.
 - **Device loss:** If you change devices without signing in, local data **cannot be recovered**. We warn you in the App before export and in Settings.
 
-## 3. Acceptable Use
+## 4. Subscriptions & Payments
 
-You agree not to misuse the App, upload unlawful content, or attempt to access other users' data.
+Tax-season **Export Tax Pack** requires a one-time fee processed by **Paddle** ($49 per season unless otherwise shown in the App). Refunds follow Paddle's policies and applicable law. Paid seasons include unlimited re-export for that tax season as described in the App.
 
-## 4. Payments
+## 5. Intellectual Property
 
-Tax-season export requires a one-time fee processed by **Paddle**. Refunds follow Paddle's policies and applicable law. Export rights apply per tax season as described in the App.
+Snap1099, its logo, and software are owned by us or our licensors. You retain ownership of your receipt content. You grant us a limited license to process your receipts solely to provide the Service.
 
-## 5. Data & Privacy
+## 6. Disclaimer & Tax Estimates
 
-Your use is governed by our [Privacy Policy](/privacy). By snapping a receipt, you acknowledge our Terms and Privacy Policy.
+**Est. Tax Saved** and related figures are **estimates only**, not tax advice, audit defense, or guaranteed savings. Categorization may be wrong; you are responsible for verifying deductions with a qualified professional.
 
-## 6. Disclaimer
+THE APP IS PROVIDED **"AS IS"** WITHOUT WARRANTIES OF ANY KIND. WE ARE NOT LIABLE FOR INDIRECT DAMAGES, TAX PENALTIES, OR LOSSES FROM MISCLASSIFIED RECEIPTS.
 
-THE APP IS PROVIDED "AS IS" WITHOUT WARRANTIES. WE ARE NOT LIABLE FOR INDIRECT DAMAGES, TAX PENALTIES, OR LOSSES FROM MISCLASSIFIED RECEIPTS. MAXIMUM LIABILITY IS LIMITED TO FEES YOU PAID IN THE PAST 12 MONTHS.
+## 7. Limitation of Liability
 
-## 7. Changes & Termination
+TO THE MAXIMUM EXTENT PERMITTED BY LAW, OUR TOTAL LIABILITY FOR ANY CLAIM ARISING FROM THE SERVICE IS LIMITED TO THE FEES YOU PAID TO US IN THE **PAST 12 MONTHS**.
 
-We may update these Terms. Continued use after changes constitutes acceptance. We may suspend access for violations.
+## 8. Indemnification
 
-## 8. Contact
+You agree to indemnify and hold us harmless from claims arising from your misuse of the App or violation of these Terms, except where prohibited by law.
+
+## 9. Termination & Suspension
+
+We may suspend or terminate access for violations of these Terms or to protect the Service. You may stop using the App at any time and delete your data via **Delete Account** in Settings.
+
+## 10. Dispute Resolution & Governing Law
+
+These Terms are governed by the laws of the **State of Delaware, United States**, excluding conflict-of-law rules. EU consumers retain mandatory rights under local law and GDPR. Disputes should first be sent to **legal@snap1099.com**.
+
+## 11. Privacy
+
+Your use is governed by our [Privacy Policy](/privacy). By snapping a receipt while online, you acknowledge our Terms and Privacy Policy, including processing in the United States.
+
+## 12. Contact
 
 **legal@snap1099.com**

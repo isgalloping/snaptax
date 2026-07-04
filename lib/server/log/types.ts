@@ -8,9 +8,11 @@ export type LogModule =
   | "api.billing"
   | "api.webhook"
   | "biz.openai"
+  | "biz.ocr"
   | "biz.blob"
   | "biz.ghost"
   | "biz.paddle"
+  | "biz.founder"
   | "biz.export"
   | "biz.verify";
 
@@ -38,6 +40,13 @@ export type LogMeta = {
   verifyBypass?: boolean;
   mockAi?: boolean;
   bypassPay?: boolean;
+  stage?: string;
+  extractionSource?: string;
+  engine?: string;
+  event?: string;
+  founderNumber?: number | null;
+  tier?: string;
+  founderPurchase?: boolean;
 };
 
 export type LogEntry = {

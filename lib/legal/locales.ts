@@ -30,44 +30,51 @@ const EN: LegalBundle = {
     "Processed and stored in the United States. See Privacy Policy for international transfers.",
   privacy: [
     {
-      title: "Privacy by Design",
+      title: "Privacy by Design & Ownership",
       body: [
-        "We minimize data collection for receipt categorization and tax-season exports under GDPR and CPRA.",
-        "Offline: receipts stay on your device until you are back online.",
-        "Online (including before Google Sign-In): we send receipt images to our U.S. servers and OpenAI to categorize your receipt. We do not collect your name or email until you sign in with Google.",
+        "We minimize collection for receipt categorization and tax-season exports under GDPR and CPRA.",
+        "You own your receipt data. We do not sell it or use it for ads.",
+        "Offline: data stays on your device in encrypted storage. Online: U.S. processing as described in our full Privacy Policy.",
       ],
     },
     {
-      title: "Data Storage & International Transfers",
+      title: "What We Collect",
       body: [
-        "Receipt images and related data are stored on encrypted cloud servers in the United States.",
-        "By using the App and agreeing to our Terms and Privacy Policy, you acknowledge that your data will be processed in the U.S., which may have different laws than your country.",
-        "We use TLS 1.3 and AES-256 at rest where supported; our providers comply with the EU-U.S. Data Privacy Framework where applicable.",
+        "Receipt images, extracted metadata (merchant, amount, category), Google email/name if signed in, and payment metadata for export.",
+        "We do not collect GPS, contacts, or cross-site browsing history.",
       ],
     },
     {
-      title: "Google Sign-In",
+      title: "AI Processing",
       body: [
-        "We request profile and email scopes only. We do not access Gmail, Drive, Photos, or Calendar.",
+        "OpenAI analyzes receipt images when online. API data is not used to train models.",
+        "Est. tax amounts are calculated on our servers — AI does not autonomously change filing status or ledger fields.",
       ],
     },
     {
-      title: "Sub-Processors",
+      title: "Storage & International Transfers",
       body: [
-        "OpenAI (online receipt analysis, including before sign-in; no training on API data), Paddle, Google, Vercel/Neon/Blob (United States).",
+        "Data is stored on encrypted servers in the United States.",
+        "We use TLS 1.3, AES-256 at rest where supported, EU-U.S. Data Privacy Framework, and Standard Contractual Clauses (SCCs) where applicable.",
       ],
     },
     {
-      title: "No Sale of Data",
+      title: "Retention & Security",
       body: [
-        "Zero ads. We never sell or share your financial data with marketers or brokers.",
+        "See Data Retention and Security pages linked from Settings for retention periods and incident response.",
+      ],
+    },
+    {
+      title: "No Sale (CPRA)",
+      body: [
+        "We do not sell your personal information. Zero ads. No sharing with data brokers.",
       ],
     },
     {
       title: "Your Rights",
       body: [
-        "Access and export receipts in the App. Delete all data via Delete Account in Settings.",
-        "Contact legal@snap1099.com — we aim to respond within 48 hours.",
+        "Access, rectification, erasure (Delete Account), portability (Export), restrict processing, and object — contact legal@snap1099.com.",
+        "We respond within 30 days (acknowledgment targeted within 48 hours).",
       ],
     },
   ],
@@ -75,30 +82,26 @@ const EN: LegalBundle = {
     {
       title: "Service",
       body: [
-        "Snap1099 helps you photograph receipts, categorize expenses with AI, and export spreadsheets for tax prep. This is a tool, not tax or legal advice.",
+        "Snap1099 helps you photograph receipts, categorize expenses with AI, and export for tax prep. This is a tool, not tax or legal advice.",
       ],
     },
     {
-      title: "Accounts",
+      title: "Accounts & Payments",
       body: [
-        "You may use the App with a Ghost ID before Google Sign-In. Online processing stores data in the United States as described in our Privacy Policy.",
-        "If you change devices without signing in, local data cannot be recovered.",
+        "Ghost use before Google Sign-In. Device loss without sign-in means data cannot be recovered.",
+        "Tax-season export: one-time Paddle fee per season; unlimited re-export that season when paid.",
       ],
     },
     {
-      title: "Payments",
-      body: ["Tax-season export uses Paddle one-time fees."],
-    },
-    {
-      title: "Privacy",
+      title: "Disclaimer",
       body: [
-        "Use is governed by our Privacy Policy. By snapping a receipt while online, you agree to these Terms and the Privacy Policy, including U.S. processing.",
+        'Est. Tax Saved is an estimate only, not tax advice. App provided "as is". Liability capped to fees paid in the past 12 months.',
       ],
     },
     {
-      title: "Disclaimer & Contact",
+      title: "Privacy & Contact",
       body: [
-        'The App is provided "as is" without warranties.',
+        "Governed by our Privacy Policy. U.S. processing when snapping online.",
         "Contact: legal@snap1099.com",
       ],
     },
@@ -115,44 +118,51 @@ const FR: LegalBundle = {
     "Traitement et stockage aux États-Unis. Voir la Politique de confidentialité pour les transferts internationaux.",
   privacy: [
     {
-      title: "Confidentialité dès la conception",
+      title: "Confidentialité dès la conception & propriété",
       body: [
-        "Nous limitons la collecte de données au strict nécessaire pour classer vos reçus et préparer les exports de saison fiscale, conformément au RGPD et au CPRA.",
-        "Hors ligne : les reçus restent sur votre appareil jusqu'à ce que vous soyez de nouveau en ligne.",
-        "En ligne (y compris avant la connexion Google) : nous envoyons les images de reçus à nos serveurs aux États-Unis et à OpenAI pour les analyser. Nous ne collectons ni votre nom ni votre e-mail tant que vous ne vous connectez pas avec Google.",
+        "Nous limitons la collecte pour classer vos reçus et préparer les exports de saison fiscale, conformément au RGPD et au CPRA.",
+        "Vous êtes propriétaire de vos données de reçus. Nous ne les vendons pas et ne les utilisons pas pour la publicité.",
+        "Hors ligne : données sur votre appareil. En ligne : traitement aux États-Unis comme décrit dans notre Politique complète.",
+      ],
+    },
+    {
+      title: "Données collectées",
+      body: [
+        "Images de reçus, métadonnées extraites (commerçant, montant, catégorie), e-mail/nom Google si connecté, métadonnées de paiement pour l'export.",
+        "Pas de GPS, contacts ni historique de navigation intersites.",
+      ],
+    },
+    {
+      title: "Traitement IA",
+      body: [
+        "OpenAI analyse les images de reçus en ligne. Les données API ne servent pas à l'entraînement.",
+        "Les montants fiscaux estimés sont calculés sur nos serveurs — l'IA ne modifie pas autonomement le statut d'export.",
       ],
     },
     {
       title: "Stockage & transferts internationaux",
       body: [
-        "Les images de reçus et les données associées sont stockées sur des serveurs cloud chiffrés aux États-Unis.",
-        "En utilisant l'application et en acceptant nos Conditions et notre Politique de confidentialité, vous reconnaissez que vos données seront traitées aux États-Unis, où les lois peuvent différer de celles de votre pays.",
-        "Nous utilisons TLS 1.3 et AES-256 au repos lorsque pris en charge ; nos prestataires respectent le EU-U.S. Data Privacy Framework le cas échéant.",
+        "Données stockées sur serveurs chiffrés aux États-Unis.",
+        "TLS 1.3, AES-256 au repos, EU-U.S. Data Privacy Framework et Clauses contractuelles types (CCT) le cas échéant.",
       ],
     },
     {
-      title: "Connexion Google",
+      title: "Conservation & sécurité",
       body: [
-        "Nous demandons uniquement les autorisations profil et e-mail. Nous n'accédons pas à Gmail, Drive, Photos ou Calendar.",
+        "Voir les pages Conservation des données et Sécurité dans les Paramètres pour les durées et la réponse aux incidents.",
       ],
     },
     {
-      title: "Sous-traitants",
+      title: "Aucune vente (CPRA)",
       body: [
-        "OpenAI (analyse en ligne des reçus, y compris avant connexion ; pas d'entraînement sur les données API), Paddle, Google, Vercel/Neon/Blob (États-Unis).",
-      ],
-    },
-    {
-      title: "Aucune vente de données",
-      body: [
-        "Zéro publicité. Nous ne vendons ni ne partageons vos données financières avec des annonceurs ou des courtiers.",
+        "Nous ne vendons pas vos informations personnelles. Zéro publicité. Aucun partage avec des courtiers.",
       ],
     },
     {
       title: "Vos droits",
       body: [
-        "Accédez à vos reçus et exportez-les dans l'application. Supprimez toutes vos données via Supprimer le compte dans les Paramètres.",
-        "Contact : legal@snap1099.com — réponse visée sous 48 heures.",
+        "Accès, rectification, effacement (Supprimer le compte), portabilité (Export), limitation et opposition — legal@snap1099.com.",
+        "Réponse sous 30 jours (accusé visé sous 48 heures).",
       ],
     },
   ],
@@ -160,32 +170,26 @@ const FR: LegalBundle = {
     {
       title: "Service",
       body: [
-        "Snap1099 vous aide à photographier des reçus, classer vos dépenses avec l'IA et exporter des tableurs pour la préparation fiscale. Il s'agit d'un outil, pas d'un conseil fiscal ou juridique.",
+        "Snap1099 vous aide à photographier des reçus, classer vos dépenses avec l'IA et exporter pour la préparation fiscale. Outil, pas conseil fiscal.",
       ],
     },
     {
-      title: "Comptes",
+      title: "Comptes & paiements",
       body: [
-        "Vous pouvez utiliser l'application avec un identifiant Ghost avant la connexion Google. Le traitement en ligne stocke les données aux États-Unis comme décrit dans notre Politique de confidentialité.",
-        "Si vous changez d'appareil sans vous connecter, les données locales ne peuvent pas être récupérées.",
+        "Utilisation Ghost avant Google Sign-In. Perte d'appareil sans connexion = données non récupérables.",
+        "Export de saison fiscale : frais unique Paddle par saison ; réexport illimité cette saison si payé.",
       ],
     },
     {
-      title: "Paiements",
+      title: "Clause de non-responsabilité",
       body: [
-        "L'export de saison fiscale est facturé via des paiements uniques Paddle.",
+        "Est. Tax Saved est une estimation uniquement, pas un conseil fiscal. Application fournie « en l'état ». Responsabilité limitée aux frais des 12 derniers mois.",
       ],
     },
     {
-      title: "Confidentialité",
+      title: "Confidentialité & contact",
       body: [
-        "L'utilisation est régie par notre Politique de confidentialité. En photographiant un reçu en ligne, vous acceptez ces Conditions et la Politique de confidentialité, y compris le traitement aux États-Unis.",
-      ],
-    },
-    {
-      title: "Clause de non-responsabilité & contact",
-      body: [
-        'L\'application est fournie « en l\'état » sans garantie.',
+        "Régi par notre Politique de confidentialité. Traitement aux États-Unis lors d'une photo en ligne.",
         "Contact : legal@snap1099.com",
       ],
     },
@@ -202,44 +206,51 @@ const DE: LegalBundle = {
     "Verarbeitung und Speicherung in den Vereinigten Staaten. Internationale Übermittlungen siehe Datenschutzerklärung.",
   privacy: [
     {
-      title: "Datenschutz by Design",
+      title: "Datenschutz by Design & Eigentum",
       body: [
-        "Wir minimieren die Datenerhebung für Belegkategorisierung und Steuersaison-Exporte gemäß DSGVO und CPRA.",
-        "Offline: Belege bleiben auf Ihrem Gerät, bis Sie wieder online sind.",
-        "Online (auch vor Google-Anmeldung): Wir senden Belegbilder an unsere US-Server und OpenAI zur Kategorisierung. Name und E-Mail erheben wir erst nach Google-Anmeldung.",
+        "Wir minimieren die Erhebung für Belegkategorisierung und Steuersaison-Exporte gemäß DSGVO und CPRA.",
+        "Sie besitzen Ihre Belegdaten. Wir verkaufen sie nicht und nutzen sie nicht für Werbung.",
+        "Offline: Daten auf Ihrem Gerät. Online: US-Verarbeitung wie in der vollständigen Datenschutzerklärung beschrieben.",
+      ],
+    },
+    {
+      title: "Erhobene Daten",
+      body: [
+        "Belegbilder, extrahierte Metadaten (Händler, Betrag, Kategorie), Google-E-Mail/Name bei Anmeldung, Zahlungsmetadaten für Export.",
+        "Kein GPS, keine Kontakte, kein Cross-Site-Browsing-Verlauf.",
+      ],
+    },
+    {
+      title: "KI-Verarbeitung",
+      body: [
+        "OpenAI analysiert Belegbilder online. API-Daten werden nicht zum Training verwendet.",
+        "Geschätzte Steuerbeträge werden auf unseren Servern berechnet — KI ändert Export-Status nicht autonom.",
       ],
     },
     {
       title: "Speicherung & internationale Übermittlungen",
       body: [
-        "Belegbilder und zugehörige Daten werden auf verschlüsselten Cloud-Servern in den Vereinigten Staaten gespeichert.",
-        "Mit Nutzung der App und Zustimmung zu diesen Bedingungen und der Datenschutzerklärung erkennen Sie an, dass Ihre Daten in den USA verarbeitet werden, wo andere Datenschutzgesetze gelten können.",
-        "Wir nutzen TLS 1.3 und AES-256 at rest, soweit unterstützt; Anbieter halten das EU-U.S. Data Privacy Framework ein, wo anwendbar.",
+        "Daten auf verschlüsselten Servern in den Vereinigten Staaten.",
+        "TLS 1.3, AES-256 at rest, EU-U.S. Data Privacy Framework und Standardvertragsklauseln (SCCs) wo anwendbar.",
       ],
     },
     {
-      title: "Google-Anmeldung",
+      title: "Aufbewahrung & Sicherheit",
       body: [
-        "Wir fordern nur Profil- und E-Mail-Berechtigungen an. Kein Zugriff auf Gmail, Drive, Fotos oder Kalender.",
+        "Siehe Seiten Datenaufbewahrung und Sicherheit in den Einstellungen für Fristen und Vorfallreaktion.",
       ],
     },
     {
-      title: "Unterauftragsverarbeiter",
+      title: "Kein Verkauf (CPRA)",
       body: [
-        "OpenAI (Online-Beleganalyse, auch vor Anmeldung; kein Training mit API-Daten), Paddle, Google, Vercel/Neon/Blob (USA).",
-      ],
-    },
-    {
-      title: "Kein Verkauf von Daten",
-      body: [
-        "Keine Werbung. Wir verkaufen oder teilen Ihre Finanzdaten nicht mit Vermarktern oder Brokern.",
+        "Wir verkaufen Ihre personenbezogenen Daten nicht. Keine Werbung. Kein Teilen mit Brokern.",
       ],
     },
     {
       title: "Ihre Rechte",
       body: [
-        "Zugriff und Export von Belegen in der App. Löschung aller Daten über Konto löschen in den Einstellungen.",
-        "Kontakt: legal@snap1099.com — Antwort innerhalb von 48 Stunden angestrebt.",
+        "Auskunft, Berichtigung, Löschung (Konto löschen), Übertragbarkeit (Export), Einschränkung und Widerspruch — legal@snap1099.com.",
+        "Antwort innerhalb von 30 Tagen (Bestätigung innerhalb von 48 Stunden angestrebt).",
       ],
     },
   ],
@@ -247,30 +258,26 @@ const DE: LegalBundle = {
     {
       title: "Leistung",
       body: [
-        "Snap1099 hilft Ihnen, Belege zu fotografieren, Ausgaben per KI zu kategorisieren und Tabellen für die Steuervorbereitung zu exportieren. Es ist ein Werkzeug, keine Steuer- oder Rechtsberatung.",
+        "Snap1099 hilft beim Fotografieren, KI-Kategorisieren und Exportieren für die Steuervorbereitung. Werkzeug, keine Steuerberatung.",
       ],
     },
     {
-      title: "Konten",
+      title: "Konten & Zahlungen",
       body: [
-        "Sie können die App mit einer Ghost-ID vor Google-Anmeldung nutzen. Online-Verarbeitung speichert Daten in den USA wie in der Datenschutzerklärung beschrieben.",
-        "Ohne Anmeldung sind lokale Daten nach Gerätewechsel nicht wiederherstellbar.",
+        "Ghost-Nutzung vor Google-Anmeldung. Geräteverlust ohne Anmeldung = Daten nicht wiederherstellbar.",
+        "Steuersaison-Export: einmalige Paddle-Gebühr pro Saison; unbegrenzter Re-Export in bezahlter Saison.",
       ],
     },
     {
-      title: "Zahlungen",
-      body: ["Steuersaison-Export über einmalige Paddle-Gebühren."],
-    },
-    {
-      title: "Datenschutz",
+      title: "Haftungsausschluss",
       body: [
-        "Die Nutzung unterliegt unserer Datenschutzerklärung. Mit dem Fotografieren eines Belegs online stimmen Sie diesen Bedingungen und der Datenschutzerklärung einschließlich US-Verarbeitung zu.",
+        "Est. Tax Saved ist nur eine Schätzung, keine Steuerberatung. App \"wie besehen\". Haftung begrenzt auf Gebühren der letzten 12 Monate.",
       ],
     },
     {
-      title: "Haftungsausschluss & Kontakt",
+      title: "Datenschutz & Kontakt",
       body: [
-        'Die App wird „wie besehen" ohne Gewährleistung bereitgestellt.',
+        "Unterliegt unserer Datenschutzerklärung. US-Verarbeitung beim Online-Fotografieren.",
         "Kontakt: legal@snap1099.com",
       ],
     },

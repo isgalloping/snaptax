@@ -8,34 +8,75 @@ export type CheckoutIntentResult = {
   expiresAt: Date;
 };
 
+export function shouldReuseCheckoutIntentBySkuTier(
+  existingSkuTier: string | null,
+  requestedSkuTier?: string,
+): boolean {
+  return existingSkuTier === (requestedSkuTier ?? null);
+}
+
+export type CreateCheckoutIntentDeps = {
+  findFirst?: (args: {
+    userId: string;
+    taxSeason: string;
+    now: Date;
+  }) => Promise<{ id: string; expiresAt: Date; skuTier: string | null } | null>;
+  create?: (data: {
+    userId: string;
+    taxSeason: string;
+    status: string;
+    expiresAt: Date;
+    skuTier: string | null;
+  }) => Promise<{ id: string; expiresAt: Date }>;
+  now?: () => Date;
+};
+
 export async function createOrReuseCheckoutIntent(
   userId: string,
   taxSeason: string,
+  skuTier?: string,
+  deps: CreateCheckoutIntentDeps = {},
 ): Promise<CheckoutIntentResult> {
-  const now = utcNow();
+  const now = deps.now?.() ?? utcNow();
 
-  const existing = await prisma.snaptaxCheckoutIntent.findFirst({
-    where: {
-      userId,
-      taxSeason,
-      status: "pending",
-      expiresAt: { gt: now },
-    },
-    orderBy: { createdAt: "desc" },
-  });
+  const findFirst =
+    deps.findFirst ??
+    (async ({ userId: uid, taxSeason: season, now: at }) =>
+      prisma.snaptaxCheckoutIntent.findFirst({
+        where: {
+          userId: uid,
+          taxSeason: season,
+          status: "pending",
+          expiresAt: { gt: at },
+        },
+        orderBy: { createdAt: "desc" },
+        select: { id: true, expiresAt: true, skuTier: true },
+      }));
 
-  if (existing) {
+  const existing = await findFirst({ userId, taxSeason, now });
+
+  if (
+    existing &&
+    shouldReuseCheckoutIntentBySkuTier(existing.skuTier, skuTier)
+  ) {
     return { intentId: existing.id, expiresAt: existing.expiresAt };
   }
 
   const expiresAt = new Date(now.getTime() + CHECKOUT_INTENT_TTL_MS);
-  const created = await prisma.snaptaxCheckoutIntent.create({
-    data: {
-      userId,
-      taxSeason,
-      status: "pending",
-      expiresAt,
-    },
+  const create =
+    deps.create ??
+    (async (data) =>
+      prisma.snaptaxCheckoutIntent.create({
+        data,
+        select: { id: true, expiresAt: true },
+      }));
+
+  const created = await create({
+    userId,
+    taxSeason,
+    status: "pending",
+    expiresAt,
+    skuTier: skuTier ?? null,
   });
 
   return { intentId: created.id, expiresAt: created.expiresAt };
@@ -82,6 +123,7 @@ export type WebhookGrantResolution =
       userId: string;
       taxSeason: string;
       intentId?: string;
+      skuTier?: string | null;
       legacyUserIdPath?: boolean;
       intentExpiredAtGrant?: boolean;
     }
@@ -120,6 +162,7 @@ export async function resolveWebhookGrantTarget(customData: {
       userId: intent.userId,
       taxSeason: intent.taxSeason,
       intentId: intent.id,
+      skuTier: intent.skuTier,
       intentExpiredAtGrant: evaluation.intentExpiredAtGrant,
     };
   }

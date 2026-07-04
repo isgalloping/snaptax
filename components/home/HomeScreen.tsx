@@ -190,10 +190,15 @@ export function HomeScreen() {
   const filterBarRef = useRef<HTMLDivElement>(null);
   const watcherRef = useRef<ProcessingReceiptWatcher | null>(null);
   const queueRef = useRef<ProcessingQueue | null>(null);
-  const flushPendingUploadsRef = useRef<() => Promise<void>>(async () => {});
+  const flushPendingUploadsRef = useRef<
+    (opts?: { batchCapture?: boolean; skipGhostEnsure?: boolean }) => Promise<void>
+  >(async () => {});
   const flushPendingDeletesRef = useRef<() => Promise<void>>(async () => {});
   const uploadPendingInnerRef = useRef<
-    (receipt: StoredReceipt) => Promise<void>
+    (
+      receipt: StoredReceipt,
+      opts?: { batchCapture?: boolean },
+    ) => Promise<void>
   >(async () => {});
   const uploadInFlightRef = useRef(new Set<string>());
   const [uploadInFlightIds, setUploadInFlightIds] = useState<Set<string>>(

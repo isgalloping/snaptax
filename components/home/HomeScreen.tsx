@@ -41,6 +41,13 @@ import {
   flushPendingDeletes,
 } from "@/lib/client/receiptDeleteFlow";
 import { pollEntitlementReady, pollTaxRecalc } from "@/lib/client/authApi";
+import { PaymentSuccessSheet } from "@/components/billing/PaymentSuccessSheet";
+import { runPaymentSuccessFlow } from "@/lib/billing/runPaymentSuccessFlow";
+import type {
+  PaymentSuccessState,
+  PaymentSuccessVariant,
+} from "@/lib/billing/paymentSuccessTypes";
+import { fetchFounderProgramClient } from "@/lib/founder/fetchFounderProgramClient";
 import { prepareExportSync } from "@/lib/client/exportPrepareFlow";
 import { restoreReceiptsFromCloud } from "@/lib/client/cloudRestoreFlow";
 import {
@@ -93,7 +100,6 @@ import { InlinePrivacyNote } from "./InlinePrivacyNote";
 import { HomeScrollRegion } from "./HomeScrollRegion";
 import { WidgetStack } from "./widgets/WidgetStack";
 import { FounderProgramSheet } from "./sheets/FounderProgramSheet";
-import { finalizeFounderPurchase } from "@/lib/founder/finalizeFounderPurchase";
 import { waitForFounderActive } from "@/lib/founder/waitForFounderActive";
 import {
   HomeOverlayHost,
@@ -187,6 +193,10 @@ export function HomeScreen() {
   const [seasonExportTick, setSeasonExportTick] = useState(0);
   const [homeOverlay, setHomeOverlay] = useState<HomeOverlay>(null);
   const [founderSheetOpen, setFounderSheetOpen] = useState(false);
+  const [paymentSuccess, setPaymentSuccess] = useState<PaymentSuccessState | null>(
+    null,
+  );
+  const paymentSuccessRef = useRef<PaymentSuccessState | null>(null);
   const [founderRefreshTick, setFounderRefreshTick] = useState(0);
   const [exitConfirmOpen, setExitConfirmOpen] = useState(false);
   const [settingsViewState, setSettingsViewState] =
@@ -361,6 +371,69 @@ export function HomeScreen() {
       setView("settings");
     }
   }, []);
+
+  useEffect(() => {
+    paymentSuccessRef.current = paymentSuccess;
+  }, [paymentSuccess]);
+
+  const runPaymentSuccessPoll = useCallback(
+    async (variant: PaymentSuccessVariant, seasonLabel: string) => {
+      await runPaymentSuccessFlow({
+        variant,
+        season: seasonLabel,
+        onPhaseChange: (phase) => {
+          setPaymentSuccess((prev) => (prev ? { ...prev, phase } : prev));
+          if (phase === "ready" && variant === "founder") {
+            setFounderRefreshTick((tick) => tick + 1);
+          }
+        },
+        onFounderNumber: (founderNumber) => {
+          setPaymentSuccess((prev) => (prev ? { ...prev, founderNumber } : prev));
+        },
+        pollEntitlementReady,
+        refreshSeasonPaid: auth.refreshSeasonPaid,
+        waitForFounderActive: variant === "founder" ? waitForFounderActive : undefined,
+        fetchFounderNumber:
+          variant === "founder"
+            ? async () => {
+                const data = await fetchFounderProgramClient();
+                return data?.user?.founderNumber ?? null;
+              }
+            : undefined,
+      });
+    },
+    [auth.refreshSeasonPaid],
+  );
+
+  const openPaymentSuccess = useCallback(
+    (variant: PaymentSuccessVariant, seasonLabel: string) => {
+      setPaymentSuccess({
+        open: true,
+        variant,
+        phase: "confirming",
+        seasonLabel,
+        founderNumber: null,
+      });
+      void runPaymentSuccessPoll(variant, seasonLabel);
+    },
+    [runPaymentSuccessPoll],
+  );
+
+  const handlePaymentSuccessClose = useCallback(() => {
+    setPaymentSuccess((prev) => (prev ? { ...prev, open: false } : null));
+  }, []);
+
+  const handlePaymentSuccessRetry = useCallback(() => {
+    const current = paymentSuccessRef.current;
+    if (!current) return;
+    setPaymentSuccess({
+      ...current,
+      phase: "confirming",
+      open: true,
+      founderNumber: null,
+    });
+    void runPaymentSuccessPoll(current.variant, current.seasonLabel);
+  }, [runPaymentSuccessPoll]);
 
   const refreshTaxAndSummary = useCallback(async () => {
     const summary = await readCurrentSeasonSummary();
@@ -895,6 +968,8 @@ export function HomeScreen() {
       void applyReceiptUpdate(updated as StoredReceipt);
     },
     onSnap1099: () => openIncomeCapture(view),
+    onExportPaymentComplete: () =>
+      openPaymentSuccess("export", auth.currentSeason),
   });
 
   useEffect(() => {
@@ -1312,6 +1387,21 @@ export function HomeScreen() {
     if (actionReceipt) handleResnap(actionReceipt.id);
   }, [displayReceipts, syncStuckIds, handleResnap]);
 
+  const paymentSuccessOverlay =
+    paymentSuccess?.open ? (
+      <PaymentSuccessSheet
+        state={paymentSuccess}
+        onClose={handlePaymentSuccessClose}
+        onDownloadTaxPack={() => {
+          handlePaymentSuccessClose();
+          taxExport.triggerExportAfterPayment();
+        }}
+        onRetry={handlePaymentSuccessRetry}
+        onGotIt={handlePaymentSuccessClose}
+        onNotNow={handlePaymentSuccessClose}
+      />
+    ) : null;
+
   if (view === "settings") {
     return (
       <>
@@ -1368,6 +1458,7 @@ export function HomeScreen() {
         onRestored={() => void refreshListFromLocal()}
       />
       {taxExport.overlays}
+      {paymentSuccessOverlay}
     </>
     );
   }
@@ -1505,6 +1596,8 @@ export function HomeScreen() {
 
       {taxExport.overlays}
 
+      {paymentSuccessOverlay}
+
       {founderSheetOpen && (
         <FounderProgramSheet
           onClose={() => setFounderSheetOpen(false)}
@@ -1518,16 +1611,7 @@ export function HomeScreen() {
             setFounderSheetOpen(false);
             setFounderRefreshTick((tick) => tick + 1);
           }}
-          onPaid={() => {
-            void finalizeFounderPurchase({
-              season: auth.currentSeason,
-              pollEntitlementReady,
-              refreshSeasonPaid: auth.refreshSeasonPaid,
-              waitForFounderActive,
-            }).then(() => {
-              setFounderRefreshTick((tick) => tick + 1);
-            });
-          }}
+          onPaid={() => openPaymentSuccess("founder", auth.currentSeason)}
         />
       )}
 

@@ -6,7 +6,6 @@ import type { GoogleUser } from "@/lib/client/authStorage";
 import { isSeasonPaid, setSeasonPaid } from "@/lib/client/authStorage";
 import {
   fetchSeasonPaid,
-  pollEntitlementReady,
   type GoogleAuthResponse,
 } from "@/lib/client/authApi";
 import {
@@ -34,6 +33,7 @@ interface UseTaxExportGateOptions {
   onPostExportSync?: () => Promise<void>;
   onReceiptUpdated?: (receipt: Receipt) => void;
   onSnap1099?: (kind: IncomeCaptureKind) => void;
+  onExportPaymentComplete?: () => void;
 }
 
 export function useTaxExportGate({
@@ -49,6 +49,7 @@ export function useTaxExportGate({
   onPostExportSync,
   onReceiptUpdated,
   onSnap1099,
+  onExportPaymentComplete,
 }: UseTaxExportGateOptions) {
   const { copy } = useI18n();
   const [googleSheet, setGoogleSheet] = useState<GoogleSignInMode | null>(null);
@@ -171,20 +172,9 @@ export function useTaxExportGate({
             setExportBlockedTick((tick) => tick + 1);
           }}
           onClose={() => setShowPaywall(false)}
-          onPaid={async () => {
+          onPaid={() => {
             onSeasonPaid();
-            setPaywallExporting(true);
-            try {
-              await pollEntitlementReady(currentSeason, 30_000);
-              setShowPaywall(false);
-              await openExportAfterPrepare();
-              await refreshSeasonPaid?.();
-            } catch {
-              setShowPaywall(false);
-              setErrorMessage(copy.settings.export.failedAfterPayment);
-            } finally {
-              setPaywallExporting(false);
-            }
+            onExportPaymentComplete?.();
           }}
         />
       )}
@@ -214,6 +204,7 @@ export function useTaxExportGate({
 
   return {
     requestExport: () => void runExportGate(),
+    triggerExportAfterPayment: () => void openExportAfterPrepare(),
     exportError: errorMessage,
     exportEmptyTip,
     exportEmptyTipKey,

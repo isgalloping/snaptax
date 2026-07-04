@@ -24,4 +24,9 @@ describe("buildAuditDetailCsv", () => {
     const pathCount = (lines[1]!.match(/Line_22_Supplies/g) ?? []).length;
     assert.equal(pathCount, 2);
   });
+
+  it("returns header only when no rows", () => {
+    const csv = buildAuditDetailCsv([]);
+    assert.equal(csv, "Date,Category,Merchant,Amount,Memo,Audit_Image_Path,Receipt_Image_URL");
+  });
 });

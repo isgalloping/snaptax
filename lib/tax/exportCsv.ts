@@ -70,7 +70,7 @@ export function buildTurboTaxCsv(rows: ExportExpenseRow[]): string {
   return lines.join("\r\n");
 }
 
-/** Full CPA detail CSV with audit columns (for CPA Audit Pack). */
+/** @deprecated Use buildAuditDetailCsv for audit ZIP; legacy CPA detail layout. */
 export function buildExpensesCsv(
   rows: ExportExpenseRow[],
   imageUrlStyle: CsvImageUrlStyle = "archive",

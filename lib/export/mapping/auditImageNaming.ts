@@ -1,5 +1,6 @@
 import { zipFolderForScheduleCLine } from "@/lib/export/scheduleCLines";
 
+/** Underscores in merchant names (PRD audit filenames); REC aliases strip spaces instead. */
 export function sanitizeMerchantForAuditFilename(merchant: string): string {
   return (
     merchant

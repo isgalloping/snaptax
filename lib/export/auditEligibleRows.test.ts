@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { auditEligibleRows } from "./auditEligibleRows.ts";
 import type { ExportExpenseRow } from "@/lib/tax/exportRows";
+import { auditEligibleRows, hasAuditExportContent } from "./auditEligibleRows.ts";
 
 function row(partial: Partial<ExportExpenseRow>): ExportExpenseRow {
   return {
@@ -44,5 +44,25 @@ describe("auditEligibleRows", () => {
       row({ exportAmount: 0, deductible: true }),
     ]);
     assert.equal(rows.length, 0);
+  });
+});
+
+describe("hasAuditExportContent", () => {
+  it("is false when both audit and income are empty", () => {
+    assert.equal(hasAuditExportContent([], []), false);
+  });
+
+  it("is true when audit rows exist", () => {
+    assert.equal(
+      hasAuditExportContent(
+        [row({ deductible: true, exportAmount: 10, deductibleAmount: 10 })],
+        [],
+      ),
+      true,
+    );
+  });
+
+  it("is true when only income rows exist", () => {
+    assert.equal(hasAuditExportContent([], [{}]), true);
   });
 });

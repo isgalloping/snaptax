@@ -70,7 +70,7 @@ export function ExportEngineSheet({
     pickDefaultExportTaxYear(receipts, timeZone),
   );
   const [step1Hint, setStep1Hint] = useState<string | null>(null);
-  const [format, setFormat] = useState<ExportFormat>("csv");
+  const [format, setFormat] = useState<ExportFormat>("cpa_pdf");
   const [generating, setGenerating] = useState(false);
   const [previewing, setPreviewing] = useState(false);
   const [progress, setProgress] = useState(0);

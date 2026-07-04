@@ -1,4 +1,4 @@
-export type { LegalDoc, LegalSection } from "./locales";
+export type { LegalDoc, LegalSection, LocalizedLegalDoc } from "./locales";
 export {
   LEGAL_CONTACT_EMAIL,
   formatDataStorageLabel,

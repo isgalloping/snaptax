@@ -11,6 +11,10 @@ import { useDialogEscape } from "@/lib/ui/useDialogEscape";
 
 const MARKDOWN_DOCS = new Set<LegalDoc>(["data-retention", "security"]);
 
+function isMarkdownLegalDoc(doc: LegalDoc): doc is "data-retention" | "security" {
+  return MARKDOWN_DOCS.has(doc);
+}
+
 const FULL_PAGE_HREF: Record<LegalDoc, string> = {
   privacy: "/privacy",
   terms: "/terms",
@@ -70,7 +74,7 @@ export function LegalSheet({ doc, onClose }: LegalSheetProps) {
   if (!doc) return null;
 
   const bundle = getLegalBundle(locale);
-  const isMarkdown = MARKDOWN_DOCS.has(doc);
+  const isMarkdown = isMarkdownLegalDoc(doc);
   const sections = isMarkdown ? [] : getLegalSections(doc, locale);
   const title = isMarkdown
     ? (markdownDoc?.title ??

@@ -1,12 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import type { LegalDoc } from "@/lib/legal/content";
+import type { LocalizedLegalDoc } from "@/lib/legal/content";
 import { getLegalBundle, getLegalSections, getLegalTitle } from "@/lib/legal/content";
 import { slugifyLegalHeading } from "@/lib/legal/slugifyLegalHeading";
 import { useI18n } from "@/components/i18n/I18nProvider";
 
-const LEGAL_DOC_PATH: Record<LegalDoc, Record<string, string>> = {
+const LEGAL_DOC_PATH: Record<LocalizedLegalDoc, Record<string, string>> = {
   privacy: {
     "en-US": "privacy.md",
     "fr-FR": "privacy.fr.md",
@@ -19,7 +19,7 @@ const LEGAL_DOC_PATH: Record<LegalDoc, Record<string, string>> = {
   },
 };
 
-export function LegalPageContent({ doc }: { doc: LegalDoc }) {
+export function LegalPageContent({ doc }: { doc: LocalizedLegalDoc }) {
   const { locale } = useI18n();
   const bundle = getLegalBundle(locale);
   const sections = getLegalSections(doc, locale);

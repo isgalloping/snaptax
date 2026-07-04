@@ -1,6 +1,8 @@
 import type { Locale } from "@/lib/i18n";
 
-export type LegalDoc = "privacy" | "terms" | "data-retention" | "security";
+export type LocalizedLegalDoc = "privacy" | "terms";
+
+export type LegalDoc = LocalizedLegalDoc | "data-retention" | "security";
 
 export interface LegalSection {
   title: string;
@@ -295,14 +297,14 @@ export function getLegalBundle(locale: Locale): LegalBundle {
 }
 
 export function getLegalSections(
-  doc: LegalDoc,
+  doc: LocalizedLegalDoc,
   locale: Locale,
 ): LegalSection[] {
   const bundle = getLegalBundle(locale);
   return doc === "privacy" ? bundle.privacy : bundle.terms;
 }
 
-export function getLegalTitle(doc: LegalDoc, locale: Locale): string {
+export function getLegalTitle(doc: LocalizedLegalDoc, locale: Locale): string {
   const bundle = getLegalBundle(locale);
   return doc === "privacy" ? bundle.privacyTitle : bundle.termsTitle;
 }

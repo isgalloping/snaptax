@@ -619,9 +619,16 @@ export const EN_US_COPY: UserCopy = {
         dataStorage: "Data storage",
         dataStorageValue:
           "Processed and stored in the United States. See Privacy Policy for international transfers.",
+        dataStorageOpenPrivacy: "Open Privacy Policy",
         contactPrefix: "Contact",
+        contactDsrNote:
+          "Privacy requests: we aim to confirm within 48 hours and respond within 30 days.",
         dataRetention: "Data Retention",
         security: "Security & Incidents",
+        allPolicies: "All policies",
+        englishOnlyNotice: "This document is available in English only.",
+        loadingLegal: "Loading…",
+        legalLoadFailed: "Could not load this document. Try again or open the full page.",
         deleteAccount: "Delete Account",
         deleteFailed: "Delete failed. Please try again.",
         deleteRequiresOnline:

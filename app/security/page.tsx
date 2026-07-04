@@ -1,4 +1,4 @@
-import { LegalMarkdownView } from "@/components/legal/LegalMarkdownView";
+import { LegalMarkdownPage } from "@/components/legal/LegalMarkdownPage";
 import { loadLegalMarkdown, parseLegalMarkdown } from "@/lib/legal/markdownDoc";
 
 export const metadata = {
@@ -7,5 +7,5 @@ export const metadata = {
 
 export default function SecurityPage() {
   const doc = parseLegalMarkdown(loadLegalMarkdown("security-incident.md"));
-  return <LegalMarkdownView doc={doc} />;
+  return <LegalMarkdownPage doc={doc} />;
 }

@@ -37,6 +37,8 @@ export type LogMeta = {
   entitlementCreated?: boolean;
   pathnameCount?: number;
   receiptCount?: number;
+  entitlementCount?: number;
+  checkoutIntentCount?: number;
   verifyBypass?: boolean;
   mockAi?: boolean;
   bypassPay?: boolean;

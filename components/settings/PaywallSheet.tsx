@@ -6,6 +6,11 @@ import { useUserCopy } from "@/components/i18n/I18nProvider";
 import { useSeasonOffer } from "@/lib/client/useSeasonOffer";
 import { apiFetch } from "@/lib/client/ghostClient";
 import { formatCurrency } from "@/lib/format";
+import {
+  isPaddleCheckoutClosed,
+  isPaddleCheckoutCompleted,
+  runPaddleCheckoutCompletedFlow,
+} from "@/lib/billing/paddleCheckoutFlow";
 
 type PaywallPhase = "offer" | "confirming";
 
@@ -71,21 +76,31 @@ export function PaywallSheet({
       environment: token.startsWith("test_") ? "sandbox" : "production",
       token,
       eventCallback: (event) => {
-        if (event.name !== "checkout.completed" || checkoutCompletedRef.current) {
+        if (isPaddleCheckoutClosed(event)) {
+          setPaying(false);
           return;
         }
-        checkoutCompletedRef.current = true;
-        setPhase("confirming");
-        setError(null);
-        void (async () => {
-          try {
-            await onPaidRef.current();
-          } catch {
+
+        if (!isPaddleCheckoutCompleted(event)) return;
+
+        const handled = runPaddleCheckoutCompletedFlow({
+          alreadyHandled: checkoutCompletedRef.current,
+          closeCheckout: () => paddleRef.current?.Checkout.close(),
+          returnToApp: () => {
+            setPhase("confirming");
+            setError(null);
+          },
+          onPaid: () => onPaidRef.current(),
+          onPaidError: () => {
             checkoutCompletedRef.current = false;
             setPhase("offer");
             setError(copy.paymentFailed);
-          }
-        })();
+          },
+        });
+
+        if (handled) {
+          checkoutCompletedRef.current = true;
+        }
       },
     }).then((instance) => {
       paddleRef.current = instance ?? null;

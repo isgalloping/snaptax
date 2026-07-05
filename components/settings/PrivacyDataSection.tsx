@@ -4,6 +4,10 @@ import { useEffect, useState } from "react";
 import type { LegalDoc } from "@/lib/legal/content";
 import { LEGAL_CONTACT_EMAIL } from "@/lib/legal/content";
 import { useUserCopy } from "@/components/i18n/I18nProvider";
+import {
+  LegalInAppFullPageOverlay,
+  type InAppLegalFullPage,
+} from "@/components/legal/LegalInAppFullPageOverlay";
 import { LegalSheet } from "@/components/legal/LegalSheet";
 import {
   deleteAccountAndLocalData,
@@ -58,6 +62,9 @@ export function PrivacyDataSection({
 }: PrivacyDataSectionProps) {
   const copy = useUserCopy().settings.privacyData;
   const [legalDoc, setLegalDoc] = useState<LegalDoc | null>(null);
+  const [fullPageLegal, setFullPageLegal] = useState<InAppLegalFullPage | null>(
+    null,
+  );
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -120,20 +127,42 @@ export function PrivacyDataSection({
             label={copy.terms}
             onClick={() => setLegalDoc("terms")}
           />
-          <SettingsRow label={copy.dataRetention} href="/data-retention" />
-          <SettingsRow label={copy.security} href="/security" />
-          <div className="rounded-xl border-2 border-zinc-600 bg-zinc-800 p-4">
+          <SettingsRow
+            label={copy.pricing}
+            onClick={() => setFullPageLegal("pricing")}
+          />
+          <SettingsRow
+            label={copy.refundPolicy}
+            onClick={() => setFullPageLegal("refund")}
+          />
+          <SettingsRow
+            label={copy.dataRetention}
+            onClick={() => setLegalDoc("data-retention")}
+          />
+          <SettingsRow
+            label={copy.security}
+            onClick={() => setLegalDoc("security")}
+          />
+          <button
+            type="button"
+            onClick={() => setLegalDoc("privacy")}
+            aria-label={copy.dataStorageOpenPrivacy}
+            className="w-full rounded-xl border-2 border-zinc-600 bg-zinc-800 p-4 text-left transition-transform active:scale-95"
+          >
             <p className="text-xs font-bold uppercase tracking-wider text-zinc-400">
               {copy.dataStorage}
             </p>
             <p className="mt-2 text-sm font-bold text-yellow-400">
               {copy.dataStorageValue}
             </p>
-          </div>
+          </button>
           <SettingsRow
             label={`${copy.contactPrefix}: ${LEGAL_CONTACT_EMAIL}`}
             href={`mailto:${LEGAL_CONTACT_EMAIL}`}
           />
+          <p className="px-1 text-xs leading-relaxed text-zinc-500">
+            {copy.contactDsrNote}
+          </p>
           <SettingsRow
             label={copy.deleteAccount}
             destructive
@@ -151,6 +180,13 @@ export function PrivacyDataSection({
       </section>
 
       <LegalSheet doc={legalDoc} onClose={() => setLegalDoc(null)} />
+
+      {fullPageLegal && (
+        <LegalInAppFullPageOverlay
+          page={fullPageLegal}
+          onClose={() => setFullPageLegal(null)}
+        />
+      )}
 
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-end bg-black/70">

@@ -498,9 +498,16 @@ export type UserCopy = {
       terms: string;
       dataStorage: string;
       dataStorageValue: string;
+      dataStorageOpenPrivacy: string;
       contactPrefix: string;
+      contactDsrNote: string;
       dataRetention: string;
       security: string;
+      pricing: string;
+      refundPolicy: string;
+      englishOnlyNotice: string;
+      loadingLegal: string;
+      legalLoadFailed: string;
       deleteAccount: string;
       deleteFailed: string;
       deleteRequiresOnline: string;

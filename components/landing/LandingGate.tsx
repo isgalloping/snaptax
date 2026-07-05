@@ -9,6 +9,7 @@ import {
   resolveExit,
   type LandingExitMode,
 } from "@/lib/landing/landingTiming";
+import { markLandingDonePersisted } from "@/lib/landing/startupPhase";
 import {
   readLandingVariantMirror,
 } from "@/lib/landing/landingVariant";
@@ -47,6 +48,7 @@ export function LandingGate({ homeChunkReady, onExit }: LandingGateProps) {
     clearTimers();
     document.documentElement.classList.remove("landing-exiting");
     document.documentElement.classList.add("landing-done");
+    markLandingDonePersisted();
     window.dispatchEvent(new Event("snap1099:landing-done"));
     setPhase("done");
     onExit(exitModeRef.current);

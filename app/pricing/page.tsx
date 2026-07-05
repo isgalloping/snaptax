@@ -6,7 +6,12 @@ export const metadata = {
   title: "Pricing · Snap1099",
 };
 
-export default async function PricingPage() {
+export default async function PricingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ ctx?: string }>;
+}) {
+  const { ctx } = await searchParams;
   const doc = parseLegalMarkdown(loadLegalMarkdown("pricing.md"));
   let live = null;
   try {
@@ -15,5 +20,11 @@ export default async function PricingPage() {
     live = null;
   }
 
-  return <PricingPageContent doc={doc} live={live} />;
+  return (
+    <PricingPageContent
+      doc={doc}
+      live={live}
+      hideHubSections={ctx === "privacy-center"}
+    />
+  );
 }

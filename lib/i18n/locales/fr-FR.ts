@@ -629,9 +629,18 @@ export const FR_FR_COPY: UserCopy = {
       dataStorage: "Stockage des données",
       dataStorageValue:
         "Traitées et stockées aux États-Unis. Voir la Politique de confidentialité pour les transferts internationaux.",
+      dataStorageOpenPrivacy: "Ouvrir la Politique de confidentialité",
       contactPrefix: "Contact",
+      contactDsrNote:
+        "Demandes de confidentialité : accusé de réception sous 48 h, réponse sous 30 jours.",
       dataRetention: "Conservation des données",
       security: "Sécurité & incidents",
+      pricing: "Tarification",
+      refundPolicy: "Politique de remboursement",
+      englishOnlyNotice: "Ce document est disponible en anglais uniquement.",
+      loadingLegal: "Chargement…",
+      legalLoadFailed:
+        "Impossible de charger ce document. Réessayez ou ouvrez la page complète.",
       deleteAccount: "Supprimer le compte",
       deleteFailed: "Échec de la suppression. Veuillez réessayer.",
       deleteRequiresOnline:

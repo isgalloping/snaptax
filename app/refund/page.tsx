@@ -1,11 +1,18 @@
-import { LegalMarkdownView } from "@/components/legal/LegalMarkdownView";
+import { LegalMarkdownPage } from "@/components/legal/LegalMarkdownPage";
 import { loadLegalMarkdown, parseLegalMarkdown } from "@/lib/legal/markdownDoc";
 
 export const metadata = {
   title: "Refund Policy · Snap1099",
 };
 
-export default function RefundPage() {
+export default async function RefundPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ ctx?: string }>;
+}) {
+  const { ctx } = await searchParams;
   const doc = parseLegalMarkdown(loadLegalMarkdown("refund.md"));
-  return <LegalMarkdownView doc={doc} />;
+  return (
+    <LegalMarkdownPage doc={doc} hideHubSections={ctx === "privacy-center"} />
+  );
 }

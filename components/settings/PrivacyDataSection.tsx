@@ -1,9 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { LegalDoc } from "@/lib/legal/content";
 import { LEGAL_CONTACT_EMAIL } from "@/lib/legal/content";
 import { useUserCopy } from "@/components/i18n/I18nProvider";
+import {
+  consumeLegalReturnNav,
+  LEGAL_RETURN_EVENT,
+  saveLegalReturnNav,
+} from "@/lib/client/legalReturnNav";
+import {
+  LegalInAppFullPageOverlay,
+  type InAppLegalFullPage,
+} from "@/components/legal/LegalInAppFullPageOverlay";
 import { LegalSheet } from "@/components/legal/LegalSheet";
 import {
   deleteAccountAndLocalData,
@@ -58,6 +67,9 @@ export function PrivacyDataSection({
 }: PrivacyDataSectionProps) {
   const copy = useUserCopy().settings.privacyData;
   const [legalDoc, setLegalDoc] = useState<LegalDoc | null>(null);
+  const [fullPageLegal, setFullPageLegal] = useState<InAppLegalFullPage | null>(
+    null,
+  );
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -82,6 +94,22 @@ export function PrivacyDataSection({
       setError(null);
     }
   });
+
+  const closeFullPageLegal = useCallback(() => {
+    setFullPageLegal(null);
+    consumeLegalReturnNav();
+  }, []);
+
+  const openFullPageLegal = useCallback((page: InAppLegalFullPage) => {
+    saveLegalReturnNav({ kind: "settings", page: "privacy-center" });
+    setFullPageLegal(page);
+  }, []);
+
+  useEffect(() => {
+    const onLegalReturn = () => setFullPageLegal(null);
+    window.addEventListener(LEGAL_RETURN_EVENT, onLegalReturn);
+    return () => window.removeEventListener(LEGAL_RETURN_EVENT, onLegalReturn);
+  }, []);
 
   const handleDelete = async () => {
     setDeleting(true);
@@ -121,6 +149,14 @@ export function PrivacyDataSection({
             onClick={() => setLegalDoc("terms")}
           />
           <SettingsRow
+            label={copy.pricing}
+            onClick={() => openFullPageLegal("pricing")}
+          />
+          <SettingsRow
+            label={copy.refundPolicy}
+            onClick={() => openFullPageLegal("refund")}
+          />
+          <SettingsRow
             label={copy.dataRetention}
             onClick={() => setLegalDoc("data-retention")}
           />
@@ -128,7 +164,6 @@ export function PrivacyDataSection({
             label={copy.security}
             onClick={() => setLegalDoc("security")}
           />
-          <SettingsRow label={copy.allPolicies} href="/policies" />
           <button
             type="button"
             onClick={() => setLegalDoc("privacy")}
@@ -166,6 +201,13 @@ export function PrivacyDataSection({
       </section>
 
       <LegalSheet doc={legalDoc} onClose={() => setLegalDoc(null)} />
+
+      {fullPageLegal && (
+        <LegalInAppFullPageOverlay
+          page={fullPageLegal}
+          onClose={closeFullPageLegal}
+        />
+      )}
 
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-end bg-black/70">

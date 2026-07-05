@@ -9,8 +9,11 @@ import {
   taxYearDeductions,
   receiptsInTaxYear,
 } from "@/lib/tax/taxYearStats";
-import { pickDefaultExportTaxYear } from "@/lib/tax/exportGate";
-import { defaultExportTaxYear } from "@/lib/tax/season";
+import {
+  exportPickerTaxYears,
+  pickDefaultExportTaxYear,
+} from "@/lib/tax/exportGate";
+import { filingTaxYearForSeason } from "@/lib/tax/season";
 import { receiptsNeedingExportReview } from "@/lib/tax/exportReview";
 import { formatCurrency } from "@/lib/format";
 import { clientTimeZone } from "@/lib/time/timeZone";
@@ -33,6 +36,7 @@ type Step = 1 | 2 | 3 | 4;
 
 interface ExportEngineSheetProps {
   receipts: Receipt[];
+  currentSeason: string;
   onClose: () => void;
   onPreExportPrepare?: () => Promise<void | Receipt[]>;
   onExported?: () => void | Promise<void>;
@@ -46,6 +50,7 @@ const FAST_RAMP_MS = 300;
 
 export function ExportEngineSheet({
   receipts,
+  currentSeason,
   onClose,
   onPreExportPrepare,
   onExported,
@@ -56,18 +61,20 @@ export function ExportEngineSheet({
   const { copy } = useI18n();
   const t = copy.exportEngine;
   const timeZone = clientTimeZone();
-  const defaultYear = Number(defaultExportTaxYear());
+  const [activeReceipts, setActiveReceipts] = useState(receipts);
 
-  const years = useMemo(() => {
-    const found = availableTaxYears(receipts, timeZone);
-    if (found.length === 0) return [defaultYear];
-    if (!found.includes(defaultYear)) return [defaultYear, ...found];
-    return found;
-  }, [receipts, timeZone, defaultYear]);
+  useEffect(() => {
+    setActiveReceipts(receipts);
+  }, [receipts]);
+
+  const years = useMemo(
+    () => exportPickerTaxYears(activeReceipts, timeZone, currentSeason),
+    [activeReceipts, timeZone, currentSeason],
+  );
 
   const [step, setStep] = useState<Step>(1);
   const [taxYear, setTaxYear] = useState<number>(() =>
-    pickDefaultExportTaxYear(receipts, timeZone),
+    pickDefaultExportTaxYear(activeReceipts, timeZone, currentSeason),
   );
   const [step1Hint, setStep1Hint] = useState<string | null>(null);
   const [format, setFormat] = useState<ExportFormat>("cpa_pdf");
@@ -83,9 +90,9 @@ export function ExportEngineSheet({
   const autoSharedRef = useRef(false);
   const progressTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const yearReceipts = receiptsInTaxYear(receipts, taxYear, timeZone);
-  const yearDeductions = taxYearDeductions(receipts, taxYear, timeZone);
-  const incomeFormCount = incomeFormsInTaxYear(receipts, taxYear, timeZone);
+  const yearReceipts = receiptsInTaxYear(activeReceipts, taxYear, timeZone);
+  const yearDeductions = taxYearDeductions(activeReceipts, taxYear, timeZone);
+  const incomeFormCount = incomeFormsInTaxYear(activeReceipts, taxYear, timeZone);
   const reviewReceipts = useMemo(
     () => receiptsNeedingExportReview(yearReceipts),
     [yearReceipts],
@@ -95,13 +102,17 @@ export function ExportEngineSheet({
   const canContinueStep1 = yearReceipts.length > 0;
 
   useEffect(() => {
-    if (receiptsInTaxYear(receipts, taxYear, timeZone).length > 0) return;
-    const next = pickDefaultExportTaxYear(receipts, timeZone);
-    if (receiptsInTaxYear(receipts, next, timeZone).length > 0) {
+    if (receiptsInTaxYear(activeReceipts, taxYear, timeZone).length > 0) return;
+    const next = pickDefaultExportTaxYear(
+      activeReceipts,
+      timeZone,
+      currentSeason,
+    );
+    if (receiptsInTaxYear(activeReceipts, next, timeZone).length > 0) {
       setTaxYear(next);
       setStep1Hint(null);
     }
-  }, [receipts, taxYear, timeZone]);
+  }, [activeReceipts, taxYear, timeZone, currentSeason]);
 
   const displayStep = useMemo(() => {
     if (!includesReview && step >= 2) return step - 1;
@@ -205,7 +216,7 @@ export function ExportEngineSheet({
     setErrorMessage(null);
     setPreviewing(true);
     try {
-      const csv = buildLocalTurboTaxCsv(receipts, taxYear, timeZone);
+      const csv = buildLocalTurboTaxCsv(activeReceipts, taxYear, timeZone);
       const file = new File(
         [csv],
         `Snap1099-${taxYear}-TurboTax-Preview.csv`,
@@ -244,7 +255,10 @@ export function ExportEngineSheet({
     startProgressRamp(format, yearReceipts.length);
     try {
       if (onPreExportPrepare) {
-        await onPreExportPrepare();
+        const merged = await onPreExportPrepare();
+        if (merged && merged.length > 0) {
+          setActiveReceipts(merged);
+        }
       }
       const result = await exportTaxPack({
         taxYear: String(taxYear),
@@ -330,11 +344,16 @@ export function ExportEngineSheet({
 
         {step === 1 && (
           <>
-            <p className="mb-4 text-sm font-bold text-zinc-300">{t.step1Heading}</p>
+            <p className="mb-1 text-sm font-bold text-zinc-300">{t.step1Heading}</p>
+            <p className="mb-4 text-xs leading-relaxed text-zinc-500">
+              {t.step1SeasonHint
+                .replace("{season}", currentSeason)
+                .replace("{year}", String(filingTaxYearForSeason(currentSeason)))}
+            </p>
             <div className="space-y-3">
               {years.map((year) => {
-                const count = receiptsInTaxYear(receipts, year, timeZone).length;
-                const deductions = taxYearDeductions(receipts, year, timeZone);
+                const count = receiptsInTaxYear(activeReceipts, year, timeZone).length;
+                const deductions = taxYearDeductions(activeReceipts, year, timeZone);
                 const selected = taxYear === year;
                 const disabled = count === 0;
                 return (

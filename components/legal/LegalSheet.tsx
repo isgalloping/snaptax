@@ -1,22 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import type { LegalDoc } from "@/lib/legal/content";
 import { getLegalBundle, getLegalSections, getLegalTitle } from "@/lib/legal/content";
 import type { ParsedLegalMarkdown } from "@/lib/legal/markdownDoc";
+import { omitLegalHubSections } from "@/lib/legal/omitLegalHubSections";
 import { useI18n, useUserCopy } from "@/components/i18n/I18nProvider";
 import { LegalMarkdownSections } from "@/components/legal/LegalMarkdownSections";
 import { useDialogEscape } from "@/lib/ui/useDialogEscape";
 
 const MARKDOWN_DOCS = new Set<LegalDoc>(["data-retention", "security"]);
 
-const FULL_PAGE_HREF: Record<LegalDoc, string> = {
-  privacy: "/privacy",
-  terms: "/terms",
-  "data-retention": "/data-retention",
-  security: "/security",
-};
+function isMarkdownLegalDoc(doc: LegalDoc): doc is "data-retention" | "security" {
+  return MARKDOWN_DOCS.has(doc);
+}
 
 interface LegalSheetProps {
   doc: LegalDoc | null;
@@ -70,7 +67,7 @@ export function LegalSheet({ doc, onClose }: LegalSheetProps) {
   if (!doc) return null;
 
   const bundle = getLegalBundle(locale);
-  const isMarkdown = MARKDOWN_DOCS.has(doc);
+  const isMarkdown = isMarkdownLegalDoc(doc);
   const sections = isMarkdown ? [] : getLegalSections(doc, locale);
   const title = isMarkdown
     ? (markdownDoc?.title ??
@@ -122,7 +119,10 @@ export function LegalSheet({ doc, onClose }: LegalSheetProps) {
             ) : markdownError || !markdownDoc ? (
               <p className="text-sm text-zinc-300">{privacyCopy.legalLoadFailed}</p>
             ) : (
-              <LegalMarkdownSections sections={markdownDoc.sections} headingLevel="h3" />
+              <LegalMarkdownSections
+                sections={omitLegalHubSections(markdownDoc.sections)}
+                headingLevel="h3"
+              />
             )
           ) : (
             sections.map((section) => (
@@ -141,12 +141,6 @@ export function LegalSheet({ doc, onClose }: LegalSheetProps) {
               </section>
             ))
           )}
-          <Link
-            href={FULL_PAGE_HREF[doc]}
-            className="mt-4 inline-block min-h-12 text-sm font-bold text-yellow-400 underline"
-          >
-            {bundle.openFullPage(title)}
-          </Link>
         </div>
       </div>
     </div>

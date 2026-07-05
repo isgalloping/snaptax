@@ -1,42 +1,30 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import type { ParsedLegalMarkdown } from "@/lib/legal/markdownDoc";
+import { omitLegalHubSections } from "@/lib/legal/omitLegalHubSections";
 import { LegalMarkdownSections } from "@/components/legal/LegalMarkdownSections";
+import { LegalFullPageShell } from "@/components/legal/LegalFullPageShell";
 
 export function LegalMarkdownPage({
   doc,
+  hideHubSections = false,
+  onClose,
 }: {
   doc: ParsedLegalMarkdown;
+  hideHubSections?: boolean;
+  onClose?: () => void;
 }) {
-  const router = useRouter();
-
-  const handleBack = () => {
-    if (typeof window !== "undefined" && window.history.length > 1) {
-      router.back();
-      return;
-    }
-    router.push("/");
-  };
+  const sections = hideHubSections
+    ? omitLegalHubSections(doc.sections)
+    : doc.sections;
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      <header className="border-b-4 border-yellow-500 bg-zinc-900 p-6">
-        <button
-          type="button"
-          onClick={handleBack}
-          className="mb-4 inline-flex min-h-12 items-center text-sm font-black uppercase tracking-wider text-yellow-400"
-        >
-          &lt; Back to Snap1099
-        </button>
-        <h1 className="text-2xl font-black uppercase tracking-wider">{doc.title}</h1>
-        {doc.subtitle && (
-          <p className="mt-2 text-xs text-zinc-400">{doc.subtitle}</p>
-        )}
-      </header>
-      <main className="mx-auto max-w-2xl p-6 pb-16">
-        <LegalMarkdownSections sections={doc.sections} headingLevel="h2" />
-      </main>
-    </div>
+    <LegalFullPageShell
+      title={doc.title}
+      subtitle={doc.subtitle}
+      onClose={onClose}
+    >
+      <LegalMarkdownSections sections={sections} headingLevel="h2" />
+    </LegalFullPageShell>
   );
 }

@@ -503,7 +503,8 @@ export type UserCopy = {
       contactDsrNote: string;
       dataRetention: string;
       security: string;
-      allPolicies: string;
+      pricing: string;
+      refundPolicy: string;
       englishOnlyNotice: string;
       loadingLegal: string;
       legalLoadFailed: string;
@@ -618,6 +619,7 @@ export type UserCopy = {
     close: string;
     stepLabel: string;
     step1Heading: string;
+    step1SeasonHint: string;
     step2Heading: string;
     stepFormatHeading: string;
     step3Heading: string;

@@ -635,7 +635,8 @@ export const FR_FR_COPY: UserCopy = {
         "Demandes de confidentialité : accusé de réception sous 48 h, réponse sous 30 jours.",
       dataRetention: "Conservation des données",
       security: "Sécurité & incidents",
-      allPolicies: "Toutes les politiques",
+      pricing: "Tarification",
+      refundPolicy: "Politique de remboursement",
       englishOnlyNotice: "Ce document est disponible en anglais uniquement.",
       loadingLegal: "Chargement…",
       legalLoadFailed:
@@ -879,6 +880,8 @@ export const FR_FR_COPY: UserCopy = {
     close: "Fermer",
     stepLabel: "Étape {step} sur {total}",
     step1Heading: "Sélectionner l'année fiscale",
+    step1SeasonHint:
+      "Votre saison {season} couvre les reçus de l'année civile {year} (1er janv. – 31 déc.).",
     step2Heading: "Vérifier les catégories",
     stepFormatHeading: "Choisir le format d'export",
     step3Heading: "Votre pack fiscal",

@@ -625,7 +625,8 @@ export const EN_US_COPY: UserCopy = {
           "Privacy requests: we aim to confirm within 48 hours and respond within 30 days.",
         dataRetention: "Data Retention",
         security: "Security & Incidents",
-        allPolicies: "All policies",
+        pricing: "Pricing",
+        refundPolicy: "Refund Policy",
         englishOnlyNotice: "This document is available in English only.",
         loadingLegal: "Loading…",
         legalLoadFailed: "Could not load this document. Try again or open the full page.",
@@ -866,6 +867,8 @@ export const EN_US_COPY: UserCopy = {
       close: "Close",
       stepLabel: "Step {step} of {total}",
       step1Heading: "Select tax year",
+      step1SeasonHint:
+        "Your {season} season covers {year} calendar-year receipts (Jan 1 – Dec 31).",
       step2Heading: "Review categories",
       stepFormatHeading: "Choose export format",
       step3Heading: "Your tax pack",

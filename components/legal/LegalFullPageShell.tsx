@@ -4,6 +4,10 @@ import { useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useI18n } from "@/components/i18n/I18nProvider";
 import { getLegalBundle } from "@/lib/legal/content";
+import {
+  consumeLegalReturnNav,
+  dispatchLegalReturnNav,
+} from "@/lib/client/legalReturnNav";
 import { useDialogEscape } from "@/lib/ui/useDialogEscape";
 
 export function LegalFullPageShell({
@@ -24,6 +28,11 @@ export function LegalFullPageShell({
   const handleClose = useCallback(() => {
     if (onClose) {
       onClose();
+      return;
+    }
+    const returnKey = consumeLegalReturnNav();
+    if (returnKey) {
+      dispatchLegalReturnNav(returnKey);
       return;
     }
     if (typeof window !== "undefined" && window.history.length > 1) {

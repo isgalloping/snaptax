@@ -1,3 +1,5 @@
+"use client";
+
 import type { ParsedLegalMarkdown } from "@/lib/legal/markdownDoc";
 import { omitLegalHubSections } from "@/lib/legal/omitLegalHubSections";
 import { LegalMarkdownInline } from "@/components/legal/LegalMarkdownSections";

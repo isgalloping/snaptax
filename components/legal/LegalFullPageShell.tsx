@@ -13,7 +13,7 @@ export function LegalFullPageShell({
   children,
 }: {
   title: string;
-  subtitle?: string;
+  subtitle?: string | null;
   onClose?: () => void;
   children: React.ReactNode;
 }) {

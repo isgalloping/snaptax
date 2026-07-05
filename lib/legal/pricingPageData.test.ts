@@ -20,4 +20,11 @@ describe("buildFounderRows", () => {
     assert.equal(rows[3]?.seatRange, "51+");
     assert.equal(rows[3]?.priceLabel, "$29.00");
   });
+
+  it("does not promise lifetime all-years access", () => {
+    for (const row of buildFounderRows(tiers)) {
+      assert.doesNotMatch(row.note.toLowerCase(), /lifetime/);
+      assert.doesNotMatch(row.note.toLowerCase(), /for life/);
+    }
+  });
 });

@@ -117,7 +117,7 @@ if (navigator.canShare?.({ files: [file] })) {
 
 - 无次数限制（本季 entitlement 内）
 - 每次导出包含 **当前全部** `status=done` 小票（含 Export 后新拍的）
-- 导出后标记 `tax_season` + `tax_season_date`（幂等，用于 Est. Tax Saved 排除已归档小票）
+- 导出后标记 `tax_season` + `tax_season_date`（幂等，用于审计与 filed 状态；**不**减少 UI Est. Tax Saved）
 - 导出成功后记录 `biz.export` 日志（`taxSeason`, `receiptCount`）
 
 ## 8.7 错误

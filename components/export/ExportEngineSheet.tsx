@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { Receipt } from "@/lib/types";
 import { useI18n } from "@/components/i18n/I18nProvider";
 import {
-  availableTaxYears,
   incomeFormsInTaxYear,
   taxYearDeductions,
   receiptsInTaxYear,
@@ -99,6 +98,8 @@ export function ExportEngineSheet({
   );
   const includesReview = reviewReceipts.length > 0;
   const totalSteps = includesReview ? 4 : 3;
+  const formatStep: Step = includesReview ? 3 : 2;
+  const generateStep: Step = includesReview ? 4 : 3;
   const canContinueStep1 = yearReceipts.length > 0;
 
   useEffect(() => {
@@ -113,11 +114,6 @@ export function ExportEngineSheet({
       setStep1Hint(null);
     }
   }, [activeReceipts, taxYear, timeZone, currentSeason]);
-
-  const displayStep = useMemo(() => {
-    if (!includesReview && step >= 2) return step - 1;
-    return step;
-  }, [includesReview, step]);
 
   const clearProgressTimer = () => {
     if (progressTimerRef.current) {
@@ -196,7 +192,7 @@ export function ExportEngineSheet({
   };
 
   const goToFormatStep = () => {
-    setStep(includesReview ? 3 : 2);
+    setStep(formatStep);
   };
 
   const handleContinueFromYear = () => {
@@ -251,15 +247,22 @@ export function ExportEngineSheet({
     setGenerating(true);
     setReadyFile(null);
     setExportMeta(null);
-    setStep(4);
-    startProgressRamp(format, yearReceipts.length);
+    setStep(generateStep);
     try {
+      let receiptsForExport = activeReceipts;
       if (onPreExportPrepare) {
         const merged = await onPreExportPrepare();
         if (merged && merged.length > 0) {
+          receiptsForExport = merged;
           setActiveReceipts(merged);
         }
       }
+      const exportReceiptCount = receiptsInTaxYear(
+        receiptsForExport,
+        taxYear,
+        timeZone,
+      ).length;
+      startProgressRamp(format, exportReceiptCount);
       const result = await exportTaxPack({
         taxYear: String(taxYear),
         format,
@@ -328,7 +331,7 @@ export function ExportEngineSheet({
             </p>
             <p className="mt-1 text-xs font-bold uppercase tracking-wider text-zinc-400">
               {t.stepLabel
-                .replace("{step}", String(displayStep))
+                .replace("{step}", String(step))
                 .replace("{total}", String(totalSteps))}
             </p>
           </div>
@@ -449,7 +452,7 @@ export function ExportEngineSheet({
           </>
         )}
 
-        {step === 3 && (
+        {step === formatStep && (
           <>
             <p className="mb-1 text-xs font-bold text-zinc-400">
               {t.yearSummary
@@ -604,7 +607,7 @@ export function ExportEngineSheet({
           </>
         )}
 
-        {step === 4 && (
+        {step === generateStep && (
           <>
             <p className="mb-4 text-sm font-bold text-zinc-300">{t.step3Heading}</p>
             {(generating || readyFile) && (

@@ -1,11 +1,10 @@
 import { isIncomeFormType } from "@/lib/export/incomeDocuments";
-import { isReceiptFiled } from "@/lib/receipts/filedStatus";
 import type { StoredReceipt } from "@/lib/storage/receiptDb";
 import { effectiveReceiptTaxYear } from "@/lib/tax/taxYearStats";
 import { resolveDeductionRatio } from "@/lib/tax/usCategories";
 
 export type SummaryDelta = {
-  unfiledTaxSaved: number;
+  totalTaxSaved: number;
   totalReceiptCount: number;
   totalDeductions: number;
   incomeFormCount: number;
@@ -21,8 +20,8 @@ function inSeason(
   return effectiveReceiptTaxYear(row, timeZone) === taxYear;
 }
 
-function unfiledTaxContribution(row: StoredReceipt): number {
-  if (row.status !== "done" || isReceiptFiled(row)) return 0;
+function totalTaxSavedContribution(row: StoredReceipt): number {
+  if (row.status !== "done") return 0;
   return row.taxAmount ?? 0;
 }
 
@@ -44,7 +43,7 @@ function incomeFormContribution(row: StoredReceipt): { count: number; gross: num
 function contributions(row: StoredReceipt): SummaryDelta {
   const income = incomeFormContribution(row);
   return {
-    unfiledTaxSaved: unfiledTaxContribution(row),
+    totalTaxSaved: totalTaxSavedContribution(row),
     totalReceiptCount: 1,
     totalDeductions: deductionContribution(row),
     incomeFormCount: income.count,
@@ -53,7 +52,7 @@ function contributions(row: StoredReceipt): SummaryDelta {
 }
 
 const ZERO: SummaryDelta = {
-  unfiledTaxSaved: 0,
+  totalTaxSaved: 0,
   totalReceiptCount: 0,
   totalDeductions: 0,
   incomeFormCount: 0,
@@ -71,7 +70,7 @@ export function computeSummaryDelta(
   const prevC = prevIn && prev ? contributions(prev) : ZERO;
   const nextC = nextIn && next ? contributions(next) : ZERO;
   return {
-    unfiledTaxSaved: nextC.unfiledTaxSaved - prevC.unfiledTaxSaved,
+    totalTaxSaved: nextC.totalTaxSaved - prevC.totalTaxSaved,
     totalReceiptCount: nextC.totalReceiptCount - prevC.totalReceiptCount,
     totalDeductions: nextC.totalDeductions - prevC.totalDeductions,
     incomeFormCount: nextC.incomeFormCount - prevC.incomeFormCount,

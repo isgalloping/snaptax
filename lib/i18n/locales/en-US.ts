@@ -867,6 +867,8 @@ export const EN_US_COPY: UserCopy = {
       close: "Close",
       stepLabel: "Step {step} of {total}",
       step1Heading: "Select tax year",
+      step1SeasonHint:
+        "Your {season} season covers {year} calendar-year receipts (Jan 1 – Dec 31).",
       step2Heading: "Review categories",
       stepFormatHeading: "Choose export format",
       step3Heading: "Your tax pack",

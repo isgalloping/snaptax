@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { Receipt } from "@/lib/types";
 import {
+  exportPickerTaxYears,
   hasExportableReceipts,
   pickDefaultExportTaxYear,
 } from "./exportGate.ts";
@@ -38,9 +39,33 @@ describe("pickDefaultExportTaxYear", () => {
     );
   });
 
+  it("prefers filing year for paid season when receipts exist there", () => {
+    assert.equal(
+      pickDefaultExportTaxYear([doneReceipt(2025), doneReceipt(2026)], "UTC", "2027"),
+      2026,
+    );
+  });
+
   it("falls back to calendar default when empty", () => {
     const year = pickDefaultExportTaxYear([]);
     assert.equal(typeof year, "number");
     assert.ok(year >= 2020);
+  });
+
+  it("falls back to filing year for season when no receipts", () => {
+    assert.equal(pickDefaultExportTaxYear([], "UTC", "2027"), 2026);
+  });
+});
+
+describe("exportPickerTaxYears", () => {
+  it("includes filing year for season even without receipts", () => {
+    assert.deepEqual(exportPickerTaxYears([], "UTC", "2027"), [2026]);
+  });
+
+  it("lists filing year first then other receipt years", () => {
+    assert.deepEqual(
+      exportPickerTaxYears([doneReceipt(2025), doneReceipt(2026)], "UTC", "2027"),
+      [2026, 2025],
+    );
   });
 });

@@ -14,3 +14,11 @@ export function currentTaxSeason(date = new Date()): string {
 export function defaultExportTaxYear(date = new Date()): string {
   return String(date.getUTCFullYear());
 }
+
+/**
+ * Calendar tax year covered by a Paddle/filing season label.
+ * Season 2027 = file in early 2027 for income earned in calendar 2026.
+ */
+export function filingTaxYearForSeason(season: string): number {
+  return Number(season) - 1;
+}

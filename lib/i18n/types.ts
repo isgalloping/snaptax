@@ -619,6 +619,7 @@ export type UserCopy = {
     close: string;
     stepLabel: string;
     step1Heading: string;
+    step1SeasonHint: string;
     step2Heading: string;
     stepFormatHeading: string;
     step3Heading: string;

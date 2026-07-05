@@ -55,6 +55,9 @@ export function useTaxExportGate({
   const [googleSheet, setGoogleSheet] = useState<GoogleSignInMode | null>(null);
   const [showPaywall, setShowPaywall] = useState(false);
   const [showExportSheet, setShowExportSheet] = useState(false);
+  const [exportEngineReceipts, setExportEngineReceipts] = useState<Receipt[] | null>(
+    null,
+  );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [exportEmptyTip, setExportEmptyTip] = useState<string | null>(null);
   const [exportEmptyTipKey, setExportEmptyTipKey] = useState(0);
@@ -72,8 +75,9 @@ export function useTaxExportGate({
     setExportEmptyTipKey((key) => key + 1);
   };
 
-  const openExportEngine = () => {
+  const openExportEngine = (receiptsOverride?: Receipt[]) => {
     clearError();
+    setExportEngineReceipts(receiptsOverride ?? null);
     setShowExportSheet(true);
   };
 
@@ -111,7 +115,10 @@ export function useTaxExportGate({
     try {
       const prepared = await onPreExportPrepare();
       if (blockIfNoExportableReceipts(prepared)) return;
-      openExportEngine();
+      const list = (prepared ?? exportableReceipts).filter(
+        (r) => !r.isOnboardingDemo,
+      );
+      openExportEngine(list);
     } catch (err) {
       if (err instanceof Error && err.message === "EXPORT_OFFLINE") {
         setErrorMessage(copy.settings.export.offline);
@@ -181,8 +188,12 @@ export function useTaxExportGate({
 
       {showExportSheet && (
         <ExportEngineSheet
-          receipts={exportableReceipts}
-          onClose={() => setShowExportSheet(false)}
+          receipts={exportEngineReceipts ?? exportableReceipts}
+          currentSeason={currentSeason}
+          onClose={() => {
+            setShowExportSheet(false);
+            setExportEngineReceipts(null);
+          }}
           onPreExportPrepare={onPreExportPrepare}
           onExported={async () => {
             markSeasonExportDone(currentSeason);

@@ -879,6 +879,8 @@ export const DE_DE_COPY: UserCopy = {
     close: "Schließen",
     stepLabel: "Schritt {step} von {total}",
     step1Heading: "Steuerjahr auswählen",
+    step1SeasonHint:
+      "Ihre Saison {season} umfasst Belege des Kalenderjahrs {year} (1. Jan. – 31. Dez.).",
     step2Heading: "Kategorien prüfen",
     stepFormatHeading: "Exportformat wählen",
     step3Heading: "Ihr Steuerpaket",

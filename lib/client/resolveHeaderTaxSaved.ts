@@ -1,6 +1,6 @@
 export type ResolveHeaderTaxSavedInput = {
   displayTaxSaved: number | null | undefined;
-  seasonUnfiledTaxSaved: number | null | undefined;
+  seasonTotalTaxSaved: number | null | undefined;
   taxSavedFallback: number | null | undefined;
 };
 
@@ -9,6 +9,6 @@ export function resolveHeaderTaxSaved(
   input: ResolveHeaderTaxSavedInput,
 ): number | null {
   if (input.displayTaxSaved != null) return input.displayTaxSaved;
-  if (input.seasonUnfiledTaxSaved != null) return input.seasonUnfiledTaxSaved;
+  if (input.seasonTotalTaxSaved != null) return input.seasonTotalTaxSaved;
   return input.taxSavedFallback ?? null;
 }

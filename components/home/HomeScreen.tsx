@@ -451,7 +451,7 @@ export function HomeScreen() {
   const refreshTaxAndSummary = useCallback(async () => {
     const summary = await readCurrentSeasonSummary();
     setSeasonSummary(summary);
-    setTaxSaved(summary.unfiledTaxSaved);
+    setTaxSaved(summary.totalTaxSaved);
   }, []);
 
   const refreshTaxSaved = useCallback(
@@ -1100,7 +1100,7 @@ export function HomeScreen() {
     () =>
       resolveHeaderTaxSaved({
         displayTaxSaved,
-        seasonUnfiledTaxSaved: seasonSummary?.unfiledTaxSaved,
+        seasonTotalTaxSaved: seasonSummary?.totalTaxSaved,
         taxSavedFallback: taxSaved,
       }),
     [displayTaxSaved, seasonSummary, taxSaved],

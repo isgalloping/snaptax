@@ -70,7 +70,7 @@ export function OfflineHomeShell() {
   const refreshTaxAndSummary = useCallback(async () => {
     const summary = await readCurrentSeasonSummary();
     setSeasonSummary(summary);
-    setTaxSaved(summary.unfiledTaxSaved);
+    setTaxSaved(summary.totalTaxSaved);
   }, []);
 
   const refreshListFromLocal = useCallback(async () => {
@@ -121,7 +121,7 @@ export function OfflineHomeShell() {
     () =>
       resolveHeaderTaxSaved({
         displayTaxSaved,
-        seasonUnfiledTaxSaved: seasonSummary?.unfiledTaxSaved,
+        seasonTotalTaxSaved: seasonSummary?.totalTaxSaved,
         taxSavedFallback: taxSaved,
       }),
     [displayTaxSaved, seasonSummary, taxSaved],

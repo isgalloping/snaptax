@@ -635,7 +635,8 @@ export const FR_FR_COPY: UserCopy = {
         "Demandes de confidentialité : accusé de réception sous 48 h, réponse sous 30 jours.",
       dataRetention: "Conservation des données",
       security: "Sécurité & incidents",
-      allPolicies: "Toutes les politiques",
+      pricing: "Tarification",
+      refundPolicy: "Politique de remboursement",
       englishOnlyNotice: "Ce document est disponible en anglais uniquement.",
       loadingLegal: "Chargement…",
       legalLoadFailed:

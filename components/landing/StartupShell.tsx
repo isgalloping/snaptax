@@ -7,6 +7,7 @@ import {
   homeChunkReady as isHomeChunkReady,
 } from "@/lib/landing/homeChunk";
 import type { LandingExitMode } from "@/lib/landing/landingTiming";
+import { readStartupShellPhase } from "@/lib/landing/startupPhase";
 import { LandingGate } from "@/components/landing/LandingGate";
 
 const HomeScreen = dynamic(
@@ -28,7 +29,7 @@ const OfflineHomeShell = dynamic(
 type ShellPhase = "landing" | "full-home" | "offline-pack";
 
 export function StartupShell() {
-  const [phase, setPhase] = useState<ShellPhase>("landing");
+  const [phase, setPhase] = useState<ShellPhase>(() => readStartupShellPhase());
   const [homeChunkReady, setHomeChunkReady] = useState(isHomeChunkReady);
 
   useEffect(() => {

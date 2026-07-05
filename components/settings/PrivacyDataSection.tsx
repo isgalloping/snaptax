@@ -4,6 +4,10 @@ import { useEffect, useState } from "react";
 import type { LegalDoc } from "@/lib/legal/content";
 import { LEGAL_CONTACT_EMAIL } from "@/lib/legal/content";
 import { useUserCopy } from "@/components/i18n/I18nProvider";
+import {
+  LegalInAppFullPageOverlay,
+  type InAppLegalFullPage,
+} from "@/components/legal/LegalInAppFullPageOverlay";
 import { LegalSheet } from "@/components/legal/LegalSheet";
 import {
   deleteAccountAndLocalData,
@@ -58,6 +62,9 @@ export function PrivacyDataSection({
 }: PrivacyDataSectionProps) {
   const copy = useUserCopy().settings.privacyData;
   const [legalDoc, setLegalDoc] = useState<LegalDoc | null>(null);
+  const [fullPageLegal, setFullPageLegal] = useState<InAppLegalFullPage | null>(
+    null,
+  );
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -121,6 +128,14 @@ export function PrivacyDataSection({
             onClick={() => setLegalDoc("terms")}
           />
           <SettingsRow
+            label={copy.pricing}
+            onClick={() => setFullPageLegal("pricing")}
+          />
+          <SettingsRow
+            label={copy.refundPolicy}
+            onClick={() => setFullPageLegal("refund")}
+          />
+          <SettingsRow
             label={copy.dataRetention}
             onClick={() => setLegalDoc("data-retention")}
           />
@@ -128,7 +143,6 @@ export function PrivacyDataSection({
             label={copy.security}
             onClick={() => setLegalDoc("security")}
           />
-          <SettingsRow label={copy.allPolicies} href="/policies" />
           <button
             type="button"
             onClick={() => setLegalDoc("privacy")}
@@ -166,6 +180,13 @@ export function PrivacyDataSection({
       </section>
 
       <LegalSheet doc={legalDoc} onClose={() => setLegalDoc(null)} />
+
+      {fullPageLegal && (
+        <LegalInAppFullPageOverlay
+          page={fullPageLegal}
+          onClose={() => setFullPageLegal(null)}
+        />
+      )}
 
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-end bg-black/70">

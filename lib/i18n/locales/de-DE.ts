@@ -634,7 +634,8 @@ export const DE_DE_COPY: UserCopy = {
         "Datenschutzanfragen: Bestätigung innerhalb von 48 Stunden, Antwort innerhalb von 30 Tagen.",
       dataRetention: "Datenaufbewahrung",
       security: "Sicherheit & Vorfälle",
-      allPolicies: "Alle Richtlinien",
+      pricing: "Preise",
+      refundPolicy: "Erstattungsrichtlinie",
       englishOnlyNotice: "Dieses Dokument ist nur auf Englisch verfügbar.",
       loadingLegal: "Wird geladen…",
       legalLoadFailed:

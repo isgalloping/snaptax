@@ -8,6 +8,7 @@ import {
 const SHEET_FILES: Record<string, LegalMarkdownFile> = {
   "data-retention": "data-retention.md",
   security: "security-incident.md",
+  refund: "refund.md",
 };
 
 export async function GET(request: NextRequest) {

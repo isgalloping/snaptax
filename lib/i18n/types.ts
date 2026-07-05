@@ -503,7 +503,8 @@ export type UserCopy = {
       contactDsrNote: string;
       dataRetention: string;
       security: string;
-      allPolicies: string;
+      pricing: string;
+      refundPolicy: string;
       englishOnlyNotice: string;
       loadingLegal: string;
       legalLoadFailed: string;

@@ -224,6 +224,8 @@ export function HomeScreen() {
     () => new Set(),
   );
   const batchFlushActiveRef = useRef(false);
+  /** Receipt ids from batch camera — keep similar-dedup off until upload succeeds. */
+  const batchSessionReceiptIdsRef = useRef(new Set<string>());
   const receiptsRef = useRef<Receipt[]>([]);
   const cameraOpenRef = useRef(false);
   const cameraReturnViewRef = useRef<CameraReturnView | null>(null);
@@ -577,6 +579,7 @@ export function HomeScreen() {
         writeBudgetRemaining: getBudget(prior),
         photoMissing: undefined,
       };
+      batchSessionReceiptIdsRef.current.delete(prior.id);
       setReceipts((prev) => {
         const next = top100ByUpdatedAt([
           updated,
@@ -614,6 +617,8 @@ export function HomeScreen() {
         existingReceiptId,
         prior,
       );
+      batchSessionReceiptIdsRef.current.delete(localId);
+      batchSessionReceiptIdsRef.current.delete(existingReceiptId);
       setReceipts((prev) => {
         const next = top100ByUpdatedAt([
           updated,
@@ -668,7 +673,9 @@ export function HomeScreen() {
         latest.ocrDraft,
         {
           batchCapture:
-            opts?.batchCapture === true || batchFlushActiveRef.current,
+            opts?.batchCapture === true ||
+            batchFlushActiveRef.current ||
+            batchSessionReceiptIdsRef.current.has(latest.id),
         },
       );
       const updated = await persistUploadedReceipt(latest, uploaded);
@@ -1244,6 +1251,7 @@ export function HomeScreen() {
         return null;
       }
       const { receipt } = result;
+      batchSessionReceiptIdsRef.current.add(receipt.id);
       setReceipts((prev) => top100ByUpdatedAt([receipt, ...prev]));
       scheduleOcrJob(receipt.id);
       return receipt.id;
@@ -1252,6 +1260,9 @@ export function HomeScreen() {
   );
 
   const handleBatchClose = useCallback(async (sessionIds: string[]) => {
+    for (const id of sessionIds) {
+      batchSessionReceiptIdsRef.current.add(id);
+    }
     batchFlushActiveRef.current = true;
     try {
       await refreshListFromLocal();
@@ -1275,6 +1286,9 @@ export function HomeScreen() {
 
   const handleBatchDone = useCallback(
     async (sessionIds: string[]) => {
+      for (const id of sessionIds) {
+        batchSessionReceiptIdsRef.current.add(id);
+      }
       const visible = await loadTopByUpdatedAt(UI_RECEIPT_LIMIT);
       setReceipts(visible);
       refreshTaxSaved(visible);

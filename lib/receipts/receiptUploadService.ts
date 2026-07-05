@@ -284,13 +284,15 @@ export async function handleReceiptUploadPost(params: {
       return duplicateResponse(exactDup.id, "exact");
     }
 
-    const similarDup = await findSimilarDuplicate(
-      params.actor,
-      fingerprint,
-      existing.id,
-    );
-    if (similarDup) {
-      return duplicateResponse(similarDup.id, "similar");
+    if (shouldRunSimilarDuplicateCheck(params.captureMode ?? "single")) {
+      const similarDup = await findSimilarDuplicate(
+        params.actor,
+        fingerprint,
+        existing.id,
+      );
+      if (similarDup) {
+        return duplicateResponse(similarDup.id, "similar");
+      }
     }
 
     const captureKind = params.captureKind ?? incomeFormTypeFromReceipt(existing);

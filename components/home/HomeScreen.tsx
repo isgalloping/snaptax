@@ -1275,6 +1275,11 @@ export function HomeScreen() {
 
   const handleBatchDone = useCallback(
     async (sessionIds: string[]) => {
+      const visible = await loadTopByUpdatedAt(UI_RECEIPT_LIMIT);
+      setReceipts(visible);
+      refreshTaxSaved(visible);
+      setSyncStuckIds(stuckIdsFromReceipts(visible));
+
       batchFlushActiveRef.current = true;
       try {
         if (navigator.onLine && sessionIds.length > 0) {
@@ -1290,12 +1295,12 @@ export function HomeScreen() {
             // Local pending rows remain until next flush
           }
         }
-        const visible = await loadTopByUpdatedAt(UI_RECEIPT_LIMIT);
-        setReceipts(visible);
-        refreshTaxSaved(visible);
-        setSyncStuckIds(stuckIdsFromReceipts(visible));
+        const afterFlush = await loadTopByUpdatedAt(UI_RECEIPT_LIMIT);
+        setReceipts(afterFlush);
+        refreshTaxSaved(afterFlush);
+        setSyncStuckIds(stuckIdsFromReceipts(afterFlush));
         for (const id of sessionIds) {
-          const row = visible.find((r) => r.id === id);
+          const row = afterFlush.find((r) => r.id === id);
           if (
             row &&
             row.status === "processing" &&

@@ -234,7 +234,13 @@ function HelpSectionBody({
   }
 }
 
-export function HelpPageContent() {
+export function HelpPageContent({
+  appHomeHref = "/app",
+  embedded = false,
+}: {
+  appHomeHref?: string;
+  embedded?: boolean;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { copy } = useI18n();
@@ -272,8 +278,8 @@ export function HelpPageContent() {
   }, [router]);
 
   const goHome = useCallback(() => {
-    router.push("/");
-  }, [router]);
+    router.push(appHomeHref);
+  }, [router, appHomeHref]);
 
   const handleHeaderBack = () => {
     if (activeSection) {
@@ -283,22 +289,49 @@ export function HelpPageContent() {
     goHome();
   };
 
-  return (
-    <div className="flex min-h-screen flex-col bg-black text-white">
-      <header className="sticky top-0 z-50 flex shrink-0 items-center border-b-4 border-yellow-500 bg-zinc-900 p-4">
-        <button
-          type="button"
-          onClick={handleHeaderBack}
-          className="flex min-h-16 min-w-16 items-center justify-center rounded-xl border-2 border-zinc-600 bg-zinc-800 px-4 text-sm font-black uppercase tracking-wider transition-transform active:scale-95"
-        >
-          {activeSection ? help.backToTopics : help.backToApp}
-        </button>
-        <h1 className="ml-4 line-clamp-2 text-base font-black uppercase tracking-wider">
-          {activeSection ? activeTitle : help.pageTitle}
-        </h1>
-      </header>
+  const shellClass = embedded
+    ? "mx-auto max-w-2xl px-4 py-10 text-white sm:px-6"
+    : "flex min-h-screen flex-col bg-black text-white";
 
-      <main className="mx-auto w-full max-w-2xl flex-1 p-6 pb-16">
+  const topicButtonClass = embedded
+    ? "flex min-h-16 w-full items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 text-left text-sm font-bold text-white transition-colors hover:border-white/20"
+    : "flex min-h-16 w-full items-center justify-between rounded-xl border-2 border-zinc-700 bg-zinc-900 px-4 text-left text-sm font-bold text-white transition-transform active:scale-95";
+
+  const secondaryButtonClass = embedded
+    ? "mt-10 flex min-h-14 w-full items-center justify-center rounded-xl border border-white/10 px-4 text-sm font-bold text-white hover:border-white/20"
+    : "mt-10 flex min-h-16 w-full items-center justify-center rounded-xl border-2 border-zinc-600 bg-zinc-800 px-4 text-sm font-black uppercase tracking-wider text-white transition-transform active:scale-95";
+
+  return (
+    <div className={shellClass}>
+      {embedded ? (
+        <header className="mb-8 border-b border-white/10 pb-6">
+          <button
+            type="button"
+            onClick={handleHeaderBack}
+            className="text-sm font-bold text-zinc-400 hover:text-white"
+          >
+            {activeSection ? `← ${help.backToTopics}` : `← ${help.backToApp}`}
+          </button>
+          <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">
+            {activeSection ? activeTitle : help.pageTitle}
+          </h1>
+        </header>
+      ) : (
+        <header className="sticky top-0 z-50 flex shrink-0 items-center border-b-4 border-yellow-500 bg-zinc-900 p-4">
+          <button
+            type="button"
+            onClick={handleHeaderBack}
+            className="flex min-h-16 min-w-16 items-center justify-center rounded-xl border-2 border-zinc-600 bg-zinc-800 px-4 text-sm font-black uppercase tracking-wider transition-transform active:scale-95"
+          >
+            {activeSection ? help.backToTopics : help.backToApp}
+          </button>
+          <h1 className="ml-4 line-clamp-2 text-base font-black uppercase tracking-wider">
+            {activeSection ? activeTitle : help.pageTitle}
+          </h1>
+        </header>
+      )}
+
+      <main className={embedded ? "pb-16" : "mx-auto w-full max-w-2xl flex-1 p-6 pb-16"}>
         {!activeSection ? (
           <>
             <p className="mb-6 text-sm leading-relaxed text-zinc-400">
@@ -310,7 +343,7 @@ export function HelpPageContent() {
                   <button
                     type="button"
                     onClick={() => openSection(item.id)}
-                    className="flex min-h-16 w-full items-center justify-between rounded-xl border-2 border-zinc-700 bg-zinc-900 px-4 text-left text-sm font-bold text-white transition-transform active:scale-95"
+                    className={topicButtonClass}
                   >
                     <span>{item.label}</span>
                     <span className="text-yellow-400" aria-hidden>
@@ -328,7 +361,7 @@ export function HelpPageContent() {
             <button
               type="button"
               onClick={closeSection}
-              className="mt-10 flex min-h-16 w-full items-center justify-center rounded-xl border-2 border-zinc-600 bg-zinc-800 px-4 text-sm font-black uppercase tracking-wider text-white transition-transform active:scale-95"
+              className={secondaryButtonClass}
             >
               {help.allTopics}
             </button>

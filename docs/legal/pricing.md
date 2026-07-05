@@ -1,8 +1,8 @@
-# Snap1099 Pricing
+# SnapTax Pricing
 
 **Last Updated:** July 2026
 
-Receipt capture and AI categorization in Snap1099 are free. You pay only when you unlock **Export Tax Pack** for a tax season.
+Receipt capture and AI categorization in SnapTax are free. You pay only when you unlock **Export Tax Pack** for a tax season.
 
 ## What you pay for
 
@@ -13,7 +13,7 @@ Receipt capture and AI categorization in Snap1099 are free. You pay only when yo
 - Expenses CSV
 - CPA Audit Trail (ZIP)
 
-Snap1099 is not a monthly subscription for taking photos or storing receipts on your device.
+SnapTax is not a monthly subscription for taking photos or storing receipts on your device.
 
 ## How pricing works
 

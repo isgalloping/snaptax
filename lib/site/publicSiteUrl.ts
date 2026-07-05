@@ -1,4 +1,4 @@
-const DEFAULT_PUBLIC_SITE_URL = "https://app.snap1099.com";
+const DEFAULT_PUBLIC_SITE_URL = "https://snaptax.lightxforge.com";
 
 /** Canonical public site origin for robots, sitemap, and share links. */
 export function getPublicSiteUrl(): string {

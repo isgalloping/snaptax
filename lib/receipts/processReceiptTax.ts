@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { process1099Vision } from "@/lib/openai/process1099Vision";
 import type { OcrDraftPayload } from "@/lib/ocr/types";
+import { normalizeMerchantName } from "@/lib/receipts/normalizeMerchantName";
 import {
   routeStandardReceiptTax,
 } from "@/lib/receipts/processReceiptTaxRouter";
@@ -86,7 +87,7 @@ export async function processReceiptTax(params: {
       status: result.status,
       amount: result.amount,
       currency: result.currency,
-      merchantName: result.merchantName || null,
+      merchantName: normalizeMerchantName(result.merchantName) || null,
       category: result.category || null,
       deductible: result.deductible,
       taxAmount: result.taxAmount,

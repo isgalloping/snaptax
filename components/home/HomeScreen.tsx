@@ -109,8 +109,11 @@ import type { SettingsViewState } from "@/components/settings/settingsViewState"
 import { useAppNavigation } from "@/lib/client/useAppNavigation";
 import {
   confirmAppExit,
+  mapNavKeyToTarget,
   restoreHomeNavTrap,
+  type SnapNavKey,
 } from "@/lib/client/appNavigationHistory";
+import { LEGAL_RETURN_EVENT } from "@/lib/client/legalReturnNav";
 import { shouldConfirmExitFromPopState } from "@/lib/client/homeExitGuard";
 import { useHomeExitGuard } from "@/lib/client/useHomeExitGuard";
 import { ExitConfirmSheet } from "@/components/home/ExitConfirmSheet";
@@ -324,6 +327,16 @@ export function HomeScreen() {
     },
     [replaceSettingsPage],
   );
+
+  useEffect(() => {
+    const onLegalReturn = (event: Event) => {
+      const key = (event as CustomEvent<SnapNavKey>).detail;
+      if (!key) return;
+      applyPopTarget(mapNavKeyToTarget(key));
+    };
+    window.addEventListener(LEGAL_RETURN_EVENT, onLegalReturn);
+    return () => window.removeEventListener(LEGAL_RETURN_EVENT, onLegalReturn);
+  }, [applyPopTarget]);
 
   useEffect(() => {
     receiptsRef.current = receipts;

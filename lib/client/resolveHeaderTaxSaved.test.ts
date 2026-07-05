@@ -7,7 +7,7 @@ describe("resolveHeaderTaxSaved", () => {
     assert.equal(
       resolveHeaderTaxSaved({
         displayTaxSaved: 42,
-        seasonUnfiledTaxSaved: 10,
+        seasonTotalTaxSaved: 10,
         taxSavedFallback: 5,
       }),
       42,
@@ -18,7 +18,7 @@ describe("resolveHeaderTaxSaved", () => {
     assert.equal(
       resolveHeaderTaxSaved({
         displayTaxSaved: null,
-        seasonUnfiledTaxSaved: 10,
+        seasonTotalTaxSaved: 10,
         taxSavedFallback: 5,
       }),
       10,
@@ -29,7 +29,7 @@ describe("resolveHeaderTaxSaved", () => {
     assert.equal(
       resolveHeaderTaxSaved({
         displayTaxSaved: null,
-        seasonUnfiledTaxSaved: null,
+        seasonTotalTaxSaved: null,
         taxSavedFallback: 5,
       }),
       5,
@@ -40,7 +40,7 @@ describe("resolveHeaderTaxSaved", () => {
     assert.equal(
       resolveHeaderTaxSaved({
         displayTaxSaved: null,
-        seasonUnfiledTaxSaved: null,
+        seasonTotalTaxSaved: null,
         taxSavedFallback: null,
       }),
       null,

@@ -19,7 +19,6 @@ import { LegalSheet } from "@/components/legal/LegalSheet";
 import {
   isReviewComplete,
   nextUnreviewedId,
-  unreviewedIds,
 } from "@/lib/camera/batchReviewQueue";
 import {
   createBatchThumb,
@@ -147,15 +146,21 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
     }, []);
 
     const finishSession = useCallback(async () => {
-      await waitForBatchSavesIdle();
       const ids = [...sessionIdsRef.current];
       resetSession();
       streamPromiseRef.current = null;
       setCamera(false);
-      await onBatchDone(ids);
-      if (!resnapId) {
-        endBatchCaptureDefer();
-      }
+
+      void (async () => {
+        await waitForBatchSavesIdle();
+        try {
+          await onBatchDone(ids);
+        } finally {
+          if (!resnapId) {
+            endBatchCaptureDefer();
+          }
+        }
+      })();
     }, [onBatchDone, resetSession, resnapId, setCamera, waitForBatchSavesIdle]);
 
     const advanceAfterReviewAction = useCallback(
@@ -243,18 +248,7 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
 
     const handleFinishCapture = async () => {
       if (sessionIdsRef.current.length === 0) return;
-
-      if (isReviewComplete(sessionIdsRef.current, acceptedIds)) {
-        await finishSession();
-        return;
-      }
-
-      const first = unreviewedIds(sessionIdsRef.current, acceptedIds)[0];
-      if (!first) return;
-
-      setPhase("postReview");
-      setReviewId(first);
-      setSelectedId(first);
+      await finishSession();
     };
 
     const handleReviewDelete = async (id: string) => {
@@ -294,15 +288,21 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
     };
 
     const handleClose = async () => {
-      await waitForBatchSavesIdle();
       const ids = [...sessionIdsRef.current];
       resetSession();
       streamPromiseRef.current = null;
       setCamera(false);
-      await onBatchClose(ids);
-      if (!resnapId) {
-        endBatchCaptureDefer();
-      }
+
+      void (async () => {
+        await waitForBatchSavesIdle();
+        try {
+          await onBatchClose(ids);
+        } finally {
+          if (!resnapId) {
+            endBatchCaptureDefer();
+          }
+        }
+      })();
     };
 
     const handleFallback = () => {

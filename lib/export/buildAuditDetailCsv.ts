@@ -1,7 +1,9 @@
 import type { ExportExpenseRow } from "@/lib/tax/exportRows";
+import { exportIrsLineKeyForRow } from "@/lib/export/scheduleCLines";
 
 const HEADERS = [
   "Date",
+  "IRS_Line",
   "Category",
   "Merchant",
   "Amount",
@@ -29,6 +31,7 @@ export function buildAuditDetailCsv(rows: ExportExpenseRow[]): string {
     lines.push(
       csvLine([
         row.dateIso,
+        exportIrsLineKeyForRow(row),
         row.categoryDisplay,
         row.merchant,
         row.exportAmount.toFixed(2),

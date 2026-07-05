@@ -156,6 +156,13 @@ export function useTaxExportGate({
     }
   };
 
+  const handleExportReceiptUpdated = (updated: Receipt) => {
+    setExportEngineReceipts((prev) =>
+      prev ? prev.map((r) => (r.id === updated.id ? updated : r)) : prev,
+    );
+    onReceiptUpdated?.(updated);
+  };
+
   const overlays = (
     <>
       {googleSheet && (
@@ -203,7 +210,7 @@ export function useTaxExportGate({
           onPaymentRequired={() => {
             setShowPaywall(true);
           }}
-          onReceiptUpdated={onReceiptUpdated}
+          onReceiptUpdated={handleExportReceiptUpdated}
           onSnap1099={(kind) => {
             setShowExportSheet(false);
             onSnap1099?.(kind);

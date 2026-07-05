@@ -11,6 +11,7 @@ test("securityHeaders includes baseline protections", () => {
   assert.match(headers["Content-Security-Policy"], /www\.gstatic\.com/);
   assert.match(headers["Content-Security-Policy"], /fonts\.gstatic\.com/);
   assert.match(headers["Content-Security-Policy"], /paddle\.com/);
+  assert.match(headers["Content-Security-Policy"], /sandbox-cdn\.paddle\.com/);
 });
 
 test("securityHeaders allows unsafe-eval only in development", () => {

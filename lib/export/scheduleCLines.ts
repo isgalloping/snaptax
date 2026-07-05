@@ -83,6 +83,18 @@ export function scheduleCLineKeyFromLabel(scheduleCLine: string): string | null 
   return BY_LABEL.get(scheduleCLine)?.key ?? null;
 }
 
+/** IRS line key for audit CSV, e.g. `22`, `24b`. */
+export function exportIrsLineKeyForRow(row: {
+  scheduleCLine: string;
+  irsLine: string;
+}): string {
+  return (
+    scheduleCLineKeyFromLabel(row.scheduleCLine) ??
+    scheduleCLineKeyFromLabel(row.irsLine) ??
+    "27a"
+  );
+}
+
 export function zipFolderForScheduleCLine(scheduleCLine: string): string {
   return BY_LABEL.get(scheduleCLine)?.zipFolder ?? "Line_27a_Other_expenses";
 }

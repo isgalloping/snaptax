@@ -24,13 +24,13 @@ describe("clearAllLocalData", () => {
     await saveReceipt(doneReceipt("receipt-before-clear", 12));
 
     const before = await readCurrentSeasonSummary();
-    assert.equal(before.unfiledTaxSaved, 12);
+    assert.equal(before.totalTaxSaved, 12);
     assert.equal(before.totalReceiptCount, 1);
 
     await clearAllLocalData();
 
     const after = await readCurrentSeasonSummary();
-    assert.equal(after.unfiledTaxSaved, 0);
+    assert.equal(after.totalTaxSaved, 0);
     assert.equal(after.totalReceiptCount, 0);
 
     await clearAllLocalData();

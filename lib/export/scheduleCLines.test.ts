@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   SCHEDULE_C_PART_II_LINES,
+  exportIrsLineKeyForRow,
   scheduleCLineKeyFromLabel,
   sumExportAmountsByLineKey,
   zipFolderForScheduleCLine,
@@ -18,6 +19,17 @@ describe("scheduleCLines", () => {
   it("maps Line label to key", () => {
     assert.equal(scheduleCLineKeyFromLabel("Line 9"), "9");
     assert.equal(scheduleCLineKeyFromLabel("Line 24b"), "24b");
+  });
+
+  it("exportIrsLineKeyForRow prefers scheduleCLine", () => {
+    assert.equal(
+      exportIrsLineKeyForRow({ scheduleCLine: "Line 22", irsLine: "Line 27a" }),
+      "22",
+    );
+    assert.equal(
+      exportIrsLineKeyForRow({ scheduleCLine: "", irsLine: "Line 24b" }),
+      "24b",
+    );
   });
 
   it("resolves zip folder for Line 9", () => {

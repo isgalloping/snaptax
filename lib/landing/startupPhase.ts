@@ -1,4 +1,5 @@
-/** Resume main app shell without replaying cold-start landing. */
+/** Resume main app shell without replaying cold-start landing.
+ * Call only after mount (useLayoutEffect) — not in useState initializers (SSR mismatch). */
 export function readStartupShellPhase(): "landing" | "full-home" {
   if (typeof window === "undefined") return "landing";
   if (document.documentElement.classList.contains("landing-done")) {

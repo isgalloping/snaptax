@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 import {
   getHomeChunkPromise,
   homeChunkReady as isHomeChunkReady,
@@ -29,8 +29,19 @@ const OfflineHomeShell = dynamic(
 type ShellPhase = "landing" | "full-home" | "offline-pack";
 
 export function StartupShell() {
-  const [phase, setPhase] = useState<ShellPhase>(() => readStartupShellPhase());
-  const [homeChunkReady, setHomeChunkReady] = useState(isHomeChunkReady);
+  // Fixed SSR seed — sessionStorage / module singletons differ on the client.
+  const [phase, setPhase] = useState<ShellPhase>("landing");
+  const [homeChunkReady, setHomeChunkReady] = useState(false);
+
+  useLayoutEffect(() => {
+    const resumed = readStartupShellPhase();
+    if (resumed === "full-home") {
+      setPhase("full-home");
+    }
+    if (isHomeChunkReady()) {
+      setHomeChunkReady(true);
+    }
+  }, []);
 
   useEffect(() => {
     performance.mark("startup:shell");

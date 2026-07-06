@@ -64,15 +64,15 @@ function PolicyCard({
   );
 }
 
-export function PoliciesHubContent() {
+export function PoliciesHubContent({ embedded = false }: { embedded?: boolean }) {
   return (
     <LegalFullPageShell
       title="Terms & Policies"
       subtitle="Last Updated: July 2026"
+      embedded={embedded}
     >
       <p className="mb-6 text-sm leading-relaxed text-zinc-300">
-        Legal documents for Snap1099 (SnapTax). Tap a policy to read the full
-        text.
+        Legal documents for SnapTax. Tap a policy to read the full text.
       </p>
 
       <ul className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-3">

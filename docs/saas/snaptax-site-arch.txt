@@ -1,0 +1,15 @@
+主域（官网 / SEO入口）
+snaptax.lightxforge.com
+/
+├── Home
+├── Pricing
+├── FAQ
+├── Privacy
+├── Terms
+├── Refund
+├── Contact
+└── App
+
+登录以后
+snaptax.lightxforge.com/app
+直接进入 PWA (snaptax app)

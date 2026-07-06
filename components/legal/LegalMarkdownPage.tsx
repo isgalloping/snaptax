@@ -8,10 +8,12 @@ import { LegalFullPageShell } from "@/components/legal/LegalFullPageShell";
 export function LegalMarkdownPage({
   doc,
   hideHubSections = false,
+  embedded = false,
   onClose,
 }: {
   doc: ParsedLegalMarkdown;
   hideHubSections?: boolean;
+  embedded?: boolean;
   onClose?: () => void;
 }) {
   const sections = hideHubSections
@@ -23,6 +25,7 @@ export function LegalMarkdownPage({
       title={doc.title}
       subtitle={doc.subtitle}
       onClose={onClose}
+      embedded={embedded}
     >
       <LegalMarkdownSections sections={sections} headingLevel="h2" />
     </LegalFullPageShell>

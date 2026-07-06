@@ -14,11 +14,17 @@ export function LegalFullPageShell({
   title,
   subtitle,
   onClose,
+  embedded = false,
+  embeddedFlush = false,
+  embeddedTitleAs = "h1",
   children,
 }: {
   title: string;
   subtitle?: string | null;
   onClose?: () => void;
+  embedded?: boolean;
+  embeddedFlush?: boolean;
+  embeddedTitleAs?: "h1" | "h2" | "none";
   children: React.ReactNode;
 }) {
   const router = useRouter();
@@ -42,7 +48,33 @@ export function LegalFullPageShell({
     router.push("/");
   }, [onClose, router]);
 
-  useDialogEscape(true, handleClose);
+  useDialogEscape(!embedded, handleClose);
+
+  if (embedded) {
+    const TitleTag = embeddedTitleAs === "h2" ? "h2" : "h1";
+
+    return (
+      <article
+        className={
+          embeddedFlush
+            ? "w-full"
+            : "mx-auto w-full max-w-2xl px-4 py-10 sm:px-6"
+        }
+      >
+        {embeddedTitleAs !== "none" ? (
+          <header className="mb-8 border-b border-white/10 pb-6">
+            <TitleTag className="text-2xl font-black tracking-tight text-white sm:text-3xl">
+              {title}
+            </TitleTag>
+            {subtitle ? (
+              <p className="mt-2 text-sm text-zinc-400">{subtitle}</p>
+            ) : null}
+          </header>
+        ) : null}
+        {children}
+      </article>
+    );
+  }
 
   return (
     <div className="flex h-dvh flex-col bg-black text-white">

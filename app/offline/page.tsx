@@ -16,7 +16,7 @@ export default function OfflinePage() {
       </p>
       <p className="mt-2 text-sm text-zinc-500">{copy.offline.body}</p>
       <Link
-        href="/"
+        href="/app"
         className="mt-10 flex min-h-16 items-center rounded-xl bg-yellow-500 px-8 text-lg font-black text-black active:scale-95"
       >
         {copy.offline.backHome}

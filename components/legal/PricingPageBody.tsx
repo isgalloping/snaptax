@@ -11,11 +11,19 @@ export function PricingPageBody({
   doc,
   live,
   hideHubSections = false,
+  embedded = false,
+  embeddedFlush = false,
+  hideLiveBlock = false,
+  embeddedTitleAs = "h1",
   onClose,
 }: {
   doc: ParsedLegalMarkdown;
   live: PricingPageLiveData | null;
   hideHubSections?: boolean;
+  embedded?: boolean;
+  embeddedFlush?: boolean;
+  hideLiveBlock?: boolean;
+  embeddedTitleAs?: "h1" | "h2" | "none";
   onClose?: () => void;
 }) {
   const sections = hideHubSections
@@ -23,8 +31,15 @@ export function PricingPageBody({
     : doc.sections;
 
   return (
-    <LegalFullPageShell title={doc.title} subtitle={doc.subtitle} onClose={onClose}>
-      {live ? (
+    <LegalFullPageShell
+      title={doc.title}
+      subtitle={doc.subtitle}
+      onClose={onClose}
+      embedded={embedded}
+      embeddedFlush={embeddedFlush}
+      embeddedTitleAs={embeddedTitleAs}
+    >
+      {!hideLiveBlock && live ? (
         <section className="mb-8 rounded-xl border-2 border-yellow-500 bg-zinc-900 p-5">
           <p className="text-xs font-bold uppercase tracking-wider text-zinc-400">
             Current offer
@@ -42,7 +57,10 @@ export function PricingPageBody({
           {live.showFounderTable && live.founderRows.length > 0 && (
             <div className="mt-6 overflow-x-auto">
               <p className="mb-3 text-xs font-bold uppercase tracking-wider text-zinc-400">
-                Founder Program tiers (seats remaining: open)
+                Founder Program tiers
+                {live.founderSeatsRemaining != null
+                  ? ` (${live.founderSeatsRemaining} seats remaining)`
+                  : ""}
               </p>
               <table className="w-full min-w-[32rem] border-collapse text-left text-sm">
                 <thead>
@@ -65,6 +83,12 @@ export function PricingPageBody({
                       <td className="py-3 pr-3">{row.seatRange}</td>
                       <td className="py-3 pr-3 text-yellow-400">
                         {row.priceLabel}
+                        {embedded ? (
+                          <span className="text-xs font-normal text-zinc-400">
+                            {" "}
+                            / tax season
+                          </span>
+                        ) : null}
                       </td>
                       <td className="py-3">{row.note}</td>
                     </tr>
@@ -74,11 +98,13 @@ export function PricingPageBody({
             </div>
           )}
         </section>
-      ) : (
+      ) : !hideLiveBlock ? (
         <p className="mb-8 rounded-xl border-2 border-zinc-600 bg-zinc-900 p-5 text-sm leading-relaxed text-zinc-300">
-          Open Snap1099 in your browser for current season pricing at checkout.
+          {embedded
+            ? "Open SnapTax in your browser for current season pricing at checkout."
+            : "Open SnapTax in your browser for current season pricing at checkout."}
         </p>
-      )}
+      ) : null}
 
       {sections.map((section) => (
         <section key={section.title} className="mb-8">

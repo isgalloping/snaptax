@@ -6,14 +6,24 @@ import { LegalFullPageShell } from "@/components/legal/LegalFullPageShell";
 import { slugifyLegalHeading } from "@/lib/legal/slugifyLegalHeading";
 import { useI18n } from "@/components/i18n/I18nProvider";
 
-export function LegalPageContent({ doc }: { doc: LocalizedLegalDoc }) {
+export function LegalPageContent({
+  doc,
+  embedded = false,
+}: {
+  doc: LocalizedLegalDoc;
+  embedded?: boolean;
+}) {
   const { locale } = useI18n();
   const bundle = getLegalBundle(locale);
   const sections = getLegalSections(doc, locale);
   const title = getLegalTitle(doc, locale);
 
   return (
-    <LegalFullPageShell title={title} subtitle={bundle.lastUpdatedLabel}>
+    <LegalFullPageShell
+      title={title}
+      subtitle={bundle.lastUpdatedLabel}
+      embedded={embedded}
+    >
       {sections.map((section) => (
         <section key={section.title} className="mb-8">
           <h2

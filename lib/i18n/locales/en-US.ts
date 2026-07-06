@@ -57,6 +57,12 @@ export const EN_US_COPY: UserCopy = {
           "Snap1099 appears in your Dock like a native app.",
         ],
       },
+      appEntryGate: {
+        installTitle: "Install SnapTax",
+        openTitle: "Open SnapTax",
+        continueInBrowser: "Continue in browser",
+        addedToHomeScreen: "Added to Home Screen",
+      },
     },
     camera: {
       opening: "Opening camera…",

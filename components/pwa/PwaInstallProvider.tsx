@@ -24,6 +24,10 @@ import {
   type InstallUiMode,
 } from "@/lib/pwa/deferredInstall";
 import { isPwaInstalledOnDevice, resolveInstallUiModeWithInstalled } from "@/lib/pwa/installedDetect";
+import {
+  APP_ENTRY_GATE_DISMISSED_EVENT,
+  shouldSuppressInstallBarAfterGateSkip,
+} from "@/lib/pwa/appBrowserEntry";
 import { supportsNativeInstallPrompt, getInstallPlatform } from "@/lib/pwa/installPlatform";
 import {
   PwaInstallContext,
@@ -37,8 +41,11 @@ import {
   type WebApkGuideVariant,
 } from "./WebApkLaunchGuideSheet";
 
-function useInstallUiState(options: { requireLandingDone: boolean }) {
-  const { requireLandingDone } = options;
+function useInstallUiState(options: {
+  requireLandingDone: boolean;
+  suppressWebApkGuide: boolean;
+}) {
+  const { requireLandingDone, suppressWebApkGuide } = options;
 
   const isEligible = useCallback(() => {
     return requireLandingDone ? isInstallEligible() : isBrowserInstallEligible();
@@ -66,7 +73,7 @@ function useInstallUiState(options: { requireLandingDone: boolean }) {
       resolveInstallUiModeWithInstalled(
         false,
         isEligible(),
-        hasDismissedInstallBar(),
+        hasDismissedInstallBar() || shouldSuppressInstallBarAfterGateSkip(),
       ),
     );
   }, [isEligible]);
@@ -145,17 +152,24 @@ function useInstallUiState(options: { requireLandingDone: boolean }) {
     document.addEventListener("visibilitychange", onVisible);
 
     const onInstalled = () => {
+      if (suppressWebApkGuide) return;
       if (getInstallPlatform() !== "chromium-android") return;
       setWebApkGuideVariant("post-install");
       setWebApkGuideOpen(true);
     };
     window.addEventListener("appinstalled", onInstalled);
 
+    const onGateDismissed = () => {
+      void sync();
+    };
+    window.addEventListener(APP_ENTRY_GATE_DISMISSED_EVENT, onGateDismissed);
+
     return () => {
       unsubPrompt();
       unsubLanding();
       document.removeEventListener("visibilitychange", onVisible);
       window.removeEventListener("appinstalled", onInstalled);
+      window.removeEventListener(APP_ENTRY_GATE_DISMISSED_EVENT, onGateDismissed);
       if (onController) {
         navigator.serviceWorker.removeEventListener(
           "controllerchange",
@@ -164,7 +178,7 @@ function useInstallUiState(options: { requireLandingDone: boolean }) {
       }
       for (const id of recheckDelays) window.clearTimeout(id);
     };
-  }, [sync, requireLandingDone]);
+  }, [sync, requireLandingDone, suppressWebApkGuide]);
 
   const acknowledgeManualSheet = useCallback(() => {
     setManualSheetOpen(false);
@@ -246,10 +260,12 @@ export function PwaInstallProvider({
   children,
   requireLandingDone = true,
   showLaunchFromHomeHint = true,
+  suppressWebApkGuide = false,
 }: {
   children: ReactNode;
   requireLandingDone?: boolean;
   showLaunchFromHomeHint?: boolean;
+  suppressWebApkGuide?: boolean;
 }) {
   const {
     contextValue,
@@ -257,7 +273,7 @@ export function PwaInstallProvider({
     webApkGuideVariant,
     handleWebApkGuideContinue,
     handleWebApkGuideDismiss,
-  } = useInstallUiState({ requireLandingDone });
+  } = useInstallUiState({ requireLandingDone, suppressWebApkGuide });
 
   return (
     <PwaInstallContext.Provider value={contextValue}>

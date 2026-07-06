@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { PwaProvider } from "@/components/pwa/PwaProvider";
 
 export const metadata: Metadata = {
-  title: "Snap1099",
+  title: "SnapTax",
   robots: {
     index: false,
     follow: false,

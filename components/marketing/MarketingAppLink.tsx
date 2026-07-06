@@ -9,7 +9,7 @@ import {
 import { useUserCopy } from "@/components/i18n/I18nProvider";
 import { openPwaAppEntry } from "@/lib/marketing/openPwaAppEntry";
 import { PWA_APP_ENTRY } from "@/lib/marketing/pwaEntryRedirect";
-import { isPwaInstalledOnDevice } from "@/lib/pwa/installedDetect";
+import { readPwaInstalledLocally } from "@/lib/pwa/installedDetect";
 import { getInstallPlatform } from "@/lib/pwa/installPlatform";
 
 type MarketingAppLinkProps = Omit<
@@ -17,9 +17,15 @@ type MarketingAppLinkProps = Omit<
   "href"
 >;
 
+function shouldShowIosInstalledHint(): boolean {
+  return (
+    getInstallPlatform() === "ios-safari" && readPwaInstalledLocally()
+  );
+}
+
 /**
- * Marketing CTA to `/app` — uses full document navigation so installed PWAs
- * can be launched from the browser tab (Android WebAPK / Navigation Capturing).
+ * Marketing CTA to `/app` — synchronous full navigation on click so Android
+ * WebAPK / Navigation Capturing can launch the installed app (user gesture).
  */
 export function MarketingAppLink({
   onClick,
@@ -36,13 +42,12 @@ export function MarketingAppLink({
 
       event.preventDefault();
 
-      void isPwaInstalledOnDevice().then((installed) => {
-        if (installed && getInstallPlatform() === "ios-safari") {
-          setIosHintOpen(true);
-          return;
-        }
-        openPwaAppEntry();
-      });
+      if (shouldShowIosInstalledHint()) {
+        setIosHintOpen(true);
+        return;
+      }
+
+      openPwaAppEntry();
     },
     [onClick],
   );

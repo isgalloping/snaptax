@@ -1,7 +1,12 @@
 import type { MetadataRoute } from "next";
 import { USER_COPY } from "@/lib/copy/userFacing";
 
-export default function manifest(): MetadataRoute.Manifest {
+/** Chrome link capture — not yet in Next.js MetadataRoute.Manifest typings. */
+type AppManifest = MetadataRoute.Manifest & {
+  capture_links: "existing-client-navigate";
+};
+
+export default function manifest(): AppManifest {
   return {
     id: "/app",
     related_applications: [

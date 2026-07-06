@@ -53,10 +53,10 @@ export function MarketingHeader() {
             Sign In
           </MarketingAppLink>
           <MarketingAppLink
-            className="flex min-h-11 items-center rounded-lg px-4 text-sm font-black text-black transition-transform active:scale-95"
+            className="hidden min-h-11 items-center rounded-lg px-4 text-sm font-black text-black transition-transform active:scale-95 md:flex"
             style={{ backgroundColor: MARKETING_TOKENS.ctaYellow }}
           >
-            Get Started
+            {MARKETING_COPY.hero.primaryCta}
           </MarketingAppLink>
         </div>
       </div>
@@ -78,6 +78,15 @@ export function MarketingHeader() {
                 </Link>
               </li>
             ))}
+            <li>
+              <MarketingAppLink
+                className="flex min-h-12 items-center justify-center rounded-lg px-3 text-sm font-black text-black transition-transform active:scale-95"
+                style={{ backgroundColor: MARKETING_TOKENS.ctaYellow }}
+                onClick={() => setMenuOpen(false)}
+              >
+                {MARKETING_COPY.hero.primaryCta}
+              </MarketingAppLink>
+            </li>
             <li>
               <MarketingAppLink
                 className="flex min-h-12 items-center rounded-lg px-3 text-sm font-semibold text-zinc-200 hover:bg-white/5"

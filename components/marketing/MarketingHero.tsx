@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { MarketingAppLink } from "@/components/marketing/MarketingAppLink";
 import { MARKETING_COPY } from "@/lib/marketing/copy";
 import {
   MARKETING_HERO_BACKGROUND,
@@ -130,13 +131,12 @@ export function MarketingHero() {
               ))}
             </ul>
             <div className="mt-10 flex flex-row flex-nowrap items-center gap-2.5 sm:gap-3">
-              <Link
-                href="/app"
+              <MarketingAppLink
                 className="inline-flex min-h-12 shrink-0 items-center justify-center whitespace-nowrap rounded-xl px-5 text-sm font-black text-black transition-transform active:scale-95 sm:min-h-14 sm:px-6 sm:text-base"
                 style={{ backgroundColor: MARKETING_TOKENS.ctaYellow }}
               >
                 {hero.primaryCta}
-              </Link>
+              </MarketingAppLink>
               <Link
                 href="/pricing"
                 className="inline-flex min-h-12 shrink-0 items-center justify-center whitespace-nowrap rounded-xl border border-white/25 px-5 text-sm font-bold text-white transition-colors hover:border-white/50 sm:min-h-14 sm:px-6 sm:text-base"

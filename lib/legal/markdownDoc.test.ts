@@ -5,7 +5,7 @@ import { loadLegalMarkdown, parseLegalMarkdown } from "./markdownDoc";
 describe("legal markdown docs", () => {
   it("loads pricing.md with expected sections", () => {
     const doc = parseLegalMarkdown(loadLegalMarkdown("pricing.md"));
-    assert.equal(doc.title, "Snap1099 Pricing");
+    assert.equal(doc.title, "SnapTax Pricing");
     assert.ok(doc.sections.some((s) => s.title === "What you pay for"));
     assert.ok(doc.sections.some((s) => s.title === "Related policies"));
   });

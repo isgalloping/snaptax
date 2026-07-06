@@ -24,6 +24,7 @@ export type PricingPageLiveData = {
   priceLabel: string;
   skuTier: FounderTier;
   showFounderTable: boolean;
+  founderSeatsRemaining: number | null;
   founderRows: PricingFounderTierRow[];
 };
 
@@ -48,7 +49,7 @@ export function buildFounderRows(
     const note =
       tier === "DEFAULT"
         ? "After Founder Program seats are filled or status lapses"
-        : "Locked for life while Founder status stays active";
+        : "Locks this tier price for future tax seasons while Founder status stays active";
 
     return {
       tier,
@@ -74,6 +75,7 @@ export async function loadPricingPageLiveData(): Promise<PricingPageLiveData> {
     priceLabel: formatCurrency(offer.priceUsd),
     skuTier: offer.skuTier,
     showFounderTable,
+    founderSeatsRemaining: showFounderTable ? state.remaining : null,
     founderRows: showFounderTable ? buildFounderRows(state.tiers) : [],
   };
 }

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { MarketingAppLink } from "@/components/marketing/MarketingAppLink";
+import { MarketingInstallButton } from "@/components/marketing/MarketingInstallButton";
 import { MARKETING_COPY } from "@/lib/marketing/copy";
 import { MARKETING_TOKENS } from "@/lib/marketing/tokens";
 
@@ -47,6 +48,7 @@ export function MarketingHeader() {
           >
             {menuOpen ? "×" : "☰"}
           </button>
+          <MarketingInstallButton />
           <MarketingAppLink
             className="hidden min-h-11 items-center rounded-lg px-3 text-sm font-bold text-zinc-200 transition-colors hover:text-white sm:flex"
           >

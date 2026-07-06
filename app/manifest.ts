@@ -21,6 +21,8 @@ export default function manifest(): MetadataRoute.Manifest {
     launch_handler: {
       client_mode: "navigate-existing",
     },
+    // Desktop Chrome 96+ / Navigation Capturing: open in-scope links in the PWA.
+    capture_links: "existing-client-navigate",
     orientation: "portrait",
     background_color: "#000000",
     theme_color: "#000000",

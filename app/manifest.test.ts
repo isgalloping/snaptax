@@ -8,5 +8,9 @@ describe("PWA manifest", () => {
     assert.equal(data.start_url, "/app");
     assert.equal(data.scope, "/app");
     assert.equal(data.id, "/app");
+    assert.equal(
+      (data as { capture_links?: string }).capture_links,
+      "existing-client-navigate",
+    );
   });
 });

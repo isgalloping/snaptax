@@ -7,7 +7,7 @@ import {
   homeChunkReady as isHomeChunkReady,
 } from "@/lib/landing/homeChunk";
 import type { LandingExitMode } from "@/lib/landing/landingTiming";
-import { readStartupShellPhase } from "@/lib/landing/startupPhase";
+import { readStartupShellPhase, applyLandingDoneToDocument } from "@/lib/landing/startupPhase";
 import { LandingGate } from "@/components/landing/LandingGate";
 
 const HomeScreen = dynamic(
@@ -36,6 +36,7 @@ export function StartupShell() {
   useLayoutEffect(() => {
     const resumed = readStartupShellPhase();
     if (resumed === "full-home") {
+      applyLandingDoneToDocument();
       setPhase("full-home");
     }
     if (isHomeChunkReady()) {

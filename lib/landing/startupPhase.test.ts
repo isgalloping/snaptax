@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it, beforeEach, afterEach } from "node:test";
 import {
+  applyLandingDoneToDocument,
   markLandingDonePersisted,
   readStartupShellPhase,
 } from "./startupPhase";
@@ -13,6 +14,8 @@ describe("readStartupShellPhase", () => {
     storage.clear();
     htmlClassList = new Set<string>();
     (globalThis as { window?: typeof globalThis }).window = globalThis;
+    (globalThis as { window?: Window & typeof globalThis }).window!.dispatchEvent =
+      () => true;
     (globalThis as { document?: Document }).document = {
       documentElement: {
         classList: {
@@ -58,5 +61,11 @@ describe("readStartupShellPhase", () => {
   it("skips landing when session mirror is set", () => {
     markLandingDonePersisted();
     assert.equal(readStartupShellPhase(), "full-home");
+  });
+
+  it("applyLandingDoneToDocument sets class and session mirror", () => {
+    applyLandingDoneToDocument();
+    assert.equal(readStartupShellPhase(), "full-home");
+    assert.equal(htmlClassList.has("landing-done"), true);
   });
 });

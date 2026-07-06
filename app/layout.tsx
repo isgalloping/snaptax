@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { I18nProvider } from "@/components/i18n/I18nProvider";
+import { InstallCaptureScript } from "@/components/pwa/InstallCaptureScript";
 import { PwaStandaloneEntryRedirect } from "@/components/pwa/PwaStandaloneEntryRedirect";
 import { PwaStandaloneEntryRedirectScript } from "@/components/pwa/PwaStandaloneEntryRedirectScript";
 import { USER_COPY } from "@/lib/copy/userFacing";
@@ -60,6 +61,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
+        <InstallCaptureScript />
         <PwaStandaloneEntryRedirectScript />
         <PwaStandaloneEntryRedirect />
         <I18nProvider>{children}</I18nProvider>

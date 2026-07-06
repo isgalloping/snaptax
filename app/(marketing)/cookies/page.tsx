@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MarketingAppLink } from "@/components/marketing/MarketingAppLink";
 import { buildMarketingMetadata } from "@/lib/marketing/metadata";
 
 export const metadata = buildMarketingMetadata({
@@ -15,9 +16,9 @@ export default function CookiesPage() {
         SnapTax uses essential cookies for authentication, session management,
         and PWA installation. These cookies are required for the product to
         function when you use the app at{" "}
-        <Link href="/app" className="text-white underline-offset-4 hover:underline">
+        <MarketingAppLink className="text-white underline-offset-4 hover:underline">
           /app
-        </Link>
+        </MarketingAppLink>
         .
       </p>
       <p className="mt-4 text-sm leading-relaxed text-zinc-400">

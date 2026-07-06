@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MarketingAppLink } from "@/components/marketing/MarketingAppLink";
 import { PricingPageBody } from "@/components/legal/PricingPageBody";
 import {
   buildMarketingPricingCards,
@@ -73,13 +74,12 @@ export function MarketingPricingPage({
       </section>
 
       <div className="mt-10 flex flex-col gap-3 sm:flex-row">
-        <Link
-          href="/app"
+        <MarketingAppLink
           className="flex min-h-14 items-center justify-center rounded-xl px-8 text-lg font-black text-black transition-transform active:scale-95"
           style={{ backgroundColor: MARKETING_TOKENS.ctaYellow }}
         >
           Get Started
-        </Link>
+        </MarketingAppLink>
         <Link
           href="/contact"
           className="flex min-h-14 items-center justify-center rounded-xl border border-white/20 px-8 text-lg font-bold text-white"

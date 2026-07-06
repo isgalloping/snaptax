@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { MarketingAppLink } from "@/components/marketing/MarketingAppLink";
 import { MARKETING_COPY } from "@/lib/marketing/copy";
 import { MARKETING_TOKENS } from "@/lib/marketing/tokens";
 import type { FounderTier } from "@/lib/founder/types";
@@ -131,13 +131,12 @@ export function MarketingPricingCard({
       >
         {card.availability}
       </p>
-      <Link
-        href="/app"
+      <MarketingAppLink
         className="mt-4 flex min-h-12 w-full items-center justify-center rounded-xl text-sm font-black text-black transition-transform active:scale-95"
         style={{ backgroundColor: MARKETING_TOKENS.ctaYellow }}
       >
         {MARKETING_COPY.hero.primaryCta}
-      </Link>
+      </MarketingAppLink>
     </article>
   );
 }

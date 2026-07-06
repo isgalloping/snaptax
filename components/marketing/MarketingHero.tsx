@@ -1,7 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { MARKETING_COPY } from "@/lib/marketing/copy";
-import { MARKETING_HERO_SCREENS } from "@/lib/marketing/heroScreens";
+import {
+  MARKETING_HERO_BACKGROUND,
+  MARKETING_HERO_BACKGROUND_POSITION,
+  MARKETING_HERO_SCREENS,
+} from "@/lib/marketing/heroScreens";
 import { MARKETING_TOKENS } from "@/lib/marketing/tokens";
 
 type ValuePropIcon = (typeof MARKETING_COPY.hero.valueProps)[number]["icon"];
@@ -80,9 +84,23 @@ export function MarketingHero() {
   const { hero } = MARKETING_COPY;
 
   return (
-    <section className="relative overflow-hidden border-b border-white/10 bg-black/20">
+    <section className="relative min-h-[34rem] overflow-hidden border-b border-white/10 sm:min-h-[36rem] lg:min-h-[40rem]">
+      <Image
+        src={MARKETING_HERO_BACKGROUND}
+        alt=""
+        fill
+        priority
+        sizes="100vw"
+        className="object-cover"
+        style={{ objectPosition: MARKETING_HERO_BACKGROUND_POSITION }}
+        aria-hidden
+      />
       <div
-        className="pointer-events-none absolute inset-0 bg-gradient-to-br from-zinc-950 via-black to-zinc-900/80"
+        className="pointer-events-none absolute inset-0 bg-black/40"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/75 via-black/35 to-black/5"
         aria-hidden
       />
       <div className="relative mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20 lg:py-24">
@@ -164,18 +182,18 @@ export function MarketingHero() {
             </div>
           </div>
 
-          <ul className="relative z-10 min-w-0 space-y-6 lg:pl-2 xl:pl-4">
+          <ul className="relative z-10 min-w-0 space-y-6 lg:max-w-[15.5rem] lg:pl-2 lg:pt-2 xl:pl-4">
             {hero.valueProps.map((item) => (
               <li key={item.title} className="flex gap-4">
                 <span
-                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-green-500/25 bg-green-500/5"
+                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-green-500/25 bg-black/30 backdrop-blur-sm lg:bg-green-500/5 lg:backdrop-blur-none"
                   aria-hidden
                 >
                   <ValuePropIconMark icon={item.icon} />
                 </span>
-                <div>
+                <div className="drop-shadow-md">
                   <p className="font-bold text-white">{item.title}</p>
-                  <p className="mt-1 text-sm text-zinc-400">{item.subtitle}</p>
+                  <p className="mt-1 text-sm text-zinc-300">{item.subtitle}</p>
                 </div>
               </li>
             ))}

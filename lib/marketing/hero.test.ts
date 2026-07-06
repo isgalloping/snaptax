@@ -32,4 +32,13 @@ describe("MARKETING_HERO_SCREENS", () => {
     assert.match(MARKETING_HERO_SCREENS[0]?.src ?? "", /hero-app-home\.png$/);
     assert.match(MARKETING_HERO_SCREENS[1]?.src ?? "", /hero-app-export\.png$/);
   });
+
+  it("uses website hero background asset", async () => {
+    const {
+      MARKETING_HERO_BACKGROUND,
+      MARKETING_HERO_BACKGROUND_POSITION,
+    } = await import("@/lib/marketing/heroScreens");
+    assert.equal(MARKETING_HERO_BACKGROUND, "/photo/website-bg-all.png");
+    assert.equal(MARKETING_HERO_BACKGROUND_POSITION, "100% 28%");
+  });
 });

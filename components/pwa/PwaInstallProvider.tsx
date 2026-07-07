@@ -44,8 +44,9 @@ import {
 function useInstallUiState(options: {
   requireLandingDone: boolean;
   suppressWebApkGuide: boolean;
+  suppressInstallBar: boolean;
 }) {
-  const { requireLandingDone, suppressWebApkGuide } = options;
+  const { requireLandingDone, suppressWebApkGuide, suppressInstallBar } = options;
 
   const isEligible = useCallback(() => {
     return requireLandingDone ? isInstallEligible() : isBrowserInstallEligible();
@@ -73,10 +74,12 @@ function useInstallUiState(options: {
       resolveInstallUiModeWithInstalled(
         false,
         isEligible(),
-        hasDismissedInstallBar() || shouldSuppressInstallBarAfterGateSkip(),
+        hasDismissedInstallBar() ||
+          shouldSuppressInstallBarAfterGateSkip() ||
+          suppressInstallBar,
       ),
     );
-  }, [isEligible]);
+  }, [isEligible, suppressInstallBar]);
 
   const runNativeInstall = useCallback(async () => {
     const deferredPrompt = getDeferredInstallPrompt();
@@ -178,7 +181,7 @@ function useInstallUiState(options: {
       }
       for (const id of recheckDelays) window.clearTimeout(id);
     };
-  }, [sync, requireLandingDone, suppressWebApkGuide]);
+  }, [sync, requireLandingDone, suppressWebApkGuide, suppressInstallBar]);
 
   const acknowledgeManualSheet = useCallback(() => {
     setManualSheetOpen(false);
@@ -261,11 +264,13 @@ export function PwaInstallProvider({
   requireLandingDone = true,
   showLaunchFromHomeHint = true,
   suppressWebApkGuide = false,
+  suppressInstallBar = false,
 }: {
   children: ReactNode;
   requireLandingDone?: boolean;
   showLaunchFromHomeHint?: boolean;
   suppressWebApkGuide?: boolean;
+  suppressInstallBar?: boolean;
 }) {
   const {
     contextValue,
@@ -273,7 +278,11 @@ export function PwaInstallProvider({
     webApkGuideVariant,
     handleWebApkGuideContinue,
     handleWebApkGuideDismiss,
-  } = useInstallUiState({ requireLandingDone, suppressWebApkGuide });
+  } = useInstallUiState({
+    requireLandingDone,
+    suppressWebApkGuide,
+    suppressInstallBar,
+  });
 
   return (
     <PwaInstallContext.Provider value={contextValue}>

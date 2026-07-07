@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useId, useState, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { useUserCopy } from "@/components/i18n/I18nProvider";
 import { openPwaAppEntry } from "@/lib/marketing/openPwaAppEntry";
@@ -18,14 +18,23 @@ import {
 import { isPwaInstalledOnDevice } from "@/lib/pwa/installedDetect";
 import { getInstallPlatform } from "@/lib/pwa/installPlatform";
 
-type GatePhase = "hidden" | "install" | "ios-manual" | "post-install" | "open";
+type GatePhase = "hidden" | "install" | "manual" | "post-install" | "open";
 
-export function AppBrowserEntryGate() {
+type AppBrowserEntryGateProps = {
+  onActiveChange?: (active: boolean) => void;
+};
+
+export function AppBrowserEntryGate({ onActiveChange }: AppBrowserEntryGateProps) {
   const pathname = usePathname();
+  const titleId = useId();
   const copy = useUserCopy().pwa;
   const gateCopy = copy.appEntryGate;
   const [phase, setPhase] = useState<GatePhase>("hidden");
   const [canPrompt, setCanPrompt] = useState(false);
+
+  useEffect(() => {
+    onActiveChange?.(phase !== "hidden");
+  }, [phase, onActiveChange]);
 
   const syncEligibility = useCallback(async () => {
     const reason = readAppBrowserEntryGateEligibility(pathname);
@@ -37,7 +46,7 @@ export function AppBrowserEntryGate() {
     setCanPrompt(canNativeInstallPrompt());
     const installed = await isPwaInstalledOnDevice();
     setPhase((current) => {
-      if (current === "post-install" || current === "ios-manual") {
+      if (current === "post-install" || current === "manual") {
         return current;
       }
       return installed ? "open" : "install";
@@ -61,16 +70,22 @@ export function AppBrowserEntryGate() {
     };
   }, [syncEligibility]);
 
-  const continueInBrowser = useCallback(() => {
+  const finishGateForSession = useCallback((notifyInstallUi = true) => {
     dismissAppEntryGate();
     setPhase("hidden");
-    window.dispatchEvent(new Event(APP_ENTRY_GATE_DISMISSED_EVENT));
+    if (notifyInstallUi) {
+      window.dispatchEvent(new Event(APP_ENTRY_GATE_DISMISSED_EVENT));
+    }
   }, []);
+
+  const continueInBrowser = useCallback(() => {
+    finishGateForSession(true);
+  }, [finishGateForSession]);
 
   const runAndroidInstall = useCallback(async () => {
     const deferredPrompt = getDeferredInstallPrompt();
     if (!deferredPrompt) {
-      setPhase("ios-manual");
+      setPhase("manual");
       return;
     }
 
@@ -82,14 +97,14 @@ export function AppBrowserEntryGate() {
         setPhase("post-install");
       }
     } catch {
-      setPhase("ios-manual");
+      setPhase("manual");
     }
   }, []);
 
   const handlePrimaryInstall = useCallback(() => {
     const platform = getInstallPlatform();
     if (platform === "ios-safari") {
-      setPhase("ios-manual");
+      setPhase("manual");
       return;
     }
     void runAndroidInstall();
@@ -97,13 +112,12 @@ export function AppBrowserEntryGate() {
 
   if (phase === "hidden") return null;
 
-  const shell = (
-    content: React.ReactNode,
-  ) => (
+  const shell = (content: ReactNode) => (
     <div
       className="fixed inset-0 z-[70] flex flex-col justify-end bg-black/90 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:justify-center"
       role="dialog"
       aria-modal="true"
+      aria-labelledby={titleId}
     >
       <div className="mx-auto w-full max-w-md rounded-2xl border border-white/10 bg-zinc-900 p-5 shadow-2xl">
         {content}
@@ -114,7 +128,9 @@ export function AppBrowserEntryGate() {
   if (phase === "open") {
     return shell(
       <>
-        <h2 className="text-lg font-black text-white">{gateCopy.openTitle}</h2>
+        <h2 id={titleId} className="text-lg font-black text-white">
+          {gateCopy.openTitle}
+        </h2>
         <p className="mt-2 text-sm leading-snug text-zinc-300">
           {copy.launchFromHomeHint}
         </p>
@@ -139,17 +155,17 @@ export function AppBrowserEntryGate() {
   if (phase === "post-install") {
     return shell(
       <>
-        <h2 className="text-lg font-black text-white">
-          {copy.webApkGuide.postInstallTitle}
+        <h2 id={titleId} className="text-lg font-black text-white">
+          {gateCopy.postInstallTitle}
         </h2>
         <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-zinc-300">
-          {copy.webApkGuide.postInstallSteps.map((step) => (
+          {gateCopy.postInstallSteps.map((step) => (
             <li key={step}>{step}</li>
           ))}
         </ol>
         <button
           type="button"
-          onClick={() => setPhase("hidden")}
+          onClick={() => finishGateForSession(true)}
           className="mt-5 min-h-14 w-full rounded-xl bg-yellow-500 text-sm font-black text-black active:scale-95"
         >
           {copy.webApkGuide.gotIt}
@@ -158,7 +174,7 @@ export function AppBrowserEntryGate() {
     );
   }
 
-  if (phase === "ios-manual") {
+  if (phase === "manual") {
     const steps =
       getInstallPlatform() === "ios-safari"
         ? copy.manualSteps.iosSafari
@@ -166,7 +182,9 @@ export function AppBrowserEntryGate() {
 
     return shell(
       <>
-        <h2 className="text-lg font-black text-white">{copy.manualSheetTitle}</h2>
+        <h2 id={titleId} className="text-lg font-black text-white">
+          {copy.manualSheetTitle}
+        </h2>
         <p className="mt-2 text-sm text-zinc-400">{copy.manualSheetLead}</p>
         <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-zinc-300">
           {steps.map((step) => (
@@ -193,7 +211,9 @@ export function AppBrowserEntryGate() {
 
   return shell(
     <>
-      <h2 className="text-lg font-black text-white">{gateCopy.installTitle}</h2>
+      <h2 id={titleId} className="text-lg font-black text-white">
+        {gateCopy.installTitle}
+      </h2>
       <p className="mt-2 text-sm leading-snug text-zinc-300">
         {getInstallPlatform() === "chromium-android"
           ? copy.webApkGuide.preInstallBody

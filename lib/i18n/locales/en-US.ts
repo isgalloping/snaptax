@@ -62,6 +62,12 @@ export const EN_US_COPY: UserCopy = {
         openTitle: "Open SnapTax",
         continueInBrowser: "Continue in browser",
         addedToHomeScreen: "Added to Home Screen",
+        postInstallTitle: "SnapTax installed",
+        postInstallSteps: [
+          "Go to your home screen and tap the SnapTax icon.",
+          "If your phone asks to open Chrome, tap Always allow.",
+          "The app opens full-screen with no address bar.",
+        ],
       },
     },
     camera: {

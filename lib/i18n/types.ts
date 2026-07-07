@@ -37,6 +37,8 @@ export type UserCopy = {
       openTitle: string;
       continueInBrowser: string;
       addedToHomeScreen: string;
+      postInstallTitle: string;
+      postInstallSteps: string[];
     };
   };
   camera: {

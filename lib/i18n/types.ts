@@ -32,6 +32,14 @@ export type UserCopy = {
       iosSafari: string[];
       macosSafari: string[];
     };
+    appEntryGate: {
+      installTitle: string;
+      openTitle: string;
+      continueInBrowser: string;
+      addedToHomeScreen: string;
+      postInstallTitle: string;
+      postInstallSteps: string[];
+    };
   };
   camera: {
     opening: string;

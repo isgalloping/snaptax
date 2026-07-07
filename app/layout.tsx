@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const APP_NAME = "Snap1099";
+const APP_NAME = "SnapTax";
 const APP_DESCRIPTION = USER_COPY.app.description;
 
 export const metadata: Metadata = {

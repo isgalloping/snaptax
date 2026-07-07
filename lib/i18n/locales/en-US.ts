@@ -57,6 +57,18 @@ export const EN_US_COPY: UserCopy = {
           "Snap1099 appears in your Dock like a native app.",
         ],
       },
+      appEntryGate: {
+        installTitle: "Install SnapTax",
+        openTitle: "Open SnapTax",
+        continueInBrowser: "Continue in browser",
+        addedToHomeScreen: "Added to Home Screen",
+        postInstallTitle: "SnapTax installed",
+        postInstallSteps: [
+          "Go to your home screen and tap the SnapTax icon.",
+          "If your phone asks to open Chrome, tap Always allow.",
+          "The app opens full-screen with no address bar.",
+        ],
+      },
     },
     camera: {
       opening: "Opening camera…",

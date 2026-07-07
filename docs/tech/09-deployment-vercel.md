@@ -129,9 +129,11 @@ Preview 部署需在 Paddle Sandbox 单独配置。
 ## 9.6 PWA 生产检查
 
 - [ ] HTTPS
-- [ ] `/` 在 SW precache
-- [ ] `manifest.webmanifest` 可访问
+- [ ] **`/app`** 可开且 Serwist SW 已注册（产品路由）
+- [ ] `manifest.webmanifest` 可访问；`short_name` = **SnapTax**；`scope` = `/app`
+- [ ] 营销 `/` → Get Started 链至 `/app`（Android Chrome WebAPK smoke）
 - [ ] 相机权限（Permissions-Policy 如需要）
+- [ ] 详见 [13-pwa-install-architecture.md](./13-pwa-install-architecture.md)
 - [ ] `GHOST_HMAC_SECRET` + `AUTH_SECRET` 已在 Production/Preview 配置且互不相同
 - [ ] `PADDLE_WEBHOOK_SECRET` 为真实 Paddle destination secret（非 placeholder）
 

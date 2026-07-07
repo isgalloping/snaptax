@@ -26,6 +26,7 @@
 | 4 | [04-data-model.md](./04-data-model.md) | 数据库表结构明细 |
 | 5 | [03-api.md](./03-api.md) | API 契约 |
 | 6 | [02-frontend.md](./02-frontend.md) | PWA / 离线 / 客户端 |
+| 6b | [13-pwa-install-architecture.md](./13-pwa-install-architecture.md) | **PWA 安装 / 营销 vs `/app`（Agent 必读）** |
 | 7 | [06-receipt-ai-pipeline.md](./06-receipt-ai-pipeline.md) | OpenAI 小票流水线 |
 | 7b | [11-ocr-pipeline-design.md](./11-ocr-pipeline-design.md) | **OCR 双路径（第一阶段）；数据一致性见第二阶段** |
 | 7c | [12-local-image-storage-design.md](./12-local-image-storage-design.md) · [Plan](../superpowers/plans/2026-06-19-local-image-storage-opfs.md) | **本地图片 OPFS + 压缩 + 90d 回收** |

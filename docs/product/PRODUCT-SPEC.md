@@ -38,7 +38,26 @@
 - 核心 UI 离线可开；弱网 **≤ 1.5s** 可操作  
 - **离线：** 可拍照；小票 + 照片入 **IndexedDB**；保持 `Processing...`，**不调 OpenAI**  
 - **联网（含未登录 Ghost）：** 本地 OCR Worker 生成 `ocrDraft`（离线亦可）；上传后服务端 **文本 GPT 分类**（Path A）或 **OpenAI Vision 兜底**（Path B，见 §2.3.1）  
-- Service Worker 预缓存 `/` 及静态资源  
+- Service Worker 预缓存 `/app` 及静态资源（Serwist；营销页 `/` 不在 PWA scope 内）
+
+#### 2.2.1 站点与 PWA 安装（2026-07）
+
+| 层 | 路由 | 说明 |
+|----|------|------|
+| **营销站** | `/`, `/pricing`, `/help` … | SEO + 转化；轻量安装 UI（header + 底栏）；**无**全屏安装门控 |
+| **产品 PWA** | **`/app`** | Serwist SW · manifest `scope`/`start_url`=`/app` · 主界面拍照 |
+
+**桌面 / 主屏幕图标名：** **SnapTax**（`manifest.short_name` · iOS `appleWebApp.title`）。应用内品牌文案仍可写 Snap1099。
+
+**手机浏览器直接打开 `/app`（非 standalone）：**
+
+1. 播完 **Landing** 后 → 全屏 **AppBrowserEntryGate**（Android Chrome + iOS/iPad Safari）  
+2. 未安装 → Install；已安装 → **Open SnapTax**（须用户点击，无静默跳转）  
+3. **Continue in browser** 可跳过；本 session 不再弹门控，隐藏底栏 install bar，保留顶栏安装按钮  
+
+**铁律例外：** 上述全屏门控是「核心拍照零 Modal」的**唯一已批准全屏 overlay**（仅 `/app`、可跳过）。详见 `docs/tech/13-pwa-install-architecture.md`。
+
+**营销 Get Started：** 链至 `/app`；Android Chrome 用原生 `<a href>` 以触发 WebAPK Navigation Capturing。
 
 ### 2.3 隐私、合规与数据存储（EU + US · MVP 美国驻留）
 
@@ -256,7 +275,7 @@ Next.js 16 · React 19 · Tailwind 4 · Serwist · **PostgreSQL（美国）** ·
 
 ---
 
-## 12. 产品里程碑 vs 代码（2026-06-13）
+## 12. 产品里程碑 vs 代码（2026-07-07）
 
 | 能力 | 产品设计 v1.2 | 代码 |
 |------|---------------|------|
@@ -284,6 +303,11 @@ Next.js 16 · React 19 · Tailwind 4 · Serwist · **PostgreSQL（美国）** ·
 | Home v2 筛选桶 + 列表展示 | ✅ | ✅（ALL/READY/REVIEW/ACTION/PROCESSING；绿/灰 tax；category + Line pill） |
 | 本地 OCR + 双路径 AI（Phase 1） | ✅ | ✅（Worker OCR、`ocrDraft`、router、`biz.ocr` 日志；O3 ROI/EU parse） |
 | Founder Program Widget + Sheet + Badge | ✅ | ✅（Widget #1 · GET /api/founder/program · Paddle founder SKU · Flag 定价） |
+| **营销站 + 产品 `/app` 拆分** | ✅ | ✅（`(marketing)` vs `(pwa)/app`；manifest scope `/app`） |
+| **PWA 安装：SnapTax 图标名 + 全站 prompt 捕获** | ✅ | ✅（`manifest`/`appleWebApp` · 根 layout `InstallCaptureScript`） |
+| **营销页 install UI（header + bar）** | ✅ | ✅（`MarketingInstallShell` · 无全屏门控） |
+| **`/app` 手机浏览器入口门控** | ✅ | ✅（`AppBrowserEntryGate` · Landing 后 · 可跳过 · spec 2026-07-06） |
+| **Android Chrome 营销 CTA → WebAPK** | ✅ | ✅（`MarketingAppLink` 原生链 + `capture_links`） |
 
 **Dev 限制（非产品偏离）：** 无 Upstash 时速率限制放行；无 Paddle env 时 Paywall 显示错误而非假付费。
 
@@ -304,6 +328,9 @@ Next.js 16 · React 19 · Tailwind 4 · Serwist · **PostgreSQL（美国）** ·
 - [ ] OpenAI / Blob 是否 **仅服务端**、Blob 是否私有？  
 - [ ] 顶栏是否 **SUM(tax_amount)**，且 **仅 OpenAI Vision 路径** 更新 `tax_amount`？  
 - [ ] Google 登录后 **仅 region 不一致** 时是否排队 OpenAI 重算？  
+- [ ] PWA：产品入口是否为 **`/app`**（非 marketing `/`）？manifest **`short_name` = SnapTax**？  
+- [ ] `/app` 手机门控是否 **Landing 后**、**可跳过**、且 **不**在营销页弹全屏？  
+- [ ] Android Chrome 营销 CTA 是否 **原生 `<a href="/app">`**（非 client-only 路由）？  
 
 ---
 
@@ -331,6 +358,8 @@ Next.js 16 · React 19 · Tailwind 4 · Serwist · **PostgreSQL（美国）** ·
 | [specs/2026-06-07-tax-savings-regional-design.md](../superpowers/specs/2026-06-07-tax-savings-regional-design.md) | 分区域省税 US/EU + R1 |
 | [specs/2026-06-12-new-user-onboarding-design.md](../superpowers/specs/2026-06-12-new-user-onboarding-design.md) | 新人引导（业务分析 + T1/T2 软引导） |
 | [specs/2026-06-07-mvp-master-roadmap-design.md](../superpowers/specs/2026-06-07-mvp-master-roadmap-design.md) | MVP 总路线图 |
+| [specs/2026-07-06-pwa-snaptax-label-app-entry-gate-design.md](../superpowers/specs/2026-07-06-pwa-snaptax-label-app-entry-gate-design.md) | PWA SnapTax 图标 + `/app` 手机入口门控 |
+| [tech/13-pwa-install-architecture.md](../tech/13-pwa-install-architecture.md) | **PWA 安装架构（Agent 改 pwa/ 必读）** |
 | [plans/2026-06-07-mvp-master-implementation.md](../superpowers/plans/2026-06-07-mvp-master-implementation.md) | **MVP 总落地计划** |
 
 **变更流程：** 产品决策 → **本文件** → PRD → `docs/legal/` → UI 文案（`lib/legal/content.ts`）

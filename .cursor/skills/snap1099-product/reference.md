@@ -31,6 +31,21 @@
 4. Button: `Pay $49 with Paddle` → Overlay
 5. Success → system share (Email/WhatsApp)
 
+## PWA install (2026-07)
+
+| Surface | Component | Notes |
+|---------|-----------|-------|
+| Icon label | `app/manifest.ts` | **SnapTax** on home screen |
+| Prompt capture | `InstallCaptureScript` @ root layout | Once globally |
+| Marketing | `MarketingInstallShell` | bar + header; no full-screen gate |
+| `/app` mobile browser | `AppBrowserEntryGate` | After Landing; skippable |
+| Open installed app | `openPwaAppEntry()` | User gesture; `/app` assign |
+| CTA from marketing | `MarketingAppLink` | Native `<a>` for WebAPK |
+
+Session skip key: `snaptax_app_entry_gate_dismissed` (sessionStorage).
+
+Full matrix: `docs/tech/13-pwa-install-architecture.md`
+
 ## Industries
 
 `truck_driver` | `plumber` | `electrician` | `construction` | `delivery` | `general`
@@ -46,6 +61,7 @@
 
 ```
 docs/product/PRODUCT-SPEC.md   ← product start
+docs/tech/13-pwa-install-architecture.md  ← PWA / install (Agent)
 docs/tech/README.md            ← tech start (Vercel full-stack)
 docs/prd/0.0.1.md              ← full PRD
 docs/superpowers/specs/        ← ADRs

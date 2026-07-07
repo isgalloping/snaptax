@@ -14,6 +14,20 @@ alwaysApply: true
 - **视觉：** 黑 `#000000` / 白 `#FFFFFF` / 黄 `#EAB308`；热区 ≥64px，核心 >96px；`active:scale-95`
 - **离线：** PWA 须离线可开主界面；离线可拍照；IndexedDB 队列（store **`snaptax_*`**）；**图片字节 OPFS**，IDB 仅 meta（见 `12-local-image-storage-design.md`）
 - **联网 Ghost：** 服务端 OpenAI（非 client mock）；**Est. Tax Saved** = SUM(`tax_amount`) — 见 **`snap1099-tax.mdc`**
+- **站点：** 营销 **`/`** · 产品 PWA **`/app`**（manifest scope/start_url）；详见 **`docs/tech/13-pwa-install-architecture.md`**
+- **PWA 图标名：** 主屏幕 **SnapTax**（`manifest.short_name`）；应用内文案品牌仍可用 Snap1099
+
+## PWA 安装（门控）
+
+| 触点 | 行为 | 可跳过 |
+|------|------|--------|
+| 营销页 | header 安装按钮 + 底栏 bar（`MarketingInstallShell`） | bar「Not now」 |
+| **`/app` 手机浏览器** | Landing 后全屏门控（Install / Open SnapTax） | **Continue in browser**（本 session） |
+| **`/app` standalone** | 无门控；正常拍照 | — |
+
+- **铁律例外：** `/app` 全屏安装门控是唯一已批准的全屏 overlay（非拍照 Modal）；**必须可跳过**
+- **禁止：** 营销 CTA 用 `preventDefault` 打断 Android Chrome 原生 `<a href="/app">`（破坏 WebAPK 唤起）
+- **Agent 改 PWA：** 读 `docs/tech/13-pwa-install-architecture.md` + rule **`snap1099-pwa.mdc`**
 
 ## 账户
 

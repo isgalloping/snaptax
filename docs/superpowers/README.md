@@ -22,7 +22,7 @@ Layer 2  Archive        docs/superpowers/archive/**
 | receipt-sync-lifecycle | [topics/receipt-sync-lifecycle-design.md](./topics/receipt-sync-lifecycle-design.md) | docs/tech/06-* |
 | pwa-install | — | **[docs/tech/13-pwa-install-architecture.md](../tech/13-pwa-install-architecture.md)** |
 
-Status: Phase 0 in progress · Phase 1 pending · See [MANIFEST.csv](./MANIFEST.csv) (220 entries)
+Status: Phase 0 complete · Phase 1 pending · See [MANIFEST.csv](./MANIFEST.csv) (220 entries)
 
 ## Agent 读法
 

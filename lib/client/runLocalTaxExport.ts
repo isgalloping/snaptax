@@ -52,6 +52,6 @@ export async function runLocalTaxExport(
   const filename = exportTaxPackFilename(params.format, params.taxYear);
   return {
     file: new File([pack.content], filename, { type: pack.mimeType }),
-    meta: {},
+    meta: { receiptCount: filedReceiptIds.length },
   };
 }

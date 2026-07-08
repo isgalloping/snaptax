@@ -128,3 +128,36 @@ if (navigator.canShare?.({ files: [file] })) {
 | 无 done 小票 | 422 NO_RECEIPTS | "No completed receipts to export. Snap some receipts first!" |
 | 生成失败 | 500 | "Export failed. Please try again." |
 | 离线 | — (前端拦截) | "You're offline. Connect to export." |
+
+## 8.8 Local-first filed（csv / txf）
+
+本地 pack 构建完成后，客户端调用 **`POST /api/export/filed`** 写 filed 元数据（CPA 仍由 `tax-pack` 一并写入）。
+
+**Auth：** Google user + 本季 `season_entitlements.paid=true`（与 tax-pack 相同）
+
+**请求体：**
+
+```json
+{ "taxYear": "2026" }
+```
+
+**Headers：** `X-Time-Zone`（IANA，与 tax-pack 相同）
+
+**行为：** Server 查询该用户全部 `status=done` 小票（含 bound ghost），按 `filterReceiptsByTaxYear` 过滤 `taxYear`，幂等 `updateMany` 写 `taxSeason` + `taxSeasonDate`。返回 filed 的 id 列表供客户端更新 IDB。
+
+**响应：**
+
+```json
+{
+  "taxSeason": "2026",
+  "taxSeasonDate": "2026-07-08T15:00:00.000Z",
+  "filedCount": 12,
+  "receiptIds": ["uuid", "..."]
+}
+```
+
+| 场景 | HTTP |
+|------|------|
+| 未付费 | 402 PAYMENT_REQUIRED |
+| 该税年无 done 小票 | 422 NO_RECEIPTS |
+| 未登录 | 401 UNAUTHORIZED |

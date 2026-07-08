@@ -176,12 +176,12 @@ PaywallSheet / FounderProgramSheet checkout.completed
 ```text
 Generate (csv/txf)
   → buildLocalTaxPack(receipts from IDB)
-  → POST /api/export/filed { taxYear, receiptIds: all done in year }
-  → markReceiptsFiledLocal
+  → POST /api/export/filed { taxYear } — server queries all PG done in year + filed
+  → markReceiptsFiledLocal(server receiptIds)
   → deliver File to Share / Save
 ```
 
-Gate 仍跑 `prepareExportSync`（flush + merge）；**pack 内容不读 server PG**。Income 1099 不进 CSV/TXF 但 **filed** 仍含该税年全部 `done` 行。`POST /api/export/filed` 服务端校验 `X-Time-Zone` + `filterReceiptsByTaxYear`（与 tax-pack 对称）。
+Gate 仍跑 `prepareExportSync`（flush + merge）；**pack 内容不读 server PG**。Income 1099 不进 CSV/TXF；**filed** 由 server 按 `filterReceiptsByTaxYear` 写全量 PG done（与 tax-pack 对称，不受 client sync window 50 限制）。
 
 **Modules:** `lib/export/buildLocalTaxPack.ts` · `lib/client/runLocalTaxExport.ts` · `app/api/export/filed/route.ts`
 

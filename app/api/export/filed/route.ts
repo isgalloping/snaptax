@@ -4,10 +4,9 @@ import { apiError, mapErrorToResponse } from "@/lib/api/errors";
 import { getActor } from "@/lib/auth/getActor";
 import { prisma } from "@/lib/prisma";
 import { userAccountReceiptFilter } from "@/lib/receipts/accountCleanup";
-import { assertPersistedReceiptId } from "@/lib/receipts/receiptId";
-import { assertReceiptsMatchExportTaxYear } from "@/lib/receipts/validateExportFiledReceipts";
 import { withRequestLog } from "@/lib/server/log/withRequestLog";
 import { logEvent } from "@/lib/server/log/logEvent";
+import { filterReceiptsByTaxYear } from "@/lib/tax/exportRows";
 import { currentTaxSeason } from "@/lib/tax/season";
 import { parseRequestTimeZone } from "@/lib/time/timeZone";
 import { utcNow } from "@/lib/time/utc";
@@ -16,7 +15,6 @@ import { resolveVerifyContext } from "@/lib/verify/context";
 
 const filedBodySchema = z.object({
   taxYear: z.string().regex(/^\d{4}$/),
-  receiptIds: z.array(z.string().uuid()).min(1),
 });
 
 export const POST = withRequestLog("api.entitlement", async (request, _context) => {
@@ -39,38 +37,30 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
     }
 
     const body = filedBodySchema.parse(await request.json());
-    for (const id of body.receiptIds) {
-      assertPersistedReceiptId(id);
-    }
+    const taxYearNum = Number(body.taxYear);
 
     const binding = await prisma.snaptaxGhostAccount.findUnique({
       where: { userId: actor.userId },
       select: { ghostId: true },
     });
 
-    const owned = await prisma.snaptaxReceipt.findMany({
+    const allDone = await prisma.snaptaxReceipt.findMany({
       where: {
-        id: { in: body.receiptIds },
         ...userAccountReceiptFilter(actor.userId, binding?.ghostId ?? null),
         status: "done",
       },
     });
-    if (owned.length !== body.receiptIds.length) {
-      return apiError("NOT_FOUND", "One or more receipts not found", 404);
-    }
 
     const timeZone = parseRequestTimeZone(request.headers.get("X-Time-Zone"));
-    const taxYearNum = Number(body.taxYear);
-    assertReceiptsMatchExportTaxYear({
-      receipts: owned,
-      receiptIds: body.receiptIds,
-      taxYear: taxYearNum,
-      timeZone,
-    });
+    const yearReceipts = filterReceiptsByTaxYear(allDone, taxYearNum, timeZone);
+    if (yearReceipts.length === 0) {
+      return apiError("NO_RECEIPTS", "No completed receipts to file for tax year", 422);
+    }
 
+    const receiptIds = yearReceipts.map((r) => r.id);
     const exportedAt = utcNow();
     const result = await prisma.snaptaxReceipt.updateMany({
-      where: { id: { in: body.receiptIds } },
+      where: { id: { in: receiptIds } },
       data: { taxSeason: body.taxYear, taxSeasonDate: exportedAt },
     });
 
@@ -92,6 +82,7 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
       taxSeason: body.taxYear,
       taxSeasonDate: exportedAt.toISOString(),
       filedCount: result.count,
+      receiptIds,
     });
   } catch (err) {
     return mapErrorToResponse(err);

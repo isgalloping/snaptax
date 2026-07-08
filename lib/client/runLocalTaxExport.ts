@@ -4,9 +4,10 @@ import {
   buildLocalTaxPack,
   type LocalTaxPackFormat,
 } from "@/lib/export/buildLocalTaxPack";
+import { buildLocalExpenseExportRows } from "@/lib/export/buildLocalExpenseRows";
+import { buildTxfExport } from "@/lib/export/buildTxf";
 import { exportTaxPackFilename } from "@/lib/export/exportFilenames";
 import type { ExportTaxPackMeta } from "@/lib/client/authApi";
-import { receiptsInTaxYear } from "@/lib/tax/taxYearStats";
 import type { Receipt } from "@/lib/types";
 
 export type RunLocalTaxExportParams = {
@@ -32,26 +33,29 @@ export async function runLocalTaxExport(
     params.format,
   );
 
-  const filedReceiptIds = receiptsInTaxYear(
-    params.receipts,
-    params.taxYear,
-    params.timeZone,
-  ).map((r) => r.id);
-
   const filed = await syncExportFiledToServer({
     taxYear: String(params.taxYear),
-    receiptIds: filedReceiptIds,
   });
 
   await markReceiptsFiledLocal({
-    receiptIds: filedReceiptIds,
+    receiptIds: filed.receiptIds,
     taxSeason: filed.taxSeason,
     taxSeasonDate: filed.taxSeasonDate,
   });
 
+  let content = pack.content;
+  if (params.format === "txf") {
+    const rows = buildLocalExpenseExportRows(
+      params.receipts,
+      params.taxYear,
+      params.timeZone,
+    );
+    content = buildTxfExport(rows, filed.taxSeasonDate);
+  }
+
   const filename = exportTaxPackFilename(params.format, params.taxYear);
   return {
-    file: new File([pack.content], filename, { type: pack.mimeType }),
-    meta: { receiptCount: filedReceiptIds.length },
+    file: new File([content], filename, { type: pack.mimeType }),
+    meta: { receiptCount: filed.filedCount },
   };
 }

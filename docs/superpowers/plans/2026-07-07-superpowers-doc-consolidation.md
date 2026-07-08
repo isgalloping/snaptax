@@ -650,7 +650,7 @@ git commit -m "docs: add superpowers topic layer to Agent checklist and doc inde
 - [ ] Quarterly: run `classify-superpowers-docs.mjs`; review `status=consolidate` rows
 - [x] Phase 2 backlog: founder widget topic, camera footer chain, navigation/history (PR #114)
 - [x] `npm run lint:docs` link checker (Phase 2, PR #112)
-- [ ] Optional Phase 4 topic merges: settings cluster, batch-snap/capture pipeline, compliance program
+- [x] Optional Phase 4 topic merges: **capture-pipeline** ✅ · settings cluster · compliance program
 
 ---
 

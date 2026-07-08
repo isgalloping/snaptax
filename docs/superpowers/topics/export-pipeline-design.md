@@ -185,7 +185,18 @@ Gate **`prepareExportLocal`**（flush + IDB，无 list merge）；Generate 前 c
 
 **Modules:** `lib/export/buildLocalTaxPack.ts` · `lib/client/runLocalTaxExport.ts` · `lib/client/exportPrepareFlow.ts` · `app/api/export/filed/route.ts`
 
-**Still deferred:** local `cpa_pdf` / `cpa_pack`（OPFS 图片 + browser PDF/ZIP）
+**Still deferred:** browser `cpa_pdf` / `cpa_pack` pack assembly（pdf-lib + ZIP）· wired in `ExportEngineSheet`
+
+### 3.9 Local CPA foundation (P1c · 2026-07-09)
+
+Shared row + image plumbing for future client CPA export（server hybrid unchanged until pack builders ship）:
+
+| Module | Role |
+|--------|------|
+| `lib/export/buildLocalCpaExportContext.ts` | IDB receipts → income/audit rows（same finalize/audit pipeline as server） |
+| `lib/client/resolveExportReceiptImage.ts` | OPFS `loadPhoto` preferred; signed URL fetch fallback |
+
+**Next:** browser PDF mirror + ZIP (`fflate`/`pdf-lib` spike) → `runLocalCpaExport` → wire `cpa_pdf`/`cpa_pack` in sheet.
 
 ---
 

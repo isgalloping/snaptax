@@ -43,7 +43,7 @@
 ## 4. Code alignment tasks (M2)
 
 - [x] 文档常量与 `lib/client/receiptRetention.ts` · `photoRetention.ts` · `dbRateLimit.ts` 一致
-- [x] Delete Account 路径文档化 server 删 Blob+PG（已有 spec：`delete-account-full-cleanup`）
+- [x] Delete Account 路径文档化 server 删 Blob+PG（见 [`topics/delete-account-design.md`](../topics/delete-account-design.md)）
 - [x] **可携带权：** Export Tax Pack = 结构化可携带格式（CSV/XLSX）；Privacy 明示
 
 ---

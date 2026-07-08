@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-19  
 **Status:** Approved (design)  
-**Builds on:** `2026-06-19-app-navigation-history-design.md`  
+**Builds on:** [`app-navigation-history-design.md`](../topics/app-navigation-history-design.md)  
 **Scope:** On **Home main screen only**, confirm before leaving the PWA via edge swipe or system back when the next action would exit the app.
 
 ## Problem

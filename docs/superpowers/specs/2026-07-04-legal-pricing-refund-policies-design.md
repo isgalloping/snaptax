@@ -2,7 +2,7 @@
 
 **Date:** 2026-07-04  
 **Status:** Approved (implemented 2026-07-04)  
-**References:** `docs/legal/terms.md` · `docs/product/PRODUCT-SPEC.md` §2.3 · `docs/superpowers/specs/2026-06-30-founder-program-widget-design.md` · Paddle vendor URL requirements  
+**References:** `docs/legal/terms.md` · `docs/product/PRODUCT-SPEC.md` §2.3 · `docs/superpowers/topics/founder-program-widget-design.md` · Paddle vendor URL requirements  
 **Scope:** Public routes for Paddle/compliance URLs only — no Paywall or checkout flow changes.
 
 ## Summary

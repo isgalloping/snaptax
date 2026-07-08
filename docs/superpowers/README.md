@@ -22,7 +22,15 @@ Layer 2  Archive        docs/superpowers/archive/**
 | receipt-sync-lifecycle | [topics/receipt-sync-lifecycle-design.md](./topics/receipt-sync-lifecycle-design.md) · consolidated 2026-07-08 | docs/tech/06-* · [11-ocr-pipeline-design.md](../tech/11-ocr-pipeline-design.md) |
 | pwa-install | — | **[docs/tech/13-pwa-install-architecture.md](../tech/13-pwa-install-architecture.md)** · archived 2026-07-08 |
 
-Status: Phase 0 complete · Phase 1 complete · Phase 2 complete · See [MANIFEST.csv](./MANIFEST.csv) (325 entries) · `npm run lint:docs`
+## Phase 3 主题（合并目标）
+
+| Topic | 终稿 | Canonical |
+|-------|------|-----------|
+| founder-program-widget | [topics/founder-program-widget-design.md](./topics/founder-program-widget-design.md) · consolidated 2026-07-08 | PRODUCT-SPEC §12 Founder · §6 按季付费 |
+| camera-live-footer | [topics/camera-live-footer-design.md](./topics/camera-live-footer-design.md) · consolidated 2026-07-08 | PRODUCT-SPEC §3.1 连拍相机 footer |
+| app-navigation-history | [topics/app-navigation-history-design.md](./topics/app-navigation-history-design.md) · consolidated 2026-07-08 | PRODUCT-SPEC §2 导航 · PWA 返回 |
+
+Status: Phase 0 complete · Phase 1 complete · Phase 2 complete · **Phase 3 complete** (founder, camera footer, navigation) · See [MANIFEST.csv](./MANIFEST.csv) (345 entries) · `npm run lint:docs`
 
 ## Agent 读法
 

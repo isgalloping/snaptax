@@ -33,3 +33,17 @@ test("resolveDisplayTier uses locked tier for active founders", () => {
     "FOUNDER_LEVEL_SUPER",
   );
 });
+
+test("resolveDisplayTier uses DEFAULT for lapsed founders", () => {
+  assert.equal(
+    resolveDisplayTier({
+      claimedCount: 20,
+      user: {
+        founderNumber: 3,
+        founderStatus: "lapsed",
+        founderTier: "FOUNDER_LEVEL_SUPER",
+      },
+    }),
+    "DEFAULT",
+  );
+});

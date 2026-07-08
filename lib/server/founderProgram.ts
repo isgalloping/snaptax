@@ -28,10 +28,7 @@ export function resolveFounderCheckoutSkuTier(
 
   if (user?.founderNumber != null) {
     const status = user.founderStatus;
-    if (
-      (status === "active" || status === "lapsed") &&
-      user.founderTier != null
-    ) {
+    if (status === "active" && user.founderTier != null) {
       return { ok: true, skuTier: user.founderTier };
     }
   }

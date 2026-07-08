@@ -43,7 +43,7 @@ describe("resolveFounderCheckoutSkuTier", () => {
     assert.deepEqual(result, { ok: true, skuTier: "EARLY" });
   });
 
-  it("uses locked tier for lapsed founder renewal", () => {
+  it("uses DEFAULT for lapsed founder renewal", () => {
     const result = resolveFounderCheckoutSkuTier({
       user: {
         founderStatus: "lapsed",
@@ -53,10 +53,7 @@ describe("resolveFounderCheckoutSkuTier", () => {
       claimedCount: 50,
       programOpen: false,
     });
-    assert.deepEqual(result, {
-      ok: true,
-      skuTier: "FOUNDER_LEVEL_SUPER",
-    });
+    assert.deepEqual(result, { ok: true, skuTier: "DEFAULT" });
   });
 
   it("resolves next seat tier for first founder purchase", () => {

@@ -16,10 +16,7 @@ export function resolveDisplayTier(input: FounderDisplayTierInput): FounderTier 
 
   if (user?.founderNumber != null) {
     const status = user.founderStatus;
-    if (
-      (status === "active" || status === "lapsed") &&
-      user.founderTier != null
-    ) {
+    if (status === "active" && user.founderTier != null) {
       return user.founderTier;
     }
   }

@@ -946,5 +946,9 @@ export const EN_US_COPY: UserCopy = {
       pdfFailed:
         "PDF export failed. Try CSV or CPA Audit Pack, or try again later.",
       exportTimeout: "Export timed out. Check your connection and try again.",
+      filedSyncNotFound:
+        "Some receipts aren't synced to the cloud yet. Wait for sync to finish, then tap Export Again.",
+      filedSyncFailed:
+        "Your tax pack was built but filing status couldn't be saved. Try Export Again.",
     },
   };

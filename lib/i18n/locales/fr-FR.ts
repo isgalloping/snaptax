@@ -964,5 +964,9 @@ export const FR_FR_COPY: UserCopy = {
       "Échec de l'export PDF. Essayez CSV ou le pack CPA, ou réessayez plus tard.",
     exportTimeout:
       "Délai d'export dépassé. Vérifiez votre connexion et réessayez.",
+    filedSyncNotFound:
+      "Certains reçus ne sont pas encore synchronisés. Attendez la fin de la sync, puis réessayez Exporter.",
+    filedSyncFailed:
+      "Votre pack fiscal a été créé, mais le statut « déposé » n'a pas pu être enregistré. Réessayez Exporter.",
   },
 };

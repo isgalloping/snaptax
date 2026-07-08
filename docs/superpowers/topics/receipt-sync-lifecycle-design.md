@@ -18,7 +18,7 @@ Snap1099 小票生命周期分三层：**AI 状态**（`processing` | `done` | `
 
 **Phase C（lifecycle redesign · shipped）：** WorkerSession 相机门控 · done lock merge · UI/sync window 50 · server-side filed PATCH lock。
 
-**Deferred（lifecycle redesign draft，未 ship）：** write budget 3 · export 纯 local-first 不读 server PG · Event Queue / `POST /api/sync/events`。
+**Still deferred (lifecycle redesign draft):** write budget 3 · export local-first (P1 partial) · Event Queue / `POST /api/sync/events`。
 
 ---
 

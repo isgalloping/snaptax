@@ -120,6 +120,12 @@ export function resolveApiError(err: unknown): ResolvedApiError {
         clientMessage: "No receipts to export",
         status: 422,
       };
+    case "INVALID_EXPORT_TAX_YEAR":
+      return {
+        code: "INVALID_EXPORT_TAX_YEAR",
+        clientMessage: "Receipt tax year does not match export year",
+        status: 422,
+      };
     case "PDF_GENERATION_FAILED":
       return {
         code: "PDF_GENERATION_FAILED",

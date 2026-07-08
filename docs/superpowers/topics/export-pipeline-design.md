@@ -166,6 +166,27 @@ PaywallSheet / FounderProgramSheet checkout.completed
 
 **示例：** 2026-06-15 UTC → 售卖 **2027** 季（early-bird）；导出默认选中 **2026** 日历税年（若有小票）。见 `docs/tech/07-paddle-billing.md` · `lib/tax/season.test.ts` · `lib/tax/exportGate.test.ts`。
 
+### 3.8 Local-first export (P1 · 2026-07-08)
+
+| format | Pack build | Filed persist |
+|--------|------------|---------------|
+| `csv` · `txf` | **Local IDB** — `buildLocalTaxPack` | `POST /api/export/filed` + IDB `markReceiptsFiledLocal` |
+| `cpa_pdf` · `cpa_pack` | **Server** — `POST /api/export/tax-pack` (hybrid / degraded) | Same route `updateMany` |
+
+```text
+Generate (csv/txf)
+  → buildLocalTaxPack(receipts from IDB)
+  → POST /api/export/filed { taxYear } — server queries all PG done in year + filed
+  → markReceiptsFiledLocal(server receiptIds)
+  → deliver File to Share / Save
+```
+
+Gate 仍跑 `prepareExportSync`（flush + merge）；**pack 内容不读 server PG**。Income 1099 不进 CSV/TXF；**filed** 由 server 按 `filterReceiptsByTaxYear` 写全量 PG done（与 tax-pack 对称，不受 client sync window 50 限制）。
+
+**Modules:** `lib/export/buildLocalTaxPack.ts` · `lib/client/runLocalTaxExport.ts` · `app/api/export/filed/route.ts`
+
+**Still deferred:** local `cpa_pdf` / `cpa_pack`（OPFS 图片 + client PDF/ZIP）· `prepareExportLocal` 替代 full sync
+
 ---
 
 ## 4. Decision log

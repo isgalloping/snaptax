@@ -16,6 +16,7 @@ import { filingTaxYearForSeason } from "@/lib/tax/season";
 import { receiptsNeedingExportReview } from "@/lib/tax/exportReview";
 import { formatCurrency } from "@/lib/format";
 import { clientTimeZone } from "@/lib/time/timeZone";
+import { runLocalTaxExport } from "@/lib/client/runLocalTaxExport";
 import {
   exportTaxPack,
   type ExportFormat,
@@ -267,10 +268,19 @@ export function ExportEngineSheet({
         timeZone,
       ).length;
       startProgressRamp(format, exportReceiptCount);
-      const result = await exportTaxPack({
-        taxYear: String(taxYear),
-        format,
-      });
+      const taxYearStr = String(taxYear);
+      const result =
+        format === "csv" || format === "txf"
+          ? await runLocalTaxExport({
+              receipts: receiptsForExport,
+              taxYear,
+              timeZone,
+              format,
+            })
+          : await exportTaxPack({
+              taxYear: taxYearStr,
+              format,
+            });
       finishProgress();
       setReadyFile(result.file);
       setExportMeta(result.meta);
@@ -292,6 +302,13 @@ export function ExportEngineSheet({
           setErrorMessage(t.pdfFailed);
         } else if (err.message === "EXPORT_TIMEOUT") {
           setErrorMessage(t.exportTimeout);
+        } else if (err.message === "NOT_FOUND") {
+          setErrorMessage(t.filedSyncNotFound);
+        } else if (
+          err.message === "EXPORT_FILED_SYNC_FAILED" ||
+          err.message === "INVALID_EXPORT_TAX_YEAR"
+        ) {
+          setErrorMessage(t.filedSyncFailed);
         } else {
           setErrorMessage(copy.settings.export.failed);
         }

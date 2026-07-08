@@ -678,5 +678,7 @@ export type UserCopy = {
     progressFinalizing: string;
     pdfFailed: string;
     exportTimeout: string;
+    filedSyncNotFound: string;
+    filedSyncFailed: string;
   };
 };

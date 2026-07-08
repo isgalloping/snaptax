@@ -683,6 +683,28 @@ export async function saveReceipt(receipt: StoredReceipt): Promise<void> {
   await applyReceiptSummaryDelta(db, old, receipt);
 }
 
+/** Atomic multi-row put in one IDB transaction (summary deltas run after commit). */
+export async function saveReceiptsBatch(receipts: StoredReceipt[]): Promise<void> {
+  if (receipts.length === 0) return;
+  const db = await openDb();
+  const olds = await Promise.all(
+    receipts.map((receipt) => getReceiptById(db, receipt.id)),
+  );
+  const receiptsStore = receiptsStoreName(db);
+  await new Promise<void>((resolve, reject) => {
+    const tx = db.transaction(receiptsStore, "readwrite");
+    const store = tx.objectStore(receiptsStore);
+    for (const receipt of receipts) {
+      store.put(enrichRow(receipt));
+    }
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+  for (let i = 0; i < receipts.length; i++) {
+    await applyReceiptSummaryDelta(db, olds[i] ?? null, receipts[i]!);
+  }
+}
+
 export async function deleteReceipt(id: string): Promise<void> {
   const db = await openDb();
   const old = await getReceiptById(db, id);

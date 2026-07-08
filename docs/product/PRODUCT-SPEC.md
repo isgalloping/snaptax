@@ -331,6 +331,8 @@ Next.js 16 · React 19 · Tailwind 4 · Serwist · **PostgreSQL（美国）** ·
 - [ ] PWA：产品入口是否为 **`/app`**（非 marketing `/`）？manifest **`short_name` = SnapTax**？  
 - [ ] `/app` 手机门控是否 **Landing 后**、**可跳过**、且 **不**在营销页弹全屏？  
 - [ ] Android Chrome 营销 CTA 是否 **原生 `<a href="/app">`**（非 client-only 路由）？  
+- [ ] 改 onboarding / home / export / delete / receipt sync / PWA 前是否先读 `docs/superpowers/topics/*` 或 `docs/tech/13-pwa-install-architecture.md`？  
+- [ ] 新 spec 完成后是否更新 topic 终稿或 MANIFEST（见 [`docs/superpowers/README.md`](../superpowers/README.md) 归档 checklist）？  
 
 ---
 
@@ -352,6 +354,8 @@ Next.js 16 · React 19 · Tailwind 4 · Serwist · **PostgreSQL（美国）** ·
 | [legal/terms.de.md](../legal/terms.de.md) | 服务条款（德文） |
 | [prd/privacy.updated.md](../prd/privacy.updated.md) | §4 国际传输摘要 |
 | [prd/0.0.1.md](../prd/0.0.1.md) | PRD §2.5 |
+| [superpowers/README.md](../superpowers/README.md) | 迭代 ADR 索引 + topic 终稿 + 归档 checklist |
+| [superpowers/topics/](../superpowers/topics/) | 主题合并终稿（onboarding、export、home、delete、receipt sync） |
 | [specs/2026-06-05-compliance-privacy-design.md](../superpowers/specs/2026-06-05-compliance-privacy-design.md) | 合规 ADR（v1.2 以本文为准覆盖分区域 MVP） |
 | [specs/2026-06-05-api-security-design.md](../superpowers/specs/2026-06-05-api-security-design.md) | API 安全 ADR（Ghost HMAC、OpenAI、IDOR、限流） |
 | [specs/2026-06-13-product-code-alignment-design.md](../superpowers/specs/2026-06-13-product-code-alignment-design.md) | 产品/代码全面对齐（2026-06-13） |

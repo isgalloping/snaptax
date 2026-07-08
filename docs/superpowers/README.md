@@ -22,7 +22,7 @@ Layer 2  Archive        docs/superpowers/archive/**
 | receipt-sync-lifecycle | [topics/receipt-sync-lifecycle-design.md](./topics/receipt-sync-lifecycle-design.md) · consolidated 2026-07-08 | docs/tech/06-* · [11-ocr-pipeline-design.md](../tech/11-ocr-pipeline-design.md) |
 | pwa-install | — | **[docs/tech/13-pwa-install-architecture.md](../tech/13-pwa-install-architecture.md)** · archived 2026-07-08 |
 
-Status: Phase 0 complete · Phase 1 in progress · See [MANIFEST.csv](./MANIFEST.csv) (325 entries)
+Status: Phase 0 complete · Phase 1 complete · Phase 2 complete · See [MANIFEST.csv](./MANIFEST.csv) (325 entries) · `npm run lint:docs`
 
 ## Agent 读法
 
@@ -42,6 +42,7 @@ Status: Phase 0 complete · Phase 1 in progress · See [MANIFEST.csv](./MANIFEST
 5. `git mv` spec/plan → `archive/`
 6. 原路径写 stub（见 design spec §5.2）
 7. `rg` 更新引用；更新本 README 状态
+8. `npm run lint:docs` 通过
 
 **Design:** [specs/2026-07-07-superpowers-doc-consolidation-design.md](./specs/2026-07-07-superpowers-doc-consolidation-design.md)  
 **Plan:** [plans/2026-07-07-superpowers-doc-consolidation.md](./plans/2026-07-07-superpowers-doc-consolidation.md)

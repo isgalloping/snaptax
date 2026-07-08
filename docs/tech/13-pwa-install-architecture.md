@@ -1,7 +1,6 @@
 # 13 — PWA 安装与路由架构
 
-> **Agent 必读** — 改 `components/pwa/`、`lib/pwa/`、`app/manifest.ts`、营销 CTA 前读本文。  
-> **产品 spec：** [2026-07-06-pwa-snaptax-label-app-entry-gate-design.md](../superpowers/specs/2026-07-06-pwa-snaptax-label-app-entry-gate-design.md)
+> **Agent 必读** — 改 `components/pwa/`、`lib/pwa/`、`app/manifest.ts`、营销 CTA 前读本文（canonical；历史 ADR 见 §7 archive）。
 
 ---
 
@@ -135,10 +134,10 @@ app/layout.tsx                    InstallCaptureScript（全站捕获 beforeinst
 
 | 文档 | 主题 |
 |------|------|
-| [2026-07-06-pwa-snaptax-label-app-entry-gate-design.md](../superpowers/specs/2026-07-06-pwa-snaptax-label-app-entry-gate-design.md) | SnapTax 标签 + 门控（canonical） |
-| [2026-06-10-pwa-install-prompt-design.md](../superpowers/specs/2026-06-10-pwa-install-prompt-design.md) | install bar / landing 门控 |
-| [2026-06-10-pwa-cross-context-installed-design.md](../superpowers/specs/2026-06-10-pwa-cross-context-installed-design.md) | 跨 Tab 已装检测 |
-| [2026-06-19-android-webapk-hyperos-launch-design.md](../superpowers/specs/2026-06-19-android-webapk-hyperos-launch-design.md) | WebAPK / HyperOS Chrome 权限 |
+| [2026-07-06-pwa-snaptax-label-app-entry-gate-design.md](../superpowers/archive/specs/2026-07-06-pwa-snaptax-label-app-entry-gate-design.md) | SnapTax 标签 + 门控（archived） |
+| [2026-06-10-pwa-install-prompt-design.md](../superpowers/archive/specs/2026-06-10-pwa-install-prompt-design.md) | install bar / landing 门控（archived） |
+| [2026-06-10-pwa-cross-context-installed-design.md](../superpowers/archive/specs/2026-06-10-pwa-cross-context-installed-design.md) | 跨 Tab 已装检测（archived） |
+| [2026-06-19-android-webapk-hyperos-launch-design.md](../superpowers/specs/2026-06-19-android-webapk-hyperos-launch-design.md) | WebAPK / HyperOS Chrome 权限（active ADR） |
 
 ---
 

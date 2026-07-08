@@ -14,7 +14,7 @@
 
 `taxYear` 默认 `currentTaxSeason()`。按用户时区（`X-Time-Zone`）过滤 `snap_at` / `captured_at` 所在日历年。
 
-Canonical 业务规范：`docs/biz/export/` · 设计 spec：`docs/superpowers/specs/2026-06-19-export-formats-refactor-design.md`
+Canonical 业务规范：`docs/biz/export/` · 设计 topic：`docs/superpowers/topics/export-pipeline-design.md`
 
 ## 8.3 输出格式
 

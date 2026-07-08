@@ -4,7 +4,7 @@
 **Status:** Approved (brainstorming)  
 **Scope:** Hide the **Find More Savings** (`MissingDeductionsWidget`) from the home WidgetPager. Retain compute logic, overlays, and i18n for future re-enable.
 
-**References:** `docs/superpowers/specs/2026-06-17-home-dashboard-redesign-design.md`, `docs/superpowers/specs/2026-06-18-home-widget-pager-design.md`
+**References:** `docs/superpowers/topics/home-dashboard-design.md` §4.4 · §6
 
 ---
 
@@ -38,7 +38,7 @@ Users see a green **Find More Savings** card (estimated tax from industry deduct
 
 ### When re-enabled (`SHOW_MISSING_DEDUCTIONS_WIDGET = true`)
 
-- Restores prior behavior documented in `2026-06-18-home-widget-pager-design.md` and `2026-06-18-need-action-widget-slot-design.md`.
+- Restores prior behavior documented in `topics/home-dashboard-design.md` §4.4.
 
 ---
 

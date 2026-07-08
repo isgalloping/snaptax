@@ -98,7 +98,7 @@
 
 ### Write budget（2026-06-07）
 
-见 [receipt-sync-budget-design.md](../superpowers/specs/2026-06-07-receipt-sync-budget-design.md)
+见 [receipt-sync-lifecycle-design.md](../superpowers/topics/receipt-sync-lifecycle-design.md) §3.2
 
 - 单票 `writeBudgetRemaining` 默认 5，IndexedDB 持久化
 - 仅失败写操作扣次：`POST /receipts`、`POST /process`；`GET /api/receipts` 不计

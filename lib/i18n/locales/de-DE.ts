@@ -963,5 +963,9 @@ export const DE_DE_COPY: UserCopy = {
       "PDF-Export fehlgeschlagen. Versuchen Sie CSV oder CPA-Audit-Paket.",
     exportTimeout:
       "Export-Zeitüberschreitung. Verbindung prüfen und erneut versuchen.",
+    filedSyncNotFound:
+      "Einige Belege sind noch nicht in der Cloud. Warten Sie auf die Synchronisation und tippen Sie erneut auf Export.",
+    filedSyncFailed:
+      "Ihr Steuerpaket wurde erstellt, aber der Hinterlegungsstatus konnte nicht gespeichert werden. Export erneut versuchen.",
   },
 };

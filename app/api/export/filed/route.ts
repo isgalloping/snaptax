@@ -5,9 +5,11 @@ import { getActor } from "@/lib/auth/getActor";
 import { prisma } from "@/lib/prisma";
 import { userAccountReceiptFilter } from "@/lib/receipts/accountCleanup";
 import { assertPersistedReceiptId } from "@/lib/receipts/receiptId";
+import { assertReceiptsMatchExportTaxYear } from "@/lib/receipts/validateExportFiledReceipts";
 import { withRequestLog } from "@/lib/server/log/withRequestLog";
 import { logEvent } from "@/lib/server/log/logEvent";
 import { currentTaxSeason } from "@/lib/tax/season";
+import { parseRequestTimeZone } from "@/lib/time/timeZone";
 import { utcNow } from "@/lib/time/utc";
 import { ensureBypassEntitlement } from "@/lib/verify/ensureBypassEntitlement";
 import { resolveVerifyContext } from "@/lib/verify/context";
@@ -52,11 +54,19 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
         ...userAccountReceiptFilter(actor.userId, binding?.ghostId ?? null),
         status: "done",
       },
-      select: { id: true },
     });
     if (owned.length !== body.receiptIds.length) {
       return apiError("NOT_FOUND", "One or more receipts not found", 404);
     }
+
+    const timeZone = parseRequestTimeZone(request.headers.get("X-Time-Zone"));
+    const taxYearNum = Number(body.taxYear);
+    assertReceiptsMatchExportTaxYear({
+      receipts: owned,
+      receiptIds: body.receiptIds,
+      taxYear: taxYearNum,
+      timeZone,
+    });
 
     const exportedAt = utcNow();
     const result = await prisma.snaptaxReceipt.updateMany({

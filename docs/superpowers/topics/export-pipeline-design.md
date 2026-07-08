@@ -181,7 +181,7 @@ Generate (csv/txf)
   → deliver File to Share / Save
 ```
 
-Gate 仍跑 `prepareExportSync`（flush + merge）；**pack 内容不读 server PG**。Income 1099 不进 CSV/TXF 但 **filed** 仍含该税年全部 `done` 行。
+Gate 仍跑 `prepareExportSync`（flush + merge）；**pack 内容不读 server PG**。Income 1099 不进 CSV/TXF 但 **filed** 仍含该税年全部 `done` 行。`POST /api/export/filed` 服务端校验 `X-Time-Zone` + `filterReceiptsByTaxYear`（与 tax-pack 对称）。
 
 **Modules:** `lib/export/buildLocalTaxPack.ts` · `lib/client/runLocalTaxExport.ts` · `app/api/export/filed/route.ts`
 

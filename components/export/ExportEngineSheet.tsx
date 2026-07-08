@@ -302,6 +302,13 @@ export function ExportEngineSheet({
           setErrorMessage(t.pdfFailed);
         } else if (err.message === "EXPORT_TIMEOUT") {
           setErrorMessage(t.exportTimeout);
+        } else if (err.message === "NOT_FOUND") {
+          setErrorMessage(t.filedSyncNotFound);
+        } else if (
+          err.message === "EXPORT_FILED_SYNC_FAILED" ||
+          err.message === "INVALID_EXPORT_TAX_YEAR"
+        ) {
+          setErrorMessage(t.filedSyncFailed);
         } else {
           setErrorMessage(copy.settings.export.failed);
         }

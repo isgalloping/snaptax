@@ -1,4 +1,4 @@
-# Snap1099 Refund Policy
+# SnapTax Refund Policy
 
 **Last Updated:** July 2026  
 **Related:** [Terms of Service](/terms) · [Pricing](/pricing) · [Privacy Policy](/privacy)

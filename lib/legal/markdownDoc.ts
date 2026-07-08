@@ -5,7 +5,9 @@ export type LegalMarkdownFile =
   | "data-retention.md"
   | "security-incident.md"
   | "pricing.md"
-  | "refund.md";
+  | "refund.md"
+  | "cookies.md"
+  | "disclaimer.md";
 
 export type LegalMarkdownSection = {
   title: string;

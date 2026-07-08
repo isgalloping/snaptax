@@ -1,4 +1,4 @@
-# Snap1099 Data Retention Policy
+# SnapTax Data Retention Policy
 
 **Last Updated:** July 2026
 

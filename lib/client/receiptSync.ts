@@ -5,15 +5,19 @@ import {
   isDoneLockedReceipt,
 } from "@/lib/client/receiptMergePolicy";
 import {
+  RECEIPT_SYNC_LIMIT,
+  UI_RECEIPT_LIMIT,
+} from "@/lib/client/receiptWindow";
+import {
   reconcileServerPrimaryPhotos,
   saveReceipt,
   type StoredReceipt,
 } from "@/lib/storage/receiptDb";
 import type { Receipt } from "@/lib/types";
 
+export { RECEIPT_SYNC_LIMIT, UI_RECEIPT_LIMIT } from "@/lib/client/receiptWindow";
+
 export const STARTUP_UNFILED_LIMIT = 30;
-export const UI_RECEIPT_LIMIT = 100;
-export const RECEIPT_SYNC_LIMIT = UI_RECEIPT_LIMIT;
 
 export function receiptUpdatedAt(receipt: Pick<Receipt, "updatedAt" | "timestamp">): Date {
   return receipt.updatedAt ?? receipt.timestamp;

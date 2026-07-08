@@ -16,6 +16,7 @@ const TOPIC_PATTERNS = {
   "delete-account": /delete-account/i,
   "receipt-sync-lifecycle": /receipt-(sync|lifecycle|sliding|pipeline|upload-stuck|summary-local|sync-recovery)/i,
   "capture-pipeline": /batch-receipt-review|post-batch-review|capture-immediate-list/i,
+  "settings": /settings-(redesign|v3|v5|email-mask|google-button|share|summary|privacy-data)|tax-saved-header-settings-alignment/i,
   "pwa-install": /pwa-|android-pwa|webapk/i,
   "founder-program-widget": /founder-|hide-missing-deductions/i,
   "camera-live-footer": /camera-live-footer|resnap-shutter/i,

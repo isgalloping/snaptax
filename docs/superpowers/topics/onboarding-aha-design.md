@@ -10,7 +10,7 @@
 
 Snap1099 新人引导分两层：**冷启动 Landing**（`LandingRouter`）与 **主屏 in-app 教程**（`OnboardingOrchestrator`）。首次用户走 **Hero Stage 0** → shadow/sandbox **$28.50 Aha** → **`stage_aha` coach** → 样例导出或 dismiss → `completed`；回访用户仅播 **`data_stream`**（2.4s min / 5s soft max）。
 
-**产品哲学：** 前台傻瓜、后台聪明 — 5 秒内证明能省钱，**不强制 Google**（Export / 多端硬门控不变）。旧 SnapCoach / 3rd-receipt Nudge / 首次设置 soft Sheet 在 onboarding 路径中 **禁用**；教程完成后，**T2 首次进设置 soft Sheet** 仍对未登录用户生效（T1 顶栏 Nudge 规格保留但 **当前未接线**）。
+**产品哲学：** 前台傻瓜、后台聪明 — 5 秒内证明能省钱，**不强制 Google**（Export / 多端硬门控不变）。旧 SnapCoach / 3rd-receipt Nudge / 首次设置 soft Sheet 在 onboarding 路径中 **禁用**；教程完成后，**T2 首次进设置 soft Sheet** 与 **T1 第 3 张 done 顶栏 Nudge** 对未登录用户生效。
 
 **Demo 小票：** 固定 ID `onboarding-demo-receipt`；`stage_1` 列表 **空**（无 shadow 卡）；沙盒快门后才出现 COMPLETE 样本（Builder Depot $193.12 → tax $28.50）。
 
@@ -175,7 +175,7 @@ type OnboardingStatus =
 
 | Gate | 状态 | 行为 |
 |------|------|------|
-| **T1 — 第 3 张 done Nudge** | 规格保留 · **未接线** | `requestSoftGoogleSheet` 无 setter；TaxHeader 无 nudge UI |
+| **T1 — 第 3 张 done Nudge** | ✅ 已实现 | TaxHeader 一次性横幅 → Settings + soft Sheet；10s 自动消失 |
 | **T2 — 首次进设置 soft Sheet** | ✅ 已实现 | `SETTINGS_VISITED_KEY` + 300ms → `GoogleSignInSheet mode=soft` |
 | **Onboarding 期间 T2** | **跳过** | `skipSoftGoogleSheet=true` when `status !== completed` |
 | **Dismiss** | `GOOGLE_SOFT_DISMISSED_KEY` — 全局一次 Not now |
@@ -249,6 +249,7 @@ type OnboardingStatus =
 | AC-6 | 回访冷启动：仅 data_stream；无教程 UI |
 | AC-7 | `completed` 后：真实 SNAP；正常 export gate |
 | AC-8 | Onboarding 中：T2 soft Sheet 不弹 |
+| AC-9 | `completed` 后第 3 张真实 `done` 小票：TaxHeader T1 Nudge 一次/会话；点击 → Settings soft Sheet |
 
 ---
 
@@ -257,7 +258,6 @@ type OnboardingStatus =
 - Sign in with Apple
 - Bottom tab navigation
 - Sandbox 调用 OpenAI / 真相机
-- T1 Nudge 接线（待产品排期）
 - Server-side onboarding status
 - Onboarding 内 Paddle / 付费
 

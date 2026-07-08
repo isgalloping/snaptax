@@ -141,7 +141,14 @@ import {
   ensureOnboardingDemoDone,
 } from "@/lib/onboarding/demoReceipt";
 import {
+  countDoneRealReceipts,
+  GOOGLE_SOFT_NUDGE_MIN_DONE,
+  markGoogleNudgeSessionShown,
+  wasGoogleNudgeShownThisSession,
+} from "@/lib/onboarding/googleSoftNudge";
+import {
   GOOGLE_SOFT_DISMISSED_KEY,
+  readOnboardFlag,
   writeOnboardFlag,
 } from "@/lib/onboarding/onboardingStorage";
 import { visibleReceiptsForOnboarding } from "@/lib/onboarding/onboardingReceipts";
@@ -182,6 +189,7 @@ export function HomeScreen() {
   );
   const [industry, setIndustry] = useState<Industry | null>(null);
   const [requestSoftGoogleSheet, setRequestSoftGoogleSheet] = useState(false);
+  const [googleNudgeVisible, setGoogleNudgeVisible] = useState(false);
   const [resnapId, setResnapId] = useState<string | null>(null);
   const [selectedReceipt, setSelectedReceipt] = useState<Receipt | null>(null);
   const [cameraOpen, setCameraOpen] = useState(false);
@@ -362,7 +370,21 @@ export function HomeScreen() {
 
   const handleSoftGuideDismiss = useCallback(() => {
     writeOnboardFlag(GOOGLE_SOFT_DISMISSED_KEY);
+    setGoogleNudgeVisible(false);
   }, []);
+
+  const handleGoogleNudgeDismiss = useCallback(() => {
+    handleSoftGuideDismiss();
+  }, [handleSoftGuideDismiss]);
+
+  const handleGoogleNudgeClick = useCallback(() => {
+    markGoogleNudgeSessionShown();
+    setGoogleNudgeVisible(false);
+    setRequestSoftGoogleSheet(true);
+    setView("settings");
+    setSettingsViewState("main");
+    openSettings();
+  }, [openSettings]);
 
   useEffect(() => {
     cameraOpenRef.current = cameraOpen;
@@ -1103,6 +1125,50 @@ export function HomeScreen() {
     [receipts, onboardingStatus],
   );
 
+  const doneRealReceiptCount = useMemo(
+    () => countDoneRealReceipts(receipts),
+    [receipts],
+  );
+
+  const googleNudgeActivatedRef = useRef(false);
+
+  useEffect(() => {
+    if (view === "settings") {
+      setGoogleNudgeVisible(false);
+      return;
+    }
+    if (!auth.hydrated || auth.isSignedIn) {
+      setGoogleNudgeVisible(false);
+      return;
+    }
+    if (onboardingStatus !== "completed") {
+      setGoogleNudgeVisible(false);
+      return;
+    }
+    if (readOnboardFlag(GOOGLE_SOFT_DISMISSED_KEY)) {
+      setGoogleNudgeVisible(false);
+      return;
+    }
+    if (googleNudgeActivatedRef.current || wasGoogleNudgeShownThisSession()) {
+      return;
+    }
+    if (doneRealReceiptCount < GOOGLE_SOFT_NUDGE_MIN_DONE) {
+      return;
+    }
+
+    googleNudgeActivatedRef.current = true;
+    markGoogleNudgeSessionShown();
+    setGoogleNudgeVisible(true);
+    const timer = window.setTimeout(() => setGoogleNudgeVisible(false), 10_000);
+    return () => window.clearTimeout(timer);
+  }, [
+    auth.hydrated,
+    auth.isSignedIn,
+    doneRealReceiptCount,
+    onboardingStatus,
+    view,
+  ]);
+
   const headerTaxSaved = useMemo(
     () =>
       resolveHeaderTaxSaved({
@@ -1511,6 +1577,9 @@ export function HomeScreen() {
         onExportClick={handleExportClick}
         exportBusy={taxExport.paywallExporting || taxExport.preparingExport}
         exportError={taxExport.exportError}
+        googleNudgeVisible={googleNudgeVisible}
+        onGoogleNudgeClick={handleGoogleNudgeClick}
+        onGoogleNudgeDismiss={handleGoogleNudgeDismiss}
       />
 
       <div className="relative shrink-0 px-4 pb-1.5 pt-0">

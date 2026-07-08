@@ -158,7 +158,13 @@ Camera open → defer merge (existing); **WorkerSession Phase C (2026-07-08):** 
 
 **Module:** `lib/client/workerSessionGate.ts` · `HomeScreen.runWorkerCatchUp` on `cameraOpen → false`.
 
-**Still deferred (lifecycle redesign draft):** done lock · window 50 · budget 3 · export local-first.
+**Still deferred (lifecycle redesign draft):** sync window 50 · budget 3 · export local-first · server-side done PATCH enforcement.
+
+### 3.9 Done lock merge (Phase C · 2026-07-08)
+
+Local `status=done` rows: **protected fields frozen** on merge (`amount`, `merchant`, `category`, `taxAmount`, `deductible`, `currency`, `dataRegion`, `aiConfidence`, `subtitle`, `status`). **Allowed from remote:** `taxSeason`, `taxSeasonDate`, `hasRemoteImage`, `updatedAt` (when remote filed metadata is newer). `pendingUpload` local still wins entirely.
+
+**Module:** `lib/client/receiptMergePolicy.ts` · wired in `unionMergeLWW`.
 
 ---
 
@@ -185,7 +191,7 @@ Camera open → defer merge (existing); **WorkerSession Phase C (2026-07-08):** 
 
 - Receipt **list/detail UI** tweaks (`receipt-list-*`, `receipt-detail-*`, duplicate-detection) — stay active specs
 - Event Queue / `POST /api/sync/events` / Postgres Event Store — Phase 2 OCR roadmap §16
-- WorkerSession **full** redesign (done lock · window 50 · budget 3 · local export) — lifecycle redesign draft
+- WorkerSession **full** redesign (sync window 50 · budget 3 · local export · server done PATCH) — lifecycle redesign draft partial
 - Export pack generation — [`export-pipeline-design.md`](./export-pipeline-design.md)
 - Server-side orphan ghost merge job
 

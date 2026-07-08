@@ -74,7 +74,7 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
       meta: {
         taxSeason: body.taxYear,
         receiptCount: result.count,
-        source: "local_export_filed",
+        reason: "local_export_filed",
       },
     });
 

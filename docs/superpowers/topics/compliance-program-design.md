@@ -192,6 +192,7 @@ Artifacts：`security-incident.md` · `ops/security-incident-response.md` · bac
 | 2026-06-30 | `archive/plans/2026-06-30-compliance-program.md` | implemented · **this topic** |
 | 2026-07-08 | `archive/specs/2026-07-08-us-legal-compliance-audit-design.md` | **this topic** §15 |
 | 2026-07-08 | `archive/plans/2026-07-08-us-legal-compliance-audit.md` | implemented · **this topic** §15 |
+| 2026-07-05 | `archive/specs/2026-07-05-legal-full-page-close-shell-design.md` | **this topic** §16 |
 
 **Still active:** `2026-06-05-compliance-privacy-design.md`
 
@@ -214,3 +215,25 @@ Paddle merchant + CPRA launch readiness — **implemented** on `main`.
 **Manual remaining:** counsel sign-off (L4 out of scope). Production Paddle URLs smoke-tested 2026-07-08 (see `docs/ops/us-compliance-checklist.md`).
 
 **Spec:** `archive/specs/2026-07-08-us-legal-compliance-audit-design.md` · **this topic** §15
+
+---
+
+## 16. Legal full-page close shell (2026-07-05)
+
+Public compliance full pages 统一 **`LegalFullPageShell`** — 右上 **Close**（与 Settings `LegalSheet` 一致），固定 header + 可滚动 body；**无** « Back to Snap1099。
+
+| Route | Module |
+|-------|--------|
+| `/privacy` · `/terms` | `LegalPageContent` |
+| `/pricing` · `/refund` | `PricingPageBody` · `LegalMarkdownPage` |
+| `/policies` | `PoliciesHubContent` |
+| `/data-retention` · `/security` · `/cookies` · `/disclaimer` | `LegalMarkdownPage` |
+
+| Decision | Detail |
+|----------|--------|
+| Close action | `history.length > 1` → `router.back()`；否则 → `/` |
+| Scroll | `h-dvh flex flex-col`；header `shrink-0`；main `flex-1 overflow-y-auto` |
+| Escape | 同 Close（`useDialogEscape`） |
+| Out of scope | `LegalSheet` overlay · Settings row navigation |
+
+**Spec:** `archive/specs/2026-07-05-legal-full-page-close-shell-design.md` · **this topic** §16

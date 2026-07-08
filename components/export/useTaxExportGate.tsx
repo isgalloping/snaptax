@@ -19,6 +19,7 @@ import { hasExportableReceipts } from "@/lib/tax/exportGate";
 import { markExportBlockedBanner } from "@/lib/settings/exportSampleState";
 import { markSeasonExportDone } from "@/lib/settings/seasonExportState";
 import type { IncomeCaptureKind } from "@/lib/export/incomeCapture";
+import type { ExportFormat } from "@/lib/export/exportFilenames";
 
 interface UseTaxExportGateOptions {
   receipts: Receipt[];
@@ -29,7 +30,10 @@ interface UseTaxExportGateOptions {
   onPostLoginSync?: (taxRecalcQueued: number) => Promise<void>;
   onSeasonPaid: () => void;
   refreshSeasonPaid?: () => Promise<void>;
-  onPreExportPrepare?: () => Promise<Receipt[] | void>;
+  /** Gate open: flush + local IDB (default path for local-first export). */
+  onExportGatePrepare?: () => Promise<Receipt[] | void>;
+  /** Generate step: format-aware prep before building the pack. */
+  onPreExportPrepare?: (format: ExportFormat) => Promise<Receipt[] | void>;
   onPostExportSync?: () => Promise<void>;
   onReceiptUpdated?: (receipt: Receipt) => void;
   onSnap1099?: (kind: IncomeCaptureKind) => void;
@@ -45,6 +49,7 @@ export function useTaxExportGate({
   onPostLoginSync,
   onSeasonPaid,
   refreshSeasonPaid,
+  onExportGatePrepare,
   onPreExportPrepare,
   onPostExportSync,
   onReceiptUpdated,
@@ -106,14 +111,16 @@ export function useTaxExportGate({
   };
 
   const openExportAfterPrepare = async () => {
-    if (!onPreExportPrepare) {
+    if (!onExportGatePrepare && !onPreExportPrepare) {
       if (blockIfNoExportableReceipts()) return;
       openExportEngine();
       return;
     }
     setPreparingExport(true);
     try {
-      const prepared = await onPreExportPrepare();
+      const prepared = onExportGatePrepare
+        ? await onExportGatePrepare()
+        : await onPreExportPrepare!("csv");
       if (blockIfNoExportableReceipts(prepared)) return;
       const list = (prepared ?? exportableReceipts).filter(
         (r) => !r.isOnboardingDemo,

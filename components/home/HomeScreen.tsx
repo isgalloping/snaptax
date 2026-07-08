@@ -48,7 +48,12 @@ import type {
   PaymentSuccessVariant,
 } from "@/lib/billing/paymentSuccessTypes";
 import { fetchFounderProgramClient } from "@/lib/founder/fetchFounderProgramClient";
-import { prepareExportSync } from "@/lib/client/exportPrepareFlow";
+import {
+  prepareExportSync,
+  prepareExportLocal,
+  type ExportPrepareDeps,
+} from "@/lib/client/exportPrepareFlow";
+import type { ExportFormat } from "@/lib/export/exportFilenames";
 import { restoreReceiptsFromCloud } from "@/lib/client/cloudRestoreFlow";
 import {
   markCloudRestoreAttempted,
@@ -1065,8 +1070,8 @@ export function HomeScreen() {
     setSeasonExportTick((tick) => tick + 1);
   }, [syncFromServer]);
 
-  const handlePreExportPrepare = useCallback(async () => {
-    const merged = await prepareExportSync({
+  const exportPrepareDeps = useCallback(
+    (): ExportPrepareDeps => ({
       flushPendingUploads: () => flushPendingUploadsRef.current(),
       flushPendingDeletes: () => flushPendingDeletesRef.current(),
       loadAllReceipts,
@@ -1074,10 +1079,30 @@ export function HomeScreen() {
       ensureGhostSession: async () => {
         await ensureGhostSession();
       },
-    });
-    setReceipts(merged);
-    return merged;
-  }, [syncFromServer]);
+    }),
+    [syncFromServer],
+  );
+
+  const handleExportGatePrepare = useCallback(async () => {
+    const local = await prepareExportLocal(exportPrepareDeps());
+    setReceipts(top100ByUpdatedAt(local));
+    return local;
+  }, [exportPrepareDeps]);
+
+  const handlePreExportPrepare = useCallback(
+    async (format: ExportFormat) => {
+      const isLocalFirst = format === "csv" || format === "txf";
+      if (isLocalFirst) {
+        const local = await prepareExportLocal(exportPrepareDeps());
+        setReceipts(top100ByUpdatedAt(local));
+        return local;
+      }
+      const merged = await prepareExportSync(exportPrepareDeps());
+      setReceipts(merged);
+      return merged;
+    },
+    [exportPrepareDeps],
+  );
 
   const taxExport = useTaxExportGate({
     receipts,
@@ -1088,6 +1113,7 @@ export function HomeScreen() {
     onPostLoginSync: handlePostLoginSync,
     onSeasonPaid: auth.markSeasonPaid,
     refreshSeasonPaid: auth.refreshSeasonPaid,
+    onExportGatePrepare: handleExportGatePrepare,
     onPreExportPrepare: handlePreExportPrepare,
     onPostExportSync: handlePostExportSync,
     onReceiptUpdated: (updated) => {

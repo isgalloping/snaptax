@@ -1091,7 +1091,11 @@ export function HomeScreen() {
 
   const handlePreExportPrepare = useCallback(
     async (format: ExportFormat) => {
-      const isLocalFirst = format === "csv" || format === "txf";
+      const isLocalFirst =
+        format === "csv" ||
+        format === "txf" ||
+        format === "cpa_pdf" ||
+        format === "cpa_pack";
       if (isLocalFirst) {
         const local = await prepareExportLocal(exportPrepareDeps());
         setReceipts(top100ByUpdatedAt(local));

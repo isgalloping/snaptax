@@ -129,9 +129,9 @@ if (navigator.canShare?.({ files: [file] })) {
 | 生成失败 | 500 | "Export failed. Please try again." |
 | 离线 | — (前端拦截) | "You're offline. Connect to export." |
 
-## 8.8 Local-first filed（csv / txf）
+## 8.8 Local-first filed（csv / txf / cpa_pdf / cpa_pack）
 
-本地 pack 构建完成后，客户端调用 **`POST /api/export/filed`** 写 filed 元数据（CPA 仍由 `tax-pack` 一并写入）。
+本地 pack 构建完成后，客户端调用 **`POST /api/export/filed`** 写 filed 元数据（全部可见 format 共用；`xlsx` 仍由 `tax-pack` 一并写入）。
 
 **Auth：** Google user + 本季 `season_entitlements.paid=true`（与 tax-pack 相同）
 

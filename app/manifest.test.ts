@@ -10,4 +10,10 @@ describe("PWA manifest", () => {
     assert.equal(data.id, "/app");
     assert.equal(data.capture_links, "existing-client-navigate");
   });
+
+  it("uses SnapTax display name", () => {
+    const data = manifest();
+    assert.equal(data.name, "SnapTax");
+    assert.equal(data.short_name, "SnapTax");
+  });
 });

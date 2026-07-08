@@ -12,7 +12,7 @@ describe("legal markdown docs", () => {
 
   it("loads refund.md with expected sections", () => {
     const doc = parseLegalMarkdown(loadLegalMarkdown("refund.md"));
-    assert.equal(doc.title, "Snap1099 Refund Policy");
+    assert.equal(doc.title, "SnapTax Refund Policy");
     assert.ok(doc.sections.some((s) => s.title === "How to request a refund"));
   });
 
@@ -23,12 +23,24 @@ describe("legal markdown docs", () => {
     assert.doesNotMatch(raw, /\.ts/);
 
     const doc = parseLegalMarkdown(raw);
-    assert.equal(doc.title, "Snap1099 Data Retention Policy");
+    assert.equal(doc.title, "SnapTax Data Retention Policy");
     const logs = doc.sections.find((s) => s.title === "Logs");
     assert.ok(logs && logs.body.length > 0);
     assert.ok(logs.body.some((p) => p.includes("do not include receipt photos")));
     for (const section of doc.sections) {
       assert.ok(section.body.length > 0, `section "${section.title}" should have body`);
     }
+  });
+
+  it("loads cookies.md with essential cookies section", () => {
+    const doc = parseLegalMarkdown(loadLegalMarkdown("cookies.md"));
+    assert.equal(doc.title, "SnapTax Cookie Policy");
+    assert.ok(doc.sections.some((s) => s.title === "Essential cookies"));
+  });
+
+  it("loads disclaimer.md", () => {
+    const doc = parseLegalMarkdown(loadLegalMarkdown("disclaimer.md"));
+    assert.equal(doc.title, "SnapTax Disclaimer");
+    assert.ok(doc.sections.some((s) => s.title === "Tax estimates"));
   });
 });

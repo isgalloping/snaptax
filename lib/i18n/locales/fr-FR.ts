@@ -6,7 +6,7 @@ export const FR_FR_COPY: UserCopy = {
       "Photographiez vos reçus, catégorisation automatique. Comptabilité 1099 simplifiée.",
   },
   pwa: {
-    title: "Ajouter Snap1099 à l'écran d'accueil",
+    title: "Ajouter SnapTax à l'écran d'accueil",
     subtitle:
       "Ouvrez comme une app native — photographiez vos reçus d'une main sur le chantier",
     install: "Installer",
@@ -14,23 +14,23 @@ export const FR_FR_COPY: UserCopy = {
     dismiss: "Pas maintenant",
     dismissInstallAria: "Fermer les instructions d'installation",
     manualHint: "Appuyez sur ⋮ dans Chrome, puis Installer l'application",
-    manualSheetTitle: "Installer Snap1099",
+    manualSheetTitle: "Installer SnapTax",
     manualSheetLead:
       "Votre navigateur ne peut pas installer automatiquement — suivez ces étapes :",
     manualGotIt: "Compris",
     installWebApkLead:
-      "Utilisez Installer l'application — pas un raccourci favori. Snap1099 s'ouvre en plein écran depuis l'écran d'accueil.",
+      "Utilisez Installer l'application — pas un raccourci favori. SnapTax s'ouvre en plein écran depuis l'écran d'accueil.",
     launchFromHomeHint:
-      "Ouvrez Snap1099 depuis l'icône de l'écran d'accueil, pas dans Chrome.",
+      "Ouvrez SnapTax depuis l'icône de l'écran d'accueil, pas dans Chrome.",
     launchFromHomeGotIt: "Compris",
     webApkGuide: {
       preInstallTitle: "Avant l'installation",
       preInstallBody:
-        "Après l'installation, ouvrez Snap1099 depuis l'écran d'accueil — pas dans Chrome. Sur certains téléphones Android, le premier lancement demande d'ouvrir Chrome. Appuyez sur Toujours autoriser. Refuser empêchera l'application de s'ouvrir.",
+        "Après l'installation, ouvrez SnapTax depuis l'écran d'accueil — pas dans Chrome. Sur certains téléphones Android, le premier lancement demande d'ouvrir Chrome. Appuyez sur Toujours autoriser. Refuser empêchera l'application de s'ouvrir.",
       continueInstall: "Continuer l'installation",
-      postInstallTitle: "Snap1099 installé",
+      postInstallTitle: "SnapTax installé",
       postInstallSteps: [
-        "Allez sur l'écran d'accueil et appuyez sur l'icône Snap1099.",
+        "Allez sur l'écran d'accueil et appuyez sur l'icône SnapTax.",
         "Si votre téléphone demande d'ouvrir Chrome, appuyez sur Toujours autoriser.",
         "L'application s'ouvre en plein écran sans barre d'adresse.",
       ],
@@ -39,23 +39,23 @@ export const FR_FR_COPY: UserCopy = {
     manualSteps: {
       chromiumAndroid: [
         "Appuyez sur ⋮ (en haut à droite de Chrome), puis sur « Installer l'application » (pas un raccourci).",
-        "Confirmez — Snap1099 s'ouvre depuis votre écran d'accueil comme une app native.",
+        "Confirmez — SnapTax s'ouvre depuis votre écran d'accueil comme une app native.",
         "Au premier lancement depuis l'écran d'accueil, si on vous demande d'ouvrir Chrome, appuyez sur Toujours autoriser. Refuser bloque l'ouverture de l'app.",
       ],
       chromiumDesktop: [
         "Appuyez sur le menu ⋮ (en haut à droite de Chrome ou Edge).",
-        'Appuyez sur « Applications » → « Installer Snap1099 » (ou « Installer ce site »).',
-        "Confirmez — Snap1099 s'ouvre dans sa propre fenêtre.",
+        'Appuyez sur « Applications » → « Installer SnapTax » (ou « Installer ce site »).',
+        "Confirmez — SnapTax s'ouvre dans sa propre fenêtre.",
       ],
       iosSafari: [
         "Appuyez sur le bouton Partager (carré avec flèche) en bas de Safari.",
         'Faites défiler et appuyez sur « Sur l\'écran d\'accueil ».',
-        'Appuyez sur « Ajouter » — ouvrez Snap1099 depuis votre écran d\'accueil.',
+        'Appuyez sur « Ajouter » — ouvrez SnapTax depuis votre écran d\'accueil.',
       ],
       macosSafari: [
         "Appuyez sur le bouton Partager dans la barre d'outils de Safari.",
         'Choisissez « Ajouter au Dock ».',
-        "Snap1099 apparaît dans votre Dock comme une app native.",
+        "SnapTax apparaît dans votre Dock comme une app native.",
       ],
     },
     appEntryGate: {
@@ -128,7 +128,7 @@ export const FR_FR_COPY: UserCopy = {
       cta: "C'est parti ! ⚡",
       ctaCountdown: "C'est parti ! ({seconds})",
       ctaAria: "Commencer l'introduction",
-      ariaStatus: "Chargement de Snap1099",
+      ariaStatus: "Chargement de SnapTax",
     },
     snapCoach:
       "Appuyez sur SNAP RECEIPT — photographiez tout reçu professionnel.",
@@ -166,7 +166,7 @@ export const FR_FR_COPY: UserCopy = {
       tracked: "enregistrés",
       exportTaxPack: "Exporter le dossier fiscal",
       cpaIrsReady: "CPA /IRS Ready",
-      installApp: "Ajouter Snap1099 à l'écran d'accueil",
+      installApp: "Ajouter SnapTax à l'écran d'accueil",
       installShortLabel: "ACCUEIL",
       syncReceipts: "Synchroniser les reçus",
       settings: "Paramètres",
@@ -215,7 +215,7 @@ export const FR_FR_COPY: UserCopy = {
       learnMore: "En savoir plus",
     },
     exitConfirm: {
-      title: "Quitter Snap1099 ?",
+      title: "Quitter SnapTax ?",
       body: "Vos reçus restent enregistrés sur cet appareil.",
       stay: "Rester",
       exit: "Quitter",
@@ -465,7 +465,7 @@ export const FR_FR_COPY: UserCopy = {
     syncInstructions: {
       title: "Voir sur tous les appareils",
       steps: [
-        "1. Ouvrez Snap1099 sur votre autre téléphone, tablette ou ordinateur.",
+        "1. Ouvrez SnapTax sur votre autre téléphone, tablette ou ordinateur.",
         "2. Appuyez sur Paramètres et choisissez Continuer avec Google.",
         "3. Connectez-vous avec le même compte Google — les reçus se synchronisent automatiquement.",
       ],
@@ -629,8 +629,8 @@ export const FR_FR_COPY: UserCopy = {
       moreTitle: "Plus d'options",
       moreSubtitle: "SMS, e-mail, AirDrop et plus",
       message:
-        "Salut — j'utilise Snap1099 pour suivre mes reçus 1099 et économiser sur mes impôts. Gratuit pour les indépendants — ça pourrait t'intéresser :",
-      shareTitle: "Snap1099 — Reçus vers dossier fiscal IRS",
+        "Salut — j'utilise SnapTax pour suivre mes reçus 1099 et économiser sur mes impôts. Gratuit pour les indépendants — ça pourrait t'intéresser :",
+      shareTitle: "SnapTax — Reçus vers dossier fiscal IRS",
       linkCopied: "Lien copié",
       shareFailed: "Partage impossible. Lien copié à la place.",
     },
@@ -689,7 +689,7 @@ export const FR_FR_COPY: UserCopy = {
     },
     help: {
       title: "Aide",
-      button: "Comment utiliser Snap1099",
+      button: "Comment utiliser SnapTax",
       hint: "Guides rapides pour photographier, sauvegarder et exporter.",
     },
   },
@@ -713,7 +713,7 @@ export const FR_FR_COPY: UserCopy = {
       quickStart: {
         title: "Commencer en 30 secondes",
         steps: [
-          "Ouvrez Snap1099. **Pas d'inscription.**",
+          "Ouvrez SnapTax. **Pas d'inscription.**",
           "Appuyez sur le gros bouton jaune **PHOTOGRAPHIER UN REÇU**.",
           "Pointez la caméra sur le reçu. Appuyez sur l'obturateur. **C'est fait — retour au travail.**",
           "Avec du réseau, l'app lit le reçu et affiche le montant.",
@@ -860,7 +860,7 @@ export const FR_FR_COPY: UserCopy = {
           },
           {
             q: "Nouveau téléphone. Où sont mes reçus ?",
-            a: "Snap1099 → **Continuer avec Google** avec le **même compte**. Ils se synchronisent.",
+            a: "SnapTax → **Continuer avec Google** avec le **même compte**. Ils se synchronisent.",
           },
           {
             q: "Jamais connecté, nouveau téléphone.",
@@ -950,7 +950,7 @@ export const FR_FR_COPY: UserCopy = {
     turboTaxSteps: [
       "Ouvrez TurboTax Self-Employed → Business",
       "Choisissez Import / Upload expenses from CSV",
-      "Sélectionnez ce fichier CSV Snap1099",
+      "Sélectionnez ce fichier CSV SnapTax",
       "Associez les colonnes si demandé (Date, Amount, Category)",
     ],
     previewCsv: "Aperçu CSV en local",

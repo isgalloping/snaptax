@@ -1,10 +1,20 @@
-# Snap1099 Data Retention Policy
+# SnapTax Data Retention Policy
 
 **Last Updated:** July 2026
 
+## Operator & Contact
+
+SnapTax is operated by Gang Huang, an individual sole proprietor ("we", "us", "our").
+
+Contact: snaptax.lightxforge@gmail.com  
+Privacy requests: snaptax.lightxforge@gmail.com (subject: Privacy Request)  
+Mailing address: Hong Kong
+
+Services are offered to users in the United States. Customer data is processed and stored in the United States as described below.
+
 ## Overview
 
-This page explains how long Snap1099 keeps your receipt data on your phone and on our servers in the **United States**. If we make material changes to these periods, we will update this page and our [Privacy Policy](/privacy).
+This page explains how long SnapTax keeps your receipt data on your phone and on our servers in the **United States**. If we make material changes to these periods, we will update this page and our [Privacy Policy](/privacy).
 
 ## On your device
 
@@ -16,7 +26,7 @@ This page explains how long Snap1099 keeps your receipt data on your phone and o
 
 ## On our servers (United States)
 
-- **Receipts and images:** While you use Snap1099 as a Ghost session or signed-in Google account, we store receipt metadata and images on our U.S. servers so you can sync and export.
+- **Receipts and images:** While you use SnapTax as a Ghost session or signed-in Google account, we store receipt metadata and images on our U.S. servers so you can sync and export.
 - **Google sign-in:** When you link Google, device receipts are associated with your account and continue in the cloud.
 - **Delete Account:** Using **Delete Account** in Settings permanently deletes cloud receipts, images, and account data tied to you. We target completion within **30 days**.
 - **Paid export records:** Season payment and export entitlements are kept as needed to honor your purchase and meet legal requirements.

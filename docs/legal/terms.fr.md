@@ -1,12 +1,22 @@
-# Conditions d'utilisation Snap1099
+# Conditions d'utilisation SnapTax
 
 **Dernière mise à jour :** juin 2026
 
-En utilisant Snap1099 (« l'Application »), vous acceptez ces Conditions. Si vous n'êtes pas d'accord, n'utilisez pas l'Application.
+## Exploitant & contact
+
+SnapTax est exploité par Gang Huang, entrepreneur individuel (« nous », « notre »).
+
+Contact : snaptax.lightxforge@gmail.com  
+Demandes de confidentialité : snaptax.lightxforge@gmail.com (objet : Privacy Request)  
+Adresse postale : Hong Kong
+
+Les services sont proposés aux utilisateurs aux États-Unis. Les données client sont traitées et stockées aux États-Unis comme décrit ci-dessous.
+
+En utilisant SnapTax (« l'Application »), vous acceptez ces Conditions. Si vous n'êtes pas d'accord, n'utilisez pas l'Application.
 
 ## 1. Accord & description du service
 
-Snap1099 aide les travailleurs indépendants et contractuels à photographier des reçus, classer les dépenses avec l'aide de l'IA et exporter des tableurs pour la préparation fiscale. L'Application est un **outil**, pas un conseil fiscal, juridique ou comptable. Consultez un expert-comptable qualifié pour vos obligations fiscales.
+SnapTax aide les travailleurs indépendants et contractuels à photographier des reçus, classer les dépenses avec l'aide de l'IA et exporter des tableurs pour la préparation fiscale. L'Application est un **outil**, pas un conseil fiscal, juridique ou comptable. Consultez un expert-comptable qualifié pour vos obligations fiscales.
 
 ## 2. Éligibilité & usage acceptable
 
@@ -24,7 +34,7 @@ L'**export Tax Pack** de saison fiscale requiert des frais uniques traités par 
 
 ## 5. Propriété intellectuelle
 
-Snap1099, son logo et son logiciel nous appartiennent ou appartiennent à nos concédants. Vous conservez la propriété de vos reçus. Vous nous accordez une licence limitée pour traiter vos reçus uniquement afin de fournir le Service.
+SnapTax, son logo et son logiciel nous appartiennent ou appartiennent à nos concédants. Vous conservez la propriété de vos reçus. Vous nous accordez une licence limitée pour traiter vos reçus uniquement afin de fournir le Service.
 
 ## 6. Clause de non-responsabilité & estimations fiscales
 

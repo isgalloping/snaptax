@@ -1,3 +1,4 @@
+import { LEGAL_BRAND_NAME } from "@/lib/legal/operator";
 import type { ExportExpenseRow } from "@/lib/tax/exportRows";
 import { txfTdForMerchant } from "@/lib/export/mapping/txfCategoryMapping";
 
@@ -16,7 +17,7 @@ export function buildTxfExport(
   exportDate: Date = new Date(),
 ): string {
   const headerDate = formatTxfDate(exportDate.toISOString().slice(0, 10));
-  const lines = ["V042", "Snap1099 Export", `D ${headerDate}`];
+  const lines = ["V042", `${LEGAL_BRAND_NAME} Export`, `D ${headerDate}`];
 
   for (const row of rows) {
     if (row.taxDeductible === "No" || row.exportAmount <= 0) continue;

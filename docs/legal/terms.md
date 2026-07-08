@@ -1,12 +1,22 @@
-# Snap1099 Terms of Service
+# SnapTax Terms of Service
 
 **Last Updated:** June 2026
 
-By using Snap1099 ("the App"), you agree to these Terms. If you do not agree, do not use the App.
+## Operator & Contact
+
+SnapTax is operated by Gang Huang, an individual sole proprietor ("we", "us", "our").
+
+Contact: snaptax.lightxforge@gmail.com  
+Privacy requests: snaptax.lightxforge@gmail.com (subject: Privacy Request)  
+Mailing address: Hong Kong
+
+Services are offered to users in the United States. Customer data is processed and stored in the United States as described below.
+
+By using SnapTax ("the App"), you agree to these Terms. If you do not agree, do not use the App.
 
 ## 1. Agreement & Service Description
 
-Snap1099 helps self-employed workers and contractors photograph receipts, categorize expenses with AI assistance, and export spreadsheets for tax preparation. The App is a **tool**, not tax, legal, or accounting advice. Consult a qualified CPA or advisor for your tax obligations.
+SnapTax helps self-employed workers and contractors photograph receipts, categorize expenses with AI assistance, and export spreadsheets for tax preparation. The App is a **tool**, not tax, legal, or accounting advice. Consult a qualified CPA or advisor for your tax obligations.
 
 ## 2. Eligibility & Acceptable Use
 
@@ -22,9 +32,13 @@ You must be able to form a binding contract in your jurisdiction. You agree not 
 
 Tax-season **Export Tax Pack** requires a one-time fee processed by **Paddle** ($49 per season unless otherwise shown in the App). Refunds follow Paddle's policies and applicable law. Paid seasons include unlimited re-export for that tax season as described in the App. See our [Refund Policy](/refund) and [Pricing](/pricing).
 
+Payments are processed by **Paddle** as Merchant of Record. Paddle collects payment details and issues receipts.
+
+Export Tax Pack is a **one-time purchase per tax season**. There is **no subscription** and **no automatic renewal**.
+
 ## 5. Intellectual Property
 
-Snap1099, its logo, and software are owned by us or our licensors. You retain ownership of your receipt content. You grant us a limited license to process your receipts solely to provide the Service.
+SnapTax, its logo, and software are owned by us or our licensors. You retain ownership of your receipt content. You grant us a limited license to process your receipts solely to provide the Service.
 
 ## 6. Disclaimer & Tax Estimates
 

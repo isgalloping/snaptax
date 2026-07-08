@@ -1,9 +1,19 @@
-# Politique de confidentialité Snap1099
+# Politique de confidentialité SnapTax
 
 **Dernière mise à jour :** juin 2026  
 **Juridictions applicables :** États-Unis (y compris CPRA Californie) & Union européenne (RGPD)
 
-Bienvenue sur Snap1099. Cette Politique de confidentialité explique comment nous collectons, utilisons, traitons et protégeons vos données lorsque vous utilisez l'application Snap1099 (« l'Application »).
+## Exploitant & contact
+
+SnapTax est exploité par Gang Huang, entrepreneur individuel (« nous », « notre »).
+
+Contact : snaptax.lightxforge@gmail.com  
+Demandes de confidentialité : snaptax.lightxforge@gmail.com (objet : Privacy Request)  
+Adresse postale : Hong Kong
+
+Les services sont proposés aux utilisateurs aux États-Unis. Les données client sont traitées et stockées aux États-Unis comme décrit ci-dessous.
+
+Bienvenue sur SnapTax. Cette Politique de confidentialité explique comment nous collectons, utilisons, traitons et protégeons vos données lorsque vous utilisez l'application SnapTax (« l'Application »).
 
 ## 1. Confidentialité dès la conception & propriété des données
 

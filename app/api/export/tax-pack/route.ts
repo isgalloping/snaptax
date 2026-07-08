@@ -22,6 +22,7 @@ import { buildAuditDetailCsv } from "@/lib/export/buildAuditDetailCsv";
 import { auditEligibleRows, hasAuditExportContent } from "@/lib/export/auditEligibleRows";
 import { assignAuditTrailMeta } from "@/lib/export/assignAuditTrailMeta";
 import { buildTxfExport } from "@/lib/export/buildTxf";
+import { exportTaxPackFilename } from "@/lib/export/exportFilenames";
 import { finalizeExportRows } from "@/lib/export/mapping/finalizeExportRows";
 import {
   buildExportIncomeRow,
@@ -149,7 +150,7 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
       const csv = buildTurboTaxCsv(enrichedExpenseRows);
       buffer = Buffer.from(csv, "utf-8");
       contentType = "text/csv; charset=utf-8";
-      filename = `Snap1099-${taxYear}-TurboTax-Expenses.csv`;
+      filename = exportTaxPackFilename("csv", taxYear);
     } else if (body.format === "txf") {
       if (enrichedExpenseRows.length === 0) {
         return apiError(
@@ -161,7 +162,7 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
       const txf = buildTxfExport(enrichedExpenseRows, exportedAt);
       buffer = Buffer.from(txf, "utf-8");
       contentType = "text/plain; charset=utf-8";
-      filename = `Snap1099-${taxYear}-Expenses.txf`;
+      filename = exportTaxPackFilename("txf", taxYear);
     } else if (body.format === "cpa_pack") {
       const detailCsv = buildAuditDetailCsv(auditRows);
       const summaryPdf = await buildScheduleCMirrorPdf({
@@ -180,7 +181,7 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
       );
       buffer = pack.buffer;
       contentType = "application/zip";
-      filename = `Snap1099-${taxYear}-Audit-Trail.zip`;
+      filename = exportTaxPackFilename("cpa_pack", taxYear);
       responseHeaders["X-Export-Images-Included"] = String(
         pack.imageStats.imagesIncluded,
       );
@@ -217,7 +218,7 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
         throw new Error("PDF_GENERATION_FAILED");
       }
       contentType = "application/pdf";
-      filename = `Snap1099-${taxYear}-Schedule-C-Mirror.pdf`;
+      filename = exportTaxPackFilename("cpa_pdf", taxYear);
     } else if (body.format === "xlsx") {
       const workbook = new ExcelJS.Workbook();
       const expenses = workbook.addWorksheet("Expenses");
@@ -269,7 +270,7 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
       buffer = await workbook.xlsx.writeBuffer();
       contentType =
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-      filename = `Snap1099-${taxYear}-Tax-Pack.xlsx`;
+      filename = exportTaxPackFilename("xlsx", taxYear);
     } else {
       throw new Error("UNSUPPORTED_EXPORT_FORMAT");
     }

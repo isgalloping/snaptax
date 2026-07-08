@@ -1,3 +1,4 @@
+import { sampleTurboTaxCsvFilename } from "@/lib/export/exportFilenames";
 import type { Receipt } from "@/lib/types";
 import { clientTimeZone } from "@/lib/time/timeZone";
 import { defaultExportTaxYear } from "@/lib/tax/season";
@@ -10,7 +11,7 @@ export function downloadOnboardingSampleCsv(demoReceipt: Receipt): void {
   const csv = buildLocalTurboTaxCsv([demoReceipt], taxYear, timeZone);
   const file = new File(
     [csv],
-    `Snap1099-SAMPLE-TurboTax-${taxYear}.csv`,
+    sampleTurboTaxCsvFilename(taxYear),
     { type: "text/csv;charset=utf-8" },
   );
   downloadTaxPackFile(file);

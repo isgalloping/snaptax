@@ -22,6 +22,10 @@ import {
   type ExportTaxPackMeta,
 } from "@/lib/client/authApi";
 import {
+  exportPreviewCsvFilename,
+  exportShareTitle,
+} from "@/lib/export/exportFilenames";
+import {
   canShareTaxPackFile,
   downloadTaxPackFile,
   shareTaxPackFile,
@@ -164,7 +168,7 @@ export function ExportEngineSheet({
     try {
       const result = await shareTaxPackFile(
         file,
-        `Snap1099 ${taxYear}`,
+        exportShareTitle(taxYear),
         copy.settings.export.shareText,
       );
       if (result === "unsupported") {
@@ -215,12 +219,12 @@ export function ExportEngineSheet({
       const csv = buildLocalTurboTaxCsv(activeReceipts, taxYear, timeZone);
       const file = new File(
         [csv],
-        `Snap1099-${taxYear}-TurboTax-Preview.csv`,
+        exportPreviewCsvFilename(taxYear),
         { type: "text/csv" },
       );
       const result = await shareTaxPackFile(
         file,
-        `Snap1099 ${taxYear} Preview`,
+        exportShareTitle(taxYear, "Preview"),
         copy.settings.export.shareText,
       );
       if (result === "unsupported") {

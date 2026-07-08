@@ -1,3 +1,4 @@
+import { LEGAL_BRAND_NAME } from "@/lib/legal/operator";
 import type { ExportExpenseRow } from "@/lib/tax/exportRows";
 
 const TURBOTAX_HEADERS = [
@@ -107,8 +108,8 @@ export function buildSummaryText(
     0,
   );
   const lines = [
-    `Snap1099 Tax Year ${taxYear} — Schedule C Summary (Expenses only)`,
-    "Income not tracked in Snap1099 — snap 1099 forms for your CPA.",
+    `${LEGAL_BRAND_NAME} Tax Year ${taxYear} — Schedule C Summary (Expenses only)`,
+    `Income not tracked in ${LEGAL_BRAND_NAME} — snap 1099 forms for your CPA.`,
     "For estimation only — not tax advice.",
     "",
     ...summaryLines.map((s) => `${s.line}: $${s.total.toFixed(2)}`),

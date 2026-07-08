@@ -300,6 +300,7 @@ export const MARKETING_COPY = {
           { href: "/privacy", label: "Privacy Policy" },
           { href: "/terms", label: "Terms of Service" },
           { href: "/refund", label: "Refund Policy" },
+          { href: "/privacy#no-sale", label: "Do Not Sell or Share" },
           { href: "/cookies", label: "Cookie Policy" },
           { href: "/disclaimer", label: "Disclaimer" },
         ],

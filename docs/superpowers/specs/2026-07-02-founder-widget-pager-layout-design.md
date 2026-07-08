@@ -4,7 +4,7 @@
 **Status:** Approved (brainstorming + grill-me option B)  
 **Scope:** Fix Founder Program widget subtitle overflow without hiding Deadline / Need Action.
 
-**References:** `docs/superpowers/specs/2026-06-30-founder-program-widget-design.md`, `docs/superpowers/specs/2026-06-18-home-widget-pager-design.md`
+**References:** `docs/superpowers/specs/2026-06-30-founder-program-widget-design.md`, `docs/superpowers/topics/home-dashboard-design.md` §4.4
 
 ---
 

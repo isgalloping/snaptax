@@ -624,4 +624,4 @@ IDB Save → … → TAX_CALCULATED
 - 产品 OCR 终态：[`docs/ocr/ocr-desn.md`](../ocr/ocr-desn.md)
 - **第二阶段** sync / 一致性：[`2026-06-19-receipt-lifecycle-sync-redesign-design.md`](../superpowers/specs/2026-06-19-receipt-lifecycle-sync-redesign-design.md)
 - Pipeline 韧性：[`2026-06-07-receipt-pipeline-resilience-design.md`](../superpowers/specs/2026-06-07-receipt-pipeline-resilience-design.md)
-- 置信度三档：[`2026-06-17-home-v2-first-screen-design.md`](../superpowers/specs/2026-06-17-home-v2-first-screen-design.md)
+- 置信度三档：[`home-dashboard-design.md`](../superpowers/topics/home-dashboard-design.md) §4.5

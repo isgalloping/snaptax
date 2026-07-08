@@ -469,7 +469,7 @@ Do **not** retune Vision preprocess as part of OCR redesign unless separately ap
 
 ## §10 Confidence & status mapping (unchanged externally)
 
-Continue [home-v2 three-tier](../../superpowers/specs/2026-06-17-home-v2-first-screen-design.md):
+Continue [home-dashboard three-tier](../../topics/home-dashboard-design.md) §4.5:
 
 | Tier | Condition | `status` | Bucket |
 |------|-----------|----------|--------|

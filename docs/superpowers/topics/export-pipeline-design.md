@@ -163,7 +163,7 @@ PaywallSheet checkout.completed
 
 ## 5. Out of scope
 
-- Onboarding 样例 CSV 导出（见 onboarding topic）
+- Onboarding 样例 CSV 导出（见 [`onboarding-aha-design.md`](./onboarding-aha-design.md) §5.5）
 - QIF / QBO / OFX（M4b follow-up）
 - 导出审计表、Blob signed URL 交付（方案 A）
 - `currentTaxSeason()` 5–12 月返回下一年（待产品决策）

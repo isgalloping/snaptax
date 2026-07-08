@@ -9,7 +9,7 @@
 | **3** | [../legal/](../legal/privacy.md) | 隐私政策 · 服务条款 |
 | **4** | [../tech/README.md](../tech/README.md) | **技术文档** — 全栈架构、API、部署 |
 | 5 | [../prd/0.0.1.md](../prd/0.0.1.md) | 完整 PRD（§2.5 合规） |
-| 6 | [../superpowers/specs/2026-06-12-new-user-onboarding-design.md](../superpowers/specs/2026-06-12-new-user-onboarding-design.md) | **新人引导** — T1/T2 Google 软引导（legacy path — Phase 1 后读 topics/onboarding-aha-design.md） |
+| 6 | [../superpowers/topics/onboarding-aha-design.md](../superpowers/topics/onboarding-aha-design.md) | **新人引导 / Aha onboarding** — Hero Stage 0、sandbox、coach、样例导出、T2 soft Sheet |
 | 7 | [../superpowers/specs/2026-07-06-pwa-snaptax-label-app-entry-gate-design.md](../superpowers/specs/2026-07-06-pwa-snaptax-label-app-entry-gate-design.md) | PWA SnapTax 图标 + `/app` 门控 ADR（legacy — prefer docs/tech/13-pwa-install-architecture.md） |
 | 8 | [../superpowers/specs/2026-06-05-compliance-privacy-design.md](../superpowers/specs/2026-06-05-compliance-privacy-design.md) | 合规与隐私 ADR |
 | 9 | [../ui/ui.html](../ui/ui.html) | 主界面静态视觉参考 |

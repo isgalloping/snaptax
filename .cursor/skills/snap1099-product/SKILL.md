@@ -23,7 +23,7 @@ description: >-
 
 ## Decision tree: auth UI
 
-> Onboarding canonical: `docs/superpowers/specs/2026-06-12-new-user-onboarding-design.md`
+> Onboarding canonical: `docs/superpowers/topics/onboarding-aha-design.md`
 
 ```
 User action?

@@ -109,7 +109,7 @@ Snap1099 主界面是 **2 逻辑页** 之一：固定 chrome（TaxHeader + Snap 
 | Pagination | `buildWidgetPages` — 每页 max 3；1/2/3 卡分别 100% / 50% / 33.3% 等宽 |
 | >3 widgets | 横向 `scroll-snap`；黄点 `#EAB308`；**无** smooth-scroll carousel |
 | Card height | `h-[104px] rounded-2xl`；`active:scale-[0.98]` |
-| Widgets | Deadline（常显）· Progress（常显）· Missing（门控关闭）· Need Action · CPA /IRS Ready · Founder（Phase 2 spec） |
+| Widgets | Deadline（常显）· Progress（常显）· Missing（门控关闭）· Need Action · CPA /IRS Ready · Founder（见 [`founder-program-widget-design.md`](./founder-program-widget-design.md)） |
 
 **Widget order (`buildWidgetPageKeys`):**
 

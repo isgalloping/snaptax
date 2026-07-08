@@ -23,6 +23,7 @@ Batch Snap **Live** 模式底部控件统一在黑色圆角 **footerDock** 内�
 | Doc | Relevance |
 |-----|-----------|
 | [`docs/product/PRODUCT-SPEC.md`](../../product/PRODUCT-SPEC.md) | §3.1 相机 · 快门 cooldown |
+| [`docs/superpowers/topics/capture-pipeline-design.md`](./capture-pipeline-design.md) | Post-batch review · immediate list · OCR/upload 管线 |
 | [`docs/superpowers/specs/2026-06-08-batch-snap-camera-design.md`](../specs/2026-06-08-batch-snap-camera-design.md) | Batch Snap 主 spec |
 | [`docs/superpowers/specs/2026-06-10-flash-done-fast-lane-design.md`](../specs/2026-06-10-flash-done-fast-lane-design.md) | FLASH DONE 快车道 |
 | [`components/camera/CameraLiveFooter.tsx`](../../../components/camera/CameraLiveFooter.tsx) | Live 四列 footer |

@@ -15,6 +15,7 @@ const TOPIC_PATTERNS = {
   "export-pipeline": /export-/i,
   "delete-account": /delete-account/i,
   "receipt-sync-lifecycle": /receipt-(sync|lifecycle|sliding|pipeline|upload-stuck|summary-local|sync-recovery)/i,
+  "capture-pipeline": /batch-receipt-review|post-batch-review|capture-immediate-list/i,
   "pwa-install": /pwa-|android-pwa|webapk/i,
   "founder-program-widget": /founder-|hide-missing-deductions/i,
   "camera-live-footer": /camera-live-footer|resnap-shutter/i,

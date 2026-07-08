@@ -175,7 +175,7 @@ Privacy Policy · Terms · **Data Retention** · **Security** · **Data storage�
 
 ### 3.1 连拍相机与 Post-Review
 
-> 设计：[2026-06-08-batch-snap-camera-design.md](../superpowers/specs/2026-06-08-batch-snap-camera-design.md) · [2026-06-09-post-batch-review-flow-design.md](../superpowers/specs/2026-06-09-post-batch-review-flow-design.md) · [camera-live-footer-design.md](../superpowers/topics/camera-live-footer-design.md)
+> 设计：[topics/capture-pipeline-design.md](../superpowers/topics/capture-pipeline-design.md) · [2026-06-08-batch-snap-camera-design.md](../superpowers/specs/2026-06-08-batch-snap-camera-design.md) · [camera-live-footer-design.md](../superpowers/topics/camera-live-footer-design.md)
 
 | 模式 | 行为 |
 |------|------|

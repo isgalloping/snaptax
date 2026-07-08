@@ -30,7 +30,7 @@ Layer 2  Archive        docs/superpowers/archive/**
 | camera-live-footer | [topics/camera-live-footer-design.md](./topics/camera-live-footer-design.md) · consolidated 2026-07-08 | PRODUCT-SPEC §3.1 连拍相机 footer |
 | app-navigation-history | [topics/app-navigation-history-design.md](./topics/app-navigation-history-design.md) · consolidated 2026-07-08 | PRODUCT-SPEC §2 导航 · PWA 返回 |
 
-Status: Phase 0 complete · Phase 1 complete · Phase 2 complete · **Phase 3 complete** · **Phase 4 in progress** (capture-pipeline, settings, compliance-program) · See [MANIFEST.csv](./MANIFEST.csv) · `npm run lint:docs`
+Status: Phase 0 complete · Phase 1 complete · Phase 2 complete · **Phase 3 complete** · **Phase 4 complete** (capture-pipeline, settings, compliance-program, landing → onboarding-aha) · See [MANIFEST.csv](./MANIFEST.csv) · `npm run lint:docs`
 
 ## Phase 4 主题（合并目标）
 

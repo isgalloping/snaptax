@@ -25,7 +25,9 @@ Snap1099 新人引导分两层：**冷启动 Landing**（`LandingRouter`）与 *
 | [`docs/ui/onboarding.png`](../../ui/onboarding.png) | 视觉 mockup |
 | [`lib/onboarding/`](../../../lib/onboarding/) | 状态机、demo receipt、skip |
 | [`components/onboarding/`](../../../components/onboarding/) | Orchestrator、coach、sandbox |
-| [`components/landing/LandingRouter.tsx`](../../../components/landing/LandingRouter.tsx) | Hero vs data_stream 分支 |
+| [`components/landing/StartupShell.tsx`](../../../components/landing/StartupShell.tsx) | 冷启动壳 · chunk · offline fallback |
+| [`components/home/OfflineHomeShell.tsx`](../../../components/home/OfflineHomeShell.tsx) | 5s 离线包 fallback |
+| [`lib/landing/landingTiming.ts`](../../../lib/landing/landingTiming.ts) | `LANDING_MIN_MS` / `resolveExit` |
 | [`components/home/HomeScreen.tsx`](../../../components/home/HomeScreen.tsx) | 主集成点 |
 | [`docs/superpowers/topics/export-pipeline-design.md`](./export-pipeline-design.md) | 正常导出门控（onboarding 样例导出除外） |
 
@@ -99,22 +101,34 @@ type OnboardingStatus =
 
 ## 5. Decisions
 
-### 5.1 Landing (`LandingRouter` + Hero Stage 0)
+### 5.1 Cold start — unified `data_stream` splash
+
+**Every cold start** shows landing-like UI from first paint through home ready. **No A/B**, Vercel Flags, or variant cookie.
+
+| Topic | Choice |
+|-------|--------|
+| Variant | **`data_stream` only** |
+| First paint | SSR **`LandingStaticShell`** |
+| Min / max | **`LANDING_MIN_MS = 2400`** · **`LANDING_SOFT_MAX_MS = 5000`** |
+| 5s fallback | **`OfflineHomeShell`** when HomeScreen chunk not ready |
+| UI detail | [`2026-06-10-data-stream-landing-v2-design.md`](../specs/2026-06-10-data-stream-landing-v2-design.md) |
+
+### 5.2 Landing router — Hero vs data_stream
 
 | Decision | Detail |
 |----------|--------|
-| **首次冷启动** | `HeroWelcomeLanding` — 蓝领 Hero + 绿勾清单 + Let's Go |
-| **回访** | `DataStreamLanding` only |
-| **Resume mid-tutorial** | `variant === "none"` — 跳过 Stage 0，直接主屏 |
+| **`not_started`** | In-app **Hero** Stage 0 |
+| **`completed`** | Cold start → **data_stream** splash only |
+| **`stage_*`** | `variant === "none"` — 跳过 landing，直接主屏 |
 | **CTA 就绪** | `HERO_CTA_READY_MS = 1500` |
 | **自动推进** | `HERO_AUTO_ADVANCE_MS = 5000`；按钮倒计时 5→1 |
-| **Session lock** | `heroLandingSession` 阻止 poll 提前 exit |
+| **Session lock** | `heroLandingSession` 阻止 cold-start 提前 dismiss |
 | **装饰圆点** | 已移除（仅按钮倒计时反馈） |
 | **资产** | `/onboarding/onboarding-hero.png` |
 
-**Modules:** `lib/landing/landingVariant.ts` · `lib/landing/heroLandingTiming.ts` · `components/landing/HeroWelcomeLanding.tsx`
+**Modules:** `lib/landing/heroLandingTiming.ts` · `lib/landing/heroLandingSession.ts` · `HeroWelcomeLanding` · `LandingRouter`
 
-### 5.2 Stage 1 — Shadow coach (empty list)
+### 5.3 Stage 1 — Shadow coach (empty list)
 
 | Decision | Detail |
 |----------|--------|
@@ -124,7 +138,7 @@ type OnboardingStatus =
 | **SNAP 引导** | `SnapTooltip` + `SnapFocusRing` heartbeat（`snap-coach-heartbeat`） |
 | **SNAP tap** | `resolveSnapIntent` → open sandbox；**不**走真实相机 |
 
-### 5.3 Stage 2 — Sandbox camera
+### 5.4 Stage 2 — Sandbox camera
 
 | Decision | Detail |
 |----------|--------|
@@ -136,7 +150,7 @@ type OnboardingStatus =
 
 **Demo fields（完成后）：** merchant `SAMPLE: Builder Depot` · amount $193.12 · tax $28.50 · status `done` · subtitle `COMPLETE`
 
-### 5.4 Stage 3 — Aha moment
+### 5.5 Stage 3 — Aha moment
 
 | Decision | Detail |
 |----------|--------|
@@ -146,7 +160,7 @@ type OnboardingStatus =
 | **Transition** | 400ms → `stage_aha`（effect deps `[status]` only + ref guards） |
 | **Repair** | `ensureOnboardingDemoDone()` on entry（防 stale processing） |
 
-### 5.5 Stage_aha — Coach + sample export
+### 5.6 Stage_aha — Coach + sample export
 
 | Decision | Detail |
 |----------|--------|
@@ -162,7 +176,7 @@ type OnboardingStatus =
 
 **Note:** Export 按钮点击 **不**先 dismiss coach；下载与 `completed` 原子完成。
 
-### 5.6 Skip button
+### 5.7 Skip button
 
 | Decision | Detail |
 |----------|--------|
@@ -171,7 +185,7 @@ type OnboardingStatus =
 | **动作** | `skipOnboarding()` — delete demo + photo → `completed` |
 | **可见** | `onboardingInFlow`（`stage_1` … `stage_aha`） |
 
-### 5.7 Google soft gates（new-user-onboarding 遗留）
+### 5.8 Google soft gates（new-user-onboarding 遗留）
 
 | Gate | 状态 | 行为 |
 |------|------|------|
@@ -183,7 +197,7 @@ type OnboardingStatus =
 
 **Removed for onboarding path:** SnapCoachBanner · FirstReceiptCoach · GoogleBackupNudge · onboarding-signup sheet · `deferred_login` SNAP intercept
 
-### 5.8 Demo receipt rules
+### 5.9 Demo receipt rules
 
 | Rule | Detail |
 |------|--------|
@@ -193,7 +207,7 @@ type OnboardingStatus =
 | **Login 后** | Ghost↔Google bind · attach sample photo · `pendingUpload` if online |
 | **Delete account** | `resetOnboarding()` 冷启动 |
 
-### 5.9 Cross-end & offline
+### 5.10 Cross-end & offline
 
 | Scenario | Behavior |
 |----------|----------|
@@ -267,6 +281,10 @@ type OnboardingStatus =
 
 | Date | Old spec | Superseded by |
 |------|----------|---------------|
+| 2026-06-10 | `archive/specs/2026-06-10-landing-flags-design.md` | unified data_stream · **this topic** §5.1 |
+| 2026-06-10 | `archive/specs/2026-06-10-unified-data-stream-splash-design.md` | **this topic** §5.1 |
+| 2026-06-10 | `archive/specs/2026-06-10-cold-start-landing-paint-design.md` | **this topic** §5.1 |
+| 2026-06-10 | `archive/plans/2026-06-10-unified-data-stream-splash.md` | implemented · **this topic** §5.1 |
 | 2026-06-12 | `archive/specs/2026-06-12-new-user-onboarding-design.md` | aha-moment (P2–P5) + **this topic** (T1/T2/P0/P7 遗留) |
 | 2026-06-13 | `archive/specs/2026-06-13-aha-moment-onboarding-design.md` | 2026-06-14 remediation chain → **this topic** |
 | 2026-06-14 | `archive/specs/2026-06-14-aha-moment-onboarding-remediation-design.md` | **this topic** |

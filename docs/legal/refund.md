@@ -3,6 +3,16 @@
 **Last Updated:** July 2026  
 **Related:** [Terms of Service](/terms) · [Pricing](/pricing) · [Privacy Policy](/privacy)
 
+## Operator & Contact
+
+SnapTax is operated by Gang Huang, an individual sole proprietor ("we", "us", "our").
+
+Contact: snaptax.lightxforge@gmail.com  
+Privacy requests: snaptax.lightxforge@gmail.com (subject: Privacy Request)  
+Mailing address: Hong Kong
+
+Services are offered to users in the United States. Customer data is processed and stored in the United States as described below.
+
 ## Overview
 
 **Export Tax Pack** is a digital product sold **once per tax season**. Payments are processed by **Paddle**, our Merchant of Record. Paddle issues your receipt and handles payment compliance.
@@ -10,6 +20,10 @@
 ## Standard refunds
 
 Refunds follow [Paddle's consumer terms](https://www.paddle.com/legal/invoiced-consumer-terms) and applicable law. Eligibility, timing, and method depend on your location and whether you have accessed the export deliverables.
+
+## US consumers
+
+If you have not downloaded or generated an Export Tax Pack for the purchased season, you may request a refund within **14 days** of purchase by emailing snaptax.lightxforge@gmail.com with your Paddle transaction ID.
 
 ## EU and UK consumers
 

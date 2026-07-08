@@ -1,12 +1,22 @@
-# Snap1099 Nutzungsbedingungen
+# SnapTax Nutzungsbedingungen
 
 **Zuletzt aktualisiert:** Juni 2026
 
-Mit Nutzung von Snap1099 („die App") stimmen Sie diesen Bedingungen zu. Bei Nichtzustimmung nutzen Sie die App nicht.
+## Betreiber & Kontakt
+
+SnapTax wird betrieben von Gang Huang, Einzelunternehmer („wir", „uns", „unser").
+
+Kontakt: snaptax.lightxforge@gmail.com  
+Datenschutzanfragen: snaptax.lightxforge@gmail.com (Betreff: Privacy Request)  
+Postanschrift: Hong Kong
+
+Die Dienste werden Nutzern in den Vereinigten Staaten angeboten. Kundendaten werden in den Vereinigten Staaten verarbeitet und gespeichert, wie unten beschrieben.
+
+Mit Nutzung von SnapTax („die App") stimmen Sie diesen Bedingungen zu. Bei Nichtzustimmung nutzen Sie die App nicht.
 
 ## 1. Vereinbarung & Leistungsbeschreibung
 
-Snap1099 hilft Selbstständigen und Vertragsarbeitern, Belege zu fotografieren, Ausgaben per KI zu kategorisieren und Tabellen für die Steuervorbereitung zu exportieren. Die App ist ein **Werkzeug**, keine Steuer-, Rechts- oder Buchführungsberatung. Wenden Sie sich an einen qualifizierten Steuerberater.
+SnapTax hilft Selbstständigen und Vertragsarbeitern, Belege zu fotografieren, Ausgaben per KI zu kategorisieren und Tabellen für die Steuervorbereitung zu exportieren. Die App ist ein **Werkzeug**, keine Steuer-, Rechts- oder Buchführungsberatung. Wenden Sie sich an einen qualifizierten Steuerberater.
 
 ## 2. Berechtigung & zulässige Nutzung
 
@@ -24,7 +34,7 @@ Der Steuersaison-**Tax-Pack-Export** erfordert eine Einmalgebühr über **Paddle
 
 ## 5. Geistiges Eigentum
 
-Snap1099, Logo und Software gehören uns oder unseren Lizenzgebern. Sie behalten das Eigentum an Ihren Beleginhalten. Sie gewähren uns eine beschränkte Lizenz zur Verarbeitung Ihrer Belege ausschließlich zur Erbringung des Dienstes.
+SnapTax, Logo und Software gehören uns oder unseren Lizenzgebern. Sie behalten das Eigentum an Ihren Beleginhalten. Sie gewähren uns eine beschränkte Lizenz zur Verarbeitung Ihrer Belege ausschließlich zur Erbringung des Dienstes.
 
 ## 6. Haftungsausschluss & Steuerschätzungen
 

@@ -122,7 +122,7 @@ describe("shareTaxPack", () => {
       },
       async () => {
         const file = new File(["zip"], "pack.zip", { type: "application/zip" });
-        const result = await shareTaxPackFile(file, "Snap1099", "Export");
+        const result = await shareTaxPackFile(file, "SnapTax", "Export");
         assert.equal(result, "unsupported");
       },
     );
@@ -136,7 +136,7 @@ describe("shareTaxPack", () => {
       },
       async () => {
         const file = new File(["csv"], "pack.csv", { type: "text/csv" });
-        const result = await shareTaxPackFile(file, "Snap1099", "Export");
+        const result = await shareTaxPackFile(file, "SnapTax", "Export");
         assert.equal(result, "shared");
       },
     );
@@ -151,7 +151,7 @@ describe("shareTaxPack", () => {
       },
       async () => {
         const file = new File(["csv"], "pack.csv", { type: "text/csv" });
-        const result = await shareTaxPackFile(file, "Snap1099", "Export");
+        const result = await shareTaxPackFile(file, "SnapTax", "Export");
         assert.equal(result, "cancelled");
       },
     );
@@ -166,7 +166,7 @@ describe("shareTaxPack", () => {
       },
       async () => {
         const file = new File(["zip"], "pack.zip", { type: "application/zip" });
-        const result = await shareTaxPackFile(file, "Snap1099", "Export");
+        const result = await shareTaxPackFile(file, "SnapTax", "Export");
         assert.equal(result, "failed");
       },
     );

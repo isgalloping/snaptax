@@ -20,11 +20,11 @@ Canonical 业务规范：`docs/biz/export/` · 设计 topic：`docs/superpowers/
 
 | format | 文件名 | 说明 |
 |--------|--------|------|
-| `csv`（默认） | `Snap1099-{year}-TurboTax-Expenses.csv` | TurboTax 8 列（无 BOM） |
-| `cpa_pack` | `Snap1099-{year}-CPA-Audit-Pack.zip` | P&L PDF + 按 Line 分目录收据 + Detail CSV |
-| `cpa_pdf` | `Snap1099-{year}-CPA-Summary.pdf` | P&L 摘要（含 Income + Expenses） |
-| `txf` | `Snap1099-{year}-Expenses.txf` | TXF V042 费用块（无里程汇总） |
-| `xlsx` | `Snap1099-{year}-Tax-Pack.xlsx` | 兼容旧版 Excel |
+| `csv`（默认） | `SnapTax-{year}-TurboTax-Expenses.csv` | TurboTax 8 列（无 BOM） |
+| `cpa_pack` | `SnapTax-{year}-Audit-Trail.zip` | P&L PDF + 按 Line 分目录收据 + Detail CSV |
+| `cpa_pdf` | `SnapTax-{year}-Schedule-C-Mirror.pdf` | P&L 摘要（含 Income + Expenses） |
+| `txf` | `SnapTax-{year}-Expenses.txf` | TXF V042 费用块（无里程汇总） |
+| `xlsx` | `SnapTax-{year}-Tax-Pack.xlsx` | 兼容旧版 Excel |
 
 ### TurboTax CSV（`format=csv`）
 
@@ -105,7 +105,7 @@ Expenses-Detail.csv
 ```typescript
 const file = new File([blob], filename, { type: blob.type })
 if (navigator.canShare?.({ files: [file] })) {
-  await navigator.share({ files: [file], title: 'Snap1099 Tax Pack' })
+  await navigator.share({ files: [file], title: 'SnapTax Tax Pack' })
 } else {
   // trigger explicit download via Save to Phone — never fallback download on share failure
 }

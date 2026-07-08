@@ -10,6 +10,10 @@ import {
   setSeasonPaid,
 } from "@/lib/client/authStorage";
 import { fetchReceiptList } from "@/lib/client/receiptApi";
+import {
+  exportTaxPackFilename,
+  type ExportFormat,
+} from "@/lib/export/exportFilenames";
 
 export type AuthMeResponse = {
   user: {
@@ -108,7 +112,7 @@ export async function pollTaxRecalc(
   }
 }
 
-export type ExportFormat = "csv" | "cpa_pack" | "cpa_pdf" | "txf" | "xlsx";
+export type { ExportFormat } from "@/lib/export/exportFilenames";
 
 export type ExportTaxPackParams = {
   taxYear: string;
@@ -152,11 +156,7 @@ function parseExportFilename(
     const match = disposition.match(/filename="([^"]+)"/i);
     if (match?.[1]) return match[1];
   }
-  if (format === "csv") return `Snap1099-${taxYear}-TurboTax-Expenses.csv`;
-  if (format === "cpa_pack") return `Snap1099-${taxYear}-Audit-Trail.zip`;
-  if (format === "cpa_pdf") return `Snap1099-${taxYear}-Schedule-C-Mirror.pdf`;
-  if (format === "txf") return `Snap1099-${taxYear}-Expenses.txf`;
-  return `Snap1099-${taxYear}-Tax-Pack.xlsx`;
+  return exportTaxPackFilename(format, taxYear);
 }
 
 export async function exportTaxPack(

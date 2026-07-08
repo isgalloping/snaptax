@@ -17,7 +17,7 @@ Layer 2  Archive        docs/superpowers/archive/**
 |-------|------|-----------|
 | onboarding-aha | [topics/onboarding-aha-design.md](./topics/onboarding-aha-design.md) | PRODUCT-SPEC §12 蓝领新人引导 |
 | home-dashboard | [topics/home-dashboard-design.md](./topics/home-dashboard-design.md) | PRODUCT-SPEC §2.1 布局 |
-| export-pipeline | [topics/export-pipeline-design.md](./topics/export-pipeline-design.md) | [docs/tech/08-export.md](../tech/08-export.md) |
+| export-pipeline | [topics/export-pipeline-design.md](./topics/export-pipeline-design.md) · consolidated 2026-07-08 | [docs/tech/08-export.md](../tech/08-export.md) |
 | delete-account | [topics/delete-account-design.md](./topics/delete-account-design.md) · consolidated 2026-07-08 | PRODUCT-SPEC § 合规 |
 | receipt-sync-lifecycle | [topics/receipt-sync-lifecycle-design.md](./topics/receipt-sync-lifecycle-design.md) | docs/tech/06-* |
 | pwa-install | — | **[docs/tech/13-pwa-install-architecture.md](../tech/13-pwa-install-architecture.md)** |

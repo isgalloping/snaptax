@@ -30,7 +30,7 @@ Layer 2  Archive        docs/superpowers/archive/**
 | camera-live-footer | [topics/camera-live-footer-design.md](./topics/camera-live-footer-design.md) · consolidated 2026-07-08 | PRODUCT-SPEC §3.1 连拍相机 footer |
 | app-navigation-history | [topics/app-navigation-history-design.md](./topics/app-navigation-history-design.md) · consolidated 2026-07-08 | PRODUCT-SPEC §2 导航 · PWA 返回 |
 
-Status: Phase 0 complete · Phase 1 complete · Phase 2 complete · **Phase 3 complete** · **Phase 4 in progress** (capture-pipeline, settings) · See [MANIFEST.csv](./MANIFEST.csv) · `npm run lint:docs`
+Status: Phase 0 complete · Phase 1 complete · Phase 2 complete · **Phase 3 complete** · **Phase 4 in progress** (capture-pipeline, settings, compliance-program) · See [MANIFEST.csv](./MANIFEST.csv) · `npm run lint:docs`
 
 ## Phase 4 主题（合并目标）
 
@@ -38,6 +38,7 @@ Status: Phase 0 complete · Phase 1 complete · Phase 2 complete · **Phase 3 co
 |-------|------|-----------|
 | capture-pipeline | [topics/capture-pipeline-design.md](./topics/capture-pipeline-design.md) · consolidated 2026-07-08 | PRODUCT-SPEC §3.1 · [11-ocr-pipeline-design.md](../tech/11-ocr-pipeline-design.md) |
 | settings | [topics/settings-design.md](./topics/settings-design.md) · consolidated 2026-07-08 | PRODUCT-SPEC §3 · `docs/prd/settings.md` |
+| compliance-program | [topics/compliance-program-design.md](./topics/compliance-program-design.md) · consolidated 2026-07-08 | PRODUCT-SPEC §2.3 · `docs/legal/*` |
 
 ## Agent 读法
 

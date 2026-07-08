@@ -23,8 +23,7 @@ Snap1099 的 Delete Account 仅从 **Settings → Privacy & Data** 进入，经 
 | [`docs/product/PRODUCT-SPEC.md`](../../product/PRODUCT-SPEC.md) | Delete Account 入口、Bottom Sheet 确认、合规门控 |
 | [`docs/legal/privacy.md`](../../legal/privacy.md) §6 | 删除权：移除 server + local 与会话/账户绑定的数据 |
 | [`docs/legal/data-retention.md`](../../legal/data-retention.md) | Delete Account 触发 PG + Blob 硬删（目标 30 天内完成） |
-| [`docs/superpowers/specs/2026-06-30-compliance-p2-data-lifecycle.md`](../specs/2026-06-30-compliance-p2-data-lifecycle.md) | 数据生命周期与 retention 表 |
-| [`docs/superpowers/specs/2026-06-30-compliance-p6-dsr-governance.md`](../specs/2026-06-30-compliance-p6-dsr-governance.md) | 应用内删除满足 erasure right |
+| [`docs/superpowers/topics/compliance-program-design.md`](../topics/compliance-program-design.md) | P2 retention · P6 erasure |
 
 ---
 

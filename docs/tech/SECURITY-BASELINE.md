@@ -85,6 +85,6 @@ Internal IRP and runbooks: [docs/ops/security-incident-response.md](../ops/secur
 |----------|---------|
 | [2026-06-05-api-security-design.md](../superpowers/specs/2026-06-05-api-security-design.md) | Ghost HMAC · OpenAI · IDOR · rate limits |
 | [2026-06-06-logging-design.md](../superpowers/specs/2026-06-06-logging-design.md) | Log format and redaction |
-| [2026-06-30-compliance-p3-security-baseline.md](../superpowers/specs/2026-06-30-compliance-p3-security-baseline.md) | Compliance spec (P3) |
+| [compliance-program-design.md](../superpowers/topics/compliance-program-design.md) | Compliance program (P3) |
 | [data-retention.md](../legal/data-retention.md) | Public retention periods (`/data-retention`) |
 | [data-retention-code-alignment.md](../ops/data-retention-code-alignment.md) | Internal code constant audit |

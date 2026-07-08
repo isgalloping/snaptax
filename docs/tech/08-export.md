@@ -12,7 +12,7 @@
 { "taxYear": "2025", "format": "csv" | "cpa_pack" | "cpa_pdf" | "xlsx" }
 ```
 
-`taxYear` 默认 `currentTaxSeason()`。按用户时区（`X-Time-Zone`）过滤 `snap_at` / `captured_at` 所在日历年。
+`taxYear` 缺省为 UTC **日历年**（`defaultExportTaxYear()`）；Paddle **售卖季** 为 `currentTaxSeason()`（1–4 月当年、5–12 月次年）。ExportEngine Step 1 用 `pickDefaultExportTaxYear` 优先本季 filing year。按用户时区（`X-Time-Zone`）过滤 `snap_at` / `captured_at` 所在日历年。
 
 Canonical 业务规范：`docs/biz/export/` · 设计 topic：`docs/superpowers/topics/export-pipeline-design.md`
 

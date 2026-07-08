@@ -51,8 +51,13 @@ test("unionMergeLWW keeps pendingUpload local over remote", () => {
   assert.equal(merged.find((r) => r.id === "a")?.merchant, "Local");
 });
 
-test("unionMergeLWW applies remote when newer updatedAt", () => {
-  const local = [stored("a", "2026-06-07T10:00:00.000Z", { merchant: "Old" })];
+test("unionMergeLWW applies remote when newer for non-done rows", () => {
+  const local = [
+    stored("a", "2026-06-07T10:00:00.000Z", {
+      status: "processing",
+      merchant: "Old",
+    }),
+  ];
   const remote = [
     {
       id: "a",
@@ -66,6 +71,24 @@ test("unionMergeLWW applies remote when newer updatedAt", () => {
   assert.equal(merged.find((r) => r.id === "a")?.merchant, "New");
 });
 
+test("unionMergeLWW done lock keeps local business fields when remote is newer", () => {
+  const local = [stored("a", "2026-06-07T10:00:00.000Z", { merchant: "Old" })];
+  const remote = [
+    {
+      id: "a",
+      status: "done" as const,
+      timestamp: new Date("2026-06-07T08:00:00.000Z"),
+      updatedAt: new Date("2026-06-07T12:00:00.000Z"),
+      merchant: "New",
+      amount: 99,
+    },
+  ];
+  const merged = unionMergeLWW(local, remote);
+  const row = merged.find((r) => r.id === "a");
+  assert.equal(row?.merchant, "Old");
+  assert.equal(row?.amount, undefined);
+});
+
 test("unionMergeLWW retains local-only rows", () => {
   const local = [stored("local-only", "2026-06-07T10:00:00.000Z")];
   const merged = unionMergeLWW(local, []);
@@ -73,9 +96,36 @@ test("unionMergeLWW retains local-only rows", () => {
   assert.equal(merged[0]?.id, "local-only");
 });
 
-test("unionMergeLWW backfills extraction when local updatedAt is newer", () => {
+test("unionMergeLWW does not backfill protected fields on done local rows", () => {
   const local = [
     stored("a", "2026-06-07T14:00:00.000Z", {
+      merchant: undefined,
+      category: undefined,
+      amount: undefined,
+    }),
+  ];
+  const remote = [
+    {
+      id: "a",
+      status: "done" as const,
+      timestamp: new Date("2026-06-07T08:00:00.000Z"),
+      updatedAt: new Date("2026-06-07T12:00:00.000Z"),
+      merchant: "Home Depot",
+      category: "OTHER",
+      amount: 14.75,
+    },
+  ];
+  const merged = unionMergeLWW(local, remote);
+  const row = merged.find((r) => r.id === "a");
+  assert.equal(row?.merchant, undefined);
+  assert.equal(row?.category, undefined);
+  assert.equal(row?.amount, undefined);
+});
+
+test("unionMergeLWW backfills extraction when local processing row is newer", () => {
+  const local = [
+    stored("a", "2026-06-07T14:00:00.000Z", {
+      status: "processing",
       merchant: undefined,
       category: undefined,
       amount: undefined,

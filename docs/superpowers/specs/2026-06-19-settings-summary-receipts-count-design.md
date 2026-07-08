@@ -1,15 +1,7 @@
-# Settings Summary Receipts Count — Design
+# [Archived] Settings receipts count
 
-**Date:** 2026-06-19  
-**Status:** Implemented  
-**Scope:** `TaxOverviewPanel` Receipts column — show count only.
+> **Status:** Archived · superseded by consolidated topic spec  
+> **Current truth:** [settings-design.md](../topics/settings-design.md)  
+> **Full text:** [2026-06-19-settings-summary-receipts-count-design.md](../archive/specs/2026-06-19-settings-summary-receipts-count-design.md)
 
-## Change
-
-Remove `{n} Snapped` suffix from Receipts value. Display numeric `receiptCount` only. Column label `RECEIPTS` and green/grey semantic colors unchanged.
-
-## Files
-
-- `components/settings/TaxOverviewPanel.tsx`
-- `lib/i18n/types.ts` + locales (remove `receiptsSnapped`)
-- `docs/product/PRODUCT-SPEC.md`
+Do not use this stub for implementation decisions.

@@ -157,7 +157,7 @@ PaywallSheet checkout.completed
 | 2026-07-04 | `archive/specs/2026-07-04-export-formats-enhancement-design.md` | **this topic doc** |
 | 2026-07-05 | `archive/specs/2026-07-05-export-tax-saved-persist-design.md` | **this topic doc** |
 
-**Partial supersede:** `2026-06-30-tax-saved-header-settings-alignment-design.md` 中「export 后 UI 归零」段落由 tax-saved-persist 废止；对齐逻辑仍有效。
+**Partial supersede:** [`topics/settings-design.md`](./settings-design.md) §6 — alignment active; export filed 后 tax saved 不归零见 **this topic** §3.6。
 
 ---
 

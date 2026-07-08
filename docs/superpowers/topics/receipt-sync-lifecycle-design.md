@@ -161,7 +161,7 @@ Camera open → defer merge (existing); **not** full WorkerSession gate (deferre
 | 2026-06-29 | `receipt-summary-local-design` | **this topic** (Phase A) |
 | 2026-06-29 | `receipt-sync-recovery-design` | **this topic** (Phase B) |
 
-**Partial supersede:** [`2026-06-30-tax-saved-header-settings-alignment-design.md`](../specs/2026-06-30-tax-saved-header-settings-alignment-design.md) — alignment logic active; summary store replaces scan-based header.
+**Partial supersede:** [`topics/settings-design.md`](./settings-design.md) §6 — alignment logic active; summary store replaces scan-based header.
 
 ---
 

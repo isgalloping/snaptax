@@ -19,10 +19,10 @@ Layer 2  Archive        docs/superpowers/archive/**
 | home-dashboard | [topics/home-dashboard-design.md](./topics/home-dashboard-design.md) · consolidated 2026-07-08 | PRODUCT-SPEC §2.1 布局 |
 | export-pipeline | [topics/export-pipeline-design.md](./topics/export-pipeline-design.md) · consolidated 2026-07-08 | [docs/tech/08-export.md](../tech/08-export.md) |
 | delete-account | [topics/delete-account-design.md](./topics/delete-account-design.md) · consolidated 2026-07-08 | PRODUCT-SPEC § 合规 |
-| receipt-sync-lifecycle | [topics/receipt-sync-lifecycle-design.md](./topics/receipt-sync-lifecycle-design.md) | docs/tech/06-* |
+| receipt-sync-lifecycle | [topics/receipt-sync-lifecycle-design.md](./topics/receipt-sync-lifecycle-design.md) · consolidated 2026-07-08 | docs/tech/06-* · [11-ocr-pipeline-design.md](../tech/11-ocr-pipeline-design.md) |
 | pwa-install | — | **[docs/tech/13-pwa-install-architecture.md](../tech/13-pwa-install-architecture.md)** |
 
-Status: Phase 0 complete · Phase 1 in progress · See [MANIFEST.csv](./MANIFEST.csv) (296 entries)
+Status: Phase 0 complete · Phase 1 in progress · See [MANIFEST.csv](./MANIFEST.csv) (313 entries)
 
 ## Agent 读法
 

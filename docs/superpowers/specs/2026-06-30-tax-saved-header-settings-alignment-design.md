@@ -4,7 +4,7 @@
 **Status:** Approved (design) · **Superseded in part by** [`export-pipeline-design.md`](../topics/export-pipeline-design.md) §3.6 (export no longer reduces UI tax saved)  
 **Scope:** 在线场景下首屏 `TaxHeader` 与 Settings `TaxOverviewPanel` 的 **Est. Tax Saved** 数值不一致
 
-**References:** [`2026-06-29-receipt-summary-local-design.md`](./2026-06-29-receipt-summary-local-design.md) · [`2026-06-07-tax-savings-regional-design.md`](./2026-06-07-tax-savings-regional-design.md) · [`PRODUCT-SPEC.md`](../../product/PRODUCT-SPEC.md) §5.1
+**References:** [`receipt-sync-lifecycle-design.md`](../topics/receipt-sync-lifecycle-design.md) §3.5 · [`2026-06-07-tax-savings-regional-design.md`](./2026-06-07-tax-savings-regional-design.md) · [`PRODUCT-SPEC.md`](../../product/PRODUCT-SPEC.md) §5.1
 
 ---
 

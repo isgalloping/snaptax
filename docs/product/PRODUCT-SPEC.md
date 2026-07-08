@@ -358,7 +358,6 @@ Next.js 16 · React 19 · Tailwind 4 · Serwist · **PostgreSQL（美国）** ·
 | [specs/2026-06-07-tax-savings-regional-design.md](../superpowers/specs/2026-06-07-tax-savings-regional-design.md) | 分区域省税 US/EU + R1 |
 | [topics/onboarding-aha-design.md](../superpowers/topics/onboarding-aha-design.md) | 新人引导 / Aha onboarding（Hero + sandbox + coach + 样例导出） |
 | [specs/2026-06-07-mvp-master-roadmap-design.md](../superpowers/specs/2026-06-07-mvp-master-roadmap-design.md) | MVP 总路线图 |
-| [specs/2026-07-06-pwa-snaptax-label-app-entry-gate-design.md](../superpowers/specs/2026-07-06-pwa-snaptax-label-app-entry-gate-design.md) | PWA SnapTax 图标 + `/app` 手机入口门控 |
 | [tech/13-pwa-install-architecture.md](../tech/13-pwa-install-architecture.md) | **PWA 安装架构（Agent 改 pwa/ 必读）** |
 | [plans/2026-06-07-mvp-master-implementation.md](../superpowers/plans/2026-06-07-mvp-master-implementation.md) | **MVP 总落地计划** |
 

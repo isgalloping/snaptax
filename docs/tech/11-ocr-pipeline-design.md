@@ -4,7 +4,7 @@
 > **产品来源：** [`docs/ocr/ocr-desn.md`](../ocr/ocr-desn.md)  
 > **英文摘要 spec：** [`2026-06-19-ocr-pipeline-redesign-design.md`](../superpowers/specs/2026-06-19-ocr-pipeline-redesign-design.md)  
 > **关联（第一阶段）：** [`06-receipt-ai-pipeline.md`](./06-receipt-ai-pipeline.md)  
-> **关联（第二阶段，暂不实现）：** [`2026-06-19-receipt-lifecycle-sync-redesign-design.md`](../superpowers/specs/2026-06-19-receipt-lifecycle-sync-redesign-design.md)
+> **关联（第二阶段，暂不实现）：** [`receipt-sync-lifecycle-design.md`](../superpowers/topics/receipt-sync-lifecycle-design.md) §5（Event Queue / WorkerSession draft）
 
 ## 文档说明
 
@@ -15,7 +15,7 @@
 | 阶段 | 范围 | 本文章节 |
 |------|------|----------|
 | **第一阶段（本次实现）** | 本地 OCR Worker、`parseReceipt`、`qualityGate`、服务端 `processReceiptTax` 路由器、`classifyReceiptText`、Vision 兜底、客户端 `ocrDraft` 与现有 upload/sync **沿用现网** | §1–§4.2、§6–§15（不含事件/API 同步） |
-| **第二阶段（数据一致性，暂不设计实现）** | Event Queue、Background Sync batch、`POST /api/sync/events`、Postgres Event Store、WorkerSession 与 [sync 重设计](../superpowers/specs/2026-06-19-receipt-lifecycle-sync-redesign-design.md) 合并 | §16 路线图 |
+| **第二阶段（数据一致性，暂不设计实现）** | Event Queue、Background Sync batch、`POST /api/sync/events`、Postgres Event Store、WorkerSession — 见 [receipt-sync-lifecycle topic](../superpowers/topics/receipt-sync-lifecycle-design.md) §5 + 本文 §16 | §16 路线图 |
 
 `ocr-desn.md` 全链路架构图 **仍为产品终态**；第一阶段只交付图中 **Capture → IDB → Local OCR → Structured Receipt → GPT Classify → Deduction → IDB Save** 段，**不** 引入事件队列与 Event Store。
 
@@ -380,7 +380,7 @@ async function runVisionPath(params): Promise<VisionProcessResult> {
 | image + ocrDraft 且 gate 通过 | `classifyReceiptText` → 失败则 Vision |
 | image + ocrDraft 且 gate 失败 | 直接 Vision |
 
-**响应：** 不变（201 + `serializeReceipt` 或 `processFailed`）。参见 [pipeline resilience spec](../superpowers/specs/2026-06-07-receipt-pipeline-resilience-design.md)。
+**响应：** 不变（201 + `serializeReceipt` 或 `processFailed`）。参见 [receipt-sync-lifecycle topic](../superpowers/topics/receipt-sync-lifecycle-design.md) §3.1。
 
 **服务端持久化：** 成功后将 `ocrDraft` 摘要写入 `ai_raw.ocrDraft` 供 `/process` 重试。
 
@@ -561,7 +561,7 @@ module=biz.ocr stage=local_ocr|text_classify|vision_fallback receiptId=… durat
 
 ### 14.2 第二阶段（数据一致性 · 暂不实现）
 
-与 [`2026-06-19-receipt-lifecycle-sync-redesign-design.md`](../superpowers/specs/2026-06-19-receipt-lifecycle-sync-redesign-design.md) 合并推进：
+见 [`receipt-sync-lifecycle-design.md`](../superpowers/topics/receipt-sync-lifecycle-design.md) §5（draft 部分）与本文 §16：
 
 | 交付物 | 说明 |
 |--------|------|
@@ -622,6 +622,6 @@ IDB Save → … → TAX_CALCULATED
 ## 18. 参考
 
 - 产品 OCR 终态：[`docs/ocr/ocr-desn.md`](../ocr/ocr-desn.md)
-- **第二阶段** sync / 一致性：[`2026-06-19-receipt-lifecycle-sync-redesign-design.md`](../superpowers/specs/2026-06-19-receipt-lifecycle-sync-redesign-design.md)
-- Pipeline 韧性：[`2026-06-07-receipt-pipeline-resilience-design.md`](../superpowers/specs/2026-06-07-receipt-pipeline-resilience-design.md)
+- **第二阶段** sync / 一致性（draft）：[`receipt-sync-lifecycle-design.md`](../superpowers/topics/receipt-sync-lifecycle-design.md) §5
+- **已 ship** pipeline 韧性 / sync：[`receipt-sync-lifecycle-design.md`](../superpowers/topics/receipt-sync-lifecycle-design.md) §3.1–3.4
 - 置信度三档：[`home-dashboard-design.md`](../superpowers/topics/home-dashboard-design.md) §4.5

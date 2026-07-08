@@ -190,5 +190,27 @@ Artifacts：`security-incident.md` · `ops/security-incident-response.md` · bac
 | 2026-06-30 | `archive/specs/2026-06-30-compliance-p5-security-operations.md` | **this topic** §10 |
 | 2026-06-30 | `archive/specs/2026-06-30-compliance-p6-dsr-governance.md` | **this topic** §11 |
 | 2026-06-30 | `archive/plans/2026-06-30-compliance-program.md` | implemented · **this topic** |
+| 2026-07-08 | `archive/specs/2026-07-08-us-legal-compliance-audit-design.md` | **this topic** §15 |
+| 2026-07-08 | `archive/plans/2026-07-08-us-legal-compliance-audit.md` | implemented · **this topic** §15 |
 
-**Still active:** `2026-06-05-compliance-privacy-design.md` · `2026-07-08-us-legal-compliance-audit-design.md`
+**Still active:** `2026-06-05-compliance-privacy-design.md`
+
+---
+
+## 15. US legal audit follow-up (2026-07-08)
+
+Paddle merchant + CPRA launch readiness — **implemented** on `main`.
+
+| Deliverable | Status |
+|-------------|--------|
+| Operator block (Gang Huang, Hong Kong) | ✅ all `docs/legal/*.md` |
+| Public brand **SnapTax** | ✅ legal · marketing · manifest · i18n |
+| `cookies.md` · `disclaimer.md` | ✅ `LegalMarkdownPage` routes |
+| Policies hub + footer CPRA | ✅ Cookie · Disclaimer · **Do Not Sell** → `/privacy#no-sale` |
+| `lib/legal/operator.ts` | ✅ |
+| Technical `snap1099_*` cookies | ✅ unchanged · disclosed in cookies.md |
+| Analytics | ✅ none deployed |
+
+**Manual remaining:** production Paddle URL smoke · counsel sign-off (L4 out of scope).
+
+**Spec:** `archive/specs/2026-07-08-us-legal-compliance-audit-design.md` · **this topic** §15

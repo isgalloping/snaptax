@@ -16,4 +16,8 @@ describe("slugifyLegalHeading", () => {
       "abonnements-paiements",
     );
   });
+
+  it("strips leading section numbers for CPRA deep links", () => {
+    assert.equal(slugifyLegalHeading("8. No Sale"), "no-sale");
+  });
 });

@@ -28,3 +28,18 @@ export async function prepareExportSync(
   const local = await deps.loadAllReceipts();
   return deps.syncFromServer(local, "immediate");
 }
+
+/** Flush pending writes and read IDB only — local-first csv/txf gate prep (no server list merge). */
+export async function prepareExportLocal(
+  deps: ExportPrepareDeps,
+): Promise<Receipt[]> {
+  const isOnline = deps.isOnline ?? (() => navigator.onLine);
+  if (!isOnline()) {
+    throw new Error("EXPORT_OFFLINE");
+  }
+
+  await deps.ensureGhostSession();
+  await deps.flushPendingUploads();
+  await deps.flushPendingDeletes();
+  return deps.loadAllReceipts();
+}

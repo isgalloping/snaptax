@@ -19,12 +19,12 @@ import { clientTimeZone } from "@/lib/time/timeZone";
 import { runLocalTaxExport } from "@/lib/client/runLocalTaxExport";
 import {
   exportTaxPack,
-  type ExportFormat,
   type ExportTaxPackMeta,
 } from "@/lib/client/authApi";
 import {
   exportPreviewCsvFilename,
   exportShareTitle,
+  type ExportFormat,
 } from "@/lib/export/exportFilenames";
 import {
   canShareTaxPackFile,
@@ -42,7 +42,7 @@ interface ExportEngineSheetProps {
   receipts: Receipt[];
   currentSeason: string;
   onClose: () => void;
-  onPreExportPrepare?: () => Promise<void | Receipt[]>;
+  onPreExportPrepare?: (format: ExportFormat) => Promise<void | Receipt[]>;
   onExported?: () => void | Promise<void>;
   onPaymentRequired?: () => void;
   onReceiptUpdated?: (receipt: Receipt) => void;
@@ -256,7 +256,7 @@ export function ExportEngineSheet({
     try {
       let receiptsForExport = activeReceipts;
       if (onPreExportPrepare) {
-        const merged = await onPreExportPrepare();
+        const merged = await onPreExportPrepare(format);
         if (merged && merged.length > 0) {
           receiptsForExport = merged;
           setActiveReceipts(merged);

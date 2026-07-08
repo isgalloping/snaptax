@@ -181,11 +181,11 @@ Generate (csv/txf)
   → deliver File to Share / Save
 ```
 
-Gate 仍跑 `prepareExportSync`（flush + merge）；**pack 内容不读 server PG**。Income 1099 不进 CSV/TXF；**filed** 由 server 按 `filterReceiptsByTaxYear` 写全量 PG done（与 tax-pack 对称，不受 client sync window 50 限制）。
+Gate **`prepareExportLocal`**（flush + IDB，无 list merge）；Generate 前 csv/txf 再跑 local prep，cpa_pdf/cpa_pack 仍 **`prepareExportSync`**。**pack 内容不读 server PG**（csv/txf）。
 
-**Modules:** `lib/export/buildLocalTaxPack.ts` · `lib/client/runLocalTaxExport.ts` · `app/api/export/filed/route.ts`
+**Modules:** `lib/export/buildLocalTaxPack.ts` · `lib/client/runLocalTaxExport.ts` · `lib/client/exportPrepareFlow.ts` · `app/api/export/filed/route.ts`
 
-**Still deferred:** local `cpa_pdf` / `cpa_pack`（OPFS 图片 + client PDF/ZIP）· `prepareExportLocal` 替代 full sync
+**Still deferred:** local `cpa_pdf` / `cpa_pack`（OPFS 图片 + browser PDF/ZIP）
 
 ---
 

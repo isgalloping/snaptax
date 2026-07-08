@@ -4,7 +4,7 @@
 **Status:** Approved (design)  
 **Scope:** Client capture → list → OCR → upload → server AI ordering. Single-shot and batch paths. List pill UX.
 
-**References:** [`2026-06-08-batch-snap-camera-design.md`](./2026-06-08-batch-snap-camera-design.md) · [`2026-06-19-ocr-pipeline-redesign-design.md`](./2026-06-19-ocr-pipeline-redesign-design.md) · [`2026-06-19-receipt-lifecycle-sync-redesign-design.md`](./2026-06-19-receipt-lifecycle-sync-redesign-design.md) · [`docs/tech/11-ocr-pipeline-design.md`](../../tech/11-ocr-pipeline-design.md)
+**References:** [`2026-06-08-batch-snap-camera-design.md`](./2026-06-08-batch-snap-camera-design.md) · [`2026-06-19-ocr-pipeline-redesign-design.md`](./2026-06-19-ocr-pipeline-redesign-design.md) · [`receipt-sync-lifecycle-design.md`](../topics/receipt-sync-lifecycle-design.md) · [`docs/tech/11-ocr-pipeline-design.md`](../../tech/11-ocr-pipeline-design.md)
 
 **Amends:** Batch spec §Architecture (`handleBatchDone` list merge timing, OCR-before-upload gate). Aligns client with OCR design doc: *upload scheduling independent of OCR completion; does not block shutter.*
 

@@ -39,7 +39,7 @@ Snap1099 lacks standalone URLs for **Price**, **Refund policy**, and **Terms and
 | Hardcode $49 | **No** — display Flag-driven USD; Terms §4 already says “unless otherwise shown in the App” |
 | i18n (MVP) | **English-only** new pages (match `data-retention.md` / `security-incident.md` pattern) |
 | App Settings | **No new rows** in Privacy & Data (avoid IA creep); hub discoverable via `/policies` and cross-links |
-| Delete Account | Refund policy states **no automatic Paddle refund** on delete (align existing delete-account specs) |
+| Delete Account | Refund policy states **no automatic Paddle refund** on delete（见 [`topics/delete-account-design.md`](../topics/delete-account-design.md) §5 Out of scope） |
 | Section anchors | Add `id` slugs on all legal `h2` sections (`LegalMarkdownView`, `LegalPageContent`) for deep links |
 
 ## Public URL map (production)

@@ -14,7 +14,7 @@ globs:
 
 # Snap1099 PWA 安装规范
 
-**Canonical：** `docs/tech/13-pwa-install-architecture.md` · Spec：`docs/superpowers/specs/2026-07-06-pwa-snaptax-label-app-entry-gate-design.md`
+**Canonical：** `docs/tech/13-pwa-install-architecture.md`
 
 ## 路由与 scope
 

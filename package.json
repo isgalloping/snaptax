@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test:unit": "node --import tsx --test lib/**/*.test.ts components/**/*.test.ts",
+    "lint:docs": "node scripts/check-superpowers-doc-links.mjs",
     "a11y:audit": "node scripts/a11y-audit.mjs",
     "postinstall": "prisma generate && node scripts/copy-tesseract-assets.mjs",
     "db:migrate:deploy": "node scripts/migrate-deploy.mjs",

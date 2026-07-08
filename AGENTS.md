@@ -59,6 +59,12 @@ Next.js 16 · React 19 · Tailwind 4 · Serwist PWA · Vercel (PostgreSQL, Blob,
 - PWA docs: `docs/tech/13-pwa-install-architecture.md`
 - PWA: `app/manifest.ts`, `app/sw.ts` (Serwist via `PwaProvider`)
 
+### Superpowers docs
+
+- Index: `docs/superpowers/README.md` (read before scanning `specs/`)
+- Topic consolidations: `docs/superpowers/topics/`
+- Do **not** iterate all 150+ specs; use MANIFEST.csv or README topic table
+
 ## Cursor Cloud specific instructions
 
 Single Next.js app (no monorepo). Package manager is **npm** (`package-lock.json`). Dependencies are refreshed by the startup update script (`npm install`, which runs `prisma generate` via `postinstall`).

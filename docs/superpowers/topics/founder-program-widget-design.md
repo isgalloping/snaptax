@@ -122,6 +122,16 @@ if (user?.founderNumber != null && user.founderStatus === "active" && user.found
 - 应用：`getFounderProgramState` 返回有效状态；若与 DB 不一致则 **lazy persist**（无 cron）
 - 本季付费后（webhook + entitlement）→ 有效 **`active`**；Settings Badge 恢复；Widget 隐藏
 
+### 3.10 Payment success (Founder variant)
+
+Paddle 付后 **`PaymentSuccessSheet`**（`variant: founder`）— 与 Export 共用 orchestrator，见 [`export-pipeline-design.md`](./export-pipeline-design.md) §3.5。
+
+```text
+checkout.completed → close FounderProgramSheet → confirming
+  → finalizeFounderPurchase + waitForFounderActive
+  → ready: "You're a Super Founder!" · Super Founder #{n} · primary "Got it"
+```
+
 ---
 
 ## 4. User flow
@@ -151,6 +161,7 @@ if (user?.founderNumber != null && user.founderStatus === "active" && user.found
 | 2026-07-02 | `archive/specs/2026-07-02-hide-missing-deductions-widget-design.md` | **this topic** §3.7 |
 | 2026-07-03 | `archive/specs/2026-07-03-founder-widget-marking-v1-design.md` | **this topic** §3.4–3.5 (marking v1 禁令) |
 | 2026-07-03 | `archive/specs/2026-07-03-founder-google-pay-decouple-design.md` | **this topic** §3.5–3.6 |
+| 2026-07-04 | `archive/specs/2026-07-04-payment-success-sheet-design.md` | **this topic** §3.10 · export-pipeline §3.5 |
 
 ---
 

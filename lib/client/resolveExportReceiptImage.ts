@@ -29,7 +29,12 @@ export async function resolveExportReceiptImageBlob(
   deps: ResolveExportReceiptImageDeps = {},
 ): Promise<{ blob: Blob; source: ExportImageSource } | null> {
   const loadLocal = deps.loadPhoto ?? loadPhoto;
-  const local = await loadLocal(receiptId);
+  let local: Blob | null = null;
+  try {
+    local = await loadLocal(receiptId);
+  } catch {
+    local = null;
+  }
   if (local) {
     return { blob: local, source: "local" };
   }

@@ -34,4 +34,16 @@ describe("resolveExportReceiptImageBlob", () => {
     });
     assert.equal(result, null);
   });
+
+  it("falls back to remote when local load throws", async () => {
+    const remote = new Blob(["remote-bytes"], { type: "image/jpeg" });
+    const result = await resolveExportReceiptImageBlob(RECEIPT_ID, {
+      loadPhoto: async () => {
+        throw new Error("OPFS decrypt failed");
+      },
+      fetchRemoteBlob: async () => remote,
+    });
+    assert.equal(result?.source, "remote");
+    assert.equal(await result?.blob.text(), "remote-bytes");
+  });
 });

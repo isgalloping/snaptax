@@ -55,4 +55,27 @@ describe("buildLocalCpaExportContext", () => {
     assert.equal(ctx.yearReceiptCount, 0);
     assert.equal(ctx.auditRows.length, 0);
   });
+
+  it("sorts receipts by capture time ascending for audit order", () => {
+    const later = expenseReceipt({
+      id: "00000000-0000-0000-0000-000000000003",
+      merchant: "Later Shop",
+      timestamp: new Date("2026-06-01T12:00:00.000Z"),
+    });
+    const earlier = expenseReceipt({
+      id: "00000000-0000-0000-0000-000000000004",
+      merchant: "Earlier Shop",
+      timestamp: new Date("2026-04-01T12:00:00.000Z"),
+    });
+    const ctx = buildLocalCpaExportContext(
+      [later, earlier],
+      2026,
+      "UTC",
+    );
+    assert.equal(ctx.auditRows.length, 2);
+    assert.equal(ctx.auditRows[0]?.merchant, "Earlier Shop");
+    assert.equal(ctx.auditRows[0]?.auditIndex, "001");
+    assert.equal(ctx.auditRows[1]?.merchant, "Later Shop");
+    assert.equal(ctx.auditRows[1]?.auditIndex, "002");
+  });
 });

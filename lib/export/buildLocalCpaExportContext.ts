@@ -27,7 +27,9 @@ export function buildLocalCpaExportContext(
   timeZone: string,
   dataRegion: TaxRegion = "us",
 ): LocalCpaExportContext {
-  const yearReceipts = receiptsInTaxYear(receipts, taxYear, timeZone);
+  const yearReceipts = receiptsInTaxYear(receipts, taxYear, timeZone).sort(
+    (a, b) => a.timestamp.getTime() - b.timestamp.getTime(),
+  );
   const stubs = yearReceipts.map(receiptToSnaptaxStub);
   const incomeReceipts = stubs.filter(isIncomeDocument);
   const expenseReceipts = stubs.filter((r) => !isIncomeDocument(r));

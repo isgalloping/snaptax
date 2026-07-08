@@ -2,7 +2,7 @@
 
 **Topic ID:** `founder-program-widget`  
 **Status:** Consolidated · implemented  
-**Last verified:** 2026-07-08
+**Last verified:** 2026-07-08 (#115 lapsed → DEFAULT)
 
 ---
 
@@ -47,7 +47,7 @@ Snap1099 **Founder Program** 以 Home WidgetPager **第一页全宽** 营销卡 
 | **SKU tiers** | `FOUNDER_LEVEL_SUPER` · `EARLY` · `FOUNDER` · `DEFAULT` |
 | **占席** | 仅 webhook 成功且 skuTier ∈ {SUPER, EARLY, FOUNDER} → `assignFounderSeat` |
 | **Google** | Paddle 前硬门控；登录 **不占席** |
-| **Renewal (spec intent)** | Active founder 续费 locked tier；**lapsed 应 DEFAULT**（见 §3.8 gap） |
+| **Renewal** | Active founder 续费 **locked tier**；**lapsed 续费 DEFAULT**（`founder_tier` 仅历史） |
 | **Flags** | `founderProgramEnabled` · `founderPrice*Cents` · env `PADDLE_PRICE_ID_FOUNDER_*` |
 
 ### 3.2 Widget visibility (`isFounderWidgetVisible`)
@@ -102,11 +102,17 @@ export const SHOW_MISSING_DEDUCTIONS_WIDGET = false;
 
 `effectiveHasMissing` 门控 pager；`computeMissingDeductions` 与 overlay 组件 **保留**。
 
-### 3.8 Known gap — lapsed founder pricing
+### 3.8 Lapsed founder pricing
 
-**Spec intent (2026-06-30):** lapsed founder 续费应 **DEFAULT** only；`founder_tier` 仅作历史。
+**Implemented (2026-07-08, #115):** `resolveFounderCheckoutSkuTier` 与 `resolveDisplayTier` 仅对 `founderStatus === "active"` 返回 locked `founderTier`；**lapsed** 走 **DEFAULT** 季价（checkout + Widget/Sheet 展示一致）。`founder_tier` / `founder_number` 保留作历史与 Badge；Widget 对 lapsed 仍可见直至本季付费或满员。
 
-**Current code:** `resolveFounderCheckoutSkuTier` 与 `resolveDisplayTier` 对 `founderStatus === "lapsed"` **仍返回 locked `founderTier`**（与 active 相同分支）。Widget 对 lapsed 仍可见（非 active）。**待产品决策：** 对齐 DEFAULT 定价或明确 lapsed 续费 locked tier 为 intentional。
+```typescript
+// lib/server/founderProgram.ts · lib/founder/resolveDisplayTier.ts
+if (user?.founderNumber != null && user.founderStatus === "active" && user.founderTier != null) {
+  return user.founderTier; // checkout / display
+}
+// lapsed → fall through to DEFAULT
+```
 
 ---
 

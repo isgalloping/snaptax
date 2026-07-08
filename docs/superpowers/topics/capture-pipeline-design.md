@@ -147,6 +147,7 @@ During batch camera session, cards update in React state but sit behind overlay;
 | Done / Back | Upload flush allowed |
 | Single after capture | Camera closed → upload allowed immediately |
 | Watcher poll | Paused when `cameraOpen` |
+| Auto upload / fetch / 60s retry | **Blocked** when `cameraOpen`; catch-up on close (Phase C) |
 
 ---
 

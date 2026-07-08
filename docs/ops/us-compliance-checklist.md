@@ -16,7 +16,7 @@
 ## Copy sign-off
 
 - [ ] Operator block on all `docs/legal/*.md`
-- [ ] No Snap1099 in user-facing legal/marketing/app title
+- [ ] No Snap1099 in user-facing legal/marketing/app title or export filenames
 - [ ] Cookie page matches `snap1099_ghost` / `snap1099_session`
 - [ ] Footer Do Not Sell → `/privacy#no-sale`
 - [ ] No analytics scripts deployed

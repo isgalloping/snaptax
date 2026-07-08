@@ -204,6 +204,7 @@ export function useTaxExportGate({
         <ExportEngineSheet
           receipts={exportEngineReceipts ?? exportableReceipts}
           currentSeason={currentSeason}
+          taxpayerName={googleUser?.name}
           onClose={() => {
             setShowExportSheet(false);
             setExportEngineReceipts(null);

@@ -10,7 +10,7 @@
 
 Snap1099 导出是 **唯一付费转化路径**（$49/税季 Paddle）。硬门控：**有效 Google session** + 本季 `season_entitlements.paid=true`；离线时客户端拦截，不调用 API。
 
-交互：`useTaxExportGate` 统一主屏 Export 与 Settings 入口 → `ExportEngineSheet` 三步 Bottom Sheet（税年 → 格式 → 生成/分享）。Gate 前 **`prepareExportLocal`**（flush + IDB）；CPA generate 仍 **`prepareExportSync`**（见 §3.8）。
+交互：`useTaxExportGate` 统一主屏 Export 与 Settings 入口 → `ExportEngineSheet` 三步 Bottom Sheet（税年 → 格式 → 生成/分享）。Gate 前 **`prepareExportLocal`**（flush + IDB）；全部格式 Generate 前均 **`prepareExportLocal`**（见 §3.8）。
 
 **格式（API 契约见 `docs/tech/08-export.md`，不在此重复）：**
 
@@ -60,7 +60,7 @@ Export tap (Home / Settings)
 | Decision | Detail |
 |----------|--------|
 | **硬门控** | Google session + 本季 paid；Export / View on All Devices 不可跳过 |
-| **Pre-sync** | Gate：`prepareExportLocal`；Generate 前 csv/txf 再 local，cpa_pdf/cpa_pack 跑 `prepareExportSync`（§3.8） |
+| **Pre-sync** | Gate + Generate：`prepareExportLocal`（全部 format）；`xlsx` 仍 server |
 | **Paid cache** | `refreshSeasonPaid` 镜像 API；`paid=false` 清 localStorage；gate 不用 stale fallback |
 | **Sign-out** | 清除本季 paid localStorage，避免下一 Ghost 继承 |
 | **支付成功** | `checkout.completed` → 轮询 entitlement ≤15s → 再导出；超时提示点 Export Again |
@@ -171,32 +171,41 @@ PaywallSheet / FounderProgramSheet checkout.completed
 | format | Pack build | Filed persist |
 |--------|------------|---------------|
 | `csv` · `txf` | **Local IDB** — `buildLocalTaxPack` | `POST /api/export/filed` + IDB `markReceiptsFiledLocal` |
-| `cpa_pdf` · `cpa_pack` | **Server** — `POST /api/export/tax-pack` (hybrid / degraded) | Same route `updateMany` |
+| `cpa_pdf` · `cpa_pack` | **Local IDB** — `runLocalCpaExport`（pdf-lib + fflate） | Same filed API |
+| `xlsx` | **Server** — `POST /api/export/tax-pack` | Same route `updateMany` |
 
 ```text
-Generate (csv/txf)
-  → buildLocalTaxPack(receipts from IDB)
+Generate (all visible formats)
+  → prepareExportLocal (flush + IDB)
+  → csv/txf: buildLocalTaxPack · cpa_*: runLocalCpaExport
   → POST /api/export/filed { taxYear } — server queries all PG done in year + filed
   → markReceiptsFiledLocal(server receiptIds)
   → deliver File to Share / Save
 ```
 
-Gate **`prepareExportLocal`**（flush + IDB，无 list merge）；Generate 前 csv/txf 再跑 local prep，cpa_pdf/cpa_pack 仍 **`prepareExportSync`**。**pack 内容不读 server PG**（csv/txf）。Gate Step 1 计数来自 **IDB**（非 server PG）；CPA generate 前 sync 后 server 可能含本机未缓存小票 — filed 仍由 server 全量 PG 写入。
+Gate **`prepareExportLocal`**（flush + IDB，无 list merge）；Generate 前全部可见 format 再跑 local prep。**pack 内容不读 server PG**。Gate Step 1 计数来自 **IDB**；filed 仍由 server 全量 PG 写入。
 
-**Modules:** `lib/export/buildLocalTaxPack.ts` · `lib/client/runLocalTaxExport.ts` · `lib/client/exportPrepareFlow.ts` · `app/api/export/filed/route.ts`
-
-**Still deferred:** browser `cpa_pdf` / `cpa_pack` pack assembly（pdf-lib + ZIP）· wired in `ExportEngineSheet`
+**Modules:** `lib/export/buildLocalTaxPack.ts` · `lib/client/runLocalTaxExport.ts` · `lib/client/runLocalCpaExport.ts` · `lib/export/buildBrowserScheduleCMirrorPdf.ts` · `lib/export/buildLocalCpaPackZip.ts` · `lib/client/exportPrepareFlow.ts` · `app/api/export/filed/route.ts`
 
 ### 3.9 Local CPA foundation (P1c · 2026-07-09)
 
-Shared row + image plumbing for future client CPA export（server hybrid unchanged until pack builders ship）:
+Shared row + image plumbing for client CPA export:
 
 | Module | Role |
 |--------|------|
 | `lib/export/buildLocalCpaExportContext.ts` | IDB receipts → income/audit rows（same finalize/audit pipeline as server） |
 | `lib/client/resolveExportReceiptImage.ts` | OPFS `loadPhoto` preferred; signed URL fetch fallback |
 
-**Next:** browser PDF mirror + ZIP (`fflate`/`pdf-lib` spike) → `runLocalCpaExport` → wire `cpa_pdf`/`cpa_pack` in sheet.
+### 3.10 Local CPA pack (P1d · 2026-07-09)
+
+| Module | Role |
+|--------|------|
+| `lib/export/buildBrowserScheduleCMirrorPdf.ts` | pdf-lib Schedule C mirror PDF |
+| `lib/export/buildLocalCpaPackZip.ts` | fflate audit ZIP + OPFS/remote images |
+| `lib/client/runLocalCpaExport.ts` | Orchestrate context → PDF/ZIP → filed sync |
+| `ExportEngineSheet` | `cpa_pdf` / `cpa_pack` → `runLocalCpaExport` |
+
+**Server hybrid retained:** `POST /api/export/tax-pack` still serves `xlsx` and fallback; CPA formats no longer call it from UI.
 
 ---
 

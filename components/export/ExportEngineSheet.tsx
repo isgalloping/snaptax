@@ -17,6 +17,7 @@ import { receiptsNeedingExportReview } from "@/lib/tax/exportReview";
 import { formatCurrency } from "@/lib/format";
 import { clientTimeZone } from "@/lib/time/timeZone";
 import { runLocalTaxExport } from "@/lib/client/runLocalTaxExport";
+import { runLocalCpaExport } from "@/lib/client/runLocalCpaExport";
 import {
   exportTaxPack,
   type ExportTaxPackMeta,
@@ -41,6 +42,7 @@ type Step = 1 | 2 | 3 | 4;
 interface ExportEngineSheetProps {
   receipts: Receipt[];
   currentSeason: string;
+  taxpayerName?: string;
   onClose: () => void;
   onPreExportPrepare?: (format: ExportFormat) => Promise<void | Receipt[]>;
   onExported?: () => void | Promise<void>;
@@ -55,6 +57,7 @@ const FAST_RAMP_MS = 300;
 export function ExportEngineSheet({
   receipts,
   currentSeason,
+  taxpayerName,
   onClose,
   onPreExportPrepare,
   onExported,
@@ -277,10 +280,18 @@ export function ExportEngineSheet({
               timeZone,
               format,
             })
-          : await exportTaxPack({
-              taxYear: taxYearStr,
-              format,
-            });
+          : format === "cpa_pdf" || format === "cpa_pack"
+            ? await runLocalCpaExport({
+                receipts: receiptsForExport,
+                taxYear,
+                timeZone,
+                format,
+                taxpayerName,
+              })
+            : await exportTaxPack({
+                taxYear: taxYearStr,
+                format,
+              });
       finishProgress();
       setReadyFile(result.file);
       setExportMeta(result.meta);

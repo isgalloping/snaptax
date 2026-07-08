@@ -235,5 +235,6 @@ Public compliance full pages 统一 **`LegalFullPageShell`** — 右上 **Close*
 | Scroll | `h-dvh flex flex-col`；header `shrink-0`；main `flex-1 overflow-y-auto` |
 | Escape | 同 Close（`useDialogEscape`） |
 | Out of scope | `LegalSheet` overlay · Settings row navigation |
+| Settings LegalSheet i18n | `data-retention` · `security` → locale markdown via `/api/legal/document?locale=` |
 
 **Spec:** `archive/specs/2026-07-05-legal-full-page-close-shell-design.md` · **this topic** §16

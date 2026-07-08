@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { loadLegalMarkdown, parseLegalMarkdown } from "./markdownDoc";
+import {
+  hasLocalizedLegalMarkdown,
+  loadLegalMarkdown,
+  parseLegalMarkdown,
+} from "./markdownDoc";
 
 describe("legal markdown docs", () => {
   it("loads pricing.md with expected sections", () => {
@@ -42,5 +46,29 @@ describe("legal markdown docs", () => {
     const doc = parseLegalMarkdown(loadLegalMarkdown("disclaimer.md"));
     assert.equal(doc.title, "SnapTax Disclaimer");
     assert.ok(doc.sections.some((s) => s.title === "Tax estimates"));
+  });
+
+  it("loads localized data-retention for fr-FR and de-DE", () => {
+    assert.equal(hasLocalizedLegalMarkdown("data-retention.md", "fr-FR"), true);
+    assert.equal(hasLocalizedLegalMarkdown("data-retention.md", "de-DE"), true);
+
+    const fr = parseLegalMarkdown(loadLegalMarkdown("data-retention.md", "fr-FR"));
+    assert.match(fr.title, /conservation/i);
+    const de = parseLegalMarkdown(loadLegalMarkdown("data-retention.md", "de-DE"));
+    assert.match(de.title, /Datenspeicherung/i);
+  });
+
+  it("loads localized security-incident for fr-FR and de-DE", () => {
+    assert.equal(hasLocalizedLegalMarkdown("security-incident.md", "fr-FR"), true);
+    const fr = parseLegalMarkdown(
+      loadLegalMarkdown("security-incident.md", "fr-FR"),
+    );
+    assert.match(fr.title, /Sécurité/i);
+  });
+
+  it("falls back to English when locale file missing", () => {
+    assert.equal(hasLocalizedLegalMarkdown("pricing.md", "fr-FR"), false);
+    const doc = parseLegalMarkdown(loadLegalMarkdown("pricing.md", "fr-FR"));
+    assert.equal(doc.title, "SnapTax Pricing");
   });
 });

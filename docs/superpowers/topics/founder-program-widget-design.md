@@ -114,6 +114,14 @@ if (user?.founderNumber != null && user.founderStatus === "active" && user.found
 // lapsed → fall through to DEFAULT
 ```
 
+### 3.9 Season lapse transition (implemented 2026-07-08)
+
+**Rule:** `founder_number` 非空且 **无** 当前 `currentTaxSeason()` entitlement → 有效状态 **`lapsed`**（即使 DB 仍为 `active`）。
+
+- 计算：`lib/server/founderSeasonStatus.ts` → `resolveEffectiveFounderStatus`
+- 应用：`getFounderProgramState` 返回有效状态；若与 DB 不一致则 **lazy persist**（无 cron）
+- 本季付费后（webhook + entitlement）→ 有效 **`active`**；Settings Badge 恢复；Widget 隐藏
+
 ---
 
 ## 4. User flow

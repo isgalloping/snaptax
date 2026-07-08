@@ -10,13 +10,15 @@
 
 Snap1099 小票生命周期分三层：**AI 状态**（`processing` | `done` | `blurry`）、**同步面**（`pendingUpload`、write budget、merge window、tombstone delete）、**报税面**（`taxSeason` / `taxSeasonDate` filed 标记 + `snaptax_receipts_summary` 聚合）。
 
-**本地优先：** Phase 0 从 IndexedDB 即时渲染（30 unfiled 热加载 → top 100 UI）；Phase 2 延迟 merge 服务端 top 100。Ghost 注册幂等；空 remote **永不**删本地。单票 write budget（默认 **5**）统一 upload + `/process`；用尽 → `syncStuck` + Tap to Retry。Orchestrator 移除 window prune，watcher 改单票 `GET /api/receipts/:id`。
+**本地优先：** Phase 0 从 IndexedDB 即时渲染（30 unfiled 热加载 → top 50 UI）；Phase 2 延迟 merge 服务端 top 50。Ghost 注册幂等；空 remote **永不**删本地。单票 write budget（默认 **5**）统一 upload + `/process`；用尽 → `syncStuck` + Tap to Retry。Orchestrator 移除 window prune，watcher 改单票 `GET /api/receipts/:id`。
 
 **Phase A（summary）：** `snaptax_receipts_summary` 维护当前税季 `unfiledTaxSaved` / `totalReceiptCount`；写路径 delta + idle watermark rebuild。
 
 **Phase B（recovery）：** 本地丢失 → 分页 `GET /api/receipts/sync` + OPFS 重下压缩图；稳态 idle 对账最近 50 条非 `done`；18 月 idle prune；Android/Desktop hidden flush（iOS 除外）。
 
-**Deferred（lifecycle redesign draft，未 ship）：** WorkerSession 门控、budget 3、UI/sync window 50、done 业务字段锁、export 纯 local-first 不读 server PG、Event Queue / `POST /api/sync/events`。
+**Phase C（lifecycle redesign · shipped）：** WorkerSession 相机门控 · done lock merge · UI/sync window 50 · server-side filed PATCH lock。
+
+**Deferred（lifecycle redesign draft，未 ship）：** write budget 3 · export 纯 local-first 不读 server PG · Event Queue / `POST /api/sync/events`。
 
 ---
 
@@ -158,7 +160,13 @@ Camera open → defer merge (existing); **WorkerSession Phase C (2026-07-08):** 
 
 **Module:** `lib/client/workerSessionGate.ts` · `HomeScreen.runWorkerCatchUp` on `cameraOpen → false`.
 
-**Still deferred (lifecycle redesign draft):** write budget 3 · export local-first · server-side done PATCH enforcement.
+**Still deferred (lifecycle redesign draft):** write budget 3 · export local-first.
+
+### 3.11 Server-side filed PATCH lock (Phase C · 2026-07-08)
+
+`PATCH /api/receipts/:id` category correction **rejected** when `status=done` **and** `isReceiptFiled` (`409 RECEIPT_LOCKED`). Unfiled `done` rows remain editable for export category review. `/process` already no-ops on `done`/`blurry`.
+
+**Module:** `lib/receipts/doneReceiptLock.ts` · `updateReceiptCategory`.
 
 ### 3.9 Done lock merge (Phase C · 2026-07-08)
 
@@ -197,7 +205,7 @@ UI list + default `GET /api/receipts` fetch window reduced **100 → 50** rows (
 
 - Receipt **list/detail UI** tweaks (`receipt-list-*`, `receipt-detail-*`, duplicate-detection) — stay active specs
 - Event Queue / `POST /api/sync/events` / Postgres Event Store — Phase 2 OCR roadmap §16
-- WorkerSession **full** redesign (write budget 3 · local export · server done PATCH) — lifecycle redesign draft partial
+- WorkerSession **full** redesign (write budget 3 · local export) — lifecycle redesign draft partial
 - Export pack generation — [`export-pipeline-design.md`](./export-pipeline-design.md)
 - Server-side orphan ghost merge job
 

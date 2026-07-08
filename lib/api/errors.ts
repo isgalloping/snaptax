@@ -84,6 +84,18 @@ export function resolveApiError(err: unknown): ResolvedApiError {
         clientMessage: "Invalid industry selection",
         status: 400,
       };
+    case "INVALID_CATEGORY":
+      return {
+        code: "INVALID_CATEGORY",
+        clientMessage: "Invalid receipt category",
+        status: 400,
+      };
+    case "RECEIPT_LOCKED":
+      return {
+        code: "RECEIPT_LOCKED",
+        clientMessage: "This receipt can no longer be edited",
+        status: 409,
+      };
     case "GHOST_RECEIPT_LIMIT":
       return {
         code: "GHOST_RECEIPT_LIMIT",

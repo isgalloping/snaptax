@@ -12,7 +12,7 @@ Snap1099 **Option C** 合规程序：12 维主矩阵 **100% Implemented**（Fran
 
 **Foundation ADR（仍 active）：** [`2026-06-05-compliance-privacy-design.md`](../specs/2026-06-05-compliance-privacy-design.md) — MVP 隐私架构；PRODUCT-SPEC §2.3 美国驻留以 PRODUCT-SPEC 为准。
 
-**Follow-up audit（仍 active）：** [`2026-07-08-us-legal-compliance-audit-design.md`](../specs/2026-07-08-us-legal-compliance-audit-design.md) — Paddle 审查、CPRA、SnapTax 品牌、operator 披露。
+**US legal audit（已归档）：** [`archive/specs/2026-07-08-us-legal-compliance-audit-design.md`](../archive/specs/2026-07-08-us-legal-compliance-audit-design.md) — Paddle 审查、CPRA、SnapTax 品牌、operator 披露 · **this topic** §15。
 
 **Canonical legal truth：** `docs/legal/*.md` · `lib/legal/locales.ts` · App Legal Sheet / `/privacy` `/terms` 同源。
 
@@ -211,6 +211,6 @@ Paddle merchant + CPRA launch readiness — **implemented** on `main`.
 | Technical `snap1099_*` cookies | ✅ unchanged · disclosed in cookies.md |
 | Analytics | ✅ none deployed |
 
-**Manual remaining:** production Paddle URL smoke · counsel sign-off (L4 out of scope).
+**Manual remaining:** counsel sign-off (L4 out of scope). Production Paddle URLs smoke-tested 2026-07-08 (see `docs/ops/us-compliance-checklist.md`).
 
 **Spec:** `archive/specs/2026-07-08-us-legal-compliance-audit-design.md` · **this topic** §15

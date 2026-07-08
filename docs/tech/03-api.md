@@ -178,7 +178,7 @@ Query: `season=2026`（默认当前报税季）
 ```json
 {
   "downloadUrl": "https://...",
-  "filename": "Snap1099-2026-Tax-Pack.xlsx",
+  "filename": "SnapTax-2026-Tax-Pack.xlsx",
   "expiresAt": "..."
 }
 ```

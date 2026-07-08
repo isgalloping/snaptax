@@ -1,17 +1,17 @@
 # SnapTax US Compliance Checklist
 
 **Operator:** Gang Huang · **Mailing:** Hong Kong · **Email:** snaptax.lightxforge@gmail.com  
-**Last reviewed:** _date_
+**Last reviewed:** 2026-07-08
 
 ## Paddle vendor URLs
 
 | Field | URL | Status |
 |-------|-----|--------|
-| Privacy | https://snaptax.lightxforge.com/privacy | [ ] |
-| Terms | https://snaptax.lightxforge.com/terms | [ ] |
-| Price | https://snaptax.lightxforge.com/pricing | [ ] |
-| Refund | https://snaptax.lightxforge.com/refund | [ ] |
-| Policies hub | https://snaptax.lightxforge.com/policies | [ ] |
+| Privacy | https://snaptax.lightxforge.com/privacy | [x] 200 · SnapTax operator block |
+| Terms | https://snaptax.lightxforge.com/terms | [x] 200 · Paddle season pricing |
+| Price | https://snaptax.lightxforge.com/pricing | [x] 200 · Founder tiers + Standard |
+| Refund | https://snaptax.lightxforge.com/refund | [x] 200 · 14-day US window |
+| Policies hub | https://snaptax.lightxforge.com/policies | [x] 200 · Privacy · Retention · Security · Cookie · Disclaimer |
 
 ## Copy sign-off
 

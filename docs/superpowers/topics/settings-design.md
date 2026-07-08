@@ -191,8 +191,9 @@ Sub-page：`privacy-center` → `PrivacyDataSection` + `PrivacyCenterSubPage`。
 
 - Referral 后端 / 推送通知
 - Settings deep-link Back（D2/D3 已拒）
-- FR/DE retention/security Markdown（E3 deferred）
 - PWA Before/After chrome（独立 spec）
+
+**Legal i18n（2026-07-08）：** Settings `LegalSheet` 中 **Data Retention** · **Security** 支持 `fr-FR` / `de-DE` Markdown（`docs/legal/*.fr.md` · `*.de.md`）；`privacy` / `terms` 仍用 `lib/legal/locales.ts`。
 
 ---
 

@@ -30,7 +30,7 @@ Layer 2  Archive        docs/superpowers/archive/**
 | camera-live-footer | [topics/camera-live-footer-design.md](./topics/camera-live-footer-design.md) · consolidated 2026-07-08 | PRODUCT-SPEC §3.1 连拍相机 footer |
 | app-navigation-history | [topics/app-navigation-history-design.md](./topics/app-navigation-history-design.md) · consolidated 2026-07-08 | PRODUCT-SPEC §2 导航 · PWA 返回 |
 
-Status: Phase 0 complete · Phase 1 complete · Phase 2 complete · **Phase 3 complete** (founder, camera footer, navigation) · See [MANIFEST.csv](./MANIFEST.csv) (345 entries) · `npm run lint:docs`
+Status: Phase 0 complete · Phase 1 complete · Phase 2 complete · **Phase 3 complete** (founder, camera footer, navigation) · See [MANIFEST.csv](./MANIFEST.csv) (348 entries · 78 active · 116 stubs) · `npm run lint:docs`
 
 ## Agent 读法
 

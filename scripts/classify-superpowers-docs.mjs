@@ -16,8 +16,15 @@ const TOPIC_PATTERNS = {
   "delete-account": /delete-account/i,
   "receipt-sync-lifecycle": /receipt-(sync|lifecycle|sliding|pipeline|upload-stuck|summary-local|sync-recovery)/i,
   "pwa-install": /pwa-|android-pwa|webapk/i,
+  "founder-program-widget": /founder-|hide-missing-deductions/i,
+  "camera-live-footer": /camera-live-footer|resnap-shutter/i,
+  "app-navigation-history": /swipe-back|app-navigation-history/i,
   "foundation-adr": /2026-06-05-|logging-design|tax-savings-regional|mvp-master/i,
 };
+
+function isArchiveStub(content) {
+  return content.startsWith("# [Archived]");
+}
 
 function inferTopic(filename) {
   for (const [topic, re] of Object.entries(TOPIC_PATTERNS)) {
@@ -29,6 +36,7 @@ function inferTopic(filename) {
 function inferLayer(relPath, content) {
   if (relPath.startsWith("archive/")) return "archive";
   if (relPath.startsWith("topics/")) return "consolidated";
+  if (isArchiveStub(content)) return "stub";
   if (/supersedes|superseded|Partially superseded|DEPRECATED/i.test(content)) {
     return "consolidate-candidate";
   }
@@ -75,13 +83,17 @@ for (const rel of files.sort()) {
   const topic = inferTopic(basename(rel));
   const layer = inferLayer(rel, content);
   const status =
-    layer === "consolidate-candidate"
-      ? "consolidate"
-      : layer === "foundation-adr"
-        ? "keep-active"
-        : layer === "archive"
-          ? "archived"
-          : "active";
+    layer === "stub"
+      ? "archived-stub"
+      : layer === "consolidate-candidate"
+        ? "consolidate"
+        : layer === "foundation-adr"
+          ? "keep-active"
+          : layer === "archive"
+            ? "archived"
+            : layer === "consolidated"
+              ? "topic"
+              : "active";
   const canonical =
     topic === "pwa-install"
       ? "docs/tech/13-pwa-install-architecture.md"

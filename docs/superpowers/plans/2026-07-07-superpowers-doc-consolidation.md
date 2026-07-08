@@ -10,6 +10,8 @@
 
 **Spec:** `docs/superpowers/specs/2026-07-07-superpowers-doc-consolidation-design.md`
 
+> **Executed (2026-07-08):** Phase 0–3 complete via PRs [#112](https://github.com/isgalloping/snaptax/pull/112) and [#114](https://github.com/isgalloping/snaptax/pull/114). Founder follow-ups: [#115](https://github.com/isgalloping/snaptax/pull/115), [#116](https://github.com/isgalloping/snaptax/pull/116). Step checkboxes below are a historical execution log.
+
 ---
 
 ## File map (created / modified)
@@ -646,7 +648,9 @@ git commit -m "docs: add superpowers topic layer to Agent checklist and doc inde
 
 - [ ] New feature spec merged → if belongs to existing topic, update topic + Decision log in same PR
 - [ ] Quarterly: run `classify-superpowers-docs.mjs`; review `status=consolidate` rows
-- [ ] Phase 2 backlog: founder widget topic, camera footer chain, navigation/history
+- [x] Phase 2 backlog: founder widget topic, camera footer chain, navigation/history (PR #114)
+- [x] `npm run lint:docs` link checker (Phase 2, PR #112)
+- [ ] Optional Phase 4 topic merges: settings cluster, batch-snap/capture pipeline, compliance program
 
 ---
 

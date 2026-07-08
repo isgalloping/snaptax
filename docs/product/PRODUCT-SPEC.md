@@ -331,7 +331,7 @@ Next.js 16 · React 19 · Tailwind 4 · Serwist · **PostgreSQL（美国）** ·
 - [ ] PWA：产品入口是否为 **`/app`**（非 marketing `/`）？manifest **`short_name` = SnapTax**？  
 - [ ] `/app` 手机门控是否 **Landing 后**、**可跳过**、且 **不**在营销页弹全屏？  
 - [ ] Android Chrome 营销 CTA 是否 **原生 `<a href="/app">`**（非 client-only 路由）？  
-- [ ] 改 onboarding / home / export / delete / receipt sync / PWA 前是否先读 `docs/superpowers/topics/*` 或 `docs/tech/13-pwa-install-architecture.md`？  
+- [ ] 改 onboarding / home / export / delete / receipt sync / **founder / camera footer / navigation** / PWA 前是否先读 `docs/superpowers/topics/*` 或 `docs/tech/13-pwa-install-architecture.md`？  
 - [ ] 新 spec 完成后是否更新 topic 终稿或 MANIFEST（见 [`docs/superpowers/README.md`](../superpowers/README.md) 归档 checklist）？  
 
 ---

@@ -2,7 +2,7 @@
 
 **Last Updated:** July 2026  
 **Public page:** [data-retention.md](../legal/data-retention.md) (`/data-retention`)  
-**Compliance:** [`2026-06-30-compliance-p2-data-lifecycle.md`](../superpowers/specs/2026-06-30-compliance-p2-data-lifecycle.md)
+**Compliance:** [`compliance-program-design.md`](../superpowers/topics/compliance-program-design.md) §7
 
 Engineering audit reference. **Not linked from the public app.** Values here must match the user-facing Data Retention Policy and running code.
 

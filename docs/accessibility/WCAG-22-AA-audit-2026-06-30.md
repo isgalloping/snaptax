@@ -55,4 +55,4 @@ npm run a11y:audit
 ## Related
 
 - [WCAG-22-AA-summary.md](./WCAG-22-AA-summary.md)
-- [2026-06-30-compliance-p4-accessibility-wcag22-aa.md](../superpowers/specs/2026-06-30-compliance-p4-accessibility-wcag22-aa.md)
+- [compliance-program-design.md](../superpowers/topics/compliance-program-design.md) §9

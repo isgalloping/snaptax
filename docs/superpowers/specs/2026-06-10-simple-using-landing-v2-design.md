@@ -4,7 +4,7 @@
 **Status:** Approved (design)  
 **Scope:** Replace pill carousel `simple_using` with mockup Screen 1 (camera hero + 3 status lines + Let's Start CTA). `data_stream` unchanged.
 
-**Parent spec:** [`2026-06-10-landing-flags-design.md`](./2026-06-10-landing-flags-design.md)
+**Parent spec:** [`topics/onboarding-aha-design.md`](../topics/onboarding-aha-design.md) §5.1 · **Retired variant**
 
 ## Problem
 

@@ -194,8 +194,8 @@ git commit -m "docs(legal): update contact email in public legal pages"
 - Modify: `docs/accessibility/WCAG-22-AA-summary.md`
 - Modify: `docs/product/PRODUCT-SPEC.md`
 - Modify: `docs/prd/0.0.1.update.md`
-- Modify: `docs/superpowers/specs/2026-06-30-compliance-p1-legal.md`
-- Modify: `docs/superpowers/specs/2026-06-30-compliance-p6-dsr-governance.md`
+- Modify: `docs/superpowers/topics/compliance-program-design.md`
+- Modify: `docs/superpowers/topics/compliance-program-design.md`
 - Modify: `docs/superpowers/specs/2026-06-05-compliance-privacy-design.md`
 
 - [ ] **Step 1: Bulk replace**
@@ -211,8 +211,8 @@ for f in \
   docs/accessibility/WCAG-22-AA-summary.md \
   docs/product/PRODUCT-SPEC.md \
   docs/prd/0.0.1.update.md \
-  docs/superpowers/specs/2026-06-30-compliance-p1-legal.md \
-  docs/superpowers/specs/2026-06-30-compliance-p6-dsr-governance.md \
+  docs/superpowers/topics/compliance-program-design.md \
+  docs/superpowers/topics/compliance-program-design.md \
   docs/superpowers/specs/2026-06-05-compliance-privacy-design.md; do
   sed -i 's/legal@snap1099\.com/snaptax.lightxforge@gmail.com/g' "$f"
 done
@@ -230,8 +230,8 @@ For `2026-06-30-compliance-p6-dsr-governance.md`, the table row becomes:
 rg 'legal@snap1099\.com' \
   lib/ components/ docs/legal/ docs/ops/ docs/product/ \
   docs/prd/ docs/accessibility/ \
-  docs/superpowers/specs/2026-06-30-compliance-p1-legal.md \
-  docs/superpowers/specs/2026-06-30-compliance-p6-dsr-governance.md \
+  docs/superpowers/topics/compliance-program-design.md \
+  docs/superpowers/topics/compliance-program-design.md \
   docs/superpowers/specs/2026-06-05-compliance-privacy-design.md
 ```
 
@@ -243,8 +243,8 @@ Remaining `legal@snap1099.com` in `docs/superpowers/plans/` and the new design s
 
 ```bash
 git add docs/ops/ docs/accessibility/ docs/product/ docs/prd/ \
-  docs/superpowers/specs/2026-06-30-compliance-p1-legal.md \
-  docs/superpowers/specs/2026-06-30-compliance-p6-dsr-governance.md \
+  docs/superpowers/topics/compliance-program-design.md \
+  docs/superpowers/topics/compliance-program-design.md \
   docs/superpowers/specs/2026-06-05-compliance-privacy-design.md
 git commit -m "docs: update legal contact email across ops and compliance docs"
 ```

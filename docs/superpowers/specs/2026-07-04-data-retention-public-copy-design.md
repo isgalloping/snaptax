@@ -3,7 +3,7 @@
 **Date:** 2026-07-04  
 **Status:** Approved (implemented 2026-07-04)  
 **Route:** `/data-retention`  
-**References:** `docs/superpowers/specs/2026-06-30-compliance-p2-data-lifecycle.md` · `lib/legal/markdownDoc.ts`
+**References:** `docs/superpowers/topics/compliance-program-design.md` §7 · `lib/legal/markdownDoc.ts`
 
 ## Summary
 

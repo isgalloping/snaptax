@@ -1085,16 +1085,19 @@ export function HomeScreen() {
 
   const handleExportGatePrepare = useCallback(async () => {
     const local = await prepareExportLocal(exportPrepareDeps());
-    setReceipts(local);
+    setReceipts(top100ByUpdatedAt(local));
     return local;
   }, [exportPrepareDeps]);
 
   const handlePreExportPrepare = useCallback(
     async (format: ExportFormat) => {
       const isLocalFirst = format === "csv" || format === "txf";
-      const merged = isLocalFirst
-        ? await prepareExportLocal(exportPrepareDeps())
-        : await prepareExportSync(exportPrepareDeps());
+      if (isLocalFirst) {
+        const local = await prepareExportLocal(exportPrepareDeps());
+        setReceipts(top100ByUpdatedAt(local));
+        return local;
+      }
+      const merged = await prepareExportSync(exportPrepareDeps());
       setReceipts(merged);
       return merged;
     },

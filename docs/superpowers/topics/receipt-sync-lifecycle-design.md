@@ -137,8 +137,8 @@ Server: Blob **before** DB on upload（避免 orphan row）。
 
 ```text
 Phase 0-fast: loadRecentUnfiled(30) + sum from summary → render (no network)
-Phase 0-full: loadTopByUpdatedAt(100) → expand list
-Phase 2:      ghost + flush + fetchReceiptList(100) → orchestrator merge → watcher bootstrap
+Phase 0-full: loadTopByUpdatedAt(50) → expand list
+Phase 2:      ghost + flush + fetchReceiptList(50) → orchestrator merge → watcher bootstrap
 Phase 3 idle: summary verify · retention prune · photo 90d purge (≥30s delay)
 ```
 
@@ -158,13 +158,19 @@ Camera open → defer merge (existing); **WorkerSession Phase C (2026-07-08):** 
 
 **Module:** `lib/client/workerSessionGate.ts` · `HomeScreen.runWorkerCatchUp` on `cameraOpen → false`.
 
-**Still deferred (lifecycle redesign draft):** sync window 50 · budget 3 · export local-first · server-side done PATCH enforcement.
+**Still deferred (lifecycle redesign draft):** write budget 3 · export local-first · server-side done PATCH enforcement.
 
 ### 3.9 Done lock merge (Phase C · 2026-07-08)
 
 Local `status=done` rows: **protected fields frozen** on merge (`amount`, `merchant`, `category`, `taxAmount`, `deductible`, `currency`, `dataRegion`, `aiConfidence`, `subtitle`, `status`). **Allowed from remote:** `taxSeason`, `taxSeasonDate`, `hasRemoteImage`, `updatedAt` (when remote filed metadata is newer). `pendingUpload` local still wins entirely.
 
 **Module:** `lib/client/receiptMergePolicy.ts` · wired in `unionMergeLWW`.
+
+### 3.10 Sync window 50 (Phase C · 2026-07-08)
+
+UI list + default `GET /api/receipts` fetch window reduced **100 → 50** rows (`updatedAt desc`). Older rows remain in IndexedDB; reconcile non-done window stays **50** (`NON_DONE_RECONCILE_LIMIT`). Write budget remains **5** (draft 3 not adopted).
+
+**Module:** `lib/client/receiptWindow.ts` · `UI_RECEIPT_LIMIT` · `fetchReceiptList` default.
 
 ---
 
@@ -191,7 +197,7 @@ Local `status=done` rows: **protected fields frozen** on merge (`amount`, `merch
 
 - Receipt **list/detail UI** tweaks (`receipt-list-*`, `receipt-detail-*`, duplicate-detection) — stay active specs
 - Event Queue / `POST /api/sync/events` / Postgres Event Store — Phase 2 OCR roadmap §16
-- WorkerSession **full** redesign (sync window 50 · budget 3 · local export · server done PATCH) — lifecycle redesign draft partial
+- WorkerSession **full** redesign (write budget 3 · local export · server done PATCH) — lifecycle redesign draft partial
 - Export pack generation — [`export-pipeline-design.md`](./export-pipeline-design.md)
 - Server-side orphan ghost merge job
 

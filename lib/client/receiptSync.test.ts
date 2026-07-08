@@ -22,13 +22,13 @@ function stored(
   };
 }
 
-test("top100ByUpdatedAt keeps newest rows", () => {
-  const rows = Array.from({ length: 105 }, (_, i) =>
+test("top100ByUpdatedAt keeps newest rows within sync window", () => {
+  const rows = Array.from({ length: 55 }, (_, i) =>
     stored(`r${i}`, new Date(Date.UTC(2026, 5, 1, 0, 0, i)).toISOString()),
   );
   const top = top100ByUpdatedAt(rows);
   assert.equal(top.length, RECEIPT_SYNC_LIMIT);
-  assert.equal(top[0]?.id, "r104");
+  assert.equal(top[0]?.id, "r54");
 });
 
 test("unionMergeLWW keeps pendingUpload local over remote", () => {

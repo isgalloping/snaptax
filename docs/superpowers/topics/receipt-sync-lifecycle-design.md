@@ -142,7 +142,23 @@ Phase 2:      ghost + flush + fetchReceiptList(100) → orchestrator merge → w
 Phase 3 idle: summary verify · retention prune · photo 90d purge (≥30s delay)
 ```
 
-Camera open → defer merge (existing); **not** full WorkerSession gate (deferred).
+Camera open → defer merge (existing); **WorkerSession Phase C (2026-07-08):** auto upload / list fetch / 60s retry deferred; catch-up on camera close · manual ↻ unchanged.
+
+### 3.8 WorkerSession gate (Phase C · 2026-07-08)
+
+| While `cameraOpen` | Behavior |
+|--------------------|----------|
+| Auto `flushPendingUploads` | **Blocked** — queued for catch-up |
+| Auto `syncFromServer(defer)` / `fetchReceiptList` | **Blocked** — no network fetch |
+| 60s retry interval | **Blocked** — queued |
+| Deferred startup Phase 2 | **Blocked** if camera opens first — queued |
+| OCR-complete upload hook | **Blocked** |
+| Manual list ↻ (`immediate` sync) | **Allowed** |
+| Batch Done flush (`batchCapture: true`) | **Allowed** (camera already closed) |
+
+**Module:** `lib/client/workerSessionGate.ts` · `HomeScreen.runWorkerCatchUp` on `cameraOpen → false`.
+
+**Still deferred (lifecycle redesign draft):** done lock · window 50 · budget 3 · export local-first.
 
 ---
 
@@ -169,7 +185,7 @@ Camera open → defer merge (existing); **not** full WorkerSession gate (deferre
 
 - Receipt **list/detail UI** tweaks (`receipt-list-*`, `receipt-detail-*`, duplicate-detection) — stay active specs
 - Event Queue / `POST /api/sync/events` / Postgres Event Store — Phase 2 OCR roadmap §16
-- WorkerSession full gate — lifecycle redesign draft only
+- WorkerSession **full** redesign (done lock · window 50 · budget 3 · local export) — lifecycle redesign draft
 - Export pack generation — [`export-pipeline-design.md`](./export-pipeline-design.md)
 - Server-side orphan ghost merge job
 

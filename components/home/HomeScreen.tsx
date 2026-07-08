@@ -77,6 +77,12 @@ import {
 import { ProcessingQueue } from "@/lib/client/processingQueue";
 import { ProcessingReceiptWatcher } from "@/lib/client/processingReceiptWatcher";
 import { resolveHeaderTaxSaved } from "@/lib/client/resolveHeaderTaxSaved";
+import {
+  hasWorkerCatchUp,
+  isWorkerSessionActive,
+  mergeWorkerCatchUpFlags,
+  type WorkerCatchUpFlags,
+} from "@/lib/client/workerSessionGate";
 import { utcNow } from "@/lib/time/utc";
 import {
   deleteReceipt as deleteStoredReceipt,
@@ -218,7 +224,11 @@ export function HomeScreen() {
   const watcherRef = useRef<ProcessingReceiptWatcher | null>(null);
   const queueRef = useRef<ProcessingQueue | null>(null);
   const flushPendingUploadsRef = useRef<
-    (opts?: { batchCapture?: boolean; skipGhostEnsure?: boolean }) => Promise<void>
+    (opts?: {
+      batchCapture?: boolean;
+      skipGhostEnsure?: boolean;
+      force?: boolean;
+    }) => Promise<void>
   >(async () => {});
   const flushPendingDeletesRef = useRef<() => Promise<void>>(async () => {});
   const uploadPendingInnerRef = useRef<
@@ -240,6 +250,7 @@ export function HomeScreen() {
   const pendingMergeRef = useRef<{
     receipts: Receipt[];
   } | null>(null);
+  const pendingWorkerCatchUpRef = useRef<WorkerCatchUpFlags>({});
   const snapButtonRef = useRef<SnapButtonHandle>(null);
   const setTaxAnimatingRef = useRef<(value: boolean) => void>(() => {});
 
@@ -504,6 +515,13 @@ export function HomeScreen() {
     [applyMergeNow],
   );
 
+  const queueWorkerCatchUp = useCallback((flags: Partial<WorkerCatchUpFlags>) => {
+    pendingWorkerCatchUpRef.current = mergeWorkerCatchUpFlags(
+      pendingWorkerCatchUpRef.current,
+      flags,
+    );
+  }, []);
+
   useEffect(() => {
     if (cameraOpen || !pendingMergeRef.current) return;
     const pending = pendingMergeRef.current;
@@ -515,10 +533,22 @@ export function HomeScreen() {
     async (
       local: StoredReceipt[],
       applyMode: "immediate" | "defer" = "defer",
+      opts?: { force?: boolean },
     ): Promise<Receipt[]> => {
       if (!navigator.onLine) {
         applyMergeNow(local);
         return local;
+      }
+      if (
+        !opts?.force &&
+        applyMode === "defer" &&
+        isWorkerSessionActive({ cameraOpen: cameraOpenRef.current })
+      ) {
+        queueWorkerCatchUp({ sync: true });
+        const visible = await loadTopByUpdatedAt(UI_RECEIPT_LIMIT).catch(() =>
+          top100ByUpdatedAt(local),
+        );
+        return visible;
       }
       try {
         const { visible } = await mergeServerReceiptsIntoLocal(local);
@@ -537,7 +567,7 @@ export function HomeScreen() {
         return visible;
       }
     },
-    [applyMergeNow, applyMergeOrDefer],
+    [applyMergeNow, applyMergeOrDefer, queueWorkerCatchUp],
   );
 
   const applyReceiptUpdate = useCallback(
@@ -733,8 +763,20 @@ export function HomeScreen() {
   uploadPendingInnerRef.current = uploadPendingInner;
 
   const flushPendingUploads = useCallback(
-    async (opts?: { batchCapture?: boolean; skipGhostEnsure?: boolean }) => {
+    async (opts?: {
+      batchCapture?: boolean;
+      skipGhostEnsure?: boolean;
+      force?: boolean;
+    }) => {
     await ensureConvertedDemoUploadReady();
+    if (
+      !opts?.force &&
+      !opts?.batchCapture &&
+      isWorkerSessionActive({ cameraOpen: cameraOpenRef.current })
+    ) {
+      queueWorkerCatchUp({ flushUploads: true });
+      return;
+    }
     if (!opts?.skipGhostEnsure) {
       try {
         await ensureGhostSession();
@@ -754,10 +796,42 @@ export function HomeScreen() {
       }
     }
   },
-  [],
+  [queueWorkerCatchUp],
   );
 
   flushPendingUploadsRef.current = flushPendingUploads;
+
+  const runWorkerCatchUp = useCallback(async () => {
+    if (isWorkerSessionActive({ cameraOpen: cameraOpenRef.current })) return;
+    const flags = pendingWorkerCatchUpRef.current;
+    if (!hasWorkerCatchUp(flags)) return;
+    pendingWorkerCatchUpRef.current = {};
+    if (!navigator.onLine) return;
+    try {
+      await ensureGhostSession();
+    } catch {
+      pendingWorkerCatchUpRef.current = mergeWorkerCatchUpFlags({}, flags);
+      return;
+    }
+    if (flags.flushUploads) {
+      await flushPendingUploadsRef.current({ force: true });
+    }
+    if (flags.flushDeletes) {
+      await flushPendingDeletesRef.current();
+    }
+    if (flags.sync) {
+      const stored = await loadAllReceipts();
+      await syncFromServer(stored, "immediate", { force: true });
+    }
+    if (flags.reconcile) {
+      void reconcileNonDoneWindow();
+    }
+  }, [syncFromServer]);
+
+  useEffect(() => {
+    if (cameraOpen) return;
+    void runWorkerCatchUp();
+  }, [cameraOpen, runWorkerCatchUp]);
 
   useEffect(() => {
     setOcrCompleteHandler((receiptId) => {
@@ -772,6 +846,7 @@ export function HomeScreen() {
         if (!receipt?.pendingUpload || shouldSkipUploadAttempt(receipt)) return;
         if (uploadInFlightRef.current.has(receiptId)) return;
         if (batchFlushActiveRef.current) return;
+        if (isWorkerSessionActive({ cameraOpen: cameraOpenRef.current })) return;
         if (isBatchOcrUploadDeferred(receiptId)) return;
         try {
           await uploadPendingInnerRef.current(receipt);
@@ -812,6 +887,15 @@ export function HomeScreen() {
             }
           }
           if (cancelled()) return;
+          if (isWorkerSessionActive({ cameraOpen: cameraOpenRef.current })) {
+            queueWorkerCatchUp({
+              flushUploads: true,
+              flushDeletes: true,
+              sync: true,
+              reconcile: true,
+            });
+            return;
+          }
           await flushPendingUploadsRef.current();
           if (cancelled()) return;
           await flushPendingDeletesRef.current();
@@ -833,7 +917,7 @@ export function HomeScreen() {
         })();
       });
     },
-    [syncFromServer],
+    [syncFromServer, queueWorkerCatchUp],
   );
 
   useEffect(() => {
@@ -1045,6 +1129,14 @@ export function HomeScreen() {
       ) {
         return;
       }
+      if (isWorkerSessionActive({ cameraOpen: cameraOpenRef.current })) {
+        queueWorkerCatchUp({
+          flushUploads: true,
+          flushDeletes: true,
+          reconcile: document.visibilityState === "visible",
+        });
+        return;
+      }
       void flushPendingUploadsRef.current();
       void flushPendingDeletesRef.current();
       if (document.visibilityState === "visible") {
@@ -1054,7 +1146,7 @@ export function HomeScreen() {
 
     const intervalId = window.setInterval(retryPending, 60_000);
     return () => window.clearInterval(intervalId);
-  }, []);
+  }, [queueWorkerCatchUp]);
 
   useEffect(() => {
     const onVisibility = () => setAppHidden(document.hidden);

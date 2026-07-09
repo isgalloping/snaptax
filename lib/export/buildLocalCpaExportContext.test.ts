@@ -56,6 +56,16 @@ describe("buildLocalCpaExportContext", () => {
     assert.equal(ctx.auditRows.length, 0);
   });
 
+  it("excludes non-done receipts", () => {
+    const ctx = buildLocalCpaExportContext(
+      [expenseReceipt({ status: "processing" })],
+      2026,
+      "UTC",
+    );
+    assert.equal(ctx.yearReceiptCount, 0);
+    assert.equal(ctx.auditRows.length, 0);
+  });
+
   it("sorts receipts by capture time ascending for audit order", () => {
     const later = expenseReceipt({
       id: "00000000-0000-0000-0000-000000000003",

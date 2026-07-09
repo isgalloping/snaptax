@@ -21,6 +21,7 @@ function expenseReceipt(overrides: Partial<Receipt> = {}): Receipt {
 
 describe("runLocalCpaExport", () => {
   it("builds cpa_pdf and syncs filed metadata", async () => {
+    const order: string[] = [];
     let marked = false;
     const result = await runLocalCpaExport(
       {
@@ -31,18 +32,29 @@ describe("runLocalCpaExport", () => {
         taxpayerName: "Jane Contractor",
       },
       {
-        buildPdf: async () => new TextEncoder().encode("%PDF-test"),
-        syncFiled: async () => ({
-          taxSeason: "2026",
-          taxSeasonDate: new Date("2026-07-08T12:00:00.000Z"),
-          filedCount: 1,
-          receiptIds: [RECEIPT_ID],
-        }),
+        buildPdf: async (input) => {
+          order.push("buildPdf");
+          assert.equal(input.taxYear, "2026");
+          assert.equal(input.auditRows.length, 1);
+          return new TextEncoder().encode("%PDF-test");
+        },
+        syncFiled: async () => {
+          order.push("syncFiled");
+          return {
+            taxSeason: "2026",
+            taxSeasonDate: new Date("2026-07-08T12:00:00.000Z"),
+            filedCount: 1,
+            receiptIds: [RECEIPT_ID],
+          };
+        },
         markFiledLocal: async () => {
+          order.push("markFiledLocal");
           marked = true;
         },
       },
     );
+
+    assert.deepEqual(order, ["buildPdf", "syncFiled", "markFiledLocal"]);
 
     assert.equal(result.file.type, "application/pdf");
     assert.match(result.file.name, /Schedule-C-Mirror\.pdf$/);
@@ -90,6 +102,26 @@ describe("runLocalCpaExport", () => {
           format: "cpa_pdf",
         }),
       (err: Error) => err.message === "NO_RECEIPTS",
+    );
+  });
+
+  it("throws PDF_GENERATION_FAILED when buildPdf fails", async () => {
+    await assert.rejects(
+      () =>
+        runLocalCpaExport(
+          {
+            receipts: [expenseReceipt()],
+            taxYear: 2026,
+            timeZone: "UTC",
+            format: "cpa_pdf",
+          },
+          {
+            buildPdf: async () => {
+              throw new Error("pdf-lib failed");
+            },
+          },
+        ),
+      (err: Error) => err.message === "PDF_GENERATION_FAILED",
     );
   });
 });

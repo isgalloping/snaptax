@@ -29,7 +29,6 @@ async function defaultLoadReceiptMeta(
 
 async function fetchRemoteReceiptImageBlob(
   receiptId: string,
-  deps: ResolveExportReceiptImageDeps,
 ): Promise<Blob | null> {
   if (!isPersistedReceiptId(receiptId)) return null;
   try {
@@ -70,7 +69,7 @@ export async function resolveExportReceiptImageBlob(
 
   const fetchRemote =
     deps.fetchRemoteBlob ??
-    ((id: string) => fetchRemoteReceiptImageBlob(id, deps));
+    ((id: string) => fetchRemoteReceiptImageBlob(id));
   const remote = await fetchRemote(receiptId);
   if (remote) {
     return { blob: remote, source: "remote" };

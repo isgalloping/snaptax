@@ -212,6 +212,8 @@ Shared row + image plumbing for client CPA export:
 | Heavy bundles | `buildBrowserScheduleCMirrorPdf` / `buildLocalCpaPackZip` **dynamic import** in `runLocalCpaExport`（`cpa_pdf` 不加载 fflate） |
 | Tax year filter | `buildLocalCpaExportContext` → `filterReceiptsByTaxYear` + capture-time asc（同 server / csv） |
 | Batch images | `resolveExportReceiptImage` → `fetchReceiptImageUrlCached` |
+| CPA pack ZIP | Incremental `Zip` + `ZipPassThrough`（逐张写入，降低峰值内存） |
+| Generate UX | `cpa_pack` 图片进度回调 → `ExportEngineSheet` 真实进度 |
 | Tests | `runLocalCpaExport.test.ts` — deps 注入 orchestration 契约 |
 
 **Server hybrid retained:** `POST /api/export/tax-pack` still serves `xlsx` and fallback; CPA formats no longer call it from UI.

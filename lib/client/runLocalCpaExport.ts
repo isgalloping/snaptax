@@ -8,6 +8,7 @@ import { hasAuditExportContent } from "@/lib/export/auditEligibleRows";
 import { exportTaxPackFilename } from "@/lib/export/exportFilenames";
 import type { ExportTaxPackMeta } from "@/lib/client/authApi";
 import type { ScheduleCMirrorPdfInput } from "@/lib/export/buildScheduleCMirrorPdf";
+import type { LocalCpaPackProgress } from "@/lib/export/buildLocalCpaPackZip";
 import type { TaxRegion } from "@/lib/tax/types";
 import type { Receipt } from "@/lib/types";
 
@@ -20,6 +21,7 @@ export type RunLocalCpaExportParams = {
   format: LocalCpaExportFormat;
   taxpayerName?: string;
   dataRegion?: TaxRegion;
+  onPackProgress?: (progress: LocalCpaPackProgress) => void;
 };
 
 export type RunLocalCpaExportResult = {
@@ -108,6 +110,7 @@ export async function runLocalCpaExport(
         const resolved = await resolveImage(receiptId);
         return resolved?.blob ?? null;
       },
+      params.onPackProgress,
     );
     mimeType = "application/zip";
     blob = new Blob([pack.buffer.slice()], { type: mimeType });

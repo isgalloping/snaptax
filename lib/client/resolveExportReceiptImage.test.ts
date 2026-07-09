@@ -46,4 +46,38 @@ describe("resolveExportReceiptImageBlob", () => {
     assert.equal(result?.source, "remote");
     assert.equal(await result?.blob.text(), "remote-bytes");
   });
+
+  it("skips remote fetch when receipt is pending upload", async () => {
+    let fetched = false;
+    const result = await resolveExportReceiptImageBlob(RECEIPT_ID, {
+      loadPhoto: async () => null,
+      loadReceiptMeta: async () => ({
+        pendingUpload: true,
+        hasRemoteImage: true,
+      }),
+      fetchRemoteBlob: async () => {
+        fetched = true;
+        return new Blob(["remote-bytes"], { type: "image/jpeg" });
+      },
+    });
+    assert.equal(result, null);
+    assert.equal(fetched, false);
+  });
+
+  it("skips remote fetch when hasRemoteImage is false", async () => {
+    let fetched = false;
+    const result = await resolveExportReceiptImageBlob(RECEIPT_ID, {
+      loadPhoto: async () => null,
+      loadReceiptMeta: async () => ({
+        pendingUpload: false,
+        hasRemoteImage: false,
+      }),
+      fetchRemoteBlob: async () => {
+        fetched = true;
+        return new Blob(["remote-bytes"], { type: "image/jpeg" });
+      },
+    });
+    assert.equal(result, null);
+    assert.equal(fetched, false);
+  });
 });

@@ -1,13 +1,31 @@
-import { fetchReceiptImageUrlCached } from "@/lib/client/receiptImageCache";
+import {
+  canFetchRemoteReceiptImage,
+  fetchReceiptImageUrlCached,
+} from "@/lib/client/receiptImageCache";
 import { isPersistedReceiptId } from "@/lib/receipts/receiptId";
-import { loadPhoto } from "@/lib/storage/receiptDb";
+import { loadPhoto, loadReceipt } from "@/lib/storage/receiptDb";
+import type { Receipt } from "@/lib/types";
 
 export type ExportImageSource = "local" | "remote";
 
 export type ResolveExportReceiptImageDeps = {
   loadPhoto?: (id: string) => Promise<Blob | null>;
   fetchRemoteBlob?: (id: string) => Promise<Blob | null>;
+  loadReceiptMeta?: (
+    id: string,
+  ) => Promise<Pick<Receipt, "hasRemoteImage" | "pendingUpload"> | null>;
 };
+
+async function defaultLoadReceiptMeta(
+  receiptId: string,
+): Promise<Pick<Receipt, "hasRemoteImage" | "pendingUpload"> | null> {
+  const receipt = await loadReceipt(receiptId);
+  if (!receipt) return null;
+  return {
+    hasRemoteImage: receipt.hasRemoteImage,
+    pendingUpload: receipt.pendingUpload,
+  };
+}
 
 async function fetchRemoteReceiptImageBlob(
   receiptId: string,
@@ -39,7 +57,19 @@ export async function resolveExportReceiptImageBlob(
     return { blob: local, source: "local" };
   }
 
-  const fetchRemote = deps.fetchRemoteBlob ?? fetchRemoteReceiptImageBlob;
+  const shouldCheckRemoteMeta =
+    deps.loadReceiptMeta != null || deps.fetchRemoteBlob == null;
+  if (shouldCheckRemoteMeta) {
+    const loadReceiptMeta = deps.loadReceiptMeta ?? defaultLoadReceiptMeta;
+    const meta = await loadReceiptMeta(receiptId);
+    if (meta && !canFetchRemoteReceiptImage(meta)) {
+      return null;
+    }
+  }
+
+  const fetchRemote =
+    deps.fetchRemoteBlob ??
+    ((id: string) => fetchRemoteReceiptImageBlob(id));
   const remote = await fetchRemote(receiptId);
   if (remote) {
     return { blob: remote, source: "remote" };

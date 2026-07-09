@@ -32,6 +32,7 @@ import {
   downloadTaxPackFile,
   shareTaxPackFile,
 } from "@/lib/export/shareTaxPack";
+import { countLocalExportReceiptsInTaxYear } from "@/lib/export/countLocalExportReceipts";
 import { buildLocalTurboTaxCsv } from "@/lib/export/buildLocalTurboTaxCsv";
 import { setPendingIncomeCapture } from "@/lib/export/incomeCapture";
 import type { IncomeCaptureKind } from "@/lib/export/incomeCapture";
@@ -265,11 +266,11 @@ export function ExportEngineSheet({
           setActiveReceipts(merged);
         }
       }
-      const exportReceiptCount = receiptsInTaxYear(
+      const exportReceiptCount = countLocalExportReceiptsInTaxYear(
         receiptsForExport,
         taxYear,
         timeZone,
-      ).length;
+      );
       startProgressRamp(format, exportReceiptCount);
       const taxYearStr = String(taxYear);
       const result =

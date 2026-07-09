@@ -2,7 +2,7 @@
 
 **Topic ID:** `receipt-sync-lifecycle`  
 **Status:** Consolidated · implemented (Phase A/B shipped; lifecycle redesign draft partially deferred)  
-**Last verified:** 2026-07-08
+**Last verified:** 2026-07-09
 
 ---
 
@@ -18,7 +18,7 @@ Snap1099 小票生命周期分三层：**AI 状态**（`processing` | `done` | `
 
 **Phase C（lifecycle redesign · shipped）：** WorkerSession 相机门控 · done lock merge · UI/sync window 50 · server-side filed PATCH lock。
 
-**Still deferred (lifecycle redesign draft):** write budget 3 · export local-first (P1 partial) · Event Queue / `POST /api/sync/events`。
+**Still deferred (lifecycle redesign draft):** write budget 3 · Event Queue / `POST /api/sync/events`。（export local-first P1–P1d 已于 2026-07-08 完成，见 [`export-pipeline-design.md`](./export-pipeline-design.md) §3.8–§3.10。）
 
 ---
 
@@ -95,8 +95,8 @@ Server: Blob **before** DB on upload（避免 orphan row）。
 | Constant | Value | Use |
 |----------|-------|-----|
 | `STARTUP_UNFILED_LIMIT` | 30 | Phase 0-fast first paint (unfiled only) |
-| `UI_RECEIPT_LIMIT` | **100** | UI list + server merge fetch |
-| `RECEIPT_SYNC_LIMIT` | 100 | alias for API `limit` |
+| `UI_RECEIPT_LIMIT` | **50** | UI list + server merge fetch |
+| `RECEIPT_SYNC_LIMIT` | 50 | alias for API `limit` |
 
 | Decision | Detail |
 |----------|--------|
@@ -160,7 +160,7 @@ Camera open → defer merge (existing); **WorkerSession Phase C (2026-07-08):** 
 
 **Module:** `lib/client/workerSessionGate.ts` · `HomeScreen.runWorkerCatchUp` on `cameraOpen → false`.
 
-**Still deferred (lifecycle redesign draft):** write budget 3 · export local-first.
+**Still deferred (lifecycle redesign draft):** write budget 3。
 
 ### 3.11 Server-side filed PATCH lock (Phase C · 2026-07-08)
 
@@ -205,7 +205,7 @@ UI list + default `GET /api/receipts` fetch window reduced **100 → 50** rows (
 
 - Receipt **list/detail UI** tweaks (`receipt-list-*`, `receipt-detail-*`, duplicate-detection) — stay active specs
 - Event Queue / `POST /api/sync/events` / Postgres Event Store — Phase 2 OCR roadmap §16
-- WorkerSession **full** redesign (write budget 3 · local export) — lifecycle redesign draft partial
+- WorkerSession **full** redesign (write budget 3) — lifecycle redesign draft partial；local export 已完成
 - Export pack generation — [`export-pipeline-design.md`](./export-pipeline-design.md)
 - Server-side orphan ghost merge job
 

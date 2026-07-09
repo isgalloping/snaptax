@@ -194,16 +194,25 @@ Shared row + image plumbing for client CPA export:
 | Module | Role |
 |--------|------|
 | `lib/export/buildLocalCpaExportContext.ts` | IDB receipts → income/audit rows（same finalize/audit pipeline as server） |
-| `lib/client/resolveExportReceiptImage.ts` | OPFS `loadPhoto` preferred; signed URL fetch fallback |
+| `lib/client/resolveExportReceiptImage.ts` | OPFS `loadPhoto` preferred; `fetchReceiptImageUrlCached` + signed URL fetch fallback |
 
 ### 3.10 Local CPA pack (P1d · 2026-07-09)
 
 | Module | Role |
 |--------|------|
-| `lib/export/buildBrowserScheduleCMirrorPdf.ts` | pdf-lib Schedule C mirror PDF |
+| `lib/export/buildBrowserScheduleCMirrorPdf.ts` | pdf-lib Schedule C mirror PDF（`toPdfSafeText` WinAnsi sanitize） |
 | `lib/export/buildLocalCpaPackZip.ts` | fflate audit ZIP + OPFS/remote images |
 | `lib/client/runLocalCpaExport.ts` | Orchestrate context → PDF/ZIP → filed sync |
 | `ExportEngineSheet` | `cpa_pdf` / `cpa_pack` → `runLocalCpaExport` |
+
+**P1d polish (2026-07-09):**
+
+| Detail | Implementation |
+|--------|----------------|
+| Heavy bundles | `buildBrowserScheduleCMirrorPdf` / `buildLocalCpaPackZip` **dynamic import** in `runLocalCpaExport`（`cpa_pdf` 不加载 fflate） |
+| Tax year filter | `buildLocalCpaExportContext` → `filterReceiptsByTaxYear` + capture-time asc（同 server / csv） |
+| Batch images | `resolveExportReceiptImage` → `fetchReceiptImageUrlCached` |
+| Tests | `runLocalCpaExport.test.ts` — deps 注入 orchestration 契约 |
 
 **Server hybrid retained:** `POST /api/export/tax-pack` still serves `xlsx` and fallback; CPA formats no longer call it from UI.
 

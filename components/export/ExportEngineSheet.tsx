@@ -252,6 +252,12 @@ export function ExportEngineSheet({
     setProgressLabel(t.progressFetchingImages);
   };
 
+  const finishPackProgress = () => {
+    clearProgressTimer();
+    setProgress(95);
+    setProgressLabel(t.progressFinalizing);
+  };
+
   const handleGenerate = async () => {
     setErrorMessage(null);
     autoSharedRef.current = false;
@@ -278,7 +284,13 @@ export function ExportEngineSheet({
         taxYear,
         timeZone,
       );
-      startProgressRamp(format, exportReceiptCount);
+      if (format === "cpa_pack") {
+        clearProgressTimer();
+        setProgress(5);
+        setProgressLabel(t.progressBuildingPdf);
+      } else {
+        startProgressRamp(format, exportReceiptCount);
+      }
       const taxYearStr = String(taxYear);
       const result =
         format === "csv" || format === "txf"
@@ -302,6 +314,9 @@ export function ExportEngineSheet({
                 taxYear: taxYearStr,
                 format,
               });
+      if (format === "cpa_pack") {
+        finishPackProgress();
+      }
       finishProgress();
       setReadyFile(result.file);
       setExportMeta(result.meta);

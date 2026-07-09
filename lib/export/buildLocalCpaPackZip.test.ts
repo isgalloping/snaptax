@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { unzipSync } from "fflate";
 import { assignAuditTrailMeta } from "@/lib/export/assignAuditTrailMeta";
 import { buildLocalCpaPackZip } from "@/lib/export/buildLocalCpaPackZip";
 import type { ExportIncomeRow } from "@/lib/export/incomeDocuments";
@@ -50,9 +51,16 @@ function sampleIncomeRow(overrides: Partial<ExportIncomeRow> = {}): ExportIncome
   };
 }
 
-function zipContains(buffer: Uint8Array, name: string): boolean {
-  const text = new TextDecoder("latin1").decode(buffer);
-  return text.includes(name);
+function zipEntryNames(chunks: Uint8Array[]): string[] {
+  const merged = new Uint8Array(
+    chunks.reduce((sum, chunk) => sum + chunk.length, 0),
+  );
+  let offset = 0;
+  for (const chunk of chunks) {
+    merged.set(chunk, offset);
+    offset += chunk.length;
+  }
+  return Object.keys(unzipSync(merged));
 }
 
 describe("buildLocalCpaPackZip", () => {
@@ -80,15 +88,12 @@ describe("buildLocalCpaPackZip", () => {
       (event) => progress.push({ completed: event.completed, total: event.total }),
     );
 
-    assert.ok(zipContains(result.buffer, "2025_Tax_Report_Summary.pdf"));
-    assert.ok(zipContains(result.buffer, "2025_Tax_Report_Data.csv"));
-    assert.ok(
-      zipContains(
-        result.buffer,
-        "01_Income_Documents/1099_NEC_Acme_20260131.jpg",
-      ),
-    );
-    assert.ok(zipContains(result.buffer, expenseRow.receiptArchivePath));
+    const names = zipEntryNames(result.chunks);
+    assert.ok(result.chunks.length >= 1);
+    assert.ok(names.includes("2025_Tax_Report_Summary.pdf"));
+    assert.ok(names.includes("2025_Tax_Report_Data.csv"));
+    assert.ok(names.includes("01_Income_Documents/1099_NEC_Acme_20260131.jpg"));
+    assert.ok(names.includes(expenseRow.receiptArchivePath));
     assert.equal(result.imageStats.imagesEligible, 2);
     assert.equal(result.imageStats.imagesIncluded, 2);
     assert.equal(progress.at(-1)?.completed, 2);

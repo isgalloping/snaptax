@@ -73,7 +73,7 @@ describe("runLocalCpaExport", () => {
       {
         buildPdf: async () => new TextEncoder().encode("%PDF-test"),
         buildPack: async () => ({
-          buffer: new TextEncoder().encode("PK\x03\x04"),
+          chunks: [new TextEncoder().encode("PK\x03\x04")],
           imageStats: { imagesIncluded: 1, imagesEligible: 2 },
         }),
         syncFiled: async () => ({

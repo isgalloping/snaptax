@@ -18,6 +18,7 @@ import { formatCurrency } from "@/lib/format";
 import { clientTimeZone } from "@/lib/time/timeZone";
 import { runLocalTaxExport } from "@/lib/client/runLocalTaxExport";
 import { runLocalCpaExport } from "@/lib/client/runLocalCpaExport";
+import type { LocalCpaPackProgress } from "@/lib/export/buildLocalCpaPackZip";
 import {
   exportTaxPack,
   type ExportTaxPackMeta,
@@ -245,6 +246,12 @@ export function ExportEngineSheet({
     }
   };
 
+  const applyPackProgress = (event: LocalCpaPackProgress) => {
+    const total = Math.max(1, event.total);
+    setProgress(15 + (event.completed / total) * 73);
+    setProgressLabel(t.progressFetchingImages);
+  };
+
   const handleGenerate = async () => {
     setErrorMessage(null);
     autoSharedRef.current = false;
@@ -288,6 +295,8 @@ export function ExportEngineSheet({
                 timeZone,
                 format,
                 taxpayerName,
+                onPackProgress:
+                  format === "cpa_pack" ? applyPackProgress : undefined,
               })
             : await exportTaxPack({
                 taxYear: taxYearStr,

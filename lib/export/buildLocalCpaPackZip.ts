@@ -1,4 +1,4 @@
-import { zipSync } from "fflate";
+import { Zip, ZipPassThrough } from "fflate";
 import type { ExportExpenseRow } from "@/lib/tax/exportRows";
 import type { ExportIncomeRow } from "@/lib/export/incomeDocuments";
 
@@ -24,6 +24,53 @@ type ImagePackRow = {
   receiptId: string;
   archivePath: string;
 };
+
+function concatUint8Arrays(chunks: Uint8Array[]): Uint8Array {
+  const total = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
+  const out = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    out.set(chunk, offset);
+    offset += chunk.length;
+  }
+  return out;
+}
+
+type IncrementalZip = {
+  addStoredFile: (name: string, data: Uint8Array) => void;
+  finish: () => Promise<Uint8Array>;
+};
+
+function createIncrementalZip(): IncrementalZip {
+  const chunks: Uint8Array[] = [];
+  let resolveDone!: (buffer: Uint8Array) => void;
+  let rejectDone!: (err: Error) => void;
+  const done = new Promise<Uint8Array>((resolve, reject) => {
+    resolveDone = resolve;
+    rejectDone = reject;
+  });
+
+  const zip = new Zip((err, chunk, final) => {
+    if (err) {
+      rejectDone(err);
+      return;
+    }
+    if (chunk) chunks.push(chunk);
+    if (final) resolveDone(concatUint8Arrays(chunks));
+  });
+
+  return {
+    addStoredFile(name: string, data: Uint8Array) {
+      const entry = new ZipPassThrough(name);
+      zip.add(entry);
+      entry.push(data, true);
+    },
+    finish() {
+      zip.end();
+      return done;
+    },
+  };
+}
 
 async function mapWithConcurrency<T, R>(
   items: T[],
@@ -76,31 +123,35 @@ export async function buildLocalCpaPackZip(
     }));
   const imageRows = [...incomeImages, ...expenseImages];
 
-  const files: Record<string, Uint8Array> = {
-    [`${taxYear}_Tax_Report_Summary.pdf`]: summaryPdf,
-    [`${taxYear}_Tax_Report_Data.csv`]: new TextEncoder().encode(detailCsv),
-  };
+  const incremental = createIncrementalZip();
+  incremental.addStoredFile(
+    `${taxYear}_Tax_Report_Summary.pdf`,
+    summaryPdf,
+  );
+  incremental.addStoredFile(
+    `${taxYear}_Tax_Report_Data.csv`,
+    new TextEncoder().encode(detailCsv),
+  );
 
   let imagesIncluded = 0;
   let completed = 0;
-  const fetched = await mapWithConcurrency(
+  await mapWithConcurrency(
     imageRows,
     IMAGE_FETCH_CONCURRENCY,
     async (row) => {
       const image = await resolveImage(row.receiptId);
       completed += 1;
       onProgress?.({ phase: "images", completed, total: imageRows.length });
-      return { row, image };
+      if (!image) return;
+      imagesIncluded += 1;
+      incremental.addStoredFile(
+        row.archivePath,
+        await blobToUint8Array(image),
+      );
     },
   );
 
-  for (const { row, image } of fetched) {
-    if (!image) continue;
-    imagesIncluded += 1;
-    files[row.archivePath] = await blobToUint8Array(image);
-  }
-
-  const buffer = zipSync(files, { level: 6 });
+  const buffer = await incremental.finish();
   return {
     buffer,
     imageStats: {

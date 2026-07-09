@@ -1,4 +1,4 @@
-import { fetchReceiptImageUrl } from "@/lib/client/receiptApi";
+import { fetchReceiptImageUrlCached } from "@/lib/client/receiptImageCache";
 import { isPersistedReceiptId } from "@/lib/receipts/receiptId";
 import { loadPhoto } from "@/lib/storage/receiptDb";
 
@@ -14,7 +14,7 @@ async function fetchRemoteReceiptImageBlob(
 ): Promise<Blob | null> {
   if (!isPersistedReceiptId(receiptId)) return null;
   try {
-    const { url } = await fetchReceiptImageUrl(receiptId);
+    const { url } = await fetchReceiptImageUrlCached(receiptId);
     const res = await fetch(url);
     if (!res.ok) return null;
     return await res.blob();

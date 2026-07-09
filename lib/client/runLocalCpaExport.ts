@@ -1,13 +1,13 @@
 import { syncExportFiledToServer } from "@/lib/client/exportFiledSync";
+import type { ExportFiledSyncResult } from "@/lib/client/exportFiledSync";
 import { markReceiptsFiledLocal } from "@/lib/client/markReceiptsFiledLocal";
 import { resolveExportReceiptImageBlob } from "@/lib/client/resolveExportReceiptImage";
 import { buildAuditDetailCsv } from "@/lib/export/buildAuditDetailCsv";
-import { buildBrowserScheduleCMirrorPdf } from "@/lib/export/buildBrowserScheduleCMirrorPdf";
 import { buildLocalCpaExportContext } from "@/lib/export/buildLocalCpaExportContext";
-import { buildLocalCpaPackZip } from "@/lib/export/buildLocalCpaPackZip";
 import { hasAuditExportContent } from "@/lib/export/auditEligibleRows";
 import { exportTaxPackFilename } from "@/lib/export/exportFilenames";
 import type { ExportTaxPackMeta } from "@/lib/client/authApi";
+import type { ScheduleCMirrorPdfInput } from "@/lib/export/buildScheduleCMirrorPdf";
 import type { TaxRegion } from "@/lib/tax/types";
 import type { Receipt } from "@/lib/types";
 
@@ -27,9 +27,38 @@ export type RunLocalCpaExportResult = {
   meta: ExportTaxPackMeta;
 };
 
+export type RunLocalCpaExportDeps = {
+  buildPdf?: (input: ScheduleCMirrorPdfInput) => Promise<Uint8Array>;
+  buildPack?: typeof import("@/lib/export/buildLocalCpaPackZip").buildLocalCpaPackZip;
+  resolveImage?: typeof resolveExportReceiptImageBlob;
+  syncFiled?: (params: { taxYear: string }) => Promise<ExportFiledSyncResult>;
+  markFiledLocal?: typeof markReceiptsFiledLocal;
+};
+
+async function defaultBuildPdf(
+  input: ScheduleCMirrorPdfInput,
+): Promise<Uint8Array> {
+  const { buildBrowserScheduleCMirrorPdf } = await import(
+    "@/lib/export/buildBrowserScheduleCMirrorPdf"
+  );
+  return buildBrowserScheduleCMirrorPdf(input);
+}
+
+async function defaultBuildPack(
+  ...args: Parameters<
+    typeof import("@/lib/export/buildLocalCpaPackZip").buildLocalCpaPackZip
+  >
+) {
+  const { buildLocalCpaPackZip } = await import(
+    "@/lib/export/buildLocalCpaPackZip"
+  );
+  return buildLocalCpaPackZip(...args);
+}
+
 /** Local-first CPA export: build PDF/ZIP from IDB, then filed sync server + local. */
 export async function runLocalCpaExport(
   params: RunLocalCpaExportParams,
+  deps: RunLocalCpaExportDeps = {},
 ): Promise<RunLocalCpaExportResult> {
   const taxYearStr = String(params.taxYear);
   const ctx = buildLocalCpaExportContext(
@@ -43,9 +72,10 @@ export async function runLocalCpaExport(
     throw new Error("NO_RECEIPTS");
   }
 
+  const buildPdf = deps.buildPdf ?? defaultBuildPdf;
   let pdfBytes: Uint8Array;
   try {
-    pdfBytes = await buildBrowserScheduleCMirrorPdf({
+    pdfBytes = await buildPdf({
       taxYear: taxYearStr,
       taxpayerName: params.taxpayerName ?? "SnapTax User",
       businessIndustry: "Independent Contractor",
@@ -65,15 +95,17 @@ export async function runLocalCpaExport(
     mimeType = "application/pdf";
     blob = new Blob([pdfBytes.slice()], { type: mimeType });
   } else {
+    const buildPack = deps.buildPack ?? defaultBuildPack;
+    const resolveImage = deps.resolveImage ?? resolveExportReceiptImageBlob;
     const detailCsv = buildAuditDetailCsv(ctx.auditRows);
-    const pack = await buildLocalCpaPackZip(
+    const pack = await buildPack(
       detailCsv,
       pdfBytes,
       ctx.auditRows,
       ctx.incomeRows,
       taxYearStr,
       async (receiptId) => {
-        const resolved = await resolveExportReceiptImageBlob(receiptId);
+        const resolved = await resolveImage(receiptId);
         return resolved?.blob ?? null;
       },
     );
@@ -82,11 +114,11 @@ export async function runLocalCpaExport(
     imageStats = pack.imageStats;
   }
 
-  const filed = await syncExportFiledToServer({
-    taxYear: taxYearStr,
-  });
+  const syncFiled = deps.syncFiled ?? syncExportFiledToServer;
+  const filed = await syncFiled({ taxYear: taxYearStr });
 
-  await markReceiptsFiledLocal({
+  const markFiledLocal = deps.markFiledLocal ?? markReceiptsFiledLocal;
+  await markFiledLocal({
     receiptIds: filed.receiptIds,
     taxSeason: filed.taxSeason,
     taxSeasonDate: filed.taxSeasonDate,

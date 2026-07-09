@@ -6,10 +6,12 @@ import {
 } from "@/lib/export/incomeDocuments";
 import { finalizeExportRows } from "@/lib/export/mapping/finalizeExportRows";
 import { receiptToSnaptaxStub } from "@/lib/receipts/snaptaxReceiptStub";
-import { buildExportExpenseRow } from "@/lib/tax/exportRows";
+import {
+  buildExportExpenseRow,
+  filterReceiptsByTaxYear,
+} from "@/lib/tax/exportRows";
 import type { ExportExpenseRow } from "@/lib/tax/exportRows";
 import type { ExportIncomeRow } from "@/lib/export/incomeDocuments";
-import { receiptsInTaxYear } from "@/lib/tax/taxYearStats";
 import type { TaxRegion } from "@/lib/tax/types";
 import type { Receipt } from "@/lib/types";
 
@@ -20,6 +22,10 @@ export type LocalCpaExportContext = {
   auditRows: ExportExpenseRow[];
 };
 
+function stubCaptureMs(receipt: ReturnType<typeof receiptToSnaptaxStub>): number {
+  return (receipt.snapAt ?? receipt.capturedAt).getTime();
+}
+
 /** Build CPA/PDF row context from local IDB receipts (same pipeline as server tax-pack). */
 export function buildLocalCpaExportContext(
   receipts: Receipt[],
@@ -27,12 +33,15 @@ export function buildLocalCpaExportContext(
   timeZone: string,
   dataRegion: TaxRegion = "us",
 ): LocalCpaExportContext {
-  const yearReceipts = receiptsInTaxYear(receipts, taxYear, timeZone).sort(
-    (a, b) => a.timestamp.getTime() - b.timestamp.getTime(),
+  const doneStubs = receipts
+    .filter((r) => r.status === "done")
+    .map(receiptToSnaptaxStub);
+  const yearStubs = filterReceiptsByTaxYear(doneStubs, taxYear, timeZone).sort(
+    (a, b) => stubCaptureMs(a) - stubCaptureMs(b),
   );
-  const stubs = yearReceipts.map(receiptToSnaptaxStub);
-  const incomeReceipts = stubs.filter(isIncomeDocument);
-  const expenseReceipts = stubs.filter((r) => !isIncomeDocument(r));
+
+  const incomeReceipts = yearStubs.filter(isIncomeDocument);
+  const expenseReceipts = yearStubs.filter((r) => !isIncomeDocument(r));
 
   const incomeRows = incomeReceipts
     .map((r) => buildExportIncomeRow(r, timeZone))
@@ -47,7 +56,7 @@ export function buildLocalCpaExportContext(
   );
 
   return {
-    yearReceiptCount: yearReceipts.length,
+    yearReceiptCount: yearStubs.length,
     incomeRows,
     enrichedExpenseRows,
     auditRows,

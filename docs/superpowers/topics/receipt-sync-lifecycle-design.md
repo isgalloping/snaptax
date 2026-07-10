@@ -18,7 +18,7 @@ Snap1099 小票生命周期分三层：**AI 状态**（`processing` | `done` | `
 
 **Phase C（lifecycle redesign · shipped）：** WorkerSession 相机门控 · done lock merge · UI/sync window 50 · server-side filed PATCH lock。
 
-**Still deferred (lifecycle redesign draft):** write budget 3 · Ghost bind 后 event cursor 不迁移（forward-only per actor）。
+**Still deferred (lifecycle redesign draft):** write budget 3。
 
 ---
 
@@ -85,7 +85,7 @@ Server: Blob **before** DB on upload（避免 orphan row）。
 | **Empty remote** | **Never** delete local synced rows |
 | **User actor prune** | Only when `actor.kind === "user"` **and** `remote.length > 0` — delete local ids ∉ remote (not pendingUpload) |
 | **Ghost actor** | No sync-driven delete |
-| **Post-login** | `flushPendingUploads` → `syncFromServer(immediate)` → optional `pollTaxRecalc` |
+| **Post-login** | `flushPendingUploads` → `syncFromServer(immediate)` → optional `pollTaxRecalc`；服务端 Ghost bind 同时迁移 receipts + Event Store（events/snapshots/cursor） |
 | **Persist merge** | Upsert all merged rows to IndexedDB after successful fetch |
 
 **Deletion convergence (hardening):** tombstones + `flushPendingDeletes` only — **no** top-100 window prune.
@@ -204,7 +204,7 @@ UI list + default `GET /api/receipts` fetch window reduced **100 → 50** rows (
 ## 5. Out of scope
 
 - Receipt **list/detail UI** tweaks (`receipt-list-*`, `receipt-detail-*`, duplicate-detection) — stay active specs
-- Event Store snapshots / sync cursor / 18mo server prune — **shipped** 2026-07-10（ingest 事务；Delete Account 清理 event store；Ghost bind 不迁移历史 cursor — forward-only per actor）
+- Event Store snapshots / sync cursor / 18mo server prune — **shipped** 2026-07-10（ingest 事务；Delete Account 清理 event store；Ghost bind 迁移 events/snapshots/cursor）
 - WorkerSession **full** redesign (write budget 3) — lifecycle redesign draft partial；local export 已完成
 - Export pack generation — [`export-pipeline-design.md`](./export-pipeline-design.md)
 - Server-side orphan ghost merge job

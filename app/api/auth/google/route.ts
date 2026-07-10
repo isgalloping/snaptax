@@ -13,6 +13,7 @@ import {
   SESSION_COOKIE_NAME,
   signSessionToken,
 } from "@/lib/auth/session";
+import { migrateEventStoreOnGhostBind } from "@/lib/server/migrateEventStoreOnGhostBind";
 import { prisma } from "@/lib/prisma";
 import {
   enqueueTaxRecalc,
@@ -126,9 +127,12 @@ export const POST = withRequestLog("api.auth", async (request, _context) => {
       });
     }
 
-    await prisma.snaptaxReceipt.updateMany({
-      where: { ghostId, userId: null },
-      data: { userId: user.id },
+    await prisma.$transaction(async (tx) => {
+      await tx.snaptaxReceipt.updateMany({
+        where: { ghostId, userId: null },
+        data: { userId: user.id },
+      });
+      await migrateEventStoreOnGhostBind(user.id, ghostId, tx);
     });
 
     let taxRecalcQueued = 0;

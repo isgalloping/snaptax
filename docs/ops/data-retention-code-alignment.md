@@ -14,6 +14,7 @@ Engineering audit reference. **Not linked from the public app.** Values here mus
 | Receipts pending upload | **Not pruned** until upload completes | `pendingUpload` guard in `shouldPruneReceipt()` |
 | Receipts in `processing` status | Kept until done, blurry, or deleted | No separate draft entity |
 | Receipt photos (full resolution, OPFS) | Until upload succeeds, or **90 days** after cloud sync | `PHOTO_FULL_RETENTION_MS = 90 × 24h` in `lib/client/photoRetention.ts`; skipped while receipt is `processing` or `pendingUpload` |
+| Synced receipt lifecycle events (IndexedDB) | **90 days** after server sync | `RECEIPT_EVENT_RETENTION_MS` in `lib/storage/receiptEventQueue.ts`; idle prune ~45s after load (staggered vs photo/receipt jobs) |
 | Thumbnails (OPFS) | With receipt row; full purge may leave thumb | `photoRetentionJob` |
 | Encryption keys (local) | Until you delete app data or **Delete Account** | OPFS + `snaptax_crypto_meta` |
 
@@ -42,6 +43,7 @@ Structured logs exclude receipt image bytes and mask email where applicable. See
 |----------|-------|------|
 | `RECEIPT_RETENTION_MONTHS` | 18 | `lib/client/receiptRetention.ts` |
 | `PHOTO_FULL_RETENTION_MS` | 90 days | `lib/client/photoRetention.ts` |
+| `RECEIPT_EVENT_RETENTION_MS` | 90 days | `lib/storage/receiptEventQueue.ts` |
 | `GC_RETENTION_MS` | 24 hours | `lib/api/dbRateLimit.ts` |
 
 ## Verification

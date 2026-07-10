@@ -13,7 +13,7 @@ import {
   SESSION_COOKIE_NAME,
   signSessionToken,
 } from "@/lib/auth/session";
-import { migrateEventStoreOnGhostBind } from "@/lib/server/migrateEventStoreOnGhostBind";
+import { bindGhostAndMigrateData } from "@/lib/server/bindGhostAndMigrateData";
 import { prisma } from "@/lib/prisma";
 import {
   enqueueTaxRecalc,
@@ -101,39 +101,33 @@ export const POST = withRequestLog("api.auth", async (request, _context) => {
       where: { userId: user.id },
     });
 
-    if (userBinding) {
-      if (userBinding.ghostId !== ghostId) {
-        logEvent({
-          ts: new Date().toISOString(),
-          level: "info",
-          module: "api.auth",
-          success: true,
-          durationMs: 0,
-          userId: user.id,
-          ghostId,
-          meta: {
-            reason: "ghost_rebind",
-            previousGhostId: userBinding.ghostId,
-          },
-        });
-        await prisma.snaptaxGhostAccount.update({
-          where: { userId: user.id },
-          data: { ghostId, boundAt: utcNow() },
-        });
-      }
-    } else if (!existingBinding) {
-      await prisma.snaptaxGhostAccount.create({
-        data: { ghostId, userId: user.id },
+    const migration = await prisma.$transaction(async (tx) =>
+      bindGhostAndMigrateData(
+        user.id,
+        ghostId,
+        {
+          existingGhostBinding: existingBinding,
+          userBinding,
+        },
+        tx,
+      ),
+    );
+
+    if (migration.rebindPreviousGhostId) {
+      logEvent({
+        ts: new Date().toISOString(),
+        level: "info",
+        module: "api.auth",
+        success: true,
+        durationMs: 0,
+        userId: user.id,
+        ghostId,
+        meta: {
+          reason: "ghost_rebind",
+          previousGhostId: migration.rebindPreviousGhostId,
+        },
       });
     }
-
-    const migration = await prisma.$transaction(async (tx) => {
-      await tx.snaptaxReceipt.updateMany({
-        where: { ghostId, userId: null },
-        data: { userId: user.id },
-      });
-      return migrateEventStoreOnGhostBind(user.id, ghostId, tx);
-    });
 
     if (
       migration.events > 0 ||

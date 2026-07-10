@@ -42,16 +42,24 @@ export function sanitizePayerForFilename(payer: string): string {
   );
 }
 
-/** `01_Income_Documents/1099_NEC_{Payer}_{YYYYMMDD}.jpg` */
+function sanitizeReceiptIdForFilename(receiptId: string): string {
+  return receiptId.replace(/[^a-zA-Z0-9]+/g, "") || "Receipt";
+}
+
+/** `01_Income_Documents/1099_NEC_{Payer}_{YYYYMMDD}_{ReceiptId}.jpg` */
 export function buildIncomeArchivePath(input: {
   formType: IncomeFormType;
   payer: string;
   dateIso: string;
+  receiptId?: string;
 }): string {
   const datePart = input.dateIso.replace(/-/g, "");
   const payer = sanitizePayerForFilename(input.payer);
   const formTag = input.formType.replace(/-/g, "_");
-  return `01_Income_Documents/${formTag}_${payer}_${datePart}.jpg`;
+  const receiptPart = input.receiptId
+    ? `_${sanitizeReceiptIdForFilename(input.receiptId)}`
+    : "";
+  return `01_Income_Documents/${formTag}_${payer}_${datePart}${receiptPart}.jpg`;
 }
 
 export type ExportIncomeRow = {
@@ -92,6 +100,7 @@ export function buildExportIncomeRow(
       formType,
       payer,
       dateIso,
+      receiptId: receipt.id,
     }),
   };
 }

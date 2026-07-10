@@ -12,6 +12,8 @@ export const settingsVisual = {
     valueNeutral: "text-zinc-200",
     label: "text-[10px] font-bold uppercase text-zinc-400",
     value: "mt-1 text-2xl font-black sm:text-3xl",
+    exportedStatus:
+      "text-[11px] font-bold uppercase tracking-wider text-zinc-500",
   },
   exportCard: {
     container: "rounded-2xl border border-yellow-500/40 bg-zinc-900 p-4",

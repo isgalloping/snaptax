@@ -539,6 +539,7 @@ export const DE_DE_COPY: UserCopy = {
       deductions: "Deductions",
       income: "Einkommen",
       incomeForms: "{count} Formulare",
+      exportedStatus: "Exportiert · Saison {season}",
     },
     exportCard: {
       compatLine: "TurboTax & H&R Block kompatibel",

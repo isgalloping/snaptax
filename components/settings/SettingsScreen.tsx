@@ -486,7 +486,11 @@ export function SettingsScreen({
           }}
         />
 
-        <TaxOverviewPanel {...taxStats} />
+        <TaxOverviewPanel
+          {...taxStats}
+          showExportedStatus={isSignedIn && seasonPaid && seasonExportDone}
+          exportedSeasonLabel={currentSeason}
+        />
 
         <TaxExportCard
           currentSeason={currentSeason}

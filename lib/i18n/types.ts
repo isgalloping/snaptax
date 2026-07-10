@@ -442,6 +442,7 @@ export type UserCopy = {
       deductions: string;
       income: string;
       incomeForms: string;
+      exportedStatus: string;
     };
     exportCard: {
       compatLine: string;

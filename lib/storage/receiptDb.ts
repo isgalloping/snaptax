@@ -859,6 +859,9 @@ export async function clearAllLocalData(): Promise<void> {
     if (db.objectStoreNames.contains(IDB_STORE_RECEIPT_SUMMARY)) {
       stores.push(IDB_STORE_RECEIPT_SUMMARY);
     }
+    if (db.objectStoreNames.contains(IDB_STORE_RECEIPT_EVENTS)) {
+      stores.push(IDB_STORE_RECEIPT_EVENTS);
+    }
     if (db.objectStoreNames.contains(cryptoStore)) {
       stores.push(cryptoStore);
     }
@@ -873,6 +876,9 @@ export async function clearAllLocalData(): Promise<void> {
     }
     if (db.objectStoreNames.contains(IDB_STORE_RECEIPT_SUMMARY)) {
       tx.objectStore(IDB_STORE_RECEIPT_SUMMARY).clear();
+    }
+    if (db.objectStoreNames.contains(IDB_STORE_RECEIPT_EVENTS)) {
+      tx.objectStore(IDB_STORE_RECEIPT_EVENTS).clear();
     }
     if (db.objectStoreNames.contains(cryptoStore)) {
       tx.objectStore(cryptoStore).clear();

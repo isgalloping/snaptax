@@ -75,23 +75,25 @@ function runWorkerAddFile(
     name,
     data: copy.buffer,
   };
-  getCpaPackZipWorker().postMessage(req, [copy.buffer]);
-  return waitForWorkerJobMessage(
+  const ack = waitForWorkerJobMessage(
     jobId,
     (message) => message.kind === "added" && message.name === name,
     WORKER_ADD_TIMEOUT_MS,
     "cpa_pack_zip_add_timeout",
   ).then(() => undefined);
+  getCpaPackZipWorker().postMessage(req, [copy.buffer]);
+  return ack;
 }
 
 function runWorkerFinish(jobId: string): Promise<Uint8Array[]> {
-  getCpaPackZipWorker().postMessage({ kind: "finish", jobId });
-  return waitForWorkerJobMessage(
+  const finished = waitForWorkerJobMessage(
     jobId,
     (message) => message.kind === "ok",
     WORKER_FINISH_TIMEOUT_MS,
     "cpa_pack_zip_timeout",
   ).then((message) => (message.kind === "ok" ? message.chunks : []));
+  getCpaPackZipWorker().postMessage({ kind: "finish", jobId });
+  return finished;
 }
 
 function createMainThreadSession(): CpaPackZipSession {

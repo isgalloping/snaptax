@@ -213,6 +213,8 @@ Shared row + image plumbing for client CPA export:
 | Tax year filter | `buildLocalCpaExportContext` → `filterReceiptsByTaxYear` + capture-time asc（同 server / csv） |
 | Batch images | `resolveExportReceiptImage` → `fetchReceiptImageUrlCached` |
 | CPA pack ZIP | Incremental `Zip` + `ZipPassThrough`（逐张写入，降低峰值内存） |
+| ZIP finalize | 返回 `chunks[]` → `new Blob(chunks)`（避免收尾 concat + `.slice()` 双拷贝 · PR #140） |
+| ZIP thread | `cpaPackZipWorker` — fflate 压缩 offload 至 Web Worker（图片 fetch 仍在主线程） |
 | Generate UX | `cpa_pack` 图片进度回调 → `ExportEngineSheet` 真实进度 |
 | Tests | `runLocalCpaExport.test.ts` — deps 注入 orchestration 契约 |
 

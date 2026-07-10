@@ -3,7 +3,12 @@ import { describe, it } from "node:test";
 import { unzipSync } from "fflate";
 import { assignAuditTrailMeta } from "@/lib/export/assignAuditTrailMeta";
 import { buildLocalCpaPackZip } from "@/lib/export/buildLocalCpaPackZip";
-import type { ExportIncomeRow } from "@/lib/export/incomeDocuments";
+import {
+  buildExportIncomeRow,
+  type ExportIncomeRow,
+} from "@/lib/export/incomeDocuments";
+import { stubSnaptaxReceipt } from "@/lib/receipts/snaptaxReceiptStub";
+import type { SnaptaxReceipt } from "@prisma/client";
 import type { ExportExpenseRow } from "@/lib/tax/exportRows";
 
 function sampleExpenseRow(
@@ -52,6 +57,10 @@ function sampleIncomeRow(overrides: Partial<ExportIncomeRow> = {}): ExportIncome
 }
 
 function zipEntryNames(chunks: Uint8Array[]): string[] {
+  return Object.keys(unzipChunks(chunks));
+}
+
+function unzipChunks(chunks: Uint8Array[]): Record<string, Uint8Array> {
   const merged = new Uint8Array(
     chunks.reduce((sum, chunk) => sum + chunk.length, 0),
   );
@@ -60,7 +69,25 @@ function zipEntryNames(chunks: Uint8Array[]): string[] {
     merged.set(chunk, offset);
     offset += chunk.length;
   }
-  return Object.keys(unzipSync(merged));
+  return unzipSync(merged);
+}
+
+function incomeReceipt(
+  overrides: Partial<SnaptaxReceipt> = {},
+): SnaptaxReceipt {
+  return stubSnaptaxReceipt({
+    userId: "user",
+    imageUrl: "receipts/1099.jpg",
+    amount: 4800 as unknown as SnaptaxReceipt["amount"],
+    merchantName: "Acme Contracting",
+    category: "1099-NEC",
+    taxAmount: 0 as unknown as SnaptaxReceipt["taxAmount"],
+    aiRaw: { document_kind: "1099-NEC", payer: "Acme Contracting" },
+    capturedAt: new Date("2026-01-31T12:00:00.000Z"),
+    snapAt: new Date("2026-01-31T12:00:00.000Z"),
+    contentSha256: "abc",
+    ...overrides,
+  });
 }
 
 describe("buildLocalCpaPackZip", () => {
@@ -97,5 +124,43 @@ describe("buildLocalCpaPackZip", () => {
     assert.equal(result.imageStats.imagesEligible, 2);
     assert.equal(result.imageStats.imagesIncluded, 2);
     assert.equal(progress.at(-1)?.completed, 2);
+  });
+
+  it("keeps same-day same-payer income images as separate ZIP entries", async () => {
+    const first = buildExportIncomeRow(
+      incomeReceipt({ id: "00000000-0000-0000-0000-000000000101" }),
+      "UTC",
+    );
+    const second = buildExportIncomeRow(
+      incomeReceipt({ id: "00000000-0000-0000-0000-000000000202" }),
+      "UTC",
+    );
+    assert.ok(first);
+    assert.ok(second);
+    assert.notEqual(first!.incomeArchivePath, second!.incomeArchivePath);
+
+    const result = await buildLocalCpaPackZip(
+      "Date,Payer,Amount\r\n2026-01-31,Acme Contracting,4800.00",
+      new TextEncoder().encode("%PDF-1.7\nsummary"),
+      [],
+      [first!, second!],
+      "2025",
+      async (receiptId) =>
+        new Blob([receiptId === first!.id ? "first-income" : "second-income"], {
+          type: "image/jpeg",
+        }),
+    );
+
+    const entries = unzipChunks(result.chunks);
+    assert.equal(result.imageStats.imagesEligible, 2);
+    assert.equal(result.imageStats.imagesIncluded, 2);
+    assert.equal(
+      new TextDecoder().decode(entries[first!.incomeArchivePath]),
+      "first-income",
+    );
+    assert.equal(
+      new TextDecoder().decode(entries[second!.incomeArchivePath]),
+      "second-income",
+    );
   });
 });

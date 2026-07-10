@@ -942,6 +942,9 @@ export const FR_FR_COPY: UserCopy = {
     formatTxfTitle: "TXF pour logiciel fiscal",
     formatTxfHint:
       "Format assistant comptable pour outils fiscaux (blocs V042).",
+    formatQifTitle: "QuickBooks QIF",
+    formatQifHint:
+      "Importez les dépenses déductibles dans QuickBooks ou Quicken (.qif).",
     snap1099Title: "Formulaires 1099 (revenus)",
     snap1099Hint:
       "Photographiez votre 1099-NEC ou 1099-K — inclus dans le pack d'audit sous 01_Income_Documents.",

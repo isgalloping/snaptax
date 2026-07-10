@@ -941,6 +941,9 @@ export const DE_DE_COPY: UserCopy = {
     formatTxfTitle: "TXF für Steuersoftware",
     formatTxfHint:
       "Buchhaltungsformat für Desktop-Steuertools (V042-Blöcke).",
+    formatQifTitle: "QuickBooks QIF",
+    formatQifHint:
+      "Abzugsfähige Ausgaben in QuickBooks oder Quicken importieren (.qif).",
     snap1099Title: "1099-Einkommensformulare",
     snap1099Hint:
       "1099-NEC oder 1099-K fotografieren — im Prüfpaket unter 01_Income_Documents.",

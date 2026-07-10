@@ -13,7 +13,7 @@ export type BuildWidgetPageOptions = {
 };
 
 /** Product gate: set true to restore Find More Savings widget. */
-export const SHOW_MISSING_DEDUCTIONS_WIDGET = false;
+export const SHOW_MISSING_DEDUCTIONS_WIDGET = true;
 
 /** Visible widgets; Need Action #2 and CPA #3 when ACTION + tax season. */
 export function buildWidgetPageKeys(

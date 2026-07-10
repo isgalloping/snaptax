@@ -48,6 +48,13 @@ export async function prepareReceiptCapture(
   if (!options?.skipSave) {
     await savePhotoCompressed(id, { blob, width, height });
     await saveReceipt(receipt);
+    void import("@/lib/client/emitReceiptLifecycleEvent").then(({ emitReceiptLifecycleEvent }) =>
+      emitReceiptLifecycleEvent({
+        receiptId: receipt.id,
+        type: "RECEIPT_CREATED",
+        payload: { pendingUpload: receipt.pendingUpload ?? true },
+      }),
+    );
   }
 
   return { kind: "created", receipt };

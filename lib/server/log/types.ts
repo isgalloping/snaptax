@@ -3,6 +3,7 @@ export type LogLevel = "info" | "warn" | "error";
 export type LogModule =
   | "api.auth"
   | "api.receipt"
+  | "api.sync"
   | "api.user"
   | "api.entitlement"
   | "api.billing"

@@ -113,7 +113,7 @@ export async function runLocalCpaExport(
       params.onPackProgress,
     );
     mimeType = "application/zip";
-    blob = new Blob([pack.buffer.slice()], { type: mimeType });
+    blob = new Blob(pack.chunks as BlobPart[], { type: mimeType });
     imageStats = pack.imageStats;
   }
 

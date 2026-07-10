@@ -14,7 +14,8 @@ export type LocalCpaPackProgress = {
 };
 
 export type LocalCpaPackResult = {
-  buffer: Uint8Array;
+  /** fflate ZIP segments; pass to `new Blob(chunks)` without merging. */
+  chunks: Uint8Array[];
   imageStats: LocalCpaPackImageStats;
 };
 
@@ -25,27 +26,16 @@ type ImagePackRow = {
   archivePath: string;
 };
 
-function concatUint8Arrays(chunks: Uint8Array[]): Uint8Array {
-  const total = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
-  const out = new Uint8Array(total);
-  let offset = 0;
-  for (const chunk of chunks) {
-    out.set(chunk, offset);
-    offset += chunk.length;
-  }
-  return out;
-}
-
 type IncrementalZip = {
   addStoredFile: (name: string, data: Uint8Array) => void;
-  finish: () => Promise<Uint8Array>;
+  finish: () => Promise<Uint8Array[]>;
 };
 
 function createIncrementalZip(): IncrementalZip {
   const chunks: Uint8Array[] = [];
-  let resolveDone!: (buffer: Uint8Array) => void;
+  let resolveDone!: (chunks: Uint8Array[]) => void;
   let rejectDone!: (err: Error) => void;
-  const done = new Promise<Uint8Array>((resolve, reject) => {
+  const done = new Promise<Uint8Array[]>((resolve, reject) => {
     resolveDone = resolve;
     rejectDone = reject;
   });
@@ -56,7 +46,7 @@ function createIncrementalZip(): IncrementalZip {
       return;
     }
     if (chunk) chunks.push(chunk);
-    if (final) resolveDone(concatUint8Arrays(chunks));
+    if (final) resolveDone(chunks);
   });
 
   return {
@@ -151,9 +141,9 @@ export async function buildLocalCpaPackZip(
     },
   );
 
-  const buffer = await incremental.finish();
+  const chunks = await incremental.finish();
   return {
-    buffer,
+    chunks,
     imageStats: {
       imagesIncluded,
       imagesEligible: imageRows.length,

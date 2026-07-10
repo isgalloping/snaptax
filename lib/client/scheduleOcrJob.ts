@@ -123,13 +123,29 @@ export async function persistSkippedOcrDraft(
     durationMs: 0,
   });
   await persistOcrDraft(receiptId, draft);
-  emitOcrCompletedLifecycleEvent(receiptId, {
-    source: "skipped",
-    reason,
-    engine: "skipped",
-  });
+  emitOcrCompletedLifecycleEvent(
+    receiptId,
+    buildOcrSkippedLifecyclePayload(reason),
+  );
   markOcrFinished(receiptId);
   notifyOcrComplete(receiptId);
+}
+
+export function buildOcrSkippedLifecyclePayload(
+  reason: string,
+): Record<string, unknown> {
+  return { source: "skipped", reason, engine: "skipped" };
+}
+
+export function buildOcrLocalSuccessLifecyclePayload(draft: {
+  engine: string;
+  confidence: number;
+}): Record<string, unknown> {
+  return {
+    source: "local_ocr",
+    engine: draft.engine,
+    confidence: draft.confidence,
+  };
 }
 
 function emitOcrCompletedLifecycleEvent(
@@ -167,11 +183,10 @@ async function processReceiptOcr(receiptId: string): Promise<void> {
           durationMs: 0,
         }),
       );
-      emitOcrCompletedLifecycleEvent(receiptId, {
-        source: "skipped",
-        reason: "no_photo",
-        engine: "skipped",
-      });
+      emitOcrCompletedLifecycleEvent(
+        receiptId,
+        buildOcrSkippedLifecyclePayload("no_photo"),
+      );
       return;
     }
 
@@ -179,11 +194,10 @@ async function processReceiptOcr(receiptId: string): Promise<void> {
     const result = await runOcrInWorker(receiptId, blob);
     if (result.kind === "ok") {
       await persistOcrDraft(receiptId, result.draft);
-      emitOcrCompletedLifecycleEvent(receiptId, {
-        source: "local_ocr",
-        engine: result.draft.engine,
-        confidence: result.draft.confidence,
-      });
+      emitOcrCompletedLifecycleEvent(
+        receiptId,
+        buildOcrLocalSuccessLifecyclePayload(result.draft),
+      );
       if (
         typeof window !== "undefined" &&
         process.env.NODE_ENV === "development"
@@ -203,11 +217,12 @@ async function processReceiptOcr(receiptId: string): Promise<void> {
           durationMs: Date.now() - started,
         }),
       );
-      emitOcrCompletedLifecycleEvent(receiptId, {
-        source: "skipped",
-        reason: result.kind === "err" ? result.reason : "local_ocr_failed",
-        engine: "skipped",
-      });
+      emitOcrCompletedLifecycleEvent(
+        receiptId,
+        buildOcrSkippedLifecyclePayload(
+          result.kind === "err" ? result.reason : "local_ocr_failed",
+        ),
+      );
     }
   } finally {
     markOcrFinished(receiptId);
@@ -222,6 +237,7 @@ function pumpQueue(): void {
     running += 1;
     void processReceiptOcr(id)
       .catch(() => {
+        emitOcrCompletedLifecycleEvent(id, buildOcrSkippedLifecyclePayload("process_error"));
         markOcrFinished(id);
         notifyOcrComplete(id);
       })

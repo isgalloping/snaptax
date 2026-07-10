@@ -8,6 +8,8 @@ import type {
 import { RECEIPT_EVENT_BATCH_SIZE } from "@/lib/storage/receiptEventTypes";
 import { warmReceiptDb } from "@/lib/storage/receiptDb";
 
+export const RECEIPT_EVENT_RETENTION_MS = 90 * 24 * 60 * 60 * 1000;
+
 function eventsStoreExists(db: IDBDatabase): boolean {
   return db.objectStoreNames.contains(IDB_STORE_RECEIPT_EVENTS);
 }
@@ -95,7 +97,7 @@ export function shouldPruneSyncedReceiptEvent(
 
 /** Remove synced events older than retention window (default 90d). */
 export async function pruneSyncedReceiptEvents(
-  maxAgeMs = 90 * 24 * 60 * 60 * 1000,
+  maxAgeMs = RECEIPT_EVENT_RETENTION_MS,
   nowMs = Date.now(),
 ): Promise<number> {
   const db = await warmReceiptDb();

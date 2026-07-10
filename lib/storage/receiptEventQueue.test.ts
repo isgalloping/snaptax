@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  RECEIPT_EVENT_RETENTION_MS,
   appendReceiptEvent,
   listPendingReceiptEvents,
   markReceiptEventsSynced,
@@ -41,6 +42,10 @@ describe("receiptEventQueue", () => {
       syncedAtMs: cutoffMs - 100_000,
     };
     assert.equal(shouldPruneSyncedReceiptEvent(stale, cutoffMs), true);
+  });
+
+  it("RECEIPT_EVENT_RETENTION_MS aligns with 90-day photo retention", () => {
+    assert.equal(RECEIPT_EVENT_RETENTION_MS, 90 * 24 * 60 * 60 * 1000);
   });
 
   it("shouldPruneSyncedReceiptEvent ignores pending rows", () => {

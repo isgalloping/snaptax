@@ -1,5 +1,6 @@
 import { pruneSyncedReceiptEvents } from "@/lib/storage/receiptEventQueue";
 
+/** Idle prune for synced lifecycle events — 45s delay staggers vs photo/receipt (30s). */
 export function scheduleReceiptEventRetentionPrune(delayMs = 45_000): void {
   if (typeof window === "undefined") return;
 

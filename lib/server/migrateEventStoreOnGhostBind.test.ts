@@ -107,4 +107,32 @@ describe("migrateEventStoreOnGhostBind", () => {
     assert.equal(result.cursorMerged, false);
     assert.equal(upsertCalls, 0);
   });
+
+  it("is idempotent when ghost rows already belong to user", async () => {
+    let eventUpdates = 0;
+
+    const result = await migrateEventStoreOnGhostBind(
+      "user-1",
+      "ghost-9",
+      {
+        snaptaxReceiptEvent: {
+          updateMany: async () => {
+            eventUpdates += 1;
+            return { count: 0 };
+          },
+        },
+        snaptaxReceiptLifecycleSnapshot: {
+          updateMany: async () => ({ count: 0 }),
+        },
+        snaptaxReceiptSyncCursor: {
+          findUnique: async () => null,
+          upsert: async () => ({}),
+          deleteMany: async () => ({ count: 0 }),
+        },
+      },
+    );
+
+    assert.deepEqual(result, { events: 0, snapshots: 0, cursorMerged: false });
+    assert.equal(eventUpdates, 1);
+  });
 });

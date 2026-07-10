@@ -60,7 +60,7 @@ Database: **`snaptax`** (legacy `snap1099` migrated on first open). Object store
 | `snaptax_receipt_photos` | **Photo metadata only** (paths, sizes, purge flags) |
 | `snaptax_system_meta` | Onboarding, tombstones, KV meta |
 | `snaptax_crypto_meta` | Local encryption DEK |
-| `snaptax_receipt_events` | Phase 2 lifecycle event queue only |
+| `snaptax_receipt_events` | Lifecycle event queue（pending → flush → synced） |
 
 **Image bytes:** OPFS `snaptax/photos/{id}/` (encrypted). **Not** in IDB.
 

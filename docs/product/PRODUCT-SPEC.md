@@ -302,6 +302,7 @@ Next.js 16 · React 19 · Tailwind 4 · Serwist · **PostgreSQL（美国）** ·
 | Missing Deductions Widget（Find More Savings） | ✅ | **隐藏**（`SHOW_MISSING_DEDUCTIONS_WIDGET=false`；overlay/计算逻辑保留，可恢复） |
 | Home v2 筛选桶 + 列表展示 | ✅ | ✅（ALL/READY/REVIEW/ACTION/PROCESSING；绿/灰 tax；category + Line pill） |
 | 本地 OCR + 双路径 AI（Phase 1） | ✅ | ✅（Worker OCR、`ocrDraft`、router、`biz.ocr` 日志；O3 ROI/EU parse） |
+| 生命周期 Event Queue + Event Store | ✅ | ✅（IDB `snaptax_receipt_events` · `POST /api/sync/events` · sync cursor · snapshots · 18mo prune） |
 | Founder Program Widget + Sheet + Badge | ✅ | ✅（Widget #1 · GET /api/founder/program · Paddle founder SKU · Flag 定价） |
 | **营销站 + 产品 `/app` 拆分** | ✅ | ✅（`(marketing)` vs `(pwa)/app`；manifest scope `/app`） |
 | **PWA 安装：SnapTax 图标名 + 全站 prompt 捕获** | ✅ | ✅（`manifest`/`appleWebApp` · 根 layout `InstallCaptureScript`） |

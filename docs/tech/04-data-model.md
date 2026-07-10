@@ -119,7 +119,7 @@ snaptax_receipts *───1 image (image_url → Vercel Blob)
 | receipt_events (user_id, client_created_at) | 用户事件时间线 |
 | receipt_events (ghost_id, client_created_at) | Ghost 事件时间线 |
 
-### snaptax_receipt_events（Phase 2 spike）
+### snaptax_receipt_events（shipped 2026-07-10）
 
 Append-only 客户端生命周期事件；`POST /api/sync/events` batch ≤50。
 
@@ -196,7 +196,7 @@ if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 | 原图 store | `snaptax_receipt_photos`（**元数据 only**；像素 → OPFS） |
 | 系统 KV | `snaptax_system_meta` |
 | 加密密钥 | `snaptax_crypto_meta` |
-| 事件队列（Phase 2） | `snaptax_receipt_events` |
+| 事件队列 | `snaptax_receipt_events` |
 
 实现入口：`lib/storage/receiptDb.ts` · 规范常量：`lib/storage/idbStores.ts`（v8 含 `snaptax_receipt_events`）
 

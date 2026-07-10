@@ -44,9 +44,8 @@ async function runSampledReceiptEventPrune(nowMs = Date.now()): Promise<number> 
     success: true,
     durationMs: 0,
     meta: {
-      reason: "receipt_event_prune",
-      deletedCount,
-      cutoff: cutoff.toISOString(),
+      reason: `receipt_event_prune cutoff=${cutoff.toISOString()}`,
+      receiptCount: deletedCount,
     },
   });
   return deletedCount;

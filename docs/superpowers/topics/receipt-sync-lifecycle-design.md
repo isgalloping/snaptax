@@ -18,7 +18,7 @@ Snap1099 小票生命周期分三层：**AI 状态**（`processing` | `done` | `
 
 **Phase C（lifecycle redesign · shipped）：** WorkerSession 相机门控 · done lock merge · UI/sync window 50 · server-side filed PATCH lock。
 
-**Still deferred (lifecycle redesign draft):** write budget 3。（Event Queue spike shipped 2026-07-10：IDB `snaptax_receipt_events` + `POST /api/sync/events` + batch flush；export local-first P1–P1d 已于 2026-07-08 完成，见 [`export-pipeline-design.md`](./export-pipeline-design.md) §3.8–§3.10。）
+**Still deferred (lifecycle redesign draft):** write budget 3 · Ghost bind 后 event cursor 不迁移（forward-only per actor）。
 
 ---
 

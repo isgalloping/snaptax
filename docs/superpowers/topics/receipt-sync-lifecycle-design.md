@@ -204,7 +204,7 @@ UI list + default `GET /api/receipts` fetch window reduced **100 → 50** rows (
 ## 5. Out of scope
 
 - Receipt **list/detail UI** tweaks (`receipt-list-*`, `receipt-detail-*`, duplicate-detection) — stay active specs
-- Event Store snapshots / sync cursor / 18mo server prune — follow-up after Event Queue spike (2026-07-10 shipped IDB + `POST /api/sync/events`)
+- Event Store snapshots / sync cursor / 18mo server prune — follow-up after Event Queue spike (2026-07-10 shipped IDB + `POST /api/sync/events`; 2026-07-10 hardening: per-id mark synced + local 90d synced prune)
 - WorkerSession **full** redesign (write budget 3) — lifecycle redesign draft partial；local export 已完成
 - Export pack generation — [`export-pipeline-design.md`](./export-pipeline-design.md)
 - Server-side orphan ghost merge job

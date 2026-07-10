@@ -112,7 +112,10 @@ async function persistOcrDraft(
 }
 
 /** Queue full or device skip — persist skipped draft and finalize. */
-export async function persistSkippedOcrDraft(receiptId: string): Promise<void> {
+export async function persistSkippedOcrDraft(
+  receiptId: string,
+  reason = "queue_or_env_skip",
+): Promise<void> {
   const draft = buildOcrDraft({
     text: "",
     confidence: 0,
@@ -120,8 +123,27 @@ export async function persistSkippedOcrDraft(receiptId: string): Promise<void> {
     durationMs: 0,
   });
   await persistOcrDraft(receiptId, draft);
+  emitOcrCompletedLifecycleEvent(receiptId, {
+    source: "skipped",
+    reason,
+    engine: "skipped",
+  });
   markOcrFinished(receiptId);
   notifyOcrComplete(receiptId);
+}
+
+function emitOcrCompletedLifecycleEvent(
+  receiptId: string,
+  payload: Record<string, unknown>,
+): void {
+  void import("@/lib/client/emitReceiptLifecycleEvent").then(
+    ({ emitReceiptLifecycleEvent }) =>
+      emitReceiptLifecycleEvent({
+        receiptId,
+        type: "OCR_COMPLETED",
+        payload,
+      }),
+  );
 }
 
 function notifyOcrComplete(receiptId: string): void {
@@ -145,6 +167,11 @@ async function processReceiptOcr(receiptId: string): Promise<void> {
           durationMs: 0,
         }),
       );
+      emitOcrCompletedLifecycleEvent(receiptId, {
+        source: "skipped",
+        reason: "no_photo",
+        engine: "skipped",
+      });
       return;
     }
 
@@ -152,18 +179,11 @@ async function processReceiptOcr(receiptId: string): Promise<void> {
     const result = await runOcrInWorker(receiptId, blob);
     if (result.kind === "ok") {
       await persistOcrDraft(receiptId, result.draft);
-      void import("@/lib/client/emitReceiptLifecycleEvent").then(
-        ({ emitReceiptLifecycleEvent }) =>
-          emitReceiptLifecycleEvent({
-            receiptId,
-            type: "OCR_COMPLETED",
-            payload: {
-              source: "local_ocr",
-              engine: result.draft.engine,
-              confidence: result.draft.confidence,
-            },
-          }),
-      );
+      emitOcrCompletedLifecycleEvent(receiptId, {
+        source: "local_ocr",
+        engine: result.draft.engine,
+        confidence: result.draft.confidence,
+      });
       if (
         typeof window !== "undefined" &&
         process.env.NODE_ENV === "development"
@@ -183,6 +203,11 @@ async function processReceiptOcr(receiptId: string): Promise<void> {
           durationMs: Date.now() - started,
         }),
       );
+      emitOcrCompletedLifecycleEvent(receiptId, {
+        source: "skipped",
+        reason: result.kind === "err" ? result.reason : "local_ocr_failed",
+        engine: "skipped",
+      });
     }
   } finally {
     markOcrFinished(receiptId);
@@ -287,7 +312,7 @@ export function scheduleOcrJob(receiptId: string): void {
   ocrScheduled.add(receiptId);
 
   if (shouldSkipLocalOcr()) {
-    void persistSkippedOcrDraft(receiptId).catch(() => {
+    void persistSkippedOcrDraft(receiptId, "env_skip").catch(() => {
       markOcrFinished(receiptId);
       notifyOcrComplete(receiptId);
     });
@@ -295,7 +320,7 @@ export function scheduleOcrJob(receiptId: string): void {
   }
 
   if (!shouldEnqueueOcrJob()) {
-    void persistSkippedOcrDraft(receiptId).catch(() => {
+    void persistSkippedOcrDraft(receiptId, "queue_full").catch(() => {
       markOcrFinished(receiptId);
       notifyOcrComplete(receiptId);
     });

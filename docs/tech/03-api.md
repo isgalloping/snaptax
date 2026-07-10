@@ -147,6 +147,41 @@ Header: **`X-Tax-Region`**（`us` \| `eu`；缺省 `us`）→ 写入 `receipt.da
 
 重拍前删除 blurry 记录（可选）。
 
+### `POST /api/sync/events`
+
+客户端生命周期事件 batch 上传（Phase 2 spike · append-only）。
+
+Header: **`snap1099_ghost` Cookie**（Ghost）或 session  
+Rate limit: IP **60/min** · Ghost **30/h** · User **60/h**（`SYNC_EVENTS_*` 可覆盖）
+
+**Request**
+```json
+{
+  "events": [
+    {
+      "id": "uuid",
+      "receiptId": "uuid",
+      "type": "RECEIPT_CREATED",
+      "payload": { "pendingUpload": true },
+      "createdAtMs": 1700000000000
+    }
+  ]
+}
+```
+
+| 字段 | 约束 |
+|------|------|
+| `events` | 1–50 条（`RECEIPT_EVENT_BATCH_SIZE`） |
+| `type` | `RECEIPT_CREATED` · `OCR_COMPLETED` · `TAX_CALCULATED` |
+| `TAX_CALCULATED` | 须引用当前 actor 名下 receipt，否则 **403** `INVALID_RECEIPT` |
+
+**Response 200**
+```json
+{ "syncedIds": ["uuid", "..."], "inserted": 3 }
+```
+
+服务端 `createMany({ skipDuplicates: true })` — 客户端 event `id` 幂等。
+
 ---
 
 ## 3.4 权益

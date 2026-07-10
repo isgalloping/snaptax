@@ -17,6 +17,7 @@ import {
 import { shouldRunHiddenBackgroundSync } from "@/lib/client/backgroundSyncGate";
 import { flushReceiptEventBatch } from "@/lib/client/flushReceiptEventBatch";
 import { schedulePhotoRetentionPurge } from "@/lib/client/photoRetentionJob";
+import { scheduleReceiptEventRetentionPrune } from "@/lib/client/receiptEventRetention";
 import { scheduleReceiptRetentionPrune } from "@/lib/client/receiptRetention";
 import { scheduleReceiptSummaryVerify } from "@/lib/client/receiptSummaryVerify";
 import { reconcileDuplicateReceipt } from "@/lib/client/reconcileDuplicateReceipt";
@@ -944,6 +945,7 @@ export function HomeScreen() {
           );
           schedulePhotoRetentionPurge();
           scheduleReceiptRetentionPrune();
+          scheduleReceiptEventRetentionPrune();
           scheduleReceiptSummaryVerify();
           void reconcileNonDoneWindow();
           void flushReceiptEventBatch({

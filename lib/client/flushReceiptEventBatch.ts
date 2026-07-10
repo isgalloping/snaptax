@@ -5,6 +5,7 @@ import {
   listPendingReceiptEvents,
   markReceiptEventsSynced,
 } from "@/lib/storage/receiptEventQueue";
+import { advanceStoredReceiptEventSyncCursor } from "@/lib/storage/receiptEventSyncCursor";
 import type { SyncReceiptEventPayload } from "@/lib/storage/receiptEventTypes";
 import { RECEIPT_EVENT_BATCH_SIZE } from "@/lib/storage/receiptEventTypes";
 
@@ -59,6 +60,13 @@ export async function flushReceiptEventBatch(options?: {
   const body = (await res.json()) as { syncedIds?: string[] };
   const syncedIds = body.syncedIds ?? events.map((event) => event.id);
   await markReceiptEventsSynced(syncedIds);
+  const syncedRows = pending.filter((row) => syncedIds.includes(row.id));
+  await advanceStoredReceiptEventSyncCursor(
+    syncedRows.map((row) => ({
+      id: row.id,
+      clientCreatedAtMs: row.createdAtMs,
+    })),
+  );
   return {
     attempted: events.length,
     synced: syncedIds.length,

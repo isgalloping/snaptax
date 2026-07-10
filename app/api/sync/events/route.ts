@@ -8,6 +8,8 @@ import {
   clientIp,
 } from "@/lib/api/rateLimit";
 import { getActor } from "@/lib/auth/getActor";
+import { ingestReceiptEventBatch } from "@/lib/server/ingestReceiptEventBatch";
+import { maybePruneOldReceiptEvents } from "@/lib/server/pruneReceiptEvents";
 import { prisma } from "@/lib/prisma";
 import { receiptWhereForActor } from "@/lib/receipts/ownership";
 import { withRequestLog } from "@/lib/server/log/withRequestLog";
@@ -79,14 +81,35 @@ export const POST = withRequestLog(
         clientCreatedAt: new Date(event.createdAtMs),
       }));
 
-      const result = await prisma.snaptaxReceiptEvent.createMany({
-        data: rows,
-        skipDuplicates: true,
+      const { inserted, snapshotsInserted, cursor } = await ingestReceiptEventBatch({
+        actor,
+        rows,
+        cursorEvents: body.events.map((event) => ({
+          id: event.id,
+          clientCreatedAtMs: event.createdAtMs,
+        })),
+        taxCalculatedEvents: body.events
+          .filter((event) => event.type === "TAX_CALCULATED")
+          .map((event) => ({
+            id: event.id,
+            receiptId: event.receiptId,
+            payload: event.payload,
+            createdAtMs: event.createdAtMs,
+          })),
       });
+
+      await maybePruneOldReceiptEvents();
 
       return NextResponse.json({
         syncedIds: body.events.map((event) => event.id),
-        inserted: result.count,
+        inserted,
+        snapshotsInserted,
+        cursor: cursor
+          ? {
+              lastEventId: cursor.lastEventId,
+              lastClientCreatedAtMs: cursor.lastClientCreatedAtMs,
+            }
+          : null,
       });
     } catch (err) {
       if (err instanceof z.ZodError) {

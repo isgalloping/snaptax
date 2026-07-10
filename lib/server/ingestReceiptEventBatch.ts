@@ -13,32 +13,59 @@ export type IngestReceiptEventBatchInput = {
   taxCalculatedEvents: TaxCalculatedEventInput[];
 };
 
-export async function ingestReceiptEventBatch(
+export type IngestReceiptEventBatchDb = Pick<
+  typeof prisma,
+  | "snaptaxReceiptEvent"
+  | "snaptaxReceiptLifecycleSnapshot"
+  | "snaptaxReceiptSyncCursor"
+  | "$transaction"
+>;
+
+async function ingestReceiptEventBatchInTx(
   input: IngestReceiptEventBatchInput,
+  tx: Pick<
+    typeof prisma,
+    | "snaptaxReceiptEvent"
+    | "snaptaxReceiptLifecycleSnapshot"
+    | "snaptaxReceiptSyncCursor"
+  >,
 ): Promise<{
   inserted: number;
   snapshotsInserted: number;
   cursor: Awaited<ReturnType<typeof advanceActorReceiptSyncCursor>>;
 }> {
-  return prisma.$transaction(async (tx) => {
-    const result = await tx.snaptaxReceiptEvent.createMany({
-      data: input.rows,
-      skipDuplicates: true,
-    });
-    const snapshotsInserted = await appendTaxCalculatedSnapshots(
-      input.actor,
-      input.taxCalculatedEvents,
-      tx,
-    );
-    const cursor = await advanceActorReceiptSyncCursor(
-      input.actor,
-      input.cursorEvents,
-      tx,
-    );
-    return {
-      inserted: result.count,
-      snapshotsInserted,
-      cursor,
-    };
+  const result = await tx.snaptaxReceiptEvent.createMany({
+    data: input.rows,
+    skipDuplicates: true,
   });
+  const snapshotsInserted = await appendTaxCalculatedSnapshots(
+    input.actor,
+    input.taxCalculatedEvents,
+    tx,
+  );
+  const cursor = await advanceActorReceiptSyncCursor(
+    input.actor,
+    input.cursorEvents,
+    tx,
+  );
+  return {
+    inserted: result.count,
+    snapshotsInserted,
+    cursor,
+  };
+}
+
+/** Append-only event ingest: events + TAX_CALCULATED snapshots + sync cursor in one tx. */
+export async function ingestReceiptEventBatch(
+  input: IngestReceiptEventBatchInput,
+  db: IngestReceiptEventBatchDb = prisma,
+): Promise<{
+  inserted: number;
+  snapshotsInserted: number;
+  cursor: Awaited<ReturnType<typeof advanceActorReceiptSyncCursor>>;
+}> {
+  if (db === prisma) {
+    return prisma.$transaction((tx) => ingestReceiptEventBatchInTx(input, tx));
+  }
+  return ingestReceiptEventBatchInTx(input, db);
 }

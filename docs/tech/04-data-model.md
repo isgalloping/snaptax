@@ -134,6 +134,29 @@ Append-only 客户端生命周期事件；`POST /api/sync/events` batch ≤50。
 | client_created_at | TIMESTAMPTZ(3) | 客户端时间 |
 | created_at | TIMESTAMPTZ(3) | 服务端写入时间 |
 
+### snaptax_receipt_sync_cursors
+
+Per-actor 事件 ingest 高水位；`POST /api/sync/events` 成功后 upsert。
+
+| 列 | 类型 | 说明 |
+|----|------|------|
+| user_id / ghost_id | UUID / varchar | 二选一 unique |
+| last_event_id | UUID | 最近 ingest 的 event id |
+| last_client_created_at | TIMESTAMPTZ(3) | 最近 event 客户端时间 |
+
+### snaptax_receipt_lifecycle_snapshots
+
+`TAX_CALCULATED` append-only 快照；`source_event_id` unique 幂等。
+
+| 列 | 类型 | 说明 |
+|----|------|------|
+| receipt_id | UUID | 小票 |
+| source_event_id | UUID UNIQUE | 源 event |
+| payload | JSONB | `{ status, taxAmount, category, extractionSource }` 等 |
+| client_created_at | TIMESTAMPTZ(3) | 源 event 客户端时间 |
+
+服务端事件保留：**18 个月**（采样 lazy prune，见 `lib/server/pruneReceiptEvents.ts`）。
+
 ## 4.5 应用层枚举（E3）
 
 | 字段 | 允许值 |

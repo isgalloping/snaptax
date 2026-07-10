@@ -1,6 +1,7 @@
 import { del } from "@vercel/blob";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { deleteEventStoreRecords } from "@/lib/server/receiptEventStoreCleanup";
 import { logEvent } from "@/lib/server/log/logEvent";
 import { blobCommandOptions } from "@/lib/server/blob";
 
@@ -50,6 +51,7 @@ export async function deleteGhostReceipts(ghostId: string): Promise<void> {
     select: { id: true, imageUrl: true },
   });
   await deleteReceiptBlobs(receipts.map((r) => r.imageUrl));
+  await deleteEventStoreRecords({ ghostIds: [ghostId] });
   if (receipts.length > 0) {
     await prisma.snaptaxReceipt.deleteMany({
       where: { ghostId, userId: null },
@@ -122,6 +124,13 @@ export async function deleteUserAccount(userId: string): Promise<void> {
   const historicalGhostIds = receiptGhostRows
     .map((row) => row.ghostId)
     .filter((ghostId): ghostId is string => ghostId != null);
+  const ghostIds = [
+    ...new Set(
+      [boundGhostId, ...historicalGhostIds].filter(
+        (ghostId): ghostId is string => ghostId != null && ghostId.length > 0,
+      ),
+    ),
+  ];
   const receiptFilter = userAccountReceiptFilter(
     userId,
     boundGhostId,
@@ -134,9 +143,10 @@ export async function deleteUserAccount(userId: string): Promise<void> {
   });
   await deleteReceiptBlobs(receipts.map((r) => r.imageUrl));
 
-  const counts = await prisma.$transaction((tx) =>
-    deleteUserAccountDbRecords(tx, userId, receiptFilter),
-  );
+  const counts = await prisma.$transaction(async (tx) => {
+    await deleteEventStoreRecords({ userId, ghostIds }, tx);
+    return deleteUserAccountDbRecords(tx, userId, receiptFilter);
+  });
 
   logEvent({
     ts: new Date().toISOString(),

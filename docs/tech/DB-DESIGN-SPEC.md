@@ -225,6 +225,9 @@ prisma/migrations/（deploy 用）
 | `snaptax_ghost_account` | Ghost ↔ User 一对一绑定 |
 | `snaptax_receipts` | 小票元数据（图 pathname 在 `image_url`） |
 | `snaptax_season_entitlements` | 报税季付费权益 |
+| `snaptax_receipt_events` | append-only 客户端生命周期事件 |
+| `snaptax_receipt_sync_cursors` | per-actor event ingest 高水位 |
+| `snaptax_receipt_lifecycle_snapshots` | `TAX_CALCULATED` append-only 状态快照 |
 
 **禁止：** 在 `users` 表冗余 entitlements；在 `season_entitlements` 存 `auth_channel`（已通过 `user_id` FK 表达）。
 

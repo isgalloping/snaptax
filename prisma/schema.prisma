@@ -150,5 +150,35 @@ model SnaptaxReceiptEvent {
 
   @@index([userId, clientCreatedAt], map: "snaptax_receipt_events_user_created_idx")
   @@index([ghostId, clientCreatedAt], map: "snaptax_receipt_events_ghost_created_idx")
+  @@index([clientCreatedAt], map: "snaptax_receipt_events_client_created_idx")
   @@map("snaptax_receipt_events")
+}
+
+/// Per-actor high-water mark for ingested lifecycle events.
+model SnaptaxReceiptSyncCursor {
+  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId              String?  @unique @map("user_id") @db.Uuid
+  ghostId             String?  @unique @map("ghost_id") @db.VarChar(255)
+  lastEventId         String   @map("last_event_id") @db.Uuid
+  lastClientCreatedAt DateTime @map("last_client_created_at") @db.Timestamptz(3)
+  updatedAt           DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("snaptax_receipt_sync_cursors")
+}
+
+/// Append-only receipt state snapshots derived from TAX_CALCULATED events.
+model SnaptaxReceiptLifecycleSnapshot {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  receiptId       String   @map("receipt_id") @db.Uuid
+  userId          String?  @map("user_id") @db.Uuid
+  ghostId         String?  @map("ghost_id") @db.VarChar(255)
+  sourceEventId   String   @unique @map("source_event_id") @db.Uuid
+  payload         Json     @default("{}")
+  clientCreatedAt DateTime @map("client_created_at") @db.Timestamptz(3)
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([receiptId, clientCreatedAt], map: "snaptax_receipt_lifecycle_snapshots_receipt_created_idx")
+  @@index([userId, clientCreatedAt], map: "snaptax_receipt_lifecycle_snapshots_user_created_idx")
+  @@index([ghostId, clientCreatedAt], map: "snaptax_receipt_lifecycle_snapshots_ghost_created_idx")
+  @@map("snaptax_receipt_lifecycle_snapshots")
 }

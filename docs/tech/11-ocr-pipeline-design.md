@@ -570,7 +570,7 @@ module=biz.ocr stage=local_ocr|text_classify|vision_fallback receiptId=… durat
 | 本地 synced 事件 90d prune | **shipped** — idle 调度 |
 | `WorkerSession` 门控 | shipped（Lifecycle Phase C） |
 | done 锁、50 窗口 | shipped（Lifecycle Phase C） |
-| Event Store snapshots / sync_cursor / 18mo server prune | **deferred** |
+| Event Store snapshots / sync_cursor / 18mo server prune | **shipped** — snapshots + cursor + sampled prune |
 
 第一阶段代码 **须预留扩展点**（`ocrDraft` 结构稳定、`extractionSource` 可观测），但 **不得** 半成品事件表阻塞 OCR 上线。
 
@@ -593,7 +593,7 @@ module=biz.ocr stage=local_ocr|text_classify|vision_fallback receiptId=… durat
 
 ## 16. 第二阶段路线图（数据一致性 · 摘要）
 
-**Event Queue spike shipped 2026-07-10**（IDB v8 + flush + `POST /api/sync/events`）。仍 deferred：snapshots、sync_cursor、服务端 18mo prune。
+**Event Queue spike shipped 2026-07-10**（IDB v8 + flush + `POST /api/sync/events` + cursor/snapshots/18mo server prune）。
 
 完整规范见 sync 重设计 spec + `ocr-desn.md` §11–§12。
 

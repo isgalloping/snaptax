@@ -136,3 +136,19 @@ model SnaptaxCheckoutIntent {
   @@index([userId, taxSeason], map: "snaptax_checkout_intents_user_season_idx")
   @@map("snaptax_checkout_intents")
 }
+
+/// Append-only receipt lifecycle events (Phase 2 Event Queue spike).
+model SnaptaxReceiptEvent {
+  id              String   @id @db.Uuid
+  receiptId       String   @map("receipt_id") @db.Uuid
+  userId          String?  @map("user_id") @db.Uuid
+  ghostId         String?  @map("ghost_id") @db.VarChar(255)
+  eventType       String   @map("event_type") @db.VarChar(64)
+  payload         Json     @default("{}")
+  clientCreatedAt DateTime @map("client_created_at") @db.Timestamptz(3)
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([userId, clientCreatedAt], map: "snaptax_receipt_events_user_created_idx")
+  @@index([ghostId, clientCreatedAt], map: "snaptax_receipt_events_ghost_created_idx")
+  @@map("snaptax_receipt_events")
+}

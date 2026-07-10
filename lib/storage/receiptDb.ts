@@ -27,6 +27,7 @@ import {
   IDB_LEGACY_SYSTEM_META,
   IDB_STORE_CRYPTO_META,
   IDB_STORE_RECEIPT_PHOTOS,
+  IDB_STORE_RECEIPT_EVENTS,
   IDB_STORE_RECEIPT_SUMMARY,
   IDB_STORE_RECEIPTS,
   IDB_STORE_SYSTEM_META,
@@ -290,6 +291,16 @@ function migrateToSnaptaxStores(
     !db.objectStoreNames.contains(IDB_STORE_RECEIPT_SUMMARY)
   ) {
     db.createObjectStore(IDB_STORE_RECEIPT_SUMMARY, { keyPath: "scopeKey" });
+  }
+  if (
+    oldVersion < 8 &&
+    !db.objectStoreNames.contains(IDB_STORE_RECEIPT_EVENTS)
+  ) {
+    const eventStore = db.createObjectStore(IDB_STORE_RECEIPT_EVENTS, {
+      keyPath: "id",
+    });
+    eventStore.createIndex("bySyncStatus", "syncStatus", { unique: false });
+    eventStore.createIndex("byReceiptId", "receiptId", { unique: false });
   }
 
   const finishReceiptSummaryBootstrap = (): void => {

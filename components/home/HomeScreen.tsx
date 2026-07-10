@@ -15,6 +15,7 @@ import {
   type ApiReceipt,
 } from "@/lib/client/receiptApi";
 import { shouldRunHiddenBackgroundSync } from "@/lib/client/backgroundSyncGate";
+import { flushReceiptEventBatch } from "@/lib/client/flushReceiptEventBatch";
 import { schedulePhotoRetentionPurge } from "@/lib/client/photoRetentionJob";
 import { scheduleReceiptRetentionPrune } from "@/lib/client/receiptRetention";
 import { scheduleReceiptSummaryVerify } from "@/lib/client/receiptSummaryVerify";
@@ -82,6 +83,7 @@ import {
 import { ProcessingQueue } from "@/lib/client/processingQueue";
 import { ProcessingReceiptWatcher } from "@/lib/client/processingReceiptWatcher";
 import { resolveHeaderTaxSaved } from "@/lib/client/resolveHeaderTaxSaved";
+import { emitReceiptLifecycleEvent } from "@/lib/client/emitReceiptLifecycleEvent";
 import {
   hasWorkerCatchUp,
   isWorkerSessionActive,
@@ -578,10 +580,12 @@ export function HomeScreen() {
   const applyReceiptUpdate = useCallback(
     async (updated: StoredReceipt) => {
       let merged = updated;
+      let priorStatus: StoredReceipt["status"] | undefined;
       setReceipts((prev) => {
         const existing = prev.find((r) => r.id === updated.id) as
           | StoredReceipt
           | undefined;
+        priorStatus = existing?.status;
         merged = {
           ...updated,
           writeBudgetRemaining:
@@ -592,6 +596,25 @@ export function HomeScreen() {
         return top100ByUpdatedAt(next as StoredReceipt[]);
       });
       await saveReceipt(merged);
+
+      if (
+        priorStatus === "processing" &&
+        merged.status === "done" &&
+        merged.taxAmount != null
+      ) {
+        void emitReceiptLifecycleEvent(
+          {
+            receiptId: merged.id,
+            type: "TAX_CALCULATED",
+            payload: {
+              status: merged.status,
+              taxAmount: merged.taxAmount ?? null,
+              category: merged.category ?? null,
+            },
+          },
+          { cameraOpen: cameraOpenRef.current },
+        );
+      }
 
       if (merged.status === "done" && merged.taxAmount != null) {
         pulseTaxAnimating();
@@ -831,6 +854,10 @@ export function HomeScreen() {
     if (flags.reconcile) {
       void reconcileNonDoneWindow();
     }
+    await flushReceiptEventBatch({
+      cameraOpen: cameraOpenRef.current,
+      force: true,
+    }).catch(() => {});
   }, [syncFromServer]);
 
   useEffect(() => {
@@ -919,6 +946,9 @@ export function HomeScreen() {
           scheduleReceiptRetentionPrune();
           scheduleReceiptSummaryVerify();
           void reconcileNonDoneWindow();
+          void flushReceiptEventBatch({
+            cameraOpen: cameraOpenRef.current,
+          }).catch(() => {});
         })();
       });
     },
@@ -1169,6 +1199,9 @@ export function HomeScreen() {
       }
       void flushPendingUploadsRef.current();
       void flushPendingDeletesRef.current();
+      void flushReceiptEventBatch({
+        cameraOpen: cameraOpenRef.current,
+      }).catch(() => {});
       if (document.visibilityState === "visible") {
         void reconcileNonDoneWindow();
       }

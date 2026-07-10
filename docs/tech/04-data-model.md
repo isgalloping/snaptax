@@ -116,6 +116,23 @@ snaptax_receipts *───1 image (image_url → Vercel Blob)
 | receipts (status) WHERE processing | AI 队列（部分索引） |
 | entitlements (user_id, tax_season) UNIQUE | Export 权益 |
 | entitlements (transaction_id) UNIQUE | Webhook 幂等 |
+| receipt_events (user_id, client_created_at) | 用户事件时间线 |
+| receipt_events (ghost_id, client_created_at) | Ghost 事件时间线 |
+
+### snaptax_receipt_events（Phase 2 spike）
+
+Append-only 客户端生命周期事件；`POST /api/sync/events` batch ≤50。
+
+| 列 | 类型 | 说明 |
+|----|------|------|
+| id | UUID PK | 客户端 event UUID（幂等） |
+| receipt_id | UUID | 关联小票 |
+| user_id | UUID? | 登录用户 |
+| ghost_id | varchar(255)? | Ghost |
+| event_type | varchar(64) | RECEIPT_CREATED / OCR_COMPLETED / TAX_CALCULATED |
+| payload | JSONB | 最小事件载荷 |
+| client_created_at | TIMESTAMPTZ(3) | 客户端时间 |
+| created_at | TIMESTAMPTZ(3) | 服务端写入时间 |
 
 ## 4.5 应用层枚举（E3）
 
@@ -158,7 +175,7 @@ if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 | 加密密钥 | `snaptax_crypto_meta` |
 | 事件队列（Phase 2） | `snaptax_receipt_events` |
 
-实现入口：`lib/storage/receiptDb.ts` · 规范常量：`lib/storage/idbStores.ts`（v5 迁移）
+实现入口：`lib/storage/receiptDb.ts` · 规范常量：`lib/storage/idbStores.ts`（v8 含 `snaptax_receipt_events`）
 
 字段与 server `snaptax_receipts` 对齐，额外客户端字段：
 

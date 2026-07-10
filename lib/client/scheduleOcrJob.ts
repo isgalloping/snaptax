@@ -152,6 +152,18 @@ async function processReceiptOcr(receiptId: string): Promise<void> {
     const result = await runOcrInWorker(receiptId, blob);
     if (result.kind === "ok") {
       await persistOcrDraft(receiptId, result.draft);
+      void import("@/lib/client/emitReceiptLifecycleEvent").then(
+        ({ emitReceiptLifecycleEvent }) =>
+          emitReceiptLifecycleEvent({
+            receiptId,
+            type: "OCR_COMPLETED",
+            payload: {
+              source: "local_ocr",
+              engine: result.draft.engine,
+              confidence: result.draft.confidence,
+            },
+          }),
+      );
       if (
         typeof window !== "undefined" &&
         process.env.NODE_ENV === "development"

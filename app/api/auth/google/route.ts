@@ -127,13 +127,32 @@ export const POST = withRequestLog("api.auth", async (request, _context) => {
       });
     }
 
-    await prisma.$transaction(async (tx) => {
+    const migration = await prisma.$transaction(async (tx) => {
       await tx.snaptaxReceipt.updateMany({
         where: { ghostId, userId: null },
         data: { userId: user.id },
       });
-      await migrateEventStoreOnGhostBind(user.id, ghostId, tx);
+      return migrateEventStoreOnGhostBind(user.id, ghostId, tx);
     });
+
+    if (
+      migration.events > 0 ||
+      migration.snapshots > 0 ||
+      migration.cursorMerged
+    ) {
+      logEvent({
+        ts: new Date().toISOString(),
+        level: "info",
+        module: "api.auth",
+        success: true,
+        durationMs: 0,
+        userId: user.id,
+        ghostId,
+        meta: {
+          reason: `ghost_event_store_migrated events=${migration.events} snapshots=${migration.snapshots} cursorMerged=${migration.cursorMerged}`,
+        },
+      });
+    }
 
     let taxRecalcQueued = 0;
     if (shouldRecalcOnLogin(lockedRegion, ghostCandidate)) {

@@ -1,4 +1,4 @@
-import { Zip, ZipPassThrough } from "fflate";
+import { startCpaPackZipSession } from "@/lib/client/cpaPackZipWorkerClient";
 import type { ExportExpenseRow } from "@/lib/tax/exportRows";
 import type { ExportIncomeRow } from "@/lib/export/incomeDocuments";
 
@@ -25,42 +25,6 @@ type ImagePackRow = {
   receiptId: string;
   archivePath: string;
 };
-
-type IncrementalZip = {
-  addStoredFile: (name: string, data: Uint8Array) => void;
-  finish: () => Promise<Uint8Array[]>;
-};
-
-function createIncrementalZip(): IncrementalZip {
-  const chunks: Uint8Array[] = [];
-  let resolveDone!: (chunks: Uint8Array[]) => void;
-  let rejectDone!: (err: Error) => void;
-  const done = new Promise<Uint8Array[]>((resolve, reject) => {
-    resolveDone = resolve;
-    rejectDone = reject;
-  });
-
-  const zip = new Zip((err, chunk, final) => {
-    if (err) {
-      rejectDone(err);
-      return;
-    }
-    if (chunk) chunks.push(chunk);
-    if (final) resolveDone(chunks);
-  });
-
-  return {
-    addStoredFile(name: string, data: Uint8Array) {
-      const entry = new ZipPassThrough(name);
-      zip.add(entry);
-      entry.push(data, true);
-    },
-    finish() {
-      zip.end();
-      return done;
-    },
-  };
-}
 
 async function mapWithConcurrency<T, R>(
   items: T[],
@@ -113,40 +77,45 @@ export async function buildLocalCpaPackZip(
     }));
   const imageRows = [...incomeImages, ...expenseImages];
 
-  const incremental = createIncrementalZip();
-  incremental.addStoredFile(
-    `${taxYear}_Tax_Report_Summary.pdf`,
-    summaryPdf,
-  );
-  incremental.addStoredFile(
-    `${taxYear}_Tax_Report_Data.csv`,
-    new TextEncoder().encode(detailCsv),
-  );
+  const zipSession = startCpaPackZipSession();
+  try {
+    await zipSession.addStoredFile(
+      `${taxYear}_Tax_Report_Summary.pdf`,
+      summaryPdf,
+    );
+    await zipSession.addStoredFile(
+      `${taxYear}_Tax_Report_Data.csv`,
+      new TextEncoder().encode(detailCsv),
+    );
 
-  let imagesIncluded = 0;
-  let completed = 0;
-  await mapWithConcurrency(
-    imageRows,
-    IMAGE_FETCH_CONCURRENCY,
-    async (row) => {
-      const image = await resolveImage(row.receiptId);
-      completed += 1;
-      onProgress?.({ phase: "images", completed, total: imageRows.length });
-      if (!image) return;
-      imagesIncluded += 1;
-      incremental.addStoredFile(
-        row.archivePath,
-        await blobToUint8Array(image),
-      );
-    },
-  );
+    let imagesIncluded = 0;
+    let completed = 0;
+    await mapWithConcurrency(
+      imageRows,
+      IMAGE_FETCH_CONCURRENCY,
+      async (row) => {
+        const image = await resolveImage(row.receiptId);
+        completed += 1;
+        onProgress?.({ phase: "images", completed, total: imageRows.length });
+        if (!image) return;
+        imagesIncluded += 1;
+        await zipSession.addStoredFile(
+          row.archivePath,
+          await blobToUint8Array(image),
+        );
+      },
+    );
 
-  const chunks = await incremental.finish();
-  return {
-    chunks,
-    imageStats: {
-      imagesIncluded,
-      imagesEligible: imageRows.length,
-    },
-  };
+    const chunks = await zipSession.finish();
+    return {
+      chunks,
+      imageStats: {
+        imagesIncluded,
+        imagesEligible: imageRows.length,
+      },
+    };
+  } catch (err) {
+    zipSession.abort();
+    throw err;
+  }
 }

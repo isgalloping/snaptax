@@ -1079,7 +1079,11 @@ export function HomeScreen() {
       }
       await flushPendingUploadsRef.current();
       await flushPendingDeletesRef.current();
-      await flushReceiptEventBatch({ force: true });
+      try {
+        await flushReceiptEventBatch({ force: true });
+      } catch {
+        // Event sync is best-effort; receipt merge must still run after login.
+      }
       const stored = await loadAllReceipts();
       const merged = await syncFromServer(stored, "immediate");
       const stuck = stuckIdsFromReceipts(merged as StoredReceipt[]);
@@ -1693,6 +1697,7 @@ export function HomeScreen() {
         onSignOut={auth.signOut}
         taxStats={settingsTaxStats}
         onRequestExport={handleSettingsExport}
+        onContinueExportAfterGoogle={taxExport.continueExportAfterGoogleSignIn}
         exportBlockedTick={taxExport.exportBlockedTick}
         seasonExportTick={seasonExportTick}
         onboardingAha={

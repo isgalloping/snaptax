@@ -67,6 +67,9 @@ interface SettingsScreenProps {
   onSignOut?: () => Promise<void>;
   taxStats: SettingsTaxStats;
   onRequestExport: () => void;
+  onContinueExportAfterGoogle?: (result: {
+    taxRecalcQueued: number;
+  }) => void | Promise<void>;
   exportBusy?: boolean;
   exportError?: string | null;
   exportEmptyTip?: string | null;
@@ -104,6 +107,7 @@ export function SettingsScreen({
   onSignOut,
   taxStats,
   onRequestExport,
+  onContinueExportAfterGoogle,
   exportBusy = false,
   exportError = null,
   exportEmptyTip = null,
@@ -268,11 +272,12 @@ export function SettingsScreen({
     if (!closingSoftSheet) {
       setGoogleSheet(null);
     }
-    await onPostLoginSync?.(result.taxRecalcQueued);
-    if (continueExportFromSample) {
+    if (continueExportFromSample && onContinueExportAfterGoogle) {
       onViewStateChange("main");
-      onRequestExport();
+      await onContinueExportAfterGoogle(result);
+      return;
     }
+    await onPostLoginSync?.(result.taxRecalcQueued);
   };
 
   const handleUserSignedIn = (result: GoogleAuthResponse) => {

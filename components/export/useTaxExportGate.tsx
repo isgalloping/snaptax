@@ -227,6 +227,7 @@ export function useTaxExportGate({
 
   return {
     requestExport: () => void runExportGate(),
+    continueExportAfterGoogleSignIn: handleGoogleSuccess,
     triggerExportAfterPayment: () => void openExportAfterPrepare(),
     exportError: errorMessage,
     exportEmptyTip,

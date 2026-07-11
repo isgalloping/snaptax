@@ -1,12 +1,19 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { GoogleUser } from "@/lib/client/authStorage";
+import type { GoogleAuthResponse } from "@/lib/client/authApi";
 import { restoreReceiptsFromCloud } from "@/lib/client/cloudRestoreFlow";
+import { GoogleSignInSheet } from "@/components/auth/GoogleSignInSheet";
+import { SyncInstructionsSheet } from "@/components/auth/SyncInstructionsSheet";
 import { settingsVisual } from "@/lib/ui/settingsVisual";
 
 type RestoreState = "idle" | "restoring" | "success" | "error";
 
 interface RestoreFromCloudSectionProps {
+  googleUser: GoogleUser | null;
+  onUserSignedIn?: (result: GoogleAuthResponse) => void;
+  onPostLoginSync?: (taxRecalcQueued: number) => Promise<void>;
   onRestored?: () => void | Promise<void>;
 }
 
@@ -29,12 +36,22 @@ function CloudRestoreIcon() {
   );
 }
 
-export function RestoreFromCloudSection({ onRestored }: RestoreFromCloudSectionProps) {
+export function RestoreFromCloudSection({
+  googleUser,
+  onUserSignedIn,
+  onPostLoginSync,
+  onRestored,
+}: RestoreFromCloudSectionProps) {
   const [state, setState] = useState<RestoreState>("idle");
   const [restoredCount, setRestoredCount] = useState(0);
   const [isOnline, setIsOnline] = useState(
     () => typeof navigator !== "undefined" && navigator.onLine,
   );
+  const [showGoogleSheet, setShowGoogleSheet] = useState(false);
+  const [syncInstructionsEmail, setSyncInstructionsEmail] = useState<string | null>(
+    null,
+  );
+  const signedInEmailRef = useRef<string | null>(null);
 
   useEffect(() => {
     const syncOnline = () =>
@@ -47,7 +64,7 @@ export function RestoreFromCloudSection({ onRestored }: RestoreFromCloudSectionP
     };
   }, []);
 
-  const handleRestore = useCallback(async () => {
+  const runRestore = useCallback(async () => {
     if (!isOnline || state === "restoring") return;
 
     setState("restoring");
@@ -65,6 +82,30 @@ export function RestoreFromCloudSection({ onRestored }: RestoreFromCloudSectionP
       setState("error");
     }
   }, [isOnline, onRestored, state]);
+
+  const handleRestoreTap = useCallback(() => {
+    if (!isOnline || state === "restoring") return;
+    if (!googleUser) {
+      setShowGoogleSheet(true);
+      return;
+    }
+    void runRestore();
+  }, [googleUser, isOnline, runRestore, state]);
+
+  const handleGoogleSuccess = async (result: { taxRecalcQueued: number }) => {
+    await onPostLoginSync?.(result.taxRecalcQueued);
+    setShowGoogleSheet(false);
+    const email = signedInEmailRef.current;
+    signedInEmailRef.current = null;
+    if (email) {
+      setSyncInstructionsEmail(email);
+    }
+  };
+
+  const handleUserSignedIn = (result: GoogleAuthResponse) => {
+    onUserSignedIn?.(result);
+    signedInEmailRef.current = result.user.email;
+  };
 
   const statusMessage =
     !isOnline
@@ -86,7 +127,7 @@ export function RestoreFromCloudSection({ onRestored }: RestoreFromCloudSectionP
         <button
           type="button"
           disabled={buttonDisabled}
-          onClick={() => void handleRestore()}
+          onClick={handleRestoreTap}
           className={`${settingsVisual.preferences.row} disabled:opacity-60`}
         >
           <CloudRestoreIcon />
@@ -106,6 +147,22 @@ export function RestoreFromCloudSection({ onRestored }: RestoreFromCloudSectionP
           </p>
         )}
       </div>
+
+      {showGoogleSheet && (
+        <GoogleSignInSheet
+          mode="hard-sync"
+          onClose={() => setShowGoogleSheet(null)}
+          onUserSignedIn={handleUserSignedIn}
+          onSuccess={handleGoogleSuccess}
+        />
+      )}
+
+      {syncInstructionsEmail && (
+        <SyncInstructionsSheet
+          email={syncInstructionsEmail}
+          onClose={() => setSyncInstructionsEmail(null)}
+        />
+      )}
     </section>
   );
 }

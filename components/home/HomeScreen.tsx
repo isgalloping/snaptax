@@ -139,6 +139,7 @@ import {
   type ReceiptListFilter,
 } from "@/lib/receipts/receiptBucket";
 import { SettingsScreen } from "@/components/settings/SettingsScreen";
+import { GoogleSignInSheet } from "@/components/auth/GoogleSignInSheet";
 import type { SettingsTaxStats } from "@/components/settings/TaxOverviewPanel";
 import { useTaxExportGate } from "@/components/export/useTaxExportGate";
 import { ReceiptDetailSheet } from "@/components/receipts/ReceiptDetailSheet";
@@ -217,6 +218,7 @@ export function HomeScreen() {
   );
   const [seasonExportTick, setSeasonExportTick] = useState(0);
   const [homeOverlay, setHomeOverlay] = useState<HomeOverlay>(null);
+  const [uploadReauthSheet, setUploadReauthSheet] = useState(false);
   const [founderSheetOpen, setFounderSheetOpen] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState<PaymentSuccessState | null>(
     null,
@@ -774,6 +776,10 @@ export function HomeScreen() {
           latest,
           err.matchType,
         );
+        return;
+      }
+      if (err instanceof Error && err.message === "GOOGLE_LOGIN_REQUIRED") {
+        setUploadReauthSheet(true);
         return;
       }
       const failed = recordWriteFailure(latest);
@@ -1860,6 +1866,19 @@ export function HomeScreen() {
       {taxExport.overlays}
 
       {paymentSuccessOverlay}
+
+      {uploadReauthSheet && (
+        <GoogleSignInSheet
+          mode="hard-sync"
+          onClose={() => setUploadReauthSheet(false)}
+          onUserSignedIn={auth.applyGoogleSignIn}
+          onSuccess={async (result) => {
+            await handlePostLoginSync(result.taxRecalcQueued);
+            setUploadReauthSheet(false);
+            void flushPendingUploadsRef.current({ force: true });
+          }}
+        />
+      )}
 
       {founderSheetOpen && (
         <FounderProgramSheet

@@ -108,22 +108,39 @@ export function useTaxExportGate({
     return isSeasonPaid(currentSeason);
   };
 
-  const openExportAfterPrepare = async () => {
-    if (!onExportGatePrepare && !onPreExportPrepare) {
-      if (blockIfNoExportableReceipts()) return;
-      openExportEngine();
+  const prepareExportReceipts = async (): Promise<Receipt[] | undefined> => {
+    if (onExportGatePrepare) {
+      return (await onExportGatePrepare()) ?? undefined;
+    }
+    if (onPreExportPrepare) {
+      return (await onPreExportPrepare("csv")) ?? undefined;
+    }
+    return undefined;
+  };
+
+  const exportableList = (prepared?: Receipt[] | void) =>
+    (prepared ?? exportableReceipts).filter((r) => !r.isOnboardingDemo);
+
+  const finishExportGate = async (prepared?: Receipt[] | void) => {
+    if (blockIfNoExportableReceipts(prepared)) return;
+    if (!googleUser) {
+      setGoogleSheet("hard-export");
       return;
     }
+    const paid = await resolveSeasonPaid();
+    if (paid) {
+      openExportEngine(exportableList(prepared));
+    } else {
+      setShowPaywall(true);
+    }
+  };
+
+  const runPrepareWithLoading = async (
+    fn: () => Promise<void>,
+  ): Promise<void> => {
     setPreparingExport(true);
     try {
-      const prepared = onExportGatePrepare
-        ? await onExportGatePrepare()
-        : await onPreExportPrepare!("csv");
-      if (blockIfNoExportableReceipts(prepared)) return;
-      const list = (prepared ?? exportableReceipts).filter(
-        (r) => !r.isOnboardingDemo,
-      );
-      openExportEngine(list);
+      await fn();
     } catch (err) {
       if (err instanceof Error && err.message === "EXPORT_OFFLINE") {
         setErrorMessage(copy.settings.export.offline);
@@ -135,30 +152,36 @@ export function useTaxExportGate({
     }
   };
 
+  const openExportAfterPrepare = async () => {
+    await runPrepareWithLoading(async () => {
+      const prepared = await prepareExportReceipts();
+      if (blockIfNoExportableReceipts(prepared)) return;
+      openExportEngine(exportableList(prepared));
+    });
+  };
+
   const runExportGate = async () => {
     clearError();
     clearExportEmptyTip();
-    if (!googleUser) {
-      setGoogleSheet("hard-export");
+    if (!navigator.onLine) {
+      setErrorMessage(copy.settings.export.offline);
       return;
     }
-    const paid = await resolveSeasonPaid();
-    if (paid) {
-      await openExportAfterPrepare();
-    } else {
-      setShowPaywall(true);
-    }
+
+    await runPrepareWithLoading(async () => {
+      const prepared = await prepareExportReceipts();
+      if (prepared === undefined && blockIfNoExportableReceipts()) return;
+      await finishExportGate(prepared);
+    });
   };
 
   const handleGoogleSuccess = async (result: { taxRecalcQueued: number }) => {
     await onPostLoginSync?.(result.taxRecalcQueued);
     setGoogleSheet(null);
-    const paid = await resolveSeasonPaid();
-    if (paid) {
-      await openExportAfterPrepare();
-    } else {
-      setShowPaywall(true);
-    }
+    await runPrepareWithLoading(async () => {
+      const prepared = await prepareExportReceipts();
+      await finishExportGate(prepared);
+    });
   };
 
   const handleExportReceiptUpdated = (updated: Receipt) => {

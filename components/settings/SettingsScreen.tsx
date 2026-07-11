@@ -527,7 +527,12 @@ export function SettingsScreen({
 
         <ShareAppSection />
 
-        <RestoreFromCloudSection onRestored={onRestored} />
+        <RestoreFromCloudSection
+          googleUser={googleUser}
+          onUserSignedIn={onUserSignedIn}
+          onPostLoginSync={onPostLoginSync}
+          onRestored={onRestored}
+        />
 
         {isSignedIn && onSignOut && (
           <button

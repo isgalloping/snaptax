@@ -25,7 +25,7 @@ function toStoredEvent(input: ReceiptEventInput): StoredReceiptEvent {
   };
 }
 
-/** Append-only lifecycle event (Phase 2 spike). */
+/** Append-only lifecycle event. */
 export async function appendReceiptEvent(
   input: ReceiptEventInput,
 ): Promise<StoredReceiptEvent> {

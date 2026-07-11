@@ -24,7 +24,7 @@ function canFlushReceiptEvents(cameraOpen: boolean): boolean {
   return true;
 }
 
-/** POST pending lifecycle events to server (batch 50). Phase 2 spike. */
+/** POST pending lifecycle events to server (batch 50). */
 export async function flushReceiptEventBatch(options?: {
   cameraOpen?: boolean;
   force?: boolean;

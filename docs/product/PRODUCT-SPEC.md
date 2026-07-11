@@ -299,7 +299,8 @@ Next.js 16 · React 19 · Tailwind 4 · Serwist · **PostgreSQL（美国）** ·
 | 分区域省税 US/EU + R1 | ✅ | ✅（`SUM(tax_amount)` + `X-Tax-Region`） |
 | 行业六选一 | ✅ | ✅（登录 API 回填；Ghost `localStorage`） |
 | Home WidgetPager（Snap 下固定分页） | ✅ | ✅（等宽 3 卡/页，>3 左滑 + 分页点） |
-| Missing Deductions Widget（Find More Savings） | ✅ | **隐藏**（`SHOW_MISSING_DEDUCTIONS_WIDGET=false`；overlay/计算逻辑保留，可恢复） |
+| Missing Deductions Widget（Find More Savings） | ✅ | ✅（`SHOW_MISSING_DEDUCTIONS_WIDGET=true`；有行业漏记提示时显示；overlay/计算保留） |
+| QuickBooks QIF 导出（M4b） | ✅ | ✅（Settings Export 第 5 格式 · `buildQifExport` · 本地优先 + `format=qif` API） |
 | Home v2 筛选桶 + 列表展示 | ✅ | ✅（ALL/READY/REVIEW/ACTION/PROCESSING；绿/灰 tax；category + Line pill） |
 | 本地 OCR + 双路径 AI（Phase 1） | ✅ | ✅（Worker OCR、`ocrDraft`、router、`biz.ocr` 日志；O3 ROI/EU parse） |
 | 生命周期 Event Queue + Event Store | ✅ | ✅（IDB `snaptax_receipt_events` · `POST /api/sync/events` · sync cursor · snapshots · 18mo prune） |

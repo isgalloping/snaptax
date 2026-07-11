@@ -16,7 +16,7 @@ Snap1099 **Founder Program** 以 Home WidgetPager **第一页全宽** 营销卡 
 
 **可见性：** flag off · 满员 · `founderStatus === active` · **`currentSeasonEntitled`** → 隐藏 Widget；Settings 显示 Founder Badge（active only）。
 
-**Missing Deductions：** `SHOW_MISSING_DEDUCTIONS_WIDGET = false` — 绿卡从 pager 移除，计算与 overlay 代码保留。
+**Missing Deductions：** `SHOW_MISSING_DEDUCTIONS_WIDGET = true`（2026-07-11 恢复）— 有行业漏记提示时显示 Find More Savings 卡；`false` 可从 pager 移除，overlay/计算保留。
 
 ---
 
@@ -93,14 +93,14 @@ Sheet title: **`First 50 Deal`** · CTA `Claim my spot — {price}` · `Offer en
 
 返回 `seatsTotal=50` · `claimedCount` · `remaining` · `programOpen` · `tiers`（server-resolved prices）· `user`（founderStatus/tier/number/currentSeasonEntitled）。Ghost 可读公开席位；user 字段需 session。
 
-### 3.7 Hide Missing Deductions
+### 3.7 Missing Deductions visibility gate
 
 ```typescript
 // lib/home/buildWidgetPages.ts
-export const SHOW_MISSING_DEDUCTIONS_WIDGET = false;
+export const SHOW_MISSING_DEDUCTIONS_WIDGET = true;
 ```
 
-`effectiveHasMissing` 门控 pager；`computeMissingDeductions` 与 overlay 组件 **保留**。
+`effectiveHasMissing` 门控 pager；`computeMissingDeductions` 与 overlay 组件 **保留**。设为 `false` 可再次隐藏首页卡片（2026-07-02 曾隐藏，2026-07-11 恢复）。
 
 ### 3.8 Lapsed founder pricing
 

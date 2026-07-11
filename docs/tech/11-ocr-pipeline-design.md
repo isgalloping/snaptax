@@ -4,7 +4,7 @@
 > **产品来源：** [`docs/ocr/ocr-desn.md`](../ocr/ocr-desn.md)  
 > **英文摘要 spec：** [`2026-06-19-ocr-pipeline-redesign-design.md`](../superpowers/specs/2026-06-19-ocr-pipeline-redesign-design.md)  
 > **关联（第一阶段）：** [`06-receipt-ai-pipeline.md`](./06-receipt-ai-pipeline.md)  
-> **关联（第二阶段，暂不实现）：** [`receipt-sync-lifecycle-design.md`](../superpowers/topics/receipt-sync-lifecycle-design.md) §5（Event Queue / WorkerSession draft）
+> **关联（第二阶段 · shipped 2026-07-10）：** [`receipt-sync-lifecycle-design.md`](../superpowers/topics/receipt-sync-lifecycle-design.md) §5（Event Queue / Event Store / WorkerSession Phase C）
 
 ## 文档说明
 

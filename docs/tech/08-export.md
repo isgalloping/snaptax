@@ -9,7 +9,7 @@
 ## 8.2 请求体
 
 ```json
-{ "taxYear": "2025", "format": "csv" | "cpa_pack" | "cpa_pdf" | "xlsx" }
+{ "taxYear": "2025", "format": "csv" | "cpa_pack" | "cpa_pdf" | "txf" | "qif" | "xlsx" }
 ```
 
 `taxYear` 缺省为 UTC **日历年**（`defaultExportTaxYear()`）；Paddle **售卖季** 为 `currentTaxSeason()`（1–4 月当年、5–12 月次年）。ExportEngine Step 1 用 `pickDefaultExportTaxYear` 优先本季 filing year。按用户时区（`X-Time-Zone`）过滤 `snap_at` / `captured_at` 所在日历年。
@@ -24,6 +24,7 @@ Canonical 业务规范：`docs/biz/export/` · 设计 topic：`docs/superpowers/
 | `cpa_pack` | `SnapTax-{year}-Audit-Trail.zip` | P&L PDF + 按 Line 分目录收据 + Detail CSV |
 | `cpa_pdf` | `SnapTax-{year}-Schedule-C-Mirror.pdf` | P&L 摘要（含 Income + Expenses） |
 | `txf` | `SnapTax-{year}-Expenses.txf` | TXF V042 费用块（无里程汇总） |
+| `qif` | `SnapTax-{year}-QuickBooks.qif` | QuickBooks/Quicken QIF（仅 deductible 行；负金额 `T`） |
 | `xlsx` | `SnapTax-{year}-Tax-Pack.xlsx` | 兼容旧版 Excel |
 
 ### TurboTax CSV（`format=csv`）
@@ -56,6 +57,13 @@ Expenses-Detail.csv
 - 头 `V042` + 每条费用 `^` 块（TD / P / D / M / $）
 - **不含** TD 2214 里程汇总行
 - 非 deductible 行跳过
+
+### QuickBooks QIF（`format=qif` · M4b · 2026-07-11）
+
+- 头 `!Type:Cash` + `!Account:SnapTax Expenses`
+- 每条费用：`D`（MM/DD/YYYY）· `T`（负抵扣额）· `P`（商户）· `LJob Expenses:{category} (Line N)` · `M`（`SNPTX{receiptId}` + 可选 notes）· `^`
+- **仅** deductible 且 `exportAmount > 0` 的行（与 audit 口径一致）
+- 客户端默认 **本地 IDB** 构建（`buildLocalTaxPack`）；`POST /api/export/tax-pack` 为 fallback
 
 ### 1099 Income 拍摄（M2b）
 
@@ -129,7 +137,7 @@ if (navigator.canShare?.({ files: [file] })) {
 | 生成失败 | 500 | "Export failed. Please try again." |
 | 离线 | — (前端拦截) | "You're offline. Connect to export." |
 
-## 8.8 Local-first filed（csv / txf / cpa_pdf / cpa_pack）
+## 8.8 Local-first filed（csv / txf / qif / cpa_pdf / cpa_pack）
 
 本地 pack 构建完成后，客户端调用 **`POST /api/export/filed`** 写 filed 元数据（全部可见 format 共用；`xlsx` 仍由 `tax-pack` 一并写入）。
 

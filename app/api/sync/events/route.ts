@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { apiError, mapErrorToResponse, rateLimitError } from "@/lib/api/errors";
 import {
@@ -8,6 +7,7 @@ import {
   clientIp,
 } from "@/lib/api/rateLimit";
 import { getActor } from "@/lib/auth/getActor";
+import { buildReceiptEventIngestPayload, uniqueTaxCalculatedReceiptIds } from "@/lib/server/buildReceiptEventIngestPayload";
 import { ingestReceiptEventBatch } from "@/lib/server/ingestReceiptEventBatch";
 import { maybePruneOldReceiptEvents } from "@/lib/server/pruneReceiptEvents";
 import { prisma } from "@/lib/prisma";
@@ -48,13 +48,7 @@ export const POST = withRequestLog(
 
       const body = bodySchema.parse(await request.json());
 
-      const taxCalculatedIds = [
-        ...new Set(
-          body.events
-            .filter((event) => event.type === "TAX_CALCULATED")
-            .map((event) => event.receiptId),
-        ),
-      ];
+      const taxCalculatedIds = uniqueTaxCalculatedReceiptIds(body.events);
       if (taxCalculatedIds.length > 0) {
         const ownedCount = await prisma.snaptaxReceipt.count({
           where: {
@@ -71,32 +65,9 @@ export const POST = withRequestLog(
         }
       }
 
-      const rows = body.events.map((event) => ({
-        id: event.id,
-        receiptId: event.receiptId,
-        userId: actor.kind === "user" ? actor.userId : null,
-        ghostId: actor.kind === "ghost" ? actor.ghostId : actor.ghostId ?? null,
-        eventType: event.type,
-        payload: event.payload as Prisma.InputJsonValue,
-        clientCreatedAt: new Date(event.createdAtMs),
-      }));
-
-      const { inserted, snapshotsInserted, cursor } = await ingestReceiptEventBatch({
-        actor,
-        rows,
-        cursorEvents: body.events.map((event) => ({
-          id: event.id,
-          clientCreatedAtMs: event.createdAtMs,
-        })),
-        taxCalculatedEvents: body.events
-          .filter((event) => event.type === "TAX_CALCULATED")
-          .map((event) => ({
-            id: event.id,
-            receiptId: event.receiptId,
-            payload: event.payload,
-            createdAtMs: event.createdAtMs,
-          })),
-      });
+      const { inserted, snapshotsInserted, cursor } = await ingestReceiptEventBatch(
+        buildReceiptEventIngestPayload(actor, body.events),
+      );
 
       await maybePruneOldReceiptEvents();
 

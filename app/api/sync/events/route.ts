@@ -28,14 +28,14 @@ const bodySchema = z.object({
 });
 
 async function resolveActor(req: Request) {
-  return getActor(req, { requireWrite: false });
+  return getActor(req, { requireWrite: true });
 }
 
 export const POST = withRequestLog(
   "api.sync",
   async (request, _context) => {
     try {
-      const actor = await getActor(request, { requireWrite: false });
+      const actor = await getActor(request, { requireWrite: true });
       const ip = clientIp(request);
       const ipLimit = await checkIpSyncEventsLimit(ip);
       if (!ipLimit.ok) {

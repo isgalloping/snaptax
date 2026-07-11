@@ -151,7 +151,7 @@ export function RestoreFromCloudSection({
       {showGoogleSheet && (
         <GoogleSignInSheet
           mode="hard-sync"
-          onClose={() => setShowGoogleSheet(null)}
+          onClose={() => setShowGoogleSheet(false)}
           onUserSignedIn={handleUserSignedIn}
           onSuccess={handleGoogleSuccess}
         />

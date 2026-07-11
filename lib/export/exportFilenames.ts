@@ -1,6 +1,12 @@
 import { LEGAL_BRAND_NAME } from "@/lib/legal/operator";
 
-export type ExportFormat = "csv" | "cpa_pack" | "cpa_pdf" | "txf" | "xlsx";
+export type ExportFormat =
+  | "csv"
+  | "cpa_pack"
+  | "cpa_pdf"
+  | "txf"
+  | "qif"
+  | "xlsx";
 
 /** Download filename for `POST /api/export/tax-pack` by format. */
 export function exportTaxPackFilename(
@@ -17,6 +23,8 @@ export function exportTaxPackFilename(
       return `${LEGAL_BRAND_NAME}-${year}-Schedule-C-Mirror.pdf`;
     case "txf":
       return `${LEGAL_BRAND_NAME}-${year}-Expenses.txf`;
+    case "qif":
+      return `${LEGAL_BRAND_NAME}-${year}-QuickBooks.qif`;
     case "xlsx":
       return `${LEGAL_BRAND_NAME}-${year}-Tax-Pack.xlsx`;
   }

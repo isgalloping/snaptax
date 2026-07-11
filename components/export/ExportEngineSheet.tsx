@@ -284,7 +284,7 @@ export function ExportEngineSheet({
       }
       const taxYearStr = String(taxYear);
       const result =
-        format === "csv" || format === "txf"
+        format === "csv" || format === "txf" || format === "qif"
           ? await runLocalTaxExport({
               receipts: receiptsForExport,
               taxYear,
@@ -353,9 +353,11 @@ export function ExportEngineSheet({
       ? t.formatCsvTitle
       : format === "txf"
         ? t.formatTxfTitle
-        : format === "cpa_pdf"
-          ? t.formatCpaPdfTitle
-          : t.formatCpaTitle;
+        : format === "qif"
+          ? t.formatQifTitle
+          : format === "cpa_pdf"
+            ? t.formatCpaPdfTitle
+            : t.formatCpaTitle;
 
   const imageWarning =
     exportMeta?.imagesMissing != null && exportMeta.imagesMissing > 0
@@ -576,6 +578,23 @@ export function ExportEngineSheet({
                 </p>
                 <p className="mt-2 text-xs leading-relaxed text-zinc-400">
                   {t.formatCpaHint}
+                </p>
+              </button>
+              <button
+                type="button"
+                onClick={() => setFormat("qif")}
+                className={`w-full min-h-[88px] rounded-xl border-2 p-4 text-left transition-transform active:scale-95 ${
+                  format === "qif"
+                    ? "border-yellow-500 bg-yellow-950"
+                    : "border-zinc-600 bg-zinc-800"
+                }`}
+              >
+                <p className="text-sm font-black uppercase tracking-wider text-white">
+                  {format === "qif" ? "✓ " : ""}
+                  {t.formatQifTitle}
+                </p>
+                <p className="mt-2 text-xs leading-relaxed text-zinc-400">
+                  {t.formatQifHint}
                 </p>
               </button>
             </div>

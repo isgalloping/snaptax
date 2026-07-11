@@ -26,6 +26,10 @@ describe("exportFilenames", () => {
       "SnapTax-2025-Expenses.txf",
     );
     assert.equal(
+      exportTaxPackFilename("qif", "2025"),
+      "SnapTax-2025-QuickBooks.qif",
+    );
+    assert.equal(
       exportTaxPackFilename("xlsx", "2025"),
       "SnapTax-2025-Tax-Pack.xlsx",
     );

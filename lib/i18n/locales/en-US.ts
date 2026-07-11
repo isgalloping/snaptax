@@ -925,6 +925,9 @@ export const EN_US_COPY: UserCopy = {
       formatTxfTitle: "TXF for Tax Software",
       formatTxfHint:
         "Accounting assistant format for desktop tax tools (V042 blocks).",
+      formatQifTitle: "QuickBooks QIF",
+      formatQifHint:
+        "Import deductible expenses into QuickBooks or Quicken (.qif).",
       snap1099Title: "1099 income forms",
       snap1099Hint:
         "Snap 1099-NEC / 1099-K — included in Audit Pack under 01_Income_Documents.",

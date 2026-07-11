@@ -33,6 +33,14 @@ describe("buildLocalTaxPack", () => {
     assert.equal(result.mimeType, "text/plain;charset=utf-8");
   });
 
+  it("builds qif from local receipts", () => {
+    const result = buildLocalTaxPack([sampleReceipt()], 2026, "UTC", "qif");
+    assert.match(result.content, /^!Type:Cash/);
+    assert.match(result.content, /PHome Depot/);
+    assert.equal(result.receiptIds.length, 1);
+    assert.equal(result.mimeType, "application/qif;charset=utf-8");
+  });
+
   it("throws when no expense receipts in tax year", () => {
     assert.throws(
       () => buildLocalTaxPack([sampleReceipt()], 2025, "UTC", "csv"),

@@ -134,7 +134,6 @@ export function SettingsScreen({
   const [sampleDownloading, setSampleDownloading] = useState(false);
   const [showSampleReady, setShowSampleReady] = useState(false);
   const [showExportBlocked, setShowExportBlocked] = useState(false);
-  const firstVisitHandled = useRef(false);
   const [founderStatus, setFounderStatus] = useState<FounderStatus>("none");
   const [founderTier, setFounderTier] = useState<FounderTier | null>(null);
   const [founderNumber, setFounderNumber] = useState<number | null>(null);
@@ -216,21 +215,13 @@ export function SettingsScreen({
   }, [isSignedIn, authHydrated, onRefreshSeasonPaid]);
 
   useEffect(() => {
-    if (firstVisitHandled.current) return;
-    firstVisitHandled.current = true;
+    if (skipSoftGoogleSheet || isSignedIn) return;
+    if (readOnboardFlag(GOOGLE_SOFT_DISMISSED_KEY)) return;
+    if (readOnboardFlag(SETTINGS_VISITED_KEY)) return;
 
-    const settingsVisited = readOnboardFlag(SETTINGS_VISITED_KEY);
     writeOnboardFlag(SETTINGS_VISITED_KEY);
-
-    if (
-      !skipSoftGoogleSheet &&
-      !isSignedIn &&
-      !settingsVisited &&
-      !readOnboardFlag(GOOGLE_SOFT_DISMISSED_KEY)
-    ) {
-      const timer = window.setTimeout(() => setGoogleSheet("soft"), 300);
-      return () => window.clearTimeout(timer);
-    }
+    const timer = window.setTimeout(() => setGoogleSheet("soft"), 300);
+    return () => window.clearTimeout(timer);
   }, [isSignedIn, skipSoftGoogleSheet]);
 
   useEffect(() => {
@@ -272,10 +263,16 @@ export function SettingsScreen({
 
   const handleGoogleSuccess = async (result: { taxRecalcQueued: number }) => {
     const closingSoftSheet = googleSheet === "soft";
+    const continueExportFromSample =
+      googleSheet === "hard-export" && viewState === "sample-export";
     if (!closingSoftSheet) {
       setGoogleSheet(null);
     }
     await onPostLoginSync?.(result.taxRecalcQueued);
+    if (continueExportFromSample) {
+      onViewStateChange("main");
+      onRequestExport();
+    }
   };
 
   const handleUserSignedIn = (result: GoogleAuthResponse) => {

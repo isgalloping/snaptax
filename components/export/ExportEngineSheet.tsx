@@ -96,7 +96,6 @@ export function ExportEngineSheet({
   const [sharing, setSharing] = useState(false);
   const [shareStatus, setShareStatus] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const autoSharedRef = useRef(false);
   const progressTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const yearReceipts = receiptsInTaxYear(activeReceipts, taxYear, timeZone);
@@ -189,13 +188,6 @@ export function ExportEngineSheet({
     }
   };
 
-  useEffect(() => {
-    if (!readyFile || autoSharedRef.current) return;
-    if (!canShareTaxPackFile(readyFile)) return;
-    autoSharedRef.current = true;
-    void handleShare(readyFile);
-  }, [readyFile]);
-
   const handleSaveToPhone = (file: File) => {
     downloadTaxPackFile(file);
     setShareStatus(t.savedToPhoneHint);
@@ -260,7 +252,6 @@ export function ExportEngineSheet({
 
   const handleGenerate = async () => {
     setErrorMessage(null);
-    autoSharedRef.current = false;
     setShareStatus(null);
     if (!navigator.onLine) {
       setErrorMessage(copy.settings.export.offline);

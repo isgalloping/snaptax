@@ -28,7 +28,6 @@ interface UseTaxExportGateOptions {
   currentSeason: string;
   onUserSignedIn?: (result: GoogleAuthResponse) => void;
   onPostLoginSync?: (taxRecalcQueued: number) => Promise<void>;
-  onSeasonPaid: () => void;
   refreshSeasonPaid?: () => Promise<void>;
   /** Gate open: flush + local IDB (default path for local-first export). */
   onExportGatePrepare?: () => Promise<Receipt[] | void>;
@@ -47,7 +46,6 @@ export function useTaxExportGate({
   currentSeason,
   onUserSignedIn,
   onPostLoginSync,
-  onSeasonPaid,
   refreshSeasonPaid,
   onExportGatePrepare,
   onPreExportPrepare,
@@ -194,7 +192,6 @@ export function useTaxExportGate({
           }}
           onClose={() => setShowPaywall(false)}
           onPaid={() => {
-            onSeasonPaid();
             onExportPaymentComplete?.();
           }}
         />

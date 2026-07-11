@@ -1079,6 +1079,7 @@ export function HomeScreen() {
       }
       await flushPendingUploadsRef.current();
       await flushPendingDeletesRef.current();
+      await flushReceiptEventBatch({ force: true });
       const stored = await loadAllReceipts();
       const merged = await syncFromServer(stored, "immediate");
       const stuck = stuckIdsFromReceipts(merged as StoredReceipt[]);
@@ -1147,7 +1148,6 @@ export function HomeScreen() {
     currentSeason: auth.currentSeason,
     onUserSignedIn: auth.applyGoogleSignIn,
     onPostLoginSync: handlePostLoginSync,
-    onSeasonPaid: auth.markSeasonPaid,
     refreshSeasonPaid: auth.refreshSeasonPaid,
     onExportGatePrepare: handleExportGatePrepare,
     onPreExportPrepare: handlePreExportPrepare,

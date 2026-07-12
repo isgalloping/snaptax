@@ -6,6 +6,7 @@ import { useAuthSession } from "@/lib/client/useAuthSession";
 import { useIsOnline } from "@/lib/client/useIsOnline";
 import { loadIndustry, saveIndustry } from "@/lib/client/authStorage";
 import { ensureGhostSession } from "@/lib/client/ghostClient";
+import { mergeOrphanGhostsOnLogin } from "@/lib/client/mergeOrphanGhosts";
 import { ensureTaxRegionCandidate } from "@/lib/client/taxRegion";
 import {
   apiReceiptToLocal,
@@ -1083,6 +1084,7 @@ export function HomeScreen() {
       } catch {
         return;
       }
+      await mergeOrphanGhostsOnLogin();
       await flushPendingUploadsRef.current();
       await flushPendingDeletesRef.current();
       try {

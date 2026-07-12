@@ -1,5 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { migrateEventStoreOnGhostBind } from "@/lib/server/migrateEventStoreOnGhostBind";
+import {
+  runOrphanGhostMergeForUser,
+  type OrphanGhostMergeResult,
+} from "@/lib/server/runOrphanGhostMergeForUser";
 import { utcNow } from "@/lib/time/utc";
 
 export type GhostBindTxDb = Pick<
@@ -15,6 +19,7 @@ export type GhostBindMigrationResult = Awaited<
   ReturnType<typeof migrateEventStoreOnGhostBind>
 > & {
   rebindPreviousGhostId: string | null;
+  orphanMerge: OrphanGhostMergeResult;
 };
 
 /** Upsert ghost↔user binding, migrate receipts + Event Store — single transaction. */
@@ -24,6 +29,7 @@ export async function bindGhostAndMigrateData(
   opts: {
     existingGhostBinding: { userId: string } | null;
     userBinding: { ghostId: string } | null;
+    clientOrphanGhostIds?: string[];
   },
   db: GhostBindTxDb = prisma,
 ): Promise<GhostBindMigrationResult> {
@@ -48,6 +54,15 @@ export async function bindGhostAndMigrateData(
     data: { userId },
   });
   const migration = await migrateEventStoreOnGhostBind(userId, ghostId, db);
+  const orphanMerge = await runOrphanGhostMergeForUser(
+    {
+      userId,
+      currentGhostId: ghostId,
+      rebindPreviousGhostId,
+      clientOrphanGhostIds: opts.clientOrphanGhostIds,
+    },
+    db,
+  );
 
-  return { ...migration, rebindPreviousGhostId };
+  return { ...migration, rebindPreviousGhostId, orphanMerge };
 }

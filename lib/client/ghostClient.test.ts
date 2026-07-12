@@ -1,9 +1,42 @@
 import assert from "node:assert/strict";
-import { afterEach, describe, it } from "node:test";
+import { afterEach, beforeEach, describe, it } from "node:test";
 import {
   ensureGhostSession,
+  getClientOrphanGhostIds,
+  rememberKnownGhostId,
   resetGhostSessionFlightForTests,
 } from "./ghostClient.ts";
+
+describe("ghost known ids", () => {
+  const storage = new Map<string, string>();
+
+  afterEach(() => {
+    storage.clear();
+    resetGhostSessionFlightForTests();
+  });
+
+  beforeEach(() => {
+    globalThis.localStorage = {
+      getItem: (key) => storage.get(key) ?? null,
+      setItem: (key, value) => {
+        storage.set(key, value);
+      },
+      removeItem: (key) => {
+        storage.delete(key);
+      },
+      clear: () => storage.clear(),
+      key: () => null,
+      length: 0,
+    } as Storage;
+  });
+
+  it("tracks rotated ghost ids for orphan merge", () => {
+    storage.set("snap1099_ghost_id", "ghost-old");
+    rememberKnownGhostId("ghost-old");
+    rememberKnownGhostId("ghost-new");
+    assert.deepEqual(getClientOrphanGhostIds("ghost-new"), ["ghost-old"]);
+  });
+});
 
 describe("ensureGhostSession", () => {
   const originalFetch = globalThis.fetch;

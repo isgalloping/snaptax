@@ -27,7 +27,10 @@ import { utcNow } from "@/lib/time/utc";
 
 export const POST = withRequestLog("api.auth", async (request, _context) => {
   try {
-    const body = (await request.json()) as { credential?: string };
+    const body = (await request.json()) as {
+      credential?: string;
+      orphanGhostIds?: string[];
+    };
     if (!body.credential) throw new Error("INVALID_GOOGLE_TOKEN");
 
     const cookieHeader = request.headers.get("cookie");
@@ -108,6 +111,7 @@ export const POST = withRequestLog("api.auth", async (request, _context) => {
         {
           existingGhostBinding: existingBinding,
           userBinding,
+          clientOrphanGhostIds: body.orphanGhostIds,
         },
         tx,
       ),
@@ -144,6 +148,25 @@ export const POST = withRequestLog("api.auth", async (request, _context) => {
         ghostId,
         meta: {
           reason: `ghost_event_store_migrated events=${migration.events} snapshots=${migration.snapshots} cursorMerged=${migration.cursorMerged}`,
+        },
+      });
+    }
+
+    if (
+      migration.orphanMerge.totalReceipts > 0 ||
+      migration.orphanMerge.mergedGhostIds.length > 0
+    ) {
+      logEvent({
+        ts: new Date().toISOString(),
+        level: "info",
+        module: "api.auth",
+        success: true,
+        durationMs: 0,
+        userId: user.id,
+        ghostId,
+        meta: {
+          reason: `orphan_ghost_merge ghosts=${migration.orphanMerge.mergedGhostIds.length} receipts=${migration.orphanMerge.totalReceipts}`,
+          mergedGhostIds: migration.orphanMerge.mergedGhostIds,
         },
       });
     }

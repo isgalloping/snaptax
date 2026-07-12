@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import {
   parseTaxRegionHeader,
   resolveInitialDataRegion,
@@ -29,7 +29,6 @@ export const POST = withRequestLog("api.auth", async (request, _context) => {
   try {
     const body = (await request.json()) as {
       credential?: string;
-      orphanGhostIds?: string[];
     };
     if (!body.credential) throw new Error("INVALID_GOOGLE_TOKEN");
 
@@ -111,7 +110,6 @@ export const POST = withRequestLog("api.auth", async (request, _context) => {
         {
           existingGhostBinding: existingBinding,
           userBinding,
-          clientOrphanGhostIds: body.orphanGhostIds,
         },
         tx,
       ),

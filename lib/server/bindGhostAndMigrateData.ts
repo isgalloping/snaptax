@@ -1,9 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { migrateEventStoreOnGhostBind } from "@/lib/server/migrateEventStoreOnGhostBind";
-import {
-  runOrphanGhostMergeForUser,
-  type OrphanGhostMergeResult,
-} from "@/lib/server/runOrphanGhostMergeForUser";
+import type { OrphanGhostMergeResult } from "@/lib/server/mergeOrphanGhostData";
+import { runOrphanGhostMergeForUser } from "@/lib/server/runOrphanGhostMergeForUser";
 import { utcNow } from "@/lib/time/utc";
 
 export type GhostBindTxDb = Pick<

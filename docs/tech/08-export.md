@@ -72,6 +72,7 @@ Expenses-Detail.csv
 - 每条费用：`<TRNTYPE>DEBIT` · `<DTPOSTED>`（YYYYMMDD000000）· `<TRNAMT>`（负抵扣额）· `<FITID>`（`SNPTX{receiptId}`）· `<NAME>`（商户 ≤32 字符）· `<MEMO>`（`Line N - Category` + 可选 notes）
 - **仅** deductible 且 `exportAmount > 0` 的行（与 QIF / audit 口径一致）
 - 客户端默认 **本地 IDB** 构建；`POST /api/export/tax-pack` 为 fallback
+- 零 deductible 行时本地/API 均返回 `NO_RECEIPTS`（`exportEligibleRows`）
 
 ### 1099 Income 拍摄（M2b）
 

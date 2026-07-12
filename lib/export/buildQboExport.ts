@@ -1,4 +1,5 @@
 import type { ExportExpenseRow } from "@/lib/tax/exportRows";
+import { exportEligibleRows } from "@/lib/export/auditEligibleRows";
 
 function escapeOfxText(value: string): string {
   return value
@@ -56,10 +57,7 @@ export function buildQboExport(
   rows: ExportExpenseRow[],
   exportedAt: Date = new Date(),
 ): string {
-  const transactions = rows
-    .filter((row) => row.taxDeductible !== "No" && row.exportAmount > 0)
-    .map(buildStmtTrn)
-    .join("\n");
+  const transactions = exportEligibleRows(rows).map(buildStmtTrn).join("\n");
 
   const dtServer = formatOfxServerDate(exportedAt);
   const dtAsOf = formatOfxPostedDate(

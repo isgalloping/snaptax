@@ -87,4 +87,9 @@ describe("buildQboExport", () => {
     );
     assert.match(qbo, /<NAME>A{32}<\/NAME>/);
   });
+
+  it("escapes XML special characters in NAME", () => {
+    const qbo = buildQboExport([sampleRow({ merchant: "AT&T" })], exportedAt);
+    assert.match(qbo, /<NAME>AT&amp;T<\/NAME>/);
+  });
 });

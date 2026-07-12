@@ -1,6 +1,7 @@
 import { buildTxfExport } from "@/lib/export/buildTxf";
 import { buildQifExport } from "@/lib/export/buildQifExport";
 import { buildQboExport } from "@/lib/export/buildQboExport";
+import { exportEligibleRows } from "@/lib/export/auditEligibleRows";
 import { buildLocalExpenseExportRows } from "@/lib/export/buildLocalExpenseRows";
 import { buildTurboTaxCsv } from "@/lib/tax/exportCsv";
 import type { Receipt } from "@/lib/types";
@@ -34,24 +35,28 @@ export function buildLocalTaxPack(
     };
   }
 
-  if (rows.length === 0) {
-    throw new Error("NO_RECEIPTS");
-  }
-
-  if (format === "qif") {
+  if (format === "qif" || format === "qbo") {
+    const eligible = exportEligibleRows(rows);
+    if (eligible.length === 0) {
+      throw new Error("NO_RECEIPTS");
+    }
+    const eligibleIds = eligible.map((row) => row.id);
+    if (format === "qif") {
+      return {
+        content: buildQifExport(eligible),
+        receiptIds: eligibleIds,
+        mimeType: "application/qif;charset=utf-8",
+      };
+    }
     return {
-      content: buildQifExport(rows),
-      receiptIds,
-      mimeType: "application/qif;charset=utf-8",
-    };
-  }
-
-  if (format === "qbo") {
-    return {
-      content: buildQboExport(rows),
-      receiptIds,
+      content: buildQboExport(eligible),
+      receiptIds: eligibleIds,
       mimeType: "application/x-ofx;charset=utf-8",
     };
+  }
+
+  if (rows.length === 0) {
+    throw new Error("NO_RECEIPTS");
   }
 
   return {

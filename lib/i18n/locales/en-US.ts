@@ -120,7 +120,7 @@ export const EN_US_COPY: UserCopy = {
       landing: {
         headlineLead: "Keep More of Your",
         headlineAccent: "Hard Earned Money.",
-        tagline: "AI finds tax deductions others miss.",
+        tagline: "Organize expenses. Prepare tax-season records.",
         check1: "Works Offline",
         check2: "10 Receipts in 10 Sec",
         check3: "No Signup Needed",

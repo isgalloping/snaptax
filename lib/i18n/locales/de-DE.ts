@@ -121,7 +121,7 @@ export const DE_DE_COPY: UserCopy = {
     landing: {
       headlineLead: "Behalten Sie mehr von Ihrem",
       headlineAccent: "harte Arbeit verdienten Geld.",
-      tagline: "KI findet Steuerabzüge, die andere übersehen.",
+      tagline: "Ausgaben ordnen. Unterlagen für die Steuersaison vorbereiten.",
       check1: "Funktioniert offline",
       check2: "10 Belege in 10 Sek.",
       check3: "Keine Anmeldung nötig",

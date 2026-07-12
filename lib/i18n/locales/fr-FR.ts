@@ -121,7 +121,7 @@ export const FR_FR_COPY: UserCopy = {
     landing: {
       headlineLead: "Gardez plus de votre",
       headlineAccent: "argent durement gagné.",
-      tagline: "L'IA trouve des déductions fiscales que d'autres manquent.",
+      tagline: "Organisez vos dépenses. Préparez vos dossiers fiscaux.",
       check1: "Fonctionne hors ligne",
       check2: "10 reçus en 10 sec",
       check3: "Pas d'inscription requise",

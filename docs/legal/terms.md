@@ -16,7 +16,9 @@ By using SnapTax ("the App"), you agree to these Terms. If you do not agree, do 
 
 ## 1. Agreement & Service Description
 
-SnapTax helps self-employed workers and contractors photograph receipts, categorize expenses with AI assistance, and export spreadsheets for tax preparation. The App is a **tool**, not tax, legal, or accounting advice. Consult a qualified CPA or advisor for your tax obligations.
+SnapTax helps self-employed workers and contractors photograph receipts, categorize expenses with AI assistance, and export spreadsheets **to organize records for your tax advisor or filing software**. SnapTax is a **tool** only.
+
+**SnapTax is not a tax preparation service.** SnapTax does not provide tax, legal, or accounting advice and does **not** establish an accountant–client or CPA–client relationship. Consult a qualified CPA or advisor for your tax obligations.
 
 ## 2. Eligibility & Acceptable Use
 
@@ -42,7 +44,7 @@ SnapTax, its logo, and software are owned by us or our licensors. You retain own
 
 ## 6. Disclaimer & Tax Estimates
 
-**Est. Tax Saved** and related figures are **estimates only**, not tax advice, audit defense, or guaranteed savings. Categorization may be wrong; you are responsible for verifying deductions with a qualified professional.
+**Est. Tax Saved** and related figures are **estimates only**, not tax advice, audit defense, or guaranteed savings. See our [Disclaimer](/disclaimer). Categorization may be wrong; you are responsible for verifying deductions with a qualified professional.
 
 THE APP IS PROVIDED **"AS IS"** WITHOUT WARRANTIES OF ANY KIND. WE ARE NOT LIABLE FOR INDIRECT DAMAGES, TAX PENALTIES, OR LOSSES FROM MISCLASSIFIED RECEIPTS.
 

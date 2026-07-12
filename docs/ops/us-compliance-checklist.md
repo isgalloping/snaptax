@@ -22,3 +22,7 @@
 - [x] No analytics scripts deployed
 - [x] Refund: 14-day US window documented
 - [x] Terms: Paddle MoR + one-time season (no auto-renewal)
+- [x] Terms + Disclaimer: not tax preparation service; no CPA-client relationship (2026-07-12)
+- [x] Data retention: delete-account cloud target 30 days (aligned privacy / data-retention / sign-off)
+- [x] Marketing tagline: organize/prepare records (not "find deductions others miss")
+- [x] Security page: encryption summary in security-incident.md

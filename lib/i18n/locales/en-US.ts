@@ -120,7 +120,7 @@ export const EN_US_COPY: UserCopy = {
       landing: {
         headlineLead: "Keep More of Your",
         headlineAccent: "Hard Earned Money.",
-        tagline: "AI finds tax deductions others miss.",
+        tagline: "Organize expenses. Prepare tax-season records.",
         check1: "Works Offline",
         check2: "10 Receipts in 10 Sec",
         check3: "No Signup Needed",
@@ -925,6 +925,12 @@ export const EN_US_COPY: UserCopy = {
       formatTxfTitle: "TXF for Tax Software",
       formatTxfHint:
         "Accounting assistant format for desktop tax tools (V042 blocks).",
+      formatQifTitle: "QuickBooks QIF",
+      formatQifHint:
+        "Import deductible expenses into QuickBooks or Quicken (.qif).",
+      formatQboTitle: "QuickBooks Online",
+      formatQboHint:
+        "Import as bank feed in QuickBooks Online (.qbo Web Connect).",
       snap1099Title: "1099 income forms",
       snap1099Hint:
         "Snap 1099-NEC / 1099-K — included in Audit Pack under 01_Income_Documents.",

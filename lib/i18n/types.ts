@@ -665,6 +665,10 @@ export type UserCopy = {
     formatCpaPdfHint: string;
     formatTxfTitle: string;
     formatTxfHint: string;
+    formatQifTitle: string;
+    formatQifHint: string;
+    formatQboTitle: string;
+    formatQboHint: string;
     snap1099Title: string;
     snap1099Hint: string;
     snap1099NecButton: string;

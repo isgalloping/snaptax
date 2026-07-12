@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { apiError, mapErrorToResponse, rateLimitError } from "@/lib/api/errors";
 import {
@@ -8,6 +7,9 @@ import {
   clientIp,
 } from "@/lib/api/rateLimit";
 import { getActor } from "@/lib/auth/getActor";
+import { buildReceiptEventIngestPayload, uniqueTaxCalculatedReceiptIds } from "@/lib/server/buildReceiptEventIngestPayload";
+import { ingestReceiptEventBatch } from "@/lib/server/ingestReceiptEventBatch";
+import { maybePruneOldReceiptEvents } from "@/lib/server/pruneReceiptEvents";
 import { prisma } from "@/lib/prisma";
 import { receiptWhereForActor } from "@/lib/receipts/ownership";
 import { withRequestLog } from "@/lib/server/log/withRequestLog";
@@ -26,14 +28,14 @@ const bodySchema = z.object({
 });
 
 async function resolveActor(req: Request) {
-  return getActor(req, { requireWrite: false });
+  return getActor(req, { requireWrite: true });
 }
 
 export const POST = withRequestLog(
   "api.sync",
   async (request, _context) => {
     try {
-      const actor = await getActor(request, { requireWrite: false });
+      const actor = await getActor(request, { requireWrite: true });
       const ip = clientIp(request);
       const ipLimit = await checkIpSyncEventsLimit(ip);
       if (!ipLimit.ok) {
@@ -46,13 +48,7 @@ export const POST = withRequestLog(
 
       const body = bodySchema.parse(await request.json());
 
-      const taxCalculatedIds = [
-        ...new Set(
-          body.events
-            .filter((event) => event.type === "TAX_CALCULATED")
-            .map((event) => event.receiptId),
-        ),
-      ];
+      const taxCalculatedIds = uniqueTaxCalculatedReceiptIds(body.events);
       if (taxCalculatedIds.length > 0) {
         const ownedCount = await prisma.snaptaxReceipt.count({
           where: {
@@ -69,24 +65,22 @@ export const POST = withRequestLog(
         }
       }
 
-      const rows = body.events.map((event) => ({
-        id: event.id,
-        receiptId: event.receiptId,
-        userId: actor.kind === "user" ? actor.userId : null,
-        ghostId: actor.kind === "ghost" ? actor.ghostId : actor.ghostId ?? null,
-        eventType: event.type,
-        payload: event.payload as Prisma.InputJsonValue,
-        clientCreatedAt: new Date(event.createdAtMs),
-      }));
+      const { inserted, snapshotsInserted, cursor } = await ingestReceiptEventBatch(
+        buildReceiptEventIngestPayload(actor, body.events),
+      );
 
-      const result = await prisma.snaptaxReceiptEvent.createMany({
-        data: rows,
-        skipDuplicates: true,
-      });
+      await maybePruneOldReceiptEvents();
 
       return NextResponse.json({
         syncedIds: body.events.map((event) => event.id),
-        inserted: result.count,
+        inserted,
+        snapshotsInserted,
+        cursor: cursor
+          ? {
+              lastEventId: cursor.lastEventId,
+              lastClientCreatedAtMs: cursor.lastClientCreatedAtMs,
+            }
+          : null,
       });
     } catch (err) {
       if (err instanceof z.ZodError) {

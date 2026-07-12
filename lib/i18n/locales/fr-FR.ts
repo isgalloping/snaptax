@@ -121,7 +121,7 @@ export const FR_FR_COPY: UserCopy = {
     landing: {
       headlineLead: "Gardez plus de votre",
       headlineAccent: "argent durement gagné.",
-      tagline: "L'IA trouve des déductions fiscales que d'autres manquent.",
+      tagline: "Organisez vos dépenses. Préparez vos dossiers fiscaux.",
       check1: "Fonctionne hors ligne",
       check2: "10 reçus en 10 sec",
       check3: "Pas d'inscription requise",
@@ -942,6 +942,12 @@ export const FR_FR_COPY: UserCopy = {
     formatTxfTitle: "TXF pour logiciel fiscal",
     formatTxfHint:
       "Format assistant comptable pour outils fiscaux (blocs V042).",
+    formatQifTitle: "QuickBooks QIF",
+    formatQifHint:
+      "Importez les dépenses déductibles dans QuickBooks ou Quicken (.qif).",
+    formatQboTitle: "QuickBooks Online",
+    formatQboHint:
+      "Importez comme flux bancaire dans QuickBooks Online (.qbo Web Connect).",
     snap1099Title: "Formulaires 1099 (revenus)",
     snap1099Hint:
       "Photographiez votre 1099-NEC ou 1099-K — inclus dans le pack d'audit sous 01_Income_Documents.",

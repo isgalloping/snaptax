@@ -147,6 +147,72 @@ Header: **`X-Tax-Region`**（`us` \| `eu`；缺省 `us`）→ 写入 `receipt.da
 
 重拍前删除 blurry 记录（可选）。
 
+### `POST /api/sync/events`
+
+客户端生命周期事件 batch 上传（append-only · shipped 2026-07-10）。
+
+Header: **`snap1099_ghost` Cookie**（Ghost）或 session  
+Rate limit: IP **60/min** · Ghost **30/h** · User **60/h**（`SYNC_EVENTS_*` 可覆盖）
+
+**Request**
+```json
+{
+  "events": [
+    {
+      "id": "uuid",
+      "receiptId": "uuid",
+      "type": "RECEIPT_CREATED",
+      "payload": { "pendingUpload": true },
+      "createdAtMs": 1700000000000
+    }
+  ]
+}
+```
+
+| 字段 | 约束 |
+|------|------|
+| `events` | 1–50 条（`RECEIPT_EVENT_BATCH_SIZE`） |
+| `type` | `RECEIPT_CREATED` · `OCR_COMPLETED` · `TAX_CALCULATED` |
+| `TAX_CALCULATED` | 须引用当前 actor 名下 receipt，否则 **403** `INVALID_RECEIPT` |
+
+**Response 200**
+```json
+{
+  "syncedIds": ["uuid", "..."],
+  "inserted": 3,
+  "snapshotsInserted": 1,
+  "cursor": {
+    "lastEventId": "uuid",
+    "lastClientCreatedAtMs": 1700000000000
+  }
+}
+```
+
+服务端 `createMany({ skipDuplicates: true })` — 客户端 event `id` 幂等。`TAX_CALCULATED` 同时 append `snaptax_receipt_lifecycle_snapshots`（`source_event_id` 幂等）。ingest 后更新 actor `snaptax_receipt_sync_cursors`；采样 lazy GC 删除 `client_created_at` 超过 **18 个月**的事件。
+
+| HTTP | `error.code` | 说明 |
+|------|--------------|------|
+| 400 | `INVALID_BODY` | batch 空/超长、字段非法 |
+| 403 | `INVALID_RECEIPT` | `TAX_CALCULATED` 引用非 actor 名下 receipt |
+| 429 | `RATE_LIMITED` | IP 或 actor 超 `SYNC_EVENTS_*` 限额 |
+| 401 | `UNAUTHORIZED` | 无有效 Ghost cookie / session |
+
+### `GET /api/sync/events/cursor`
+
+返回当前 actor 的服务端 sync cursor（无则 `cursor: null`）。继承 session/Ghost auth，无额外 rate limit。
+
+**Response 200**
+```json
+{
+  "cursor": {
+    "lastEventId": "uuid",
+    "lastClientCreatedAtMs": 1700000000000
+  }
+}
+```
+
+客户端 flush 成功后亦写入 `snaptax_system_meta.receipt_event_sync_cursor`。
+
 ---
 
 ## 3.4 权益

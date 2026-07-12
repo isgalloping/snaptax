@@ -4,7 +4,7 @@
 > **产品来源：** [`docs/ocr/ocr-desn.md`](../ocr/ocr-desn.md)  
 > **英文摘要 spec：** [`2026-06-19-ocr-pipeline-redesign-design.md`](../superpowers/specs/2026-06-19-ocr-pipeline-redesign-design.md)  
 > **关联（第一阶段）：** [`06-receipt-ai-pipeline.md`](./06-receipt-ai-pipeline.md)  
-> **关联（第二阶段，暂不实现）：** [`receipt-sync-lifecycle-design.md`](../superpowers/topics/receipt-sync-lifecycle-design.md) §5（Event Queue / WorkerSession draft）
+> **关联（第二阶段 · shipped 2026-07-10）：** [`receipt-sync-lifecycle-design.md`](../superpowers/topics/receipt-sync-lifecycle-design.md) §5（Event Queue / Event Store / WorkerSession Phase C）
 
 ## 文档说明
 
@@ -559,16 +559,18 @@ module=biz.ocr stage=local_ocr|text_classify|vision_fallback receiptId=… durat
 
 **建议上线顺序：** O0 → O1（可灰度 router）→ O2。**数据同步语义不变。**
 
-### 14.2 第二阶段（数据一致性 · 暂不实现）
+### 14.2 第二阶段（数据一致性 · Event Queue spike shipped 2026-07-10）
 
 见 [`receipt-sync-lifecycle-design.md`](../superpowers/topics/receipt-sync-lifecycle-design.md) §5（draft 部分）与本文 §16：
 
-| 交付物 | 说明 |
+| 交付物 | 状态 |
 |--------|------|
-| IDB `snaptax_receipt_events` + append 事件 | RECEIPT_CREATED / OCR_COMPLETED / TAX_CALCULATED |
-| `POST /api/sync/events` + Prisma Event Store | batch 50、append-only |
-| `WorkerSession` 门控 | 与 upload flush 统一 |
-| done 锁、50 窗口、18 月 prune | sync 重设计全文 |
+| IDB `snaptax_receipt_events` + append 事件 | **shipped** — RECEIPT_CREATED / OCR_COMPLETED / TAX_CALCULATED |
+| `POST /api/sync/events` + Prisma `snaptax_receipt_events` | **shipped** — batch 50、append-only、`skipDuplicates` |
+| 本地 synced 事件 90d prune | **shipped** — idle 调度 |
+| `WorkerSession` 门控 | shipped（Lifecycle Phase C） |
+| done 锁、50 窗口 | shipped（Lifecycle Phase C） |
+| Event Store snapshots / sync_cursor / 18mo server prune | **shipped** — snapshots + cursor + sampled prune |
 
 第一阶段代码 **须预留扩展点**（`ocrDraft` 结构稳定、`extractionSource` 可观测），但 **不得** 半成品事件表阻塞 OCR 上线。
 
@@ -591,7 +593,9 @@ module=biz.ocr stage=local_ocr|text_classify|vision_fallback receiptId=… durat
 
 ## 16. 第二阶段路线图（数据一致性 · 摘要）
 
-完整规范见 sync 重设计 spec + `ocr-desn.md` §11–§12。实现时再更新本文 §4.3 / §5 全文。
+**Event Queue spike shipped 2026-07-10**（IDB v8 + flush + `POST /api/sync/events` + cursor/snapshots/18mo server prune）。
+
+完整规范见 sync 重设计 spec + `ocr-desn.md` §11–§12。
 
 ```text
 IDB Save → … → TAX_CALCULATED

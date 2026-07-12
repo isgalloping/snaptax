@@ -96,7 +96,6 @@ export function ExportEngineSheet({
   const [sharing, setSharing] = useState(false);
   const [shareStatus, setShareStatus] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const autoSharedRef = useRef(false);
   const progressTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const yearReceipts = receiptsInTaxYear(activeReceipts, taxYear, timeZone);
@@ -189,13 +188,6 @@ export function ExportEngineSheet({
     }
   };
 
-  useEffect(() => {
-    if (!readyFile || autoSharedRef.current) return;
-    if (!canShareTaxPackFile(readyFile)) return;
-    autoSharedRef.current = true;
-    void handleShare(readyFile);
-  }, [readyFile]);
-
   const handleSaveToPhone = (file: File) => {
     downloadTaxPackFile(file);
     setShareStatus(t.savedToPhoneHint);
@@ -260,7 +252,6 @@ export function ExportEngineSheet({
 
   const handleGenerate = async () => {
     setErrorMessage(null);
-    autoSharedRef.current = false;
     setShareStatus(null);
     if (!navigator.onLine) {
       setErrorMessage(copy.settings.export.offline);
@@ -293,7 +284,7 @@ export function ExportEngineSheet({
       }
       const taxYearStr = String(taxYear);
       const result =
-        format === "csv" || format === "txf"
+        format === "csv" || format === "txf" || format === "qif" || format === "qbo"
           ? await runLocalTaxExport({
               receipts: receiptsForExport,
               taxYear,
@@ -362,9 +353,13 @@ export function ExportEngineSheet({
       ? t.formatCsvTitle
       : format === "txf"
         ? t.formatTxfTitle
-        : format === "cpa_pdf"
-          ? t.formatCpaPdfTitle
-          : t.formatCpaTitle;
+        : format === "qif"
+          ? t.formatQifTitle
+          : format === "qbo"
+            ? t.formatQboTitle
+            : format === "cpa_pdf"
+            ? t.formatCpaPdfTitle
+            : t.formatCpaTitle;
 
   const imageWarning =
     exportMeta?.imagesMissing != null && exportMeta.imagesMissing > 0
@@ -585,6 +580,40 @@ export function ExportEngineSheet({
                 </p>
                 <p className="mt-2 text-xs leading-relaxed text-zinc-400">
                   {t.formatCpaHint}
+                </p>
+              </button>
+              <button
+                type="button"
+                onClick={() => setFormat("qif")}
+                className={`w-full min-h-[88px] rounded-xl border-2 p-4 text-left transition-transform active:scale-95 ${
+                  format === "qif"
+                    ? "border-yellow-500 bg-yellow-950"
+                    : "border-zinc-600 bg-zinc-800"
+                }`}
+              >
+                <p className="text-sm font-black uppercase tracking-wider text-white">
+                  {format === "qif" ? "✓ " : ""}
+                  {t.formatQifTitle}
+                </p>
+                <p className="mt-2 text-xs leading-relaxed text-zinc-400">
+                  {t.formatQifHint}
+                </p>
+              </button>
+              <button
+                type="button"
+                onClick={() => setFormat("qbo")}
+                className={`w-full min-h-[88px] rounded-xl border-2 p-4 text-left transition-transform active:scale-95 ${
+                  format === "qbo"
+                    ? "border-yellow-500 bg-yellow-950"
+                    : "border-zinc-600 bg-zinc-800"
+                }`}
+              >
+                <p className="text-sm font-black uppercase tracking-wider text-white">
+                  {format === "qbo" ? "✓ " : ""}
+                  {t.formatQboTitle}
+                </p>
+                <p className="mt-2 text-xs leading-relaxed text-zinc-400">
+                  {t.formatQboHint}
                 </p>
               </button>
             </div>

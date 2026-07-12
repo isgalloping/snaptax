@@ -18,7 +18,7 @@ Snap1099 小票生命周期分三层：**AI 状态**（`processing` | `done` | `
 
 **Phase C（lifecycle redesign · shipped）：** WorkerSession 相机门控 · done lock merge · UI/sync window 50 · server-side filed PATCH lock。
 
-**Still deferred (lifecycle redesign draft):** write budget 3。（Event Queue spike shipped 2026-07-10：IDB `snaptax_receipt_events` + `POST /api/sync/events` + batch flush；export local-first P1–P1d 已于 2026-07-08 完成，见 [`export-pipeline-design.md`](./export-pipeline-design.md) §3.8–§3.10。）
+**Still deferred (lifecycle redesign draft):** write budget 3。
 
 ---
 
@@ -85,7 +85,7 @@ Server: Blob **before** DB on upload（避免 orphan row）。
 | **Empty remote** | **Never** delete local synced rows |
 | **User actor prune** | Only when `actor.kind === "user"` **and** `remote.length > 0` — delete local ids ∉ remote (not pendingUpload) |
 | **Ghost actor** | No sync-driven delete |
-| **Post-login** | `flushPendingUploads` → `syncFromServer(immediate)` → optional `pollTaxRecalc` |
+| **Post-login** | `flushPendingUploads` → `syncFromServer(immediate)` → optional `pollTaxRecalc`；服务端 Ghost bind 同时迁移 receipts + Event Store（events/snapshots/cursor） |
 | **Persist merge** | Upsert all merged rows to IndexedDB after successful fetch |
 
 **Deletion convergence (hardening):** tombstones + `flushPendingDeletes` only — **no** top-100 window prune.
@@ -204,10 +204,10 @@ UI list + default `GET /api/receipts` fetch window reduced **100 → 50** rows (
 ## 5. Out of scope
 
 - Receipt **list/detail UI** tweaks (`receipt-list-*`, `receipt-detail-*`, duplicate-detection) — stay active specs
-- Event Store snapshots / sync cursor / 18mo server prune — follow-up after Event Queue spike (2026-07-10 shipped IDB + `POST /api/sync/events`)
+- Event Store snapshots / sync cursor / 18mo server prune — **shipped** 2026-07-10（ingest 事务；Delete Account 清理 event store；Ghost bind 迁移 events/snapshots/cursor）
 - WorkerSession **full** redesign (write budget 3) — lifecycle redesign draft partial；local export 已完成
 - Export pack generation — [`export-pipeline-design.md`](./export-pipeline-design.md)
-- Server-side orphan ghost merge job
+- Server-side orphan ghost merge job — **shipped** 2026-07-11（Google bind + `POST /api/sync/ghost-orphans`；合并 rebind / historical / client-known ghosts 的 receipts + Event Store）
 
 ---
 

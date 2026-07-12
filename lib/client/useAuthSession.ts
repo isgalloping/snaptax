@@ -15,6 +15,7 @@ import {
   type GoogleAuthResponse,
 } from "@/lib/client/authApi";
 import { signOutAndResetSession } from "@/lib/client/signOutFlow";
+import { clearSeasonExportDone } from "@/lib/settings/seasonExportState";
 import { currentTaxSeason } from "@/lib/tax/season";
 
 function seasonKey(): string {
@@ -96,7 +97,9 @@ export function useAuthSession() {
     await signOutAndResetSession();
     setGoogleUser(null);
     setSeasonPaidState(false);
-    setSeasonPaid(seasonKey(), false);
+    const season = seasonKey();
+    setSeasonPaid(season, false);
+    clearSeasonExportDone(season);
   }, []);
 
   const markSeasonPaid = useCallback(() => {
@@ -118,6 +121,7 @@ export function useAuthSession() {
     setGoogleUser(null);
     setIndustry(null);
     setSeasonPaidState(false);
+    clearSeasonExportDone(seasonKey());
   }, []);
 
   return {

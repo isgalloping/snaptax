@@ -6,6 +6,7 @@ import { useAuthSession } from "@/lib/client/useAuthSession";
 import { useIsOnline } from "@/lib/client/useIsOnline";
 import { loadIndustry, saveIndustry } from "@/lib/client/authStorage";
 import { ensureGhostSession } from "@/lib/client/ghostClient";
+import { mergeOrphanGhostsOnLogin } from "@/lib/client/mergeOrphanGhosts";
 import { ensureTaxRegionCandidate } from "@/lib/client/taxRegion";
 import {
   apiReceiptToLocal,
@@ -17,6 +18,7 @@ import {
 import { shouldRunHiddenBackgroundSync } from "@/lib/client/backgroundSyncGate";
 import { flushReceiptEventBatch } from "@/lib/client/flushReceiptEventBatch";
 import { schedulePhotoRetentionPurge } from "@/lib/client/photoRetentionJob";
+import { scheduleReceiptEventRetentionPrune } from "@/lib/client/receiptEventRetention";
 import { scheduleReceiptRetentionPrune } from "@/lib/client/receiptRetention";
 import { scheduleReceiptSummaryVerify } from "@/lib/client/receiptSummaryVerify";
 import { reconcileDuplicateReceipt } from "@/lib/client/reconcileDuplicateReceipt";
@@ -138,6 +140,7 @@ import {
   type ReceiptListFilter,
 } from "@/lib/receipts/receiptBucket";
 import { SettingsScreen } from "@/components/settings/SettingsScreen";
+import { GoogleSignInSheet } from "@/components/auth/GoogleSignInSheet";
 import type { SettingsTaxStats } from "@/components/settings/TaxOverviewPanel";
 import { useTaxExportGate } from "@/components/export/useTaxExportGate";
 import { ReceiptDetailSheet } from "@/components/receipts/ReceiptDetailSheet";
@@ -216,6 +219,7 @@ export function HomeScreen() {
   );
   const [seasonExportTick, setSeasonExportTick] = useState(0);
   const [homeOverlay, setHomeOverlay] = useState<HomeOverlay>(null);
+  const [uploadReauthSheet, setUploadReauthSheet] = useState(false);
   const [founderSheetOpen, setFounderSheetOpen] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState<PaymentSuccessState | null>(
     null,
@@ -775,6 +779,10 @@ export function HomeScreen() {
         );
         return;
       }
+      if (err instanceof Error && err.message === "GOOGLE_LOGIN_REQUIRED") {
+        setUploadReauthSheet(true);
+        return;
+      }
       const failed = recordWriteFailure(latest);
       await saveReceipt(failed);
       setReceipts((prev) => prev.map((r) => (r.id === failed.id ? failed : r)));
@@ -944,6 +952,7 @@ export function HomeScreen() {
           );
           schedulePhotoRetentionPurge();
           scheduleReceiptRetentionPrune();
+          scheduleReceiptEventRetentionPrune();
           scheduleReceiptSummaryVerify();
           void reconcileNonDoneWindow();
           void flushReceiptEventBatch({
@@ -1075,8 +1084,14 @@ export function HomeScreen() {
       } catch {
         return;
       }
+      await mergeOrphanGhostsOnLogin();
       await flushPendingUploadsRef.current();
       await flushPendingDeletesRef.current();
+      try {
+        await flushReceiptEventBatch({ force: true });
+      } catch {
+        // Event sync is best-effort; receipt merge must still run after login.
+      }
       const stored = await loadAllReceipts();
       const merged = await syncFromServer(stored, "immediate");
       const stuck = stuckIdsFromReceipts(merged as StoredReceipt[]);
@@ -1124,6 +1139,8 @@ export function HomeScreen() {
       const isLocalFirst =
         format === "csv" ||
         format === "txf" ||
+        format === "qif" ||
+        format === "qbo" ||
         format === "cpa_pdf" ||
         format === "cpa_pack";
       if (isLocalFirst) {
@@ -1145,7 +1162,6 @@ export function HomeScreen() {
     currentSeason: auth.currentSeason,
     onUserSignedIn: auth.applyGoogleSignIn,
     onPostLoginSync: handlePostLoginSync,
-    onSeasonPaid: auth.markSeasonPaid,
     refreshSeasonPaid: auth.refreshSeasonPaid,
     onExportGatePrepare: handleExportGatePrepare,
     onPreExportPrepare: handlePreExportPrepare,
@@ -1691,6 +1707,7 @@ export function HomeScreen() {
         onSignOut={auth.signOut}
         taxStats={settingsTaxStats}
         onRequestExport={handleSettingsExport}
+        onContinueExportAfterGoogle={taxExport.continueExportAfterGoogleSignIn}
         exportBlockedTick={taxExport.exportBlockedTick}
         seasonExportTick={seasonExportTick}
         onboardingAha={
@@ -1853,6 +1870,19 @@ export function HomeScreen() {
       {taxExport.overlays}
 
       {paymentSuccessOverlay}
+
+      {uploadReauthSheet && (
+        <GoogleSignInSheet
+          mode="hard-sync"
+          onClose={() => setUploadReauthSheet(false)}
+          onUserSignedIn={auth.applyGoogleSignIn}
+          onSuccess={async (result) => {
+            await handlePostLoginSync(result.taxRecalcQueued);
+            setUploadReauthSheet(false);
+            void flushPendingUploadsRef.current({ force: true });
+          }}
+        />
+      )}
 
       {founderSheetOpen && (
         <FounderProgramSheet

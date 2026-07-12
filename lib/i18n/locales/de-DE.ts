@@ -121,7 +121,7 @@ export const DE_DE_COPY: UserCopy = {
     landing: {
       headlineLead: "Behalten Sie mehr von Ihrem",
       headlineAccent: "harte Arbeit verdienten Geld.",
-      tagline: "KI findet Steuerabzüge, die andere übersehen.",
+      tagline: "Ausgaben ordnen. Unterlagen für die Steuersaison vorbereiten.",
       check1: "Funktioniert offline",
       check2: "10 Belege in 10 Sek.",
       check3: "Keine Anmeldung nötig",
@@ -941,6 +941,12 @@ export const DE_DE_COPY: UserCopy = {
     formatTxfTitle: "TXF für Steuersoftware",
     formatTxfHint:
       "Buchhaltungsformat für Desktop-Steuertools (V042-Blöcke).",
+    formatQifTitle: "QuickBooks QIF",
+    formatQifHint:
+      "Abzugsfähige Ausgaben in QuickBooks oder Quicken importieren (.qif).",
+    formatQboTitle: "QuickBooks Online",
+    formatQboHint:
+      "Als Bank-Feed in QuickBooks Online importieren (.qbo Web Connect).",
     snap1099Title: "1099-Einkommensformulare",
     snap1099Hint:
       "1099-NEC oder 1099-K fotografieren — im Prüfpaket unter 01_Income_Documents.",

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   isOrphanGhostMergeable,
+  listHistoricalGhostIdsForUser,
   mergeOrphanGhostData,
 } from "@/lib/server/mergeOrphanGhostData";
 
@@ -22,6 +23,37 @@ describe("isOrphanGhostMergeable", () => {
       },
     });
     assert.equal(ok, false);
+  });
+
+  it("allows ghosts already bound to the same user", async () => {
+    const ok = await isOrphanGhostMergeable("ghost-9", "user-1", {
+      snaptaxGhostAccount: {
+        findUnique: async () => ({ userId: "user-1" }),
+      },
+    });
+    assert.equal(ok, true);
+  });
+});
+
+describe("listHistoricalGhostIdsForUser", () => {
+  it("returns non-empty historical ghost ids from user receipts", async () => {
+    const result = await listHistoricalGhostIdsForUser("user-1", {
+      snaptaxReceipt: {
+        findMany: async ({ where, select, distinct }) => {
+          assert.deepEqual(where, { userId: "user-1", ghostId: { not: null } });
+          assert.deepEqual(select, { ghostId: true });
+          assert.deepEqual(distinct, ["ghostId"]);
+          return [
+            { ghostId: "ghost-old" },
+            { ghostId: null },
+            { ghostId: "" },
+            { ghostId: "ghost-client" },
+          ];
+        },
+      },
+    });
+
+    assert.deepEqual(result, ["ghost-old", "ghost-client"]);
   });
 });
 
@@ -95,5 +127,43 @@ describe("mergeOrphanGhostData", () => {
       mergedGhostIds: [],
       totalReceipts: 0,
     });
+  });
+
+  it("counts event-only migrations as merged ghosts", async () => {
+    const result = await mergeOrphanGhostData("user-1", ["ghost-events"], {
+      snaptaxGhostAccount: {
+        findUnique: async () => null,
+      },
+      snaptaxReceipt: {
+        updateMany: async () => ({ count: 0 }),
+      },
+      snaptaxReceiptEvent: {
+        updateMany: async ({ where, data }) => {
+          assert.deepEqual(where, { ghostId: "ghost-events", userId: null });
+          assert.deepEqual(data, { userId: "user-1" });
+          return { count: 2 };
+        },
+      },
+      snaptaxReceiptLifecycleSnapshot: {
+        updateMany: async () => ({ count: 1 }),
+      },
+      snaptaxReceiptSyncCursor: {
+        findUnique: async () => null,
+        upsert: async () => ({}),
+        deleteMany: async () => ({ count: 0 }),
+      },
+    });
+
+    assert.deepEqual(result.mergedGhostIds, ["ghost-events"]);
+    assert.equal(result.totalReceipts, 0);
+    assert.deepEqual(result.merged, [
+      {
+        ghostId: "ghost-events",
+        receipts: 0,
+        events: 2,
+        snapshots: 1,
+        cursorMerged: false,
+      },
+    ]);
   });
 });

@@ -41,7 +41,7 @@ describe("runOrphanGhostMergeForUser", () => {
       clientOrphanGhostIds: ["ghost-client"],
     });
 
-    assert.equal(result.mergedGhostIds.length, expectedGhosts.length);
+    assert.deepEqual(result.mergedGhostIds.sort(), expectedGhosts.sort());
     assert.equal(result.totalReceipts, expectedGhosts.length);
   });
 });

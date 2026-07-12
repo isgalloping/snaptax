@@ -15,7 +15,10 @@ import {
 import { PaywallSheet } from "@/components/settings/PaywallSheet";
 import { ExportEngineSheet } from "@/components/export/ExportEngineSheet";
 import { useI18n } from "@/components/i18n/I18nProvider";
-import { hasExportableReceipts } from "@/lib/tax/exportGate";
+import {
+  realExportReceipts,
+  resolveTaxExportGateAction,
+} from "@/lib/tax/exportGate";
 import { markExportBlockedBanner } from "@/lib/settings/exportSampleState";
 import { markSeasonExportDone } from "@/lib/settings/seasonExportState";
 import type { IncomeCaptureKind } from "@/lib/export/incomeCapture";
@@ -90,9 +93,13 @@ export function useTaxExportGate({
   );
 
   const blockIfNoExportableReceipts = (prepared?: Receipt[] | void) => {
-    const list = prepared !== undefined ? prepared : exportableReceipts;
-    const exportable = list.filter((r) => !r.isOnboardingDemo);
-    if (!hasExportableReceipts(exportable)) {
+    const decision = resolveTaxExportGateAction({
+      receipts: exportableReceipts,
+      preparedReceipts: prepared,
+      googleUserPresent: Boolean(googleUser),
+      seasonPaid: false,
+    });
+    if (decision.kind === "empty") {
       showExportEmptyTip(copy.exportEngine.noDeductibleReceipts);
       return true;
     }
@@ -118,20 +125,33 @@ export function useTaxExportGate({
     return undefined;
   };
 
-  const exportableList = (prepared?: Receipt[] | void) =>
-    (prepared ?? exportableReceipts).filter((r) => !r.isOnboardingDemo);
-
   const finishExportGate = async (prepared?: Receipt[] | void) => {
-    if (blockIfNoExportableReceipts(prepared)) return;
-    if (!googleUser) {
+    const preAuthDecision = resolveTaxExportGateAction({
+      receipts: exportableReceipts,
+      preparedReceipts: prepared,
+      googleUserPresent: Boolean(googleUser),
+      seasonPaid: false,
+    });
+    if (preAuthDecision.kind === "empty") {
+      showExportEmptyTip(copy.exportEngine.noDeductibleReceipts);
+      return;
+    }
+    if (preAuthDecision.kind === "google") {
       setGoogleSheet("hard-export");
       return;
     }
+
     const paid = await resolveSeasonPaid();
-    if (paid) {
-      openExportEngine(exportableList(prepared));
-    } else {
+    const decision = resolveTaxExportGateAction({
+      receipts: exportableReceipts,
+      preparedReceipts: prepared,
+      googleUserPresent: true,
+      seasonPaid: paid,
+    });
+    if (decision.kind === "paywall") {
       setShowPaywall(true);
+    } else if (decision.kind === "export") {
+      openExportEngine(decision.receipts);
     }
   };
 
@@ -156,7 +176,7 @@ export function useTaxExportGate({
     await runPrepareWithLoading(async () => {
       const prepared = await prepareExportReceipts();
       if (blockIfNoExportableReceipts(prepared)) return;
-      openExportEngine(exportableList(prepared));
+      openExportEngine(realExportReceipts(exportableReceipts, prepared));
     });
   };
 

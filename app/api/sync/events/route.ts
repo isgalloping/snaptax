@@ -12,6 +12,7 @@ import { ingestReceiptEventBatch } from "@/lib/server/ingestReceiptEventBatch";
 import { maybePruneOldReceiptEvents } from "@/lib/server/pruneReceiptEvents";
 import { prisma } from "@/lib/prisma";
 import { receiptWhereForActor } from "@/lib/receipts/ownership";
+import { SYNC_EVENTS_ACTOR_OPTIONS } from "@/lib/server/syncEventsActorOptions";
 import { withRequestLog } from "@/lib/server/log/withRequestLog";
 import { RECEIPT_EVENT_BATCH_SIZE } from "@/lib/storage/receiptEventTypes";
 
@@ -28,14 +29,14 @@ const bodySchema = z.object({
 });
 
 async function resolveActor(req: Request) {
-  return getActor(req, { requireWrite: true });
+  return getActor(req, SYNC_EVENTS_ACTOR_OPTIONS);
 }
 
 export const POST = withRequestLog(
   "api.sync",
   async (request, _context) => {
     try {
-      const actor = await getActor(request, { requireWrite: true });
+      const actor = await getActor(request, SYNC_EVENTS_ACTOR_OPTIONS);
       const ip = clientIp(request);
       const ipLimit = await checkIpSyncEventsLimit(ip);
       if (!ipLimit.ok) {

@@ -5,6 +5,7 @@ import {
   exportPickerTaxYears,
   hasExportableReceipts,
   pickDefaultExportTaxYear,
+  resolveTaxExportGateAction,
 } from "./exportGate.ts";
 
 function doneReceipt(year: number): Receipt {
@@ -67,5 +68,59 @@ describe("exportPickerTaxYears", () => {
       exportPickerTaxYears([doneReceipt(2025), doneReceipt(2026)], "UTC", "2027"),
       [2026, 2025],
     );
+  });
+});
+
+describe("resolveTaxExportGateAction", () => {
+  it("blocks on an empty prepared list before prompting for Google", () => {
+    const action = resolveTaxExportGateAction({
+      receipts: [doneReceipt(2025)],
+      preparedReceipts: [],
+      googleUserPresent: false,
+      seasonPaid: false,
+      timeZone: "UTC",
+    });
+
+    assert.equal(action.kind, "empty");
+  });
+
+  it("requires Google before showing the paywall", () => {
+    const action = resolveTaxExportGateAction({
+      receipts: [doneReceipt(2025)],
+      googleUserPresent: false,
+      seasonPaid: false,
+      timeZone: "UTC",
+    });
+
+    assert.equal(action.kind, "google");
+  });
+
+  it("shows paywall only after Google is present and the season is unpaid", () => {
+    const action = resolveTaxExportGateAction({
+      receipts: [doneReceipt(2025)],
+      googleUserPresent: true,
+      seasonPaid: false,
+      timeZone: "UTC",
+    });
+
+    assert.equal(action.kind, "paywall");
+  });
+
+  it("passes only real receipts to the export engine", () => {
+    const real = doneReceipt(2025);
+    const demo: Receipt = {
+      ...doneReceipt(2025),
+      id: "demo",
+      isOnboardingDemo: true,
+    };
+    const action = resolveTaxExportGateAction({
+      receipts: [demo, real],
+      googleUserPresent: true,
+      seasonPaid: true,
+      timeZone: "UTC",
+    });
+
+    assert.equal(action.kind, "export");
+    assert.deepEqual(action.receipts, [real]);
   });
 });

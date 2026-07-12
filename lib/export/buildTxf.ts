@@ -1,5 +1,6 @@
 import { LEGAL_BRAND_NAME } from "@/lib/legal/operator";
 import type { ExportExpenseRow } from "@/lib/tax/exportRows";
+import { exportEligibleRows } from "@/lib/export/auditEligibleRows";
 import { txfTdForMerchant } from "@/lib/export/mapping/txfCategoryMapping";
 
 function formatTxfDate(dateIso: string): string {
@@ -19,9 +20,7 @@ export function buildTxfExport(
   const headerDate = formatTxfDate(exportDate.toISOString().slice(0, 10));
   const lines = ["V042", `${LEGAL_BRAND_NAME} Export`, `D ${headerDate}`];
 
-  for (const row of rows) {
-    if (row.taxDeductible === "No" || row.exportAmount <= 0) continue;
-
+  for (const row of exportEligibleRows(rows)) {
     const td = txfTdForMerchant(row.merchant, row.category);
     lines.push(
       "^",

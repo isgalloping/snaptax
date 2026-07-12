@@ -23,6 +23,7 @@ import { auditEligibleRows, hasAuditExportContent } from "@/lib/export/auditElig
 import { assignAuditTrailMeta } from "@/lib/export/assignAuditTrailMeta";
 import { buildTxfExport } from "@/lib/export/buildTxf";
 import { buildQifExport } from "@/lib/export/buildQifExport";
+import { buildQboExport } from "@/lib/export/buildQboExport";
 import { exportTaxPackFilename } from "@/lib/export/exportFilenames";
 import { finalizeExportRows } from "@/lib/export/mapping/finalizeExportRows";
 import {
@@ -39,7 +40,7 @@ export const maxDuration = 60;
 const exportBodySchema = z.object({
   taxYear: z.string().regex(/^\d{4}$/).optional(),
   format: z
-    .enum(["csv", "cpa_pack", "cpa_pdf", "txf", "qif", "xlsx"])
+    .enum(["csv", "cpa_pack", "cpa_pdf", "txf", "qif", "qbo", "xlsx"])
     .optional()
     .default("csv"),
 });
@@ -177,6 +178,19 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
       buffer = Buffer.from(qif, "utf-8");
       contentType = "application/qif; charset=utf-8";
       filename = exportTaxPackFilename("qif", taxYear);
+    } else if (body.format === "qbo") {
+      const qboRows = auditEligibleRows(enrichedExpenseRows);
+      if (qboRows.length === 0) {
+        return apiError(
+          "NO_RECEIPTS",
+          "No tax-deductible receipts to export for QuickBooks Online",
+          422,
+        );
+      }
+      const qbo = buildQboExport(qboRows, exportedAt);
+      buffer = Buffer.from(qbo, "utf-8");
+      contentType = "application/x-ofx; charset=utf-8";
+      filename = exportTaxPackFilename("qbo", taxYear);
     } else if (body.format === "cpa_pack") {
       const detailCsv = buildAuditDetailCsv(auditRows);
       const summaryPdf = await buildScheduleCMirrorPdf({

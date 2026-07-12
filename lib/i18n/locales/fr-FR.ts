@@ -945,6 +945,9 @@ export const FR_FR_COPY: UserCopy = {
     formatQifTitle: "QuickBooks QIF",
     formatQifHint:
       "Importez les dépenses déductibles dans QuickBooks ou Quicken (.qif).",
+    formatQboTitle: "QuickBooks Online",
+    formatQboHint:
+      "Importez comme flux bancaire dans QuickBooks Online (.qbo Web Connect).",
     snap1099Title: "Formulaires 1099 (revenus)",
     snap1099Hint:
       "Photographiez votre 1099-NEC ou 1099-K — inclus dans le pack d'audit sous 01_Income_Documents.",

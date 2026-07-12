@@ -1139,6 +1139,8 @@ export function HomeScreen() {
       const isLocalFirst =
         format === "csv" ||
         format === "txf" ||
+        format === "qif" ||
+        format === "qbo" ||
         format === "cpa_pdf" ||
         format === "cpa_pack";
       if (isLocalFirst) {

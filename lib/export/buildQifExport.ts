@@ -1,4 +1,5 @@
 import type { ExportExpenseRow } from "@/lib/tax/exportRows";
+import { exportEligibleRows } from "@/lib/export/auditEligibleRows";
 
 function formatQifDate(dateIso: string): string {
   const [y, m, d] = dateIso.split("-");
@@ -27,9 +28,7 @@ function qifMemo(row: ExportExpenseRow): string {
 export function buildQifExport(rows: ExportExpenseRow[]): string {
   const lines: string[] = ["!Type:Cash", "!Account:SnapTax Expenses"];
 
-  for (const row of rows) {
-    if (row.taxDeductible === "No" || row.exportAmount <= 0) continue;
-
+  for (const row of exportEligibleRows(rows)) {
     lines.push(
       `D${formatQifDate(row.dateIso)}`,
       `T${formatQifAmount(row.exportAmount)}`,

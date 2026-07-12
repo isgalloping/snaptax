@@ -1,10 +1,11 @@
 import { buildTxfExport } from "@/lib/export/buildTxf";
 import { buildQifExport } from "@/lib/export/buildQifExport";
+import { buildQboExport } from "@/lib/export/buildQboExport";
 import { buildLocalExpenseExportRows } from "@/lib/export/buildLocalExpenseRows";
 import { buildTurboTaxCsv } from "@/lib/tax/exportCsv";
 import type { Receipt } from "@/lib/types";
 
-export type LocalTaxPackFormat = "csv" | "txf" | "qif";
+export type LocalTaxPackFormat = "csv" | "txf" | "qif" | "qbo";
 
 export type LocalTaxPackResult = {
   content: string;
@@ -42,6 +43,14 @@ export function buildLocalTaxPack(
       content: buildQifExport(rows),
       receiptIds,
       mimeType: "application/qif;charset=utf-8",
+    };
+  }
+
+  if (format === "qbo") {
+    return {
+      content: buildQboExport(rows),
+      receiptIds,
+      mimeType: "application/x-ofx;charset=utf-8",
     };
   }
 

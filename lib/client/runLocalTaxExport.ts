@@ -7,6 +7,7 @@ import {
 import { buildLocalExpenseExportRows } from "@/lib/export/buildLocalExpenseRows";
 import { buildTxfExport } from "@/lib/export/buildTxf";
 import { buildQifExport } from "@/lib/export/buildQifExport";
+import { buildQboExport } from "@/lib/export/buildQboExport";
 import { exportTaxPackFilename } from "@/lib/export/exportFilenames";
 import type { ExportTaxPackMeta } from "@/lib/client/authApi";
 import type { Receipt } from "@/lib/types";
@@ -59,6 +60,13 @@ export async function runLocalTaxExport(
       params.timeZone,
     );
     content = buildQifExport(rows);
+  } else if (params.format === "qbo") {
+    const rows = buildLocalExpenseExportRows(
+      params.receipts,
+      params.taxYear,
+      params.timeZone,
+    );
+    content = buildQboExport(rows, new Date(filed.taxSeasonDate));
   }
 
   const filename = exportTaxPackFilename(params.format, params.taxYear);

@@ -284,7 +284,7 @@ export function ExportEngineSheet({
       }
       const taxYearStr = String(taxYear);
       const result =
-        format === "csv" || format === "txf" || format === "qif"
+        format === "csv" || format === "txf" || format === "qif" || format === "qbo"
           ? await runLocalTaxExport({
               receipts: receiptsForExport,
               taxYear,
@@ -355,7 +355,9 @@ export function ExportEngineSheet({
         ? t.formatTxfTitle
         : format === "qif"
           ? t.formatQifTitle
-          : format === "cpa_pdf"
+          : format === "qbo"
+            ? t.formatQboTitle
+            : format === "cpa_pdf"
             ? t.formatCpaPdfTitle
             : t.formatCpaTitle;
 
@@ -595,6 +597,23 @@ export function ExportEngineSheet({
                 </p>
                 <p className="mt-2 text-xs leading-relaxed text-zinc-400">
                   {t.formatQifHint}
+                </p>
+              </button>
+              <button
+                type="button"
+                onClick={() => setFormat("qbo")}
+                className={`w-full min-h-[88px] rounded-xl border-2 p-4 text-left transition-transform active:scale-95 ${
+                  format === "qbo"
+                    ? "border-yellow-500 bg-yellow-950"
+                    : "border-zinc-600 bg-zinc-800"
+                }`}
+              >
+                <p className="text-sm font-black uppercase tracking-wider text-white">
+                  {format === "qbo" ? "✓ " : ""}
+                  {t.formatQboTitle}
+                </p>
+                <p className="mt-2 text-xs leading-relaxed text-zinc-400">
+                  {t.formatQboHint}
                 </p>
               </button>
             </div>

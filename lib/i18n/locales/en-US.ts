@@ -928,6 +928,9 @@ export const EN_US_COPY: UserCopy = {
       formatQifTitle: "QuickBooks QIF",
       formatQifHint:
         "Import deductible expenses into QuickBooks or Quicken (.qif).",
+      formatQboTitle: "QuickBooks Online",
+      formatQboHint:
+        "Import as bank feed in QuickBooks Online (.qbo Web Connect).",
       snap1099Title: "1099 income forms",
       snap1099Hint:
         "Snap 1099-NEC / 1099-K — included in Audit Pack under 01_Income_Documents.",

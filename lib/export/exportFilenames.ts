@@ -6,6 +6,7 @@ export type ExportFormat =
   | "cpa_pdf"
   | "txf"
   | "qif"
+  | "qbo"
   | "xlsx";
 
 /** Download filename for `POST /api/export/tax-pack` by format. */
@@ -25,6 +26,8 @@ export function exportTaxPackFilename(
       return `${LEGAL_BRAND_NAME}-${year}-Expenses.txf`;
     case "qif":
       return `${LEGAL_BRAND_NAME}-${year}-QuickBooks.qif`;
+    case "qbo":
+      return `${LEGAL_BRAND_NAME}-${year}-QuickBooks-Online.qbo`;
     case "xlsx":
       return `${LEGAL_BRAND_NAME}-${year}-Tax-Pack.xlsx`;
   }

@@ -41,6 +41,15 @@ describe("buildLocalTaxPack", () => {
     assert.equal(result.mimeType, "application/qif;charset=utf-8");
   });
 
+  it("builds qbo from local receipts", () => {
+    const result = buildLocalTaxPack([sampleReceipt()], 2026, "UTC", "qbo");
+    assert.match(result.content, /^OFXHEADER:100/);
+    assert.match(result.content, /<INTU\.BID>3000<\/INTU\.BID>/);
+    assert.match(result.content, /<NAME>Home Depot<\/NAME>/);
+    assert.equal(result.receiptIds.length, 1);
+    assert.equal(result.mimeType, "application/x-ofx;charset=utf-8");
+  });
+
   it("throws when no expense receipts in tax year", () => {
     assert.throws(
       () => buildLocalTaxPack([sampleReceipt()], 2025, "UTC", "csv"),

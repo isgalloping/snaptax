@@ -207,7 +207,7 @@ UI list + default `GET /api/receipts` fetch window reduced **100 → 50** rows (
 - Event Store snapshots / sync cursor / 18mo server prune — **shipped** 2026-07-10（ingest 事务；Delete Account 清理 event store；Ghost bind 迁移 events/snapshots/cursor）
 - WorkerSession **full** redesign (write budget 3) — lifecycle redesign draft partial；local export 已完成
 - Export pack generation — [`export-pipeline-design.md`](./export-pipeline-design.md)
-- Server-side orphan ghost merge job
+- Server-side orphan ghost merge job — **shipped** 2026-07-11（Google bind + `POST /api/sync/ghost-orphans`；合并 rebind / historical / client-known ghosts 的 receipts + Event Store）
 
 ---
 

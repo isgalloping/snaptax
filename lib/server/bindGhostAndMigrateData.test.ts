@@ -17,8 +17,10 @@ describe("bindGhostAndMigrateData", () => {
             return {};
           },
           update: async () => ({}),
+          findUnique: async () => null,
         },
         snaptaxReceipt: {
+          findMany: async () => [],
           updateMany: async () => {
             order.push("receipts");
             return { count: 1 };
@@ -57,8 +59,10 @@ describe("bindGhostAndMigrateData", () => {
             assert.equal(data.ghostId, "ghost-new");
             return {};
           },
+          findUnique: async () => null,
         },
         snaptaxReceipt: {
+          findMany: async () => [],
           updateMany: async () => ({ count: 0 }),
         },
         snaptaxReceiptEvent: {

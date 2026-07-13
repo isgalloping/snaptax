@@ -40,16 +40,35 @@ export async function isOrphanGhostMergeable(
 
 export async function listHistoricalGhostIdsForUser(
   userId: string,
-  db: Pick<typeof prisma, "snaptaxReceipt"> = prisma,
+  db: Pick<
+    typeof prisma,
+    "snaptaxReceipt" | "snaptaxReceiptEvent" | "snaptaxReceiptLifecycleSnapshot"
+  > = prisma,
 ): Promise<string[]> {
-  const rows = await db.snaptaxReceipt.findMany({
-    where: { userId, ghostId: { not: null } },
-    select: { ghostId: true },
-    distinct: ["ghostId"],
-  });
-  return rows
-    .map((row) => row.ghostId)
-    .filter((ghostId): ghostId is string => ghostId != null && ghostId.length > 0);
+  const [receiptRows, eventRows, snapshotRows] = await Promise.all([
+    db.snaptaxReceipt.findMany({
+      where: { userId, ghostId: { not: null } },
+      select: { ghostId: true },
+      distinct: ["ghostId"],
+    }),
+    db.snaptaxReceiptEvent.findMany({
+      where: { userId, ghostId: { not: null } },
+      select: { ghostId: true },
+      distinct: ["ghostId"],
+    }),
+    db.snaptaxReceiptLifecycleSnapshot.findMany({
+      where: { userId, ghostId: { not: null } },
+      select: { ghostId: true },
+      distinct: ["ghostId"],
+    }),
+  ]);
+  const ids = new Set<string>();
+
+  for (const row of [...receiptRows, ...eventRows, ...snapshotRows]) {
+    if (row.ghostId) ids.add(row.ghostId);
+  }
+
+  return [...ids];
 }
 
 /** Attach server-derived orphan ghost receipts + Event Store rows to user (rebind / historical ghosts). */

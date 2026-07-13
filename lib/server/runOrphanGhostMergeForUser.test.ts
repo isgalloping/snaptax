@@ -23,9 +23,11 @@ describe("runOrphanGhostMergeForUser", () => {
           updateMany: async () => ({ count: 1 }),
         },
         snaptaxReceiptEvent: {
+          findMany: async () => [],
           updateMany: async () => ({ count: 0 }),
         },
         snaptaxReceiptLifecycleSnapshot: {
+          findMany: async () => [],
           updateMany: async () => ({ count: 0 }),
         },
         snaptaxReceiptSyncCursor: {
@@ -62,11 +64,13 @@ describe("runOrphanGhostMergeForUser", () => {
           },
         },
         snaptaxReceiptEvent: {
+          findMany: async () => [],
           updateMany: async () => {
             throw new Error("client-only ghost should not update events");
           },
         },
         snaptaxReceiptLifecycleSnapshot: {
+          findMany: async () => [],
           updateMany: async () => {
             throw new Error("client-only ghost should not update snapshots");
           },
@@ -86,5 +90,44 @@ describe("runOrphanGhostMergeForUser", () => {
       mergedGhostIds: [],
       totalReceipts: 0,
     });
+  });
+
+  it("discovers historical ghosts from user-owned event store rows", async () => {
+    const result = await runOrphanGhostMergeForUser(
+      {
+        userId: "user-1",
+        currentGhostId: "ghost-new",
+      },
+      {
+        snaptaxGhostAccount: {
+          findUnique: async () => null,
+        },
+        snaptaxReceipt: {
+          findMany: async () => [],
+          updateMany: async ({ where }) => ({
+            count: where.ghostId === "ghost-event" ? 1 : 0,
+          }),
+        },
+        snaptaxReceiptEvent: {
+          findMany: async () => [{ ghostId: "ghost-event" }],
+          updateMany: async () => ({ count: 0 }),
+        },
+        snaptaxReceiptLifecycleSnapshot: {
+          findMany: async () => [{ ghostId: "ghost-snapshot" }],
+          updateMany: async () => ({ count: 1 }),
+        },
+        snaptaxReceiptSyncCursor: {
+          findUnique: async () => null,
+          upsert: async () => ({}),
+          deleteMany: async () => ({ count: 0 }),
+        },
+      } as unknown as OrphanGhostMergeDb,
+    );
+
+    assert.deepEqual(result.mergedGhostIds.sort(), [
+      "ghost-event",
+      "ghost-snapshot",
+    ]);
+    assert.equal(result.totalReceipts, 1);
   });
 });

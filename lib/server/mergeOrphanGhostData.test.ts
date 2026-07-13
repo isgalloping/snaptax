@@ -36,7 +36,7 @@ describe("isOrphanGhostMergeable", () => {
 });
 
 describe("listHistoricalGhostIdsForUser", () => {
-  it("returns non-empty historical ghost ids from user receipts", async () => {
+  it("returns non-empty historical ghost ids from user receipts and event store", async () => {
     const result = await listHistoricalGhostIdsForUser("user-1", {
       snaptaxReceipt: {
         findMany: async ({ where, select, distinct }) => {
@@ -51,9 +51,30 @@ describe("listHistoricalGhostIdsForUser", () => {
           ];
         },
       },
+      snaptaxReceiptEvent: {
+        findMany: async ({ where, select, distinct }) => {
+          assert.deepEqual(where, { userId: "user-1", ghostId: { not: null } });
+          assert.deepEqual(select, { ghostId: true });
+          assert.deepEqual(distinct, ["ghostId"]);
+          return [{ ghostId: "ghost-event" }, { ghostId: "ghost-old" }];
+        },
+      },
+      snaptaxReceiptLifecycleSnapshot: {
+        findMany: async ({ where, select, distinct }) => {
+          assert.deepEqual(where, { userId: "user-1", ghostId: { not: null } });
+          assert.deepEqual(select, { ghostId: true });
+          assert.deepEqual(distinct, ["ghostId"]);
+          return [{ ghostId: "ghost-snapshot" }];
+        },
+      },
     });
 
-    assert.deepEqual(result, ["ghost-old", "ghost-client"]);
+    assert.deepEqual(result, [
+      "ghost-old",
+      "ghost-client",
+      "ghost-event",
+      "ghost-snapshot",
+    ]);
   });
 });
 

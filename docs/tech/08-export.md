@@ -1,10 +1,12 @@
-# 08 — Excel 导出
+# 08 — Tax Pack 多格式导出
 
 ## 8.1 触发条件
 
-1. 有效 Google session
-2. `season_entitlements` 本季 `paid = true`
-3. `POST /api/export/tax-pack`
+1. 有效 Google session。
+2. `season_entitlements` 本季 `paid = true`。
+3. 在线；离线由客户端拦截，不调用导出 API。
+4. UI 可见格式（`csv` / `txf` / `qif` / `qbo` / `cpa_pdf` / `cpa_pack`）默认 **local-first**：`prepareExportLocal` → IndexedDB 构建文件 → `POST /api/export/filed` 写 filed 元数据。
+5. `POST /api/export/tax-pack` 保留为 server fallback，并服务 UI 隐藏的 `xlsx`。
 
 ## 8.2 请求体
 
@@ -57,14 +59,14 @@ Expenses-Detail.csv
 
 - 头 `V042` + 每条费用 `^` 块（TD / P / D / M / $）
 - **不含** TD 2214 里程汇总行
-- 非 deductible 行跳过
+- `buildTxfExport` 使用 `exportEligibleRows`，非 deductible / 零抵扣行跳过；如果该税年只有 personal 行，CSV 会有行，TXF 可能只有 header（QIF/QBO 则直接 `NO_RECEIPTS`）
 
 ### QuickBooks QIF（`format=qif` · M4b · 2026-07-11）
 
 - 头 `!Type:Cash` + `!Account:SnapTax Expenses`
 - 每条费用：`D`（MM/DD/YYYY）· `T`（负抵扣额）· `P`（商户）· `LJob Expenses:{category} (Line N)` · `M`（`SNPTX{receiptId}` + 可选 notes）· `^`
 - **仅** deductible 且 `exportAmount > 0` 的行（与 audit 口径一致）
-- 客户端默认 **本地 IDB** 构建（`buildLocalTaxPack`）；`POST /api/export/tax-pack` 为 fallback
+- 客户端默认 **本地 IDB** 构建（`buildLocalTaxPack`）；`POST /api/export/tax-pack` 为 fallback；零 eligible 行时本地/API 均返回 `NO_RECEIPTS`
 
 ### QuickBooks Online QBO（`format=qbo` · M4c · 2026-07-12）
 
@@ -97,7 +99,7 @@ Expenses-Detail.csv
 | Receipt ID | UUID |
 | Receipt Image URL | ZIP 内相对路径（同 REC 命名） |
 
-**Sheet: Summary**
+**`format=xlsx` only — Sheet: Summary**
 
 | 字段 | 值 |
 |------|-----|
@@ -111,11 +113,18 @@ Expenses-Detail.csv
 
 > MVP 满足 CPA / TurboTax 手动导入；列顺序对标 IRS Schedule C 常见字段（非官方 XML）。
 
-## 8.4 实现
+## 8.4 实现分层
 
-- 库：**ExcelJS**（Node 兼容）
-- 生成：Serverless Function 内内存构建
-- 交付：**方案 B** — `Response` 直接返回 `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` 二进制流
+| Layer | Formats | Codepath | Notes |
+|-------|---------|----------|-------|
+| Client local text | `csv` / `txf` / `qif` / `qbo` | `runLocalTaxExport` → `buildLocalTaxPack` / builders | 从 IndexedDB receipts 构建；不读 server PG 内容 |
+| Client local CPA | `cpa_pdf` / `cpa_pack` | `runLocalCpaExport` → browser PDF / ZIP builders | OPFS 图片优先，必要时 signed URL fallback |
+| Filed API | 可见全部格式 | `POST /api/export/filed` | 服务端按 user + bound ghost 查询该税年全部 done receipts，写 `taxSeason` / `taxSeasonDate` |
+| Server route | `xlsx` + fallback | `POST /api/export/tax-pack` | Route 内构建文件并 `updateMany` 写 filed |
+
+`runLocalTaxExport` 先构建 pack，再调用 `/api/export/filed`，随后 `markReceiptsFiledLocal` 更新 IndexedDB。`txf` / `qbo` 会在拿到 `taxSeasonDate` 后重建内容，让导出日期使用服务端 filed timestamp；`qif` 也会以 filed 后的 rows 重建，保持同一 orchestration。
+
+本地 expense rows 来自 `buildLocalExpenseExportRows`：`status=done`、排除 1099 income category、按用户时区过滤 tax year，再用当前本地实现的 `dataRegion: "us"` 构建并 `finalizeExportRows`。
 
 ## 8.5 客户端分享
 
@@ -135,6 +144,7 @@ if (navigator.canShare?.({ files: [file] })) {
 - 无次数限制（本季 entitlement 内）
 - 每次导出包含 **当前全部** `status=done` 小票（含 Export 后新拍的）
 - 导出后标记 `tax_season` + `tax_season_date`（幂等，用于审计与 filed 状态；**不**减少 UI Est. Tax Saved）
+- local-first 格式通过 `/api/export/filed` 写 filed；`xlsx` / server fallback 通过 `tax-pack` route 内的 `updateMany` 写 filed
 - 导出成功后记录 `biz.export` 日志（`taxSeason`, `receiptCount`）
 
 ## 8.7 错误
@@ -143,6 +153,7 @@ if (navigator.canShare?.({ files: [file] })) {
 |------|------|-----------|
 | 未付费 | 402 PAYMENT_REQUIRED | 弹出 Paywall |
 | 无 done 小票 | 422 NO_RECEIPTS | "No completed receipts to export. Snap some receipts first!" |
+| QIF/QBO 无 deductible 行 | 422 NO_RECEIPTS | "No tax-deductible receipts to export..." |
 | 生成失败 | 500 | "Export failed. Please try again." |
 | 离线 | — (前端拦截) | "You're offline. Connect to export." |
 
@@ -161,6 +172,8 @@ if (navigator.canShare?.({ files: [file] })) {
 **Headers：** `X-Time-Zone`（IANA，与 tax-pack 相同）
 
 **行为：** Server 查询该用户全部 `status=done` 小票（含 bound ghost），按 `filterReceiptsByTaxYear` 过滤 `taxYear`，幂等 `updateMany` 写 `taxSeason` + `taxSeasonDate`。返回 filed 的 id 列表供客户端更新 IDB。
+
+**注意：** filed 范围是该税年全部 done receipts，不是导出文件中的 eligible rows。举例：QBO 文件只含 deductible rows，但 `/filed` 仍会标记该税年 personal / zero-deductible done receipts；`runLocalTaxExport` 返回的 `meta.receiptCount` 使用 `filedCount`。
 
 **响应：**
 

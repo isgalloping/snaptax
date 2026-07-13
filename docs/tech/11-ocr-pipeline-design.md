@@ -15,9 +15,9 @@
 | 阶段 | 范围 | 本文章节 |
 |------|------|----------|
 | **第一阶段（本次实现）** | 本地 OCR Worker、`parseReceipt`、`qualityGate`、服务端 `processReceiptTax` 路由器、`classifyReceiptText`、Vision 兜底、客户端 `ocrDraft` 与现有 upload/sync **沿用现网** | §1–§4.2、§6–§15（不含事件/API 同步） |
-| **第二阶段（数据一致性，暂不设计实现）** | Event Queue、Background Sync batch、`POST /api/sync/events`、Postgres Event Store、WorkerSession — 见 [receipt-sync-lifecycle topic](../superpowers/topics/receipt-sync-lifecycle-design.md) §5 + 本文 §16 | §16 路线图 |
+| **第二阶段（数据一致性 · shipped 2026-07-10 起）** | Event Queue、Background Sync batch、`POST /api/sync/events`、Postgres Event Store、WorkerSession、orphan Ghost merge — 见 [receipt-sync-lifecycle topic](../superpowers/topics/receipt-sync-lifecycle-design.md) | §16 历史路线图 |
 
-`ocr-desn.md` 全链路架构图 **仍为产品终态**；第一阶段只交付图中 **Capture → IDB → Local OCR → Structured Receipt → GPT Classify → Deduction → IDB Save** 段，**不** 引入事件队列与 Event Store。
+`ocr-desn.md` 全链路架构图 **仍为产品终态**；本 OCR 文档的第一阶段只交付图中 **Capture → IDB → Local OCR → Structured Receipt → GPT Classify → Deduction → IDB Save** 段。事件队列、Event Store、WorkerSession 与 orphan Ghost merge 已由 [`receipt-sync-lifecycle topic`](../superpowers/topics/receipt-sync-lifecycle-design.md) 接管。
 
 **第一阶段已锁定：**
 
@@ -37,7 +37,7 @@
 | 无客户端 OCR | 离线仅有 IDB 行，无结构化草稿 |
 | OCR 与税务分类耦合在单次 Vision | 难以单测、难以分路径优化 |
 
-（事件链、1.5 年审计载体 → **第二阶段**，见 §16。）
+（事件链、1.5 年审计载体 → 已在 **第二阶段** topic 中落地；见 [`receipt-sync-lifecycle-design.md`](../superpowers/topics/receipt-sync-lifecycle-design.md)。）
 
 ### 1.2 第一阶段目标
 
@@ -53,15 +53,15 @@
 
 - 列表 / TaxHeader / Snap **UI** 改版
 - 1099-NEC/K 文档流
-- **Event Queue / Event Store / `/api/sync/events`**
-- **sync 重设计**（done 锁、50 窗口、WorkerSession 模块）——第二阶段
+- **Event Queue / Event Store / `/api/sync/events`**（已由 receipt sync topic 实现，不属于 OCR 第一阶段）
+- **sync 重设计**（done 锁、50 窗口、WorkerSession 模块）——见 receipt sync topic
 - 改变现网 **row upsert + LWW merge** 语义
 
 ---
 
 ## 2. 第一阶段端到端流程
 
-与 `ocr-desn.md` 前半段对齐；**虚线框为第二阶段**，本次不实现。
+与 `ocr-desn.md` 前半段对齐；**虚线框为第二阶段 sync topic 的职责**，不由 OCR 第一阶段实现。
 
 ```mermaid
 flowchart TB
@@ -76,7 +76,7 @@ flowchart TB
     IDB2[Save IndexedDB · done/blurry]
   end
 
-  subgraph P2["第二阶段 · 暂不实现"]
+  subgraph P2["第二阶段 · receipt-sync-lifecycle"]
     EQ[Event Queue]
     BS[Background Sync]
     SYNC[POST /api/sync/events]
@@ -187,7 +187,7 @@ export type StructuredReceipt = {
 };
 ```
 
-> **第二阶段** 再引入 `ReceiptLifecycleEvent` 类型与 `snaptax_receipt_events` IDB store（见 §16）。
+> `ReceiptLifecycleEvent` 类型与 `snaptax_receipt_events` IDB store 已由第二阶段 sync topic 引入（见 §16）。
 
 ### 4.2 StoredReceipt 扩展（第一阶段 · 无 IDB 大版本迁移）
 
@@ -392,7 +392,7 @@ async function runVisionPath(params): Promise<VisionProcessResult> {
 | 有 `ai_raw.ocrDraft` 且 gate 通过 | 先 text classify，失败 Vision |
 | 否则 | Vision |
 
-> **`POST /api/sync/events`** — **第二阶段**，见 §16。
+> **`POST /api/sync/events`** — 第二阶段 sync topic 已上线，见 §16。
 
 ---
 
@@ -461,7 +461,7 @@ saveReceipt(processing) → Worker OCR → ocrDraft 写 IDB（无 OpenAI）
 | `receiptSyncBudget` | **不变** |
 | `computeTaxAmount` | **唯一** tax 写入口 |
 
-**不引入：** `workerSession.ts`、事件 flush、done 锁（均属第二阶段 sync 重设计）。
+**不由 OCR 第一阶段引入：** WorkerSession、事件 flush、done 锁（均属第二阶段 sync topic）。
 
 ---
 
@@ -561,7 +561,7 @@ module=biz.ocr stage=local_ocr|text_classify|vision_fallback receiptId=… durat
 
 ### 14.2 第二阶段（数据一致性 · Event Queue spike shipped 2026-07-10）
 
-见 [`receipt-sync-lifecycle-design.md`](../superpowers/topics/receipt-sync-lifecycle-design.md) §5（draft 部分）与本文 §16：
+见 [`receipt-sync-lifecycle-design.md`](../superpowers/topics/receipt-sync-lifecycle-design.md) 的 shipped/deferred notes 与本文 §16：
 
 | 交付物 | 状态 |
 |--------|------|
@@ -587,7 +587,7 @@ module=biz.ocr stage=local_ocr|text_classify|vision_fallback receiptId=… durat
 7. **现网** merge / pendingUpload / watcher 行为无回归。
 8. WASM lazy load；loader gzip <150KB。
 
-~~事件链、Background sync、Event Store~~ → 第二阶段。
+~~事件链、Background sync、Event Store~~ → 第二阶段 sync topic（已上线核心链路）。
 
 ---
 
@@ -595,7 +595,7 @@ module=biz.ocr stage=local_ocr|text_classify|vision_fallback receiptId=… durat
 
 **Event Queue spike shipped 2026-07-10**（IDB v8 + flush + `POST /api/sync/events` + cursor/snapshots/18mo server prune）。
 
-完整规范见 sync 重设计 spec + `ocr-desn.md` §11–§12。
+完整规范见 [`receipt-sync-lifecycle-design.md`](../superpowers/topics/receipt-sync-lifecycle-design.md) + `ocr-desn.md` §11–§12。
 
 ```text
 IDB Save → … → TAX_CALCULATED
@@ -605,7 +605,7 @@ IDB Save → … → TAX_CALCULATED
   → Postgres Event Store (append-only, 18mo)
 ```
 
-与第一阶段 OCR 的衔接：在 `saveReceipt(done|blurry)` 之后 **追加** 事件写入，不改动 router / Vision 兜底逻辑。
+与第一阶段 OCR 的衔接：在 `saveReceipt(done|blurry)` 之后 **追加** 事件写入，不改动 router / Vision 兜底逻辑。当前 shipped 实现见 `emitReceiptLifecycleEvent` / `flushReceiptEventBatch`。
 
 ---
 
@@ -619,13 +619,13 @@ IDB Save → … → TAX_CALCULATED
 | `docs/tech/DB-DESIGN-SPEC.md` §2.2 | IDB store `snaptax_*` 命名（v5 迁移） |
 | `docs/tech/12-local-image-storage-design.md` | OPFS + 压缩 + 90d 回收（OCR 输入用压缩 full） |
 
-~~`04-data-model` 事件表~~ → 第二阶段。
+~~`04-data-model` 事件表~~ → 第二阶段 sync topic（已上线 Event Store 表）。
 
 ---
 
 ## 18. 参考
 
 - 产品 OCR 终态：[`docs/ocr/ocr-desn.md`](../ocr/ocr-desn.md)
-- **第二阶段** sync / 一致性（draft）：[`receipt-sync-lifecycle-design.md`](../superpowers/topics/receipt-sync-lifecycle-design.md) §5
+- **第二阶段** sync / 一致性（shipped + deferred notes）：[`receipt-sync-lifecycle-design.md`](../superpowers/topics/receipt-sync-lifecycle-design.md)
 - **已 ship** pipeline 韧性 / sync：[`receipt-sync-lifecycle-design.md`](../superpowers/topics/receipt-sync-lifecycle-design.md) §3.1–3.4
 - 置信度三档：[`home-dashboard-design.md`](../superpowers/topics/home-dashboard-design.md) §4.5

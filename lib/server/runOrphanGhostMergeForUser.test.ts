@@ -4,6 +4,7 @@ import {
   runOrphanGhostMergeForUser,
   type RunOrphanGhostMergeInput,
 } from "@/lib/server/runOrphanGhostMergeForUser";
+import type { OrphanGhostMergeDb } from "@/lib/server/mergeOrphanGhostData";
 
 describe("runOrphanGhostMergeForUser", () => {
   it("merges discovered orphan ghosts for user", async () => {
@@ -32,7 +33,7 @@ describe("runOrphanGhostMergeForUser", () => {
           upsert: async () => ({}),
           deleteMany: async () => ({ count: 0 }),
         },
-      },
+      } as unknown as OrphanGhostMergeDb,
     );
 
     const expectedGhosts = ["ghost-hist", "ghost-old"];
@@ -77,7 +78,7 @@ describe("runOrphanGhostMergeForUser", () => {
           upsert: async () => ({}),
           deleteMany: async () => ({ count: 0 }),
         },
-      },
+      } as unknown as OrphanGhostMergeDb,
     );
 
     assert.deepEqual(result, {

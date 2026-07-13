@@ -27,7 +27,6 @@ export async function bindGhostAndMigrateData(
   opts: {
     existingGhostBinding: { userId: string } | null;
     userBinding: { ghostId: string } | null;
-    clientOrphanGhostIds?: string[];
   },
   db: GhostBindTxDb = prisma,
 ): Promise<GhostBindMigrationResult> {
@@ -57,7 +56,6 @@ export async function bindGhostAndMigrateData(
       userId,
       currentGhostId: ghostId,
       rebindPreviousGhostId,
-      clientOrphanGhostIds: opts.clientOrphanGhostIds,
     },
     db,
   );

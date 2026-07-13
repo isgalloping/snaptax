@@ -52,7 +52,7 @@ export async function listHistoricalGhostIdsForUser(
     .filter((ghostId): ghostId is string => ghostId != null && ghostId.length > 0);
 }
 
-/** Attach orphan ghost receipts + Event Store rows to user (rebind / historical / client-known ghosts). */
+/** Attach server-derived orphan ghost receipts + Event Store rows to user (rebind / historical ghosts). */
 export async function mergeOrphanGhostData(
   userId: string,
   ghostIds: string[],

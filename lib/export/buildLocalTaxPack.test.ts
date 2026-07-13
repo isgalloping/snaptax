@@ -57,13 +57,13 @@ describe("buildLocalTaxPack", () => {
     );
   });
 
-  it("throws NO_RECEIPTS for qif/qbo when only non-deductible rows", () => {
+  it("throws NO_RECEIPTS for txf/qif/qbo when only non-deductible rows", () => {
     const personal = sampleReceipt({
       category: "PERSONAL",
       deductible: false,
       taxAmount: 0,
     });
-    for (const format of ["qif", "qbo"] as const) {
+    for (const format of ["txf", "qif", "qbo"] as const) {
       assert.throws(
         () => buildLocalTaxPack([personal], 2026, "UTC", format),
         /NO_RECEIPTS/,

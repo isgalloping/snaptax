@@ -102,4 +102,30 @@ describe("runLocalTaxExport", () => {
       (err: Error) => err.message === "NO_RECEIPTS",
     );
   });
+
+  it("throws NO_RECEIPTS before syncing filed metadata when TXF has no deductible rows", async () => {
+    await assert.rejects(
+      () =>
+        runLocalTaxExport(
+          {
+            receipts: [
+              expenseReceipt({
+                category: "PERSONAL",
+                deductible: false,
+                taxAmount: 0,
+              }),
+            ],
+            taxYear: 2026,
+            timeZone: "UTC",
+            format: "txf",
+          },
+          {
+            syncFiled: async () => {
+              throw new Error("should not sync empty TXF exports");
+            },
+          },
+        ),
+      (err: Error) => err.message === "NO_RECEIPTS",
+    );
+  });
 });

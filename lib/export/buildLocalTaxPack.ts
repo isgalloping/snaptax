@@ -35,12 +35,19 @@ export function buildLocalTaxPack(
     };
   }
 
-  if (format === "qif" || format === "qbo") {
+  if (format === "txf" || format === "qif" || format === "qbo") {
     const eligible = exportEligibleRows(rows);
     if (eligible.length === 0) {
       throw new Error("NO_RECEIPTS");
     }
     const eligibleIds = eligible.map((row) => row.id);
+    if (format === "txf") {
+      return {
+        content: buildTxfExport(eligible),
+        receiptIds: eligibleIds,
+        mimeType: "text/plain;charset=utf-8",
+      };
+    }
     if (format === "qif") {
       return {
         content: buildQifExport(eligible),
@@ -55,13 +62,5 @@ export function buildLocalTaxPack(
     };
   }
 
-  if (rows.length === 0) {
-    throw new Error("NO_RECEIPTS");
-  }
-
-  return {
-    content: buildTxfExport(rows),
-    receiptIds,
-    mimeType: "text/plain;charset=utf-8",
-  };
+  throw new Error("UNSUPPORTED_EXPORT_FORMAT");
 }

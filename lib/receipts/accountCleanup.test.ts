@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   deleteUserAccountDbRecords,
+  resolveUnboundGhostIdsForDelete,
   uniqueBlobPathnames,
   userAccountReceiptFilter,
 } from "./accountCleanup.ts";
@@ -9,6 +10,39 @@ import {
 describe("uniqueBlobPathnames", () => {
   it("drops empty values and dedupes", () => {
     assert.deepEqual(uniqueBlobPathnames(["a", "", "a", "b"]), ["a", "b"]);
+  });
+});
+
+describe("resolveUnboundGhostIdsForDelete", () => {
+  it("always includes current ghost and unbound orphans", async () => {
+    const ids = await resolveUnboundGhostIdsForDelete(
+      "g-current",
+      ["g-orphan", "g-bound"],
+      {
+        snaptaxGhostAccount: {
+          findUnique: async ({ where }) => {
+            if (where.ghostId === "g-bound") {
+              return { userId: "other-user" };
+            }
+            return null;
+          },
+        },
+      },
+    );
+    assert.deepEqual(ids.sort(), ["g-current", "g-orphan"]);
+  });
+
+  it("dedupes and ignores empty ids", async () => {
+    const ids = await resolveUnboundGhostIdsForDelete(
+      "g1",
+      ["g1", "", "g2"],
+      {
+        snaptaxGhostAccount: {
+          findUnique: async () => null,
+        },
+      },
+    );
+    assert.deepEqual(ids.sort(), ["g1", "g2"]);
   });
 });
 

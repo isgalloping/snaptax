@@ -28,8 +28,8 @@ This page explains how long SnapTax keeps your receipt data on your phone and on
 
 - **Receipts and images:** While you use SnapTax as a Ghost session or signed-in Google account, we store receipt metadata and images on our U.S. servers so you can sync and export.
 - **Google sign-in:** When you link Google, device receipts are associated with your account and continue in the cloud.
-- **Delete Account:** Using **Delete Account** in Settings permanently deletes cloud receipts, images, and account data tied to you. We target completion within **30 days** (see [Privacy Policy](/privacy) §9).
-- **Paid export records:** Season payment and export entitlements are kept as needed to honor your purchase and meet legal requirements.
+- **Delete Account:** Using **Delete Account** in Settings permanently deletes cloud receipts, images, season export entitlements, checkout records, and other account data tied to you (including known Ghost session leftovers on this device). We target completion within **30 days** (see [Privacy Policy](/privacy) §9). Paddle, as Merchant of Record, may retain its own payment records under its policies; deleting your SnapTax account does **not** by itself issue a refund (see [Refund Policy](/refund)).
+- **While your account is active:** Season payment / export entitlement rows are kept so we can honor Export for the tax seasons you paid for.
 - **Export Tax Pack files:** We generate export files when you request them. We do **not** keep completed export files on our servers long-term — you download them to your device.
 
 ## Logs

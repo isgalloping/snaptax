@@ -519,6 +519,7 @@ export type UserCopy = {
       legalLoadFailed: string;
       deleteAccount: string;
       deleteFailed: string;
+      deleteLocalClearFailed: string;
       deleteRequiresOnline: string;
       deleteSessionExpired: string;
       deleteTitle: string;

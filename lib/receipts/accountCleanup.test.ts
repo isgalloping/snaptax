@@ -2,8 +2,49 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   deleteUserAccountDbRecords,
+  resolveUnboundGhostIdsForDelete,
+  uniqueBlobPathnames,
   userAccountReceiptFilter,
 } from "./accountCleanup.ts";
+
+describe("uniqueBlobPathnames", () => {
+  it("drops empty values and dedupes", () => {
+    assert.deepEqual(uniqueBlobPathnames(["a", "", "a", "b"]), ["a", "b"]);
+  });
+});
+
+describe("resolveUnboundGhostIdsForDelete", () => {
+  it("always includes current ghost and unbound orphans", async () => {
+    const ids = await resolveUnboundGhostIdsForDelete(
+      "g-current",
+      ["g-orphan", "g-bound"],
+      {
+        snaptaxGhostAccount: {
+          findUnique: async ({ where }) => {
+            if (where.ghostId === "g-bound") {
+              return { userId: "other-user" };
+            }
+            return null;
+          },
+        },
+      },
+    );
+    assert.deepEqual(ids.sort(), ["g-current", "g-orphan"]);
+  });
+
+  it("dedupes and ignores empty ids", async () => {
+    const ids = await resolveUnboundGhostIdsForDelete(
+      "g1",
+      ["g1", "", "g2"],
+      {
+        snaptaxGhostAccount: {
+          findUnique: async () => null,
+        },
+      },
+    );
+    assert.deepEqual(ids.sort(), ["g1", "g2"]);
+  });
+});
 
 describe("userAccountReceiptFilter", () => {
   it("scopes to userId when no ghost binding or historical ghosts", () => {
@@ -29,6 +70,18 @@ describe("userAccountReceiptFilter", () => {
     const ghostIds = ghostClauses.map((clause) => clause.ghostId).sort();
     assert.deepEqual(ghostIds, ["ghost-new", "ghost-old"]);
     assert.ok(ghostClauses.every((clause) => clause.userId === null));
+  });
+
+  it("includes client-known orphan ghost receipts in delete filter", () => {
+    const filter = userAccountReceiptFilter("user-1", "ghost-bound", [
+      "ghost-client-orphan",
+    ]);
+    const ghostClauses = (filter.OR ?? []).slice(1) as Array<{
+      ghostId: string;
+      userId: null;
+    }>;
+    const ghostIds = ghostClauses.map((clause) => clause.ghostId).sort();
+    assert.deepEqual(ghostIds, ["ghost-bound", "ghost-client-orphan"]);
   });
 
   it("deduplicates bound ghost id when also present in historical list", () => {

@@ -2,7 +2,7 @@
 
 **Topic ID:** `receipt-sync-lifecycle`  
 **Status:** Consolidated · implemented (Phase A/B shipped; lifecycle redesign draft partially deferred)  
-**Last verified:** 2026-07-09
+**Last verified:** 2026-07-13
 
 ---
 
@@ -17,6 +17,8 @@ Snap1099 小票生命周期分三层：**AI 状态**（`processing` | `done` | `
 **Phase B（recovery）：** 本地丢失 → 分页 `GET /api/receipts/sync` + OPFS 重下压缩图；稳态 idle 对账最近 50 条非 `done`；18 月 idle prune；Android/Desktop hidden flush（iOS 除外）。
 
 **Phase C（lifecycle redesign · shipped）：** WorkerSession 相机门控 · done lock merge · UI/sync window 50 · server-side filed PATCH lock。
+
+**Event Store + orphan Ghost merge（shipped）：** 客户端 append-only `snaptax_receipt_events` → `POST /api/sync/events`；Google bind / post-login 会迁移 receipts、events、snapshots、cursor，并合并本设备已知的旧 Ghost。
 
 **Still deferred (lifecycle redesign draft):** write budget 3。
 
@@ -40,6 +42,12 @@ Snap1099 小票生命周期分三层：**AI 状态**（`processing` | `done` | `
 | [`lib/client/reconcileNonDoneWindow.ts`](../../../lib/client/reconcileNonDoneWindow.ts) | 50-row non-done reconcile |
 | [`lib/client/receiptRetention.ts`](../../../lib/client/receiptRetention.ts) | 18-month idle prune |
 | [`lib/receipts/filedStatus.ts`](../../../lib/receipts/filedStatus.ts) | `isReceiptFiled` |
+| [`lib/client/ghostClient.ts`](../../../lib/client/ghostClient.ts) | Ghost register、`snap1099_known_ghost_ids`、client orphan list |
+| [`lib/client/mergeOrphanGhosts.ts`](../../../lib/client/mergeOrphanGhosts.ts) | 登录后 best-effort `POST /api/sync/ghost-orphans` |
+| [`lib/client/flushReceiptEventBatch.ts`](../../../lib/client/flushReceiptEventBatch.ts) | Event queue flush（batch 50） |
+| [`lib/storage/receiptEventQueue.ts`](../../../lib/storage/receiptEventQueue.ts) | IDB `snaptax_receipt_events` append-only queue |
+| [`lib/server/bindGhostAndMigrateData.ts`](../../../lib/server/bindGhostAndMigrateData.ts) | Google bind 事务：current ghost + Event Store + orphan merge |
+| [`lib/server/runOrphanGhostMergeForUser.ts`](../../../lib/server/runOrphanGhostMergeForUser.ts) | orphan discovery + merge orchestration |
 
 ---
 
@@ -85,10 +93,34 @@ Server: Blob **before** DB on upload（避免 orphan row）。
 | **Empty remote** | **Never** delete local synced rows |
 | **User actor prune** | Only when `actor.kind === "user"` **and** `remote.length > 0` — delete local ids ∉ remote (not pendingUpload) |
 | **Ghost actor** | No sync-driven delete |
-| **Post-login** | `flushPendingUploads` → `syncFromServer(immediate)` → optional `pollTaxRecalc`；服务端 Ghost bind 同时迁移 receipts + Event Store（events/snapshots/cursor） |
+| **Post-login** | `ensureGhostSession` → `mergeOrphanGhostsOnLogin` → `flushPendingUploads` → `flushPendingDeletes` → `flushReceiptEventBatch(force)` → `syncFromServer(immediate)` → optional `pollTaxRecalc` |
 | **Persist merge** | Upsert all merged rows to IndexedDB after successful fetch |
 
 **Deletion convergence (hardening):** tombstones + `flushPendingDeletes` only — **no** top-100 window prune.
+
+### 3.12 Orphan Ghost merge & Event Store migration
+
+Orphan Ghost merge 解决“同一设备登录前发生 Ghost 轮换，旧 Ghost 下的数据没有绑定到 Google”的恢复问题。实现分两条路径：
+
+| Path | Trigger | Modules | Notes |
+|------|---------|---------|-------|
+| Bind-time merge | `POST /api/auth/google` | `bindGhostAndMigrateData` → `runOrphanGhostMergeForUser` | 同一事务内 upsert user、bind/rebind current ghost、迁移 current ghost receipts + Event Store，然后合并 orphan ghosts |
+| Post-login compensation | `HomeScreen.handlePostLoginSync` → `mergeOrphanGhostsOnLogin` → `POST /api/sync/ghost-orphans` | `ghostClient` · `mergeOrphanGhosts` · `runOrphanGhostMergeForUser` | best-effort；失败不阻塞 pending upload/delete/event flush 与 server sync |
+
+**Discovery sources:**
+
+1. `rebindPreviousGhostId` — 仅 Google bind route 提供；同一 user 已有 ghost 绑定时记录旧 ghost。
+2. `listHistoricalGhostIdsForUser` — 当前 user receipts 上出现过的历史 `ghost_id`。
+3. `clientOrphanGhostIds` — 客户端 `snap1099_known_ghost_ids` 去掉当前 ghost，最多 20 个。
+
+`discoverOrphanGhostIds` 会去重并移除当前 Ghost。`mergeOrphanGhostData` 对每个候选先检查 `snaptax_ghost_account`：未绑定或已绑定到同一 user 才能合并；已绑定到其他 user 的 Ghost 直接跳过。合并内容包括：
+
+- `snaptax_receipts`: `{ ghostId, userId: null }` → `userId`
+- `snaptax_receipt_events`
+- `snaptax_receipt_lifecycle_snapshots`
+- `snaptax_receipt_sync_cursors`（ghost cursor merge 到 user cursor 后删除 ghost cursor）
+
+无 receipts/events/snapshots/cursor 变化的 Ghost 不计入 `mergedGhostIds`。
 
 ### 3.4 Sliding window & IndexedDB queries
 
@@ -204,10 +236,8 @@ UI list + default `GET /api/receipts` fetch window reduced **100 → 50** rows (
 ## 5. Out of scope
 
 - Receipt **list/detail UI** tweaks (`receipt-list-*`, `receipt-detail-*`, duplicate-detection) — stay active specs
-- Event Store snapshots / sync cursor / 18mo server prune — **shipped** 2026-07-10（ingest 事务；Delete Account 清理 event store；Ghost bind 迁移 events/snapshots/cursor）
 - WorkerSession **full** redesign (write budget 3) — lifecycle redesign draft partial；local export 已完成
 - Export pack generation — [`export-pipeline-design.md`](./export-pipeline-design.md)
-- Server-side orphan ghost merge job — **shipped** 2026-07-11（Google bind + `POST /api/sync/ghost-orphans`；合并 rebind / historical / client-known ghosts 的 receipts + Event Store）
 
 ---
 

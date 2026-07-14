@@ -34,7 +34,13 @@ export function resolveApiError(err: unknown): ResolvedApiError {
       return {
         code: "GOOGLE_LOGIN_REQUIRED",
         clientMessage: "Sign in with Google to continue",
-        status: 401,
+        status: 409,
+      };
+    case "INVALID_REQUEST":
+      return {
+        code: "INVALID_REQUEST",
+        clientMessage: "Invalid request body",
+        status: 400,
       };
     case "NOT_FOUND":
       return {

@@ -7,12 +7,11 @@ import {
   clientIp,
 } from "@/lib/api/rateLimit";
 import { getActor } from "@/lib/auth/getActor";
-import { buildReceiptEventIngestPayload, uniqueTaxCalculatedReceiptIds } from "@/lib/server/buildReceiptEventIngestPayload";
+import { buildReceiptEventIngestPayload } from "@/lib/server/buildReceiptEventIngestPayload";
 import { ingestReceiptEventBatch } from "@/lib/server/ingestReceiptEventBatch";
 import { maybePruneOldReceiptEvents } from "@/lib/server/pruneReceiptEvents";
-import { prisma } from "@/lib/prisma";
-import { receiptWhereForActor } from "@/lib/receipts/ownership";
 import { SYNC_EVENTS_ACTOR_OPTIONS } from "@/lib/server/syncEventsActorOptions";
+import { validateTaxCalculatedReceiptOwnership } from "@/lib/server/validateTaxCalculatedReceiptOwnership";
 import { withRequestLog } from "@/lib/server/log/withRequestLog";
 import { RECEIPT_EVENT_BATCH_SIZE } from "@/lib/storage/receiptEventTypes";
 
@@ -49,21 +48,13 @@ export const POST = withRequestLog(
 
       const body = bodySchema.parse(await request.json());
 
-      const taxCalculatedIds = uniqueTaxCalculatedReceiptIds(body.events);
-      if (taxCalculatedIds.length > 0) {
-        const ownedCount = await prisma.snaptaxReceipt.count({
-          where: {
-            id: { in: taxCalculatedIds },
-            ...receiptWhereForActor(actor),
-          },
-        });
-        if (ownedCount !== taxCalculatedIds.length) {
-          return apiError(
-            "INVALID_RECEIPT",
-            "TAX_CALCULATED events must reference actor-owned receipts",
-            403,
-          );
-        }
+      const receiptOwnership = await validateTaxCalculatedReceiptOwnership(actor, body.events);
+      if (!receiptOwnership.ok) {
+        return apiError(
+          receiptOwnership.code,
+          receiptOwnership.message,
+          receiptOwnership.status,
+        );
       }
 
       const { inserted, snapshotsInserted, cursor } = await ingestReceiptEventBatch(

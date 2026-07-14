@@ -1,7 +1,7 @@
 import { del } from "@vercel/blob";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { isOrphanGhostMergeable } from "@/lib/server/mergeOrphanGhostData";
+import { listHistoricalGhostIdsForUser } from "@/lib/server/mergeOrphanGhostData";
 import { deleteEventStoreRecords } from "@/lib/server/receiptEventStoreCleanup";
 import { logEvent } from "@/lib/server/log/logEvent";
 import { blobCommandOptions } from "@/lib/server/blob";
@@ -65,47 +65,16 @@ export type GhostBindingLookup = {
   };
 };
 
-/** Ghost IDs safe to erase for a pure-Ghost delete (current + unbound client orphans). */
+/** Ghost IDs safe to erase for a pure-Ghost delete. */
 export async function resolveUnboundGhostIdsForDelete(
   currentGhostId: string,
-  clientOrphanGhostIds: string[] = [],
-  db: GhostBindingLookup = prisma,
+  _clientOrphanGhostIds: string[] = [],
+  _db: GhostBindingLookup = prisma,
 ): Promise<string[]> {
-  const candidates = [
-    ...new Set(
-      [currentGhostId, ...clientOrphanGhostIds].filter(
-        (id): id is string => typeof id === "string" && id.length > 0,
-      ),
-    ),
-  ];
-  const deletable: string[] = [];
-  for (const ghostId of candidates) {
-    if (ghostId === currentGhostId) {
-      deletable.push(ghostId);
-      continue;
-    }
-    const binding = await db.snaptaxGhostAccount.findUnique({
-      where: { ghostId },
-      select: { userId: true },
-    });
-    if (!binding) deletable.push(ghostId);
+  if (typeof currentGhostId !== "string" || currentGhostId.length === 0) {
+    return [];
   }
-  return deletable;
-}
-
-/** Client-known orphans mergeable into this user's delete filter (unbound or bound to user). */
-export async function resolveClientOrphanGhostIdsForUserDelete(
-  userId: string,
-  clientOrphanGhostIds: string[] = [],
-): Promise<string[]> {
-  const verified: string[] = [];
-  for (const ghostId of [...new Set(clientOrphanGhostIds)]) {
-    if (!ghostId) continue;
-    if (await isOrphanGhostMergeable(ghostId, userId)) {
-      verified.push(ghostId);
-    }
-  }
-  return verified;
+  return [currentGhostId];
 }
 
 export async function deleteGhostReceipts(
@@ -182,28 +151,14 @@ export async function deleteUserAccountDbRecords(
 
 export async function deleteUserAccount(
   userId: string,
-  clientOrphanGhostIds: string[] = [],
+  _clientOrphanGhostIds: string[] = [],
 ): Promise<void> {
   const binding = await prisma.snaptaxGhostAccount.findUnique({
     where: { userId },
     select: { ghostId: true },
   });
   const boundGhostId = binding?.ghostId ?? null;
-  const receiptGhostRows = await prisma.snaptaxReceipt.findMany({
-    where: { userId, ghostId: { not: null } },
-    select: { ghostId: true },
-    distinct: ["ghostId"],
-  });
-  const historicalGhostIds = receiptGhostRows
-    .map((row) => row.ghostId)
-    .filter((ghostId): ghostId is string => ghostId != null);
-  const verifiedClientOrphans = await resolveClientOrphanGhostIdsForUserDelete(
-    userId,
-    clientOrphanGhostIds,
-  );
-  const orphanGhostIds = [
-    ...new Set([...historicalGhostIds, ...verifiedClientOrphans]),
-  ];
+  const orphanGhostIds = await listHistoricalGhostIdsForUser(userId);
   const ghostIds = [
     ...new Set(
       [boundGhostId, ...orphanGhostIds].filter(

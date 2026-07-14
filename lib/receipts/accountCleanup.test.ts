@@ -14,7 +14,7 @@ describe("uniqueBlobPathnames", () => {
 });
 
 describe("resolveUnboundGhostIdsForDelete", () => {
-  it("always includes current ghost and unbound orphans", async () => {
+  it("only includes the current ghost and ignores client-supplied orphans", async () => {
     const ids = await resolveUnboundGhostIdsForDelete(
       "g-current",
       ["g-orphan", "g-bound"],
@@ -29,7 +29,7 @@ describe("resolveUnboundGhostIdsForDelete", () => {
         },
       },
     );
-    assert.deepEqual(ids.sort(), ["g-current", "g-orphan"]);
+    assert.deepEqual(ids, ["g-current"]);
   });
 
   it("dedupes and ignores empty ids", async () => {
@@ -42,7 +42,7 @@ describe("resolveUnboundGhostIdsForDelete", () => {
         },
       },
     );
-    assert.deepEqual(ids.sort(), ["g1", "g2"]);
+    assert.deepEqual(ids, ["g1"]);
   });
 });
 
@@ -72,16 +72,16 @@ describe("userAccountReceiptFilter", () => {
     assert.ok(ghostClauses.every((clause) => clause.userId === null));
   });
 
-  it("includes client-known orphan ghost receipts in delete filter", () => {
+  it("includes server-derived historical ghost receipts in delete filter", () => {
     const filter = userAccountReceiptFilter("user-1", "ghost-bound", [
-      "ghost-client-orphan",
+      "ghost-historical",
     ]);
     const ghostClauses = (filter.OR ?? []).slice(1) as Array<{
       ghostId: string;
       userId: null;
     }>;
     const ghostIds = ghostClauses.map((clause) => clause.ghostId).sort();
-    assert.deepEqual(ghostIds, ["ghost-bound", "ghost-client-orphan"]);
+    assert.deepEqual(ghostIds, ["ghost-bound", "ghost-historical"]);
   });
 
   it("deduplicates bound ghost id when also present in historical list", () => {

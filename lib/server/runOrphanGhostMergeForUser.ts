@@ -11,7 +11,6 @@ export type RunOrphanGhostMergeInput = {
   userId: string;
   currentGhostId: string;
   rebindPreviousGhostId?: string | null;
-  clientOrphanGhostIds?: string[];
 };
 
 export async function runOrphanGhostMergeForUser(
@@ -23,7 +22,6 @@ export async function runOrphanGhostMergeForUser(
     currentGhostId: input.currentGhostId,
     rebindPreviousGhostId: input.rebindPreviousGhostId ?? null,
     historicalGhostIds,
-    clientOrphanGhostIds: input.clientOrphanGhostIds,
   });
 
   if (ghostIds.length === 0) {

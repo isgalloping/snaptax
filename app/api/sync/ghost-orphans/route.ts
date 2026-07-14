@@ -33,13 +33,12 @@ export const POST = withRequestLog("api.sync", async (request, _context) => {
       throw new Error("UNAUTHORIZED");
     }
 
-    const body = bodySchema.parse(await request.json());
+    bodySchema.parse(await request.json());
     const result = await prisma.$transaction((tx) =>
       runOrphanGhostMergeForUser(
         {
           userId: actor.userId,
           currentGhostId,
-          clientOrphanGhostIds: body.orphanGhostIds,
         },
         tx,
       ),

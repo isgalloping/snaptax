@@ -5,6 +5,7 @@ import { getActor } from "@/lib/auth/getActor";
 import { GHOST_COOKIE_NAME } from "@/lib/auth/ghostToken";
 import { SESSION_COOKIE_NAME } from "@/lib/auth/session";
 import { deleteUserAccount } from "@/lib/receipts/accountCleanup";
+import { parseDeleteAccountOrphanGhostIds } from "@/lib/receipts/deleteAccountBody";
 import { getSessionFromCookies } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
 import { withRequestLog } from "@/lib/server/log/withRequestLog";
@@ -15,7 +16,8 @@ export const DELETE = withRequestLog("api.user", async (request, _context) => {
     const session = await getSessionFromCookies();
     if (!session) throw new Error("UNAUTHORIZED");
 
-    await deleteUserAccount(session.userId);
+    const orphanGhostIds = await parseDeleteAccountOrphanGhostIds(request);
+    await deleteUserAccount(session.userId, orphanGhostIds);
 
     const res = new NextResponse(null, { status: 204 });
     res.cookies.set(SESSION_COOKIE_NAME, "", {
@@ -34,6 +36,9 @@ export const DELETE = withRequestLog("api.user", async (request, _context) => {
     });
     return res;
   } catch (err) {
+    if (err instanceof SyntaxError || err instanceof ZodError) {
+      return mapErrorToResponse(new Error("INVALID_REQUEST"));
+    }
     return mapErrorToResponse(err);
   }
 });

@@ -655,6 +655,8 @@ export const DE_DE_COPY: UserCopy = {
         "Dokument konnte nicht geladen werden. Erneut versuchen oder Vollseite öffnen.",
       deleteAccount: "Konto löschen",
       deleteFailed: "Löschen fehlgeschlagen. Bitte erneut versuchen.",
+      deleteLocalClearFailed:
+        "Cloud-Daten wurden gelöscht, aber das Löschen auf diesem Gerät ist fehlgeschlagen. Tippen Sie erneut auf Dauerhaft löschen.",
       deleteRequiresOnline:
         "Verbinden Sie sich mit dem Internet, um Ihr Konto und Cloud-Daten zu löschen.",
       deleteSessionExpired:

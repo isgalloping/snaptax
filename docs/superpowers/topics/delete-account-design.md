@@ -2,7 +2,7 @@
 
 **Topic ID:** `delete-account`  
 **Status:** Consolidated · implemented  
-**Last verified:** 2026-07-08
+**Last verified:** 2026-07-14
 
 ---
 
@@ -10,9 +10,11 @@
 
 Snap1099 的 Delete Account 仅从 **Settings → Privacy & Data** 进入，经 Bottom Sheet 二次确认后执行。**必须联网**：离线时「Delete permanently」按钮禁用，不调用 API、不清本地。删除顺序恒为 **API 成功 → `clearLocalAppData()`**；API 失败则本地数据保留，用户可重试。
 
-客户端通过 `lib/client/deleteAccountFlow.ts` 按 **实时 session**（`GET /api/auth/me`）路由：有效 Google session → `DELETE /api/users/me`；纯 Ghost → `DELETE /api/ghost/data`；若 UI 缓存了 `googleUser` 但 session 已过期 → **阻断**并提示重新登录。服务端删除覆盖 Postgres 小票行、Vercel Blob 图像、entitlements、checkout intents，并级联 User / ghost binding；Ghost 路径拒绝已绑定 Google 的 ghost（409 `GOOGLE_LOGIN_REQUIRED`）。
+客户端通过 `lib/client/deleteAccountFlow.ts` 按 **实时 session**（`GET /api/auth/me`）路由：有效 Google session → `DELETE /api/users/me`；纯 Ghost → `DELETE /api/ghost/data`；若 UI 缓存了 `googleUser` 但 session 已过期 → **阻断**并提示重新登录。两侧 DELETE 均提交 body `{ orphanGhostIds }`（来自 `snap1099_known_ghost_ids`），以擦除轮换 Ghost 留下的云端小票 / Blob / Event Store。
 
-删除成功后 `HomeScreen` 执行 `onAccountDeleted` 冷启动：清空 UI 状态、重置 auth 内存、重新 onboarding、注册新 Ghost session。
+服务端删除覆盖 Postgres 小票行、Vercel Blob 图像、entitlements、checkout intents、Event Store（events / snapshots / sync cursors），并级联 User / ghost binding；Ghost 路径拒绝已绑定 Google 的 ghost（**409** `GOOGLE_LOGIN_REQUIRED`）。
+
+删除成功后 `HomeScreen` 执行 `onAccountDeleted` 冷启动：清空 UI 状态、重置 auth 内存、重新 onboarding、注册新 Ghost session。若云端已删但本地 wipe 失败，写入 `snap1099_pending_local_wipe`；再次点 Delete 仅重试本地清除（不再打删号 API）。
 
 ---
 
@@ -35,19 +37,21 @@ Snap1099 的 Delete Account 仅从 **Settings → Privacy & Data** 进入，经 
 Settings → Privacy & Data → Delete Account
   → Bottom Sheet 确认（isSignedIn 仅用于 warning 文案）
   → [离线] Delete permanently disabled + deleteRequiresOnline
+  → [pending local wipe] → clearLocalAppData only → onAccountDeleted
   → [在线]
-       ├─ fetchAuthMe.user 有效 → DELETE /api/users/me → clearLocal → onAccountDeleted
+       ├─ fetchAuthMe.user 有效 → DELETE /api/users/me {orphanGhostIds} → clearLocal → onAccountDeleted
        ├─ googleUser 缓存但 session null → deleteSessionExpired；不删除
-       └─ 纯 Ghost → ensureGhostSession → DELETE /api/ghost/data → clearLocal → onAccountDeleted
+       └─ 纯 Ghost → ensureGhostSession → DELETE /api/ghost/data {orphanGhostIds} → clearLocal → onAccountDeleted
 ```
 
 | Decision | Detail |
 |----------|--------|
 | **唯一入口** | Settings → Delete Account；无「仅清本地」旁路 |
-| **离线** | 禁止删除；按钮 `disabled={deleting \|\| offline}` |
+| **离线** | 禁止删除；按钮 `disabled={deleting \|\| offline}`（pending local wipe 例外：可重试本地） |
 | **确认文案** | `isSignedIn`（localStorage `googleUser`）决定 signed-in / Ghost warning；**不**用于 API 路由 |
 | **成功后** | 关闭 Sheet → `onAccountDeleted`：清 receipts/tax/sync 队列 → `auth.resetAfterAccountDelete()` → `resetOnboarding()` → `ensureGhostSession()` → `refreshListFromLocal()` → `setView("home")` |
 | **Stale session 恢复** | Cancel → Continue with Google → 再次 Delete Account |
+| **本地 wipe 失败** | API 已成功 → `DeleteAccountLocalClearError`；再次 Delete → 仅 `finishLocalWipeAfterAccountDelete` |
 
 **UI：** `components/settings/PrivacyDataSection.tsx`
 
@@ -58,9 +62,13 @@ Settings → Privacy & Data → Delete Account
 | Export | Purpose |
 |--------|---------|
 | `DeleteAccountOfflineError` | `code: "OFFLINE"` |
-| `DeleteAccountSessionExpiredError` | `code: "SESSION_EXPIRED"` — `googleUser` 存在但 `fetchAuthMe().user == null` |
+| `DeleteAccountSessionExpiredError` | `code: "SESSION_EXPIRED"` — `googleUser` 存在但 `fetchAuthMe().user == null`，或 409 `GOOGLE_LOGIN_REQUIRED` |
+| `DeleteAccountLocalClearError` | `code: "LOCAL_CLEAR_FAILED"` — 云端已删、本地 wipe 失败 |
 | `resolveDeleteRoute()` | 返回 `"user"` \| `"ghost"`；stale session 抛 `DeleteAccountSessionExpiredError` |
-| `deleteAccountAndLocalData(deps?)` | 在线检查 → route →（ghost 路径）`ensureGhostSession` → `deleteAccountApi` → `clearLocalAppData` |
+| `deleteAccountAndLocalData(deps?)` | pending wipe 短路 → 在线检查 → route → orphan ids → `deleteAccountApi` → mark pending → `clearLocalAppData`（含重试） |
+| `finishLocalWipeAfterAccountDelete` | 仅本地 wipe（带重试） |
+
+**Local wipe 覆盖（`clearLocalAppData`）：** IndexedDB + OPFS · `snap1099_*` localStorage/sessionStorage · `snaptax_founder_widget_seen` · Cache Storage（best-effort）· 最后清除 pending wipe flag。
 
 **Error mapping（PrivacyDataSection）：**
 
@@ -68,11 +76,12 @@ Settings → Privacy & Data → Delete Account
 |-------|----------|
 | `DeleteAccountOfflineError` | `settings.privacyData.deleteRequiresOnline` |
 | `DeleteAccountSessionExpiredError` | `settings.privacyData.deleteSessionExpired` |
+| `DeleteAccountLocalClearError` | `settings.privacyData.deleteLocalClearFailed` |
 | 其他 | `settings.privacyData.deleteFailed` |
 
 **Invariant：** API 抛错时 **不得** 调用 `clearLocalAppData()`。
 
-**Tests：** `lib/client/deleteAccountFlow.test.ts` — offline、stale session、user/ghost 路由、API 失败保留本地。
+**Tests：** `lib/client/deleteAccountFlow.test.ts` · `lib/storage/clearLocalData.test.ts`
 
 ### 3.3 Server cleanup
 
@@ -81,8 +90,9 @@ Settings → Privacy & Data → Delete Account
 **Route：** `app/api/users/me/route.ts`
 
 1. `getSessionFromCookies()` → `session.userId`
-2. `deleteUserAccount(userId)` — `lib/receipts/accountCleanup.ts`
-3. 204 + 清除 `SESSION_COOKIE_NAME` 与 `GHOST_COOKIE_NAME`
+2. 解析 body `orphanGhostIds`（可选，最多 20）
+3. `deleteUserAccount(userId, orphanGhostIds)` — `lib/receipts/accountCleanup.ts`
+4. 204 + 清除 `SESSION_COOKIE_NAME` 与 `GHOST_COOKIE_NAME`
 
 **`deleteUserAccount` receipt scope（`userAccountReceiptFilter`）：**
 
@@ -91,12 +101,13 @@ Settings → Privacy & Data → Delete Account
 //   { userId }
 //   { ghostId: <id>, userId: null }  for each id in:
 //     - 当前 boundGhostId（snaptax_ghost_account）
-//     - historicalGhostIds（该 user 小票行上 distinct ghostId，含 rebind 后孤儿票）
+//     - historicalGhostIds（该 user 小票行上 distinct ghostId）
+//     - client orphanGhostIds 经 isOrphanGhostMergeable 校验（未绑定或已绑本 user）
 ```
 
-执行顺序：`findMany` → `deleteReceiptBlobs` → transaction（`deleteMany` receipts + entitlements + checkout_intents + `snaptaxUser.delete`）→ `logEvent`（`reason=account_deleted`）。
+执行顺序：`findMany` → `deleteReceiptBlobs` → transaction（`deleteEventStoreRecords` + receipts/entitlements/checkout_intents + `snaptaxUser.delete`）→ `logEvent`（`reason=account_deleted`）。
 
-**Blob 删除失败：** `logEvent` warn，**不阻断** DB 删除。
+**Blob 删除失败：** `logEvent` warn，**不阻断** DB 删除。空 pathname 已过滤去重。
 
 #### `DELETE /api/ghost/data` — pure Ghost
 
@@ -104,19 +115,19 @@ Settings → Privacy & Data → Delete Account
 
 1. `getActor(request)` → 必须 `actor.kind === "ghost"`
 2. 若 `actor.bound` → **409 `GOOGLE_LOGIN_REQUIRED`**（禁止部分删除）
-3. `deleteGhostReceipts(ghostId)` — `where: { ghostId, userId: null }` + Blob delete
-4. 204 + 清除 `GHOST_COOKIE_NAME`
-
-**数据移除（signed-in path）：** 该 user 全部 receipts（含历史 ghost 孤儿）、entitlements、checkout_intents、ghost_binding（User delete cascade）。
+3. 解析 `orphanGhostIds`；`deleteGhostReceipts(ghostId, orphanGhostIds)` — 仅当前 ghost + **未绑定** orphans
+4. 擦除 receipts（`userId: null`）+ Blob + Event Store
+5. 204 + 清除 `GHOST_COOKIE_NAME`
 
 ### 3.4 Invariants
 
 | ID | Invariant |
 |----|-----------|
-| **I1** | 用户主动删除成功 → 该账户/ghost 的 server + local 数据完全移除 |
+| **I1** | 用户主动删除成功 → 该账户/ghost（含 known orphans）的 server + local 数据完全移除 |
 | **I2** | API 失败 → 本地数据 **保留** |
-| **I3** | 离线 → 删除禁用；无 API、无本地清除 |
+| **I3** | 离线 → 删除禁用；无 API、无本地清除（pending local wipe 重试除外） |
 | **I4** | Signed-in warning 文案 ↔ 仅当 `fetchAuthMe.user` 有效时执行完整账户删除 |
+| **I5** | 云端已成功、本地 wipe 失败 → pending flag；再次 Delete 只清本地 |
 
 ---
 
@@ -127,6 +138,7 @@ Settings → Privacy & Data → Delete Account
 | 2026-06-14 | `archive/specs/2026-06-14-delete-account-full-cleanup-design.md` | hardening + server-cleanup |
 | 2026-06-14 | `archive/specs/2026-06-14-delete-account-cleanup-hardening-design.md` | server-cleanup |
 | 2026-07-03 | `archive/specs/2026-07-03-delete-account-server-cleanup-design.md` | **this topic doc** |
+| 2026-07-14 | multi-ghost + local wipe retry + Event Store | **this topic doc** §3.2–3.3 |
 
 ---
 
@@ -138,6 +150,7 @@ Settings → Privacy & Data → Delete Account
 - Apple Sign-In 账户删除
 - 合并单一 `DELETE /api/account` 端点
 - 日志 / analytics PII 超出平台 TTL 的专项清除
+- Rate-limit bucket 行清理（临时计数，非小票内容）
 
 ---
 

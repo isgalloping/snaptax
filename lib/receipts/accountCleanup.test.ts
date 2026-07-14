@@ -15,7 +15,9 @@ describe("uniqueBlobPathnames", () => {
 
 describe("resolveUnboundGhostIdsForDelete", () => {
   it("only includes the current ghost and ignores client-supplied orphans", async () => {
-    const ids = await resolveUnboundGhostIdsForDelete("g-current");
+    const ids = await resolveUnboundGhostIdsForDelete("g-current", [
+      "g-victim",
+    ]);
     assert.deepEqual(ids, ["g-current"]);
   });
 

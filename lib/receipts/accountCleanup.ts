@@ -59,7 +59,9 @@ export async function deleteReceiptBlobs(pathnames: string[]): Promise<void> {
 /** Ghost IDs safe to erase for a pure-Ghost delete. */
 export async function resolveUnboundGhostIdsForDelete(
   currentGhostId: string,
+  clientOrphanGhostIds: string[] = [],
 ): Promise<string[]> {
+  void clientOrphanGhostIds;
   if (typeof currentGhostId !== "string" || currentGhostId.length === 0) {
     return [];
   }

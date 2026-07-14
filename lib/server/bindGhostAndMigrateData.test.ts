@@ -27,9 +27,11 @@ describe("bindGhostAndMigrateData", () => {
           },
         },
         snaptaxReceiptEvent: {
+          findMany: async () => [],
           updateMany: async () => ({ count: 0 }),
         },
         snaptaxReceiptLifecycleSnapshot: {
+          findMany: async () => [],
           updateMany: async () => ({ count: 0 }),
         },
         snaptaxReceiptSyncCursor: {
@@ -66,9 +68,11 @@ describe("bindGhostAndMigrateData", () => {
           updateMany: async () => ({ count: 0 }),
         },
         snaptaxReceiptEvent: {
+          findMany: async () => [],
           updateMany: async () => ({ count: 0 }),
         },
         snaptaxReceiptLifecycleSnapshot: {
+          findMany: async () => [],
           updateMany: async () => ({ count: 0 }),
         },
         snaptaxReceiptSyncCursor: {

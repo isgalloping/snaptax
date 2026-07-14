@@ -154,14 +154,15 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
       contentType = "text/csv; charset=utf-8";
       filename = exportTaxPackFilename("csv", taxYear);
     } else if (body.format === "txf") {
-      if (enrichedExpenseRows.length === 0) {
+      const txfRows = auditEligibleRows(enrichedExpenseRows);
+      if (txfRows.length === 0) {
         return apiError(
           "NO_RECEIPTS",
-          "No expense receipts to export for TXF",
+          "No tax-deductible receipts to export for TXF",
           422,
         );
       }
-      const txf = buildTxfExport(enrichedExpenseRows, exportedAt);
+      const txf = buildTxfExport(txfRows, exportedAt);
       buffer = Buffer.from(txf, "utf-8");
       contentType = "text/plain; charset=utf-8";
       filename = exportTaxPackFilename("txf", taxYear);

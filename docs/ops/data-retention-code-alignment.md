@@ -25,9 +25,9 @@ Engineering audit reference. **Not linked from the public app.** Values here mus
 |------|-----------|-----------------|
 | Receipt images & metadata (Postgres + Blob) | While Ghost session or Google account is active | Bound to `ghost_id` or `user_id` |
 | Ghost session | Cookie + Postgres rows | Migrated on Google sign-in; deleted on Delete Account |
-| Account & billing (Paddle entitlements) | As required for tax export entitlements and law | `snaptax_season_entitlements` |
-| After **Delete Account** | Cloud receipts, images, and account rows permanently deleted | Client: `deleteAccountAndLocalData()`; server: `DELETE /api/users/me` — target completion within **30 days** |
-| Rate limit buckets | Bucket rows garbage-collected after **24 hours** | `GC_RETENTION_MS = 24h` in `lib/api/dbRateLimit.ts` |
+| Account & billing (Paddle entitlements) | While account active (honor Export); **removed on Delete Account** | `snaptax_season_entitlements` (+ checkout intents); Paddle MoR may keep external payment records |
+| After **Delete Account** | Cloud receipts, images, event store, entitlements, checkout intents, user/ghost binding permanently deleted; Blob best-effort | Client: `deleteAccountAndLocalData()` (+ `orphanGhostIds`); server: `DELETE /api/users/me` or `DELETE /api/ghost/data` — target completion within **30 days** |
+| Rate limit buckets | Bucket rows garbage-collected after **24 hours** (not cleared on Delete Account) | `GC_RETENTION_MS = 24h` in `lib/api/dbRateLimit.ts` |
 | Export Tax Pack files | **Not stored long-term** on server (MVP) | Generated on demand; user downloads |
 
 ## Logs

@@ -56,10 +56,20 @@ export async function deleteReceiptBlobs(pathnames: string[]): Promise<void> {
   }
 }
 
+export type GhostBindingLookup = {
+  snaptaxGhostAccount: {
+    findUnique: (args: {
+      where: { ghostId: string };
+      select: { userId: true };
+    }) => Promise<{ userId: string } | null>;
+  };
+};
+
 /** Ghost IDs safe to erase for a pure-Ghost delete (current + unbound client orphans). */
 export async function resolveUnboundGhostIdsForDelete(
   currentGhostId: string,
   clientOrphanGhostIds: string[] = [],
+  db: GhostBindingLookup = prisma,
 ): Promise<string[]> {
   const candidates = [
     ...new Set(
@@ -74,7 +84,7 @@ export async function resolveUnboundGhostIdsForDelete(
       deletable.push(ghostId);
       continue;
     }
-    const binding = await prisma.snaptaxGhostAccount.findUnique({
+    const binding = await db.snaptaxGhostAccount.findUnique({
       where: { ghostId },
       select: { userId: true },
     });

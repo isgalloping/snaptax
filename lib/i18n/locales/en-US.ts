@@ -645,6 +645,8 @@ export const EN_US_COPY: UserCopy = {
         legalLoadFailed: "Could not load this document. Try again or open the full page.",
         deleteAccount: "Delete Account",
         deleteFailed: "Delete failed. Please try again.",
+        deleteLocalClearFailed:
+          "Cloud data was deleted, but clearing this device failed. Tap Delete permanently again to finish.",
         deleteRequiresOnline:
           "Connect to the internet to delete your account and cloud data.",
         deleteSessionExpired:

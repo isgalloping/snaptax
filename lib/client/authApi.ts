@@ -229,9 +229,28 @@ export async function pollEntitlementReady(
   return false;
 }
 
-export async function deleteAccountApi(useUserApi: boolean): Promise<void> {
+export async function deleteAccountApi(
+  useUserApi: boolean,
+  orphanGhostIds: string[] = [],
+): Promise<void> {
   const path = useUserApi ? "/api/users/me" : "/api/ghost/data";
-  const res = await apiFetch(path, { method: "DELETE" });
+  const res = await apiFetch(path, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ orphanGhostIds }),
+  });
+  if (res.status === 409) {
+    let code = "";
+    try {
+      const body = (await res.json()) as { error?: { code?: string } };
+      code = body.error?.code ?? "";
+    } catch {
+      /* ignore */
+    }
+    if (code === "GOOGLE_LOGIN_REQUIRED") {
+      throw new Error("GOOGLE_LOGIN_REQUIRED");
+    }
+  }
   if (!res.ok && res.status !== 204) throw new Error("DELETE_ACCOUNT_FAILED");
   if (useUserApi) saveGoogleUser(null);
 }

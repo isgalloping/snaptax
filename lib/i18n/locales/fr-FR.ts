@@ -656,6 +656,8 @@ export const FR_FR_COPY: UserCopy = {
         "Impossible de charger ce document. Réessayez ou ouvrez la page complète.",
       deleteAccount: "Supprimer le compte",
       deleteFailed: "Échec de la suppression. Veuillez réessayer.",
+      deleteLocalClearFailed:
+        "Les données cloud ont été supprimées, mais l'effacement de cet appareil a échoué. Appuyez à nouveau sur Supprimer définitivement.",
       deleteRequiresOnline:
         "Connectez-vous à Internet pour supprimer votre compte et vos données cloud.",
       deleteSessionExpired:

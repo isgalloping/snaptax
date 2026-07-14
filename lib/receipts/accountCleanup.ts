@@ -56,20 +56,9 @@ export async function deleteReceiptBlobs(pathnames: string[]): Promise<void> {
   }
 }
 
-export type GhostBindingLookup = {
-  snaptaxGhostAccount: {
-    findUnique: (args: {
-      where: { ghostId: string };
-      select: { userId: true };
-    }) => Promise<{ userId: string } | null>;
-  };
-};
-
 /** Ghost IDs safe to erase for a pure-Ghost delete. */
 export async function resolveUnboundGhostIdsForDelete(
   currentGhostId: string,
-  _clientOrphanGhostIds: string[] = [],
-  _db: GhostBindingLookup = prisma,
 ): Promise<string[]> {
   if (typeof currentGhostId !== "string" || currentGhostId.length === 0) {
     return [];
@@ -77,14 +66,8 @@ export async function resolveUnboundGhostIdsForDelete(
   return [currentGhostId];
 }
 
-export async function deleteGhostReceipts(
-  ghostId: string,
-  clientOrphanGhostIds: string[] = [],
-): Promise<void> {
-  const ghostIds = await resolveUnboundGhostIdsForDelete(
-    ghostId,
-    clientOrphanGhostIds,
-  );
+export async function deleteGhostReceipts(ghostId: string): Promise<void> {
+  const ghostIds = await resolveUnboundGhostIdsForDelete(ghostId);
   const receipts = await prisma.snaptaxReceipt.findMany({
     where: { ghostId: { in: ghostIds }, userId: null },
     select: { id: true, imageUrl: true },
@@ -149,10 +132,7 @@ export async function deleteUserAccountDbRecords(
   };
 }
 
-export async function deleteUserAccount(
-  userId: string,
-  _clientOrphanGhostIds: string[] = [],
-): Promise<void> {
+export async function deleteUserAccount(userId: string): Promise<void> {
   const binding = await prisma.snaptaxGhostAccount.findUnique({
     where: { userId },
     select: { ghostId: true },

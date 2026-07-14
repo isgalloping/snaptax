@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { mapErrorToResponse } from "@/lib/api/errors";
 import { getActor } from "@/lib/auth/getActor";
@@ -11,13 +11,13 @@ import { prisma } from "@/lib/prisma";
 import { withRequestLog } from "@/lib/server/log/withRequestLog";
 import { patchUserBodySchema } from "@/lib/users/industrySchema";
 
-export const DELETE = withRequestLog("api.user", async (request, _context) => {
+export const DELETE = withRequestLog("api.user", async (request) => {
   try {
     const session = await getSessionFromCookies();
     if (!session) throw new Error("UNAUTHORIZED");
 
-    const orphanGhostIds = await parseDeleteAccountOrphanGhostIds(request);
-    await deleteUserAccount(session.userId, orphanGhostIds);
+    await parseDeleteAccountOrphanGhostIds(request);
+    await deleteUserAccount(session.userId);
 
     const res = new NextResponse(null, { status: 204 });
     res.cookies.set(SESSION_COOKIE_NAME, "", {
@@ -43,7 +43,7 @@ export const DELETE = withRequestLog("api.user", async (request, _context) => {
   }
 });
 
-export const PATCH = withRequestLog("api.user", async (request, _context) => {
+export const PATCH = withRequestLog("api.user", async (request) => {
   try {
     const actor = await getActor(request, { requireWrite: false });
     if (actor.kind !== "user") throw new Error("UNAUTHORIZED");

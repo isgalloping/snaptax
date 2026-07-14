@@ -15,34 +15,13 @@ describe("uniqueBlobPathnames", () => {
 
 describe("resolveUnboundGhostIdsForDelete", () => {
   it("only includes the current ghost and ignores client-supplied orphans", async () => {
-    const ids = await resolveUnboundGhostIdsForDelete(
-      "g-current",
-      ["g-orphan", "g-bound"],
-      {
-        snaptaxGhostAccount: {
-          findUnique: async ({ where }) => {
-            if (where.ghostId === "g-bound") {
-              return { userId: "other-user" };
-            }
-            return null;
-          },
-        },
-      },
-    );
+    const ids = await resolveUnboundGhostIdsForDelete("g-current");
     assert.deepEqual(ids, ["g-current"]);
   });
 
-  it("dedupes and ignores empty ids", async () => {
-    const ids = await resolveUnboundGhostIdsForDelete(
-      "g1",
-      ["g1", "", "g2"],
-      {
-        snaptaxGhostAccount: {
-          findUnique: async () => null,
-        },
-      },
-    );
-    assert.deepEqual(ids, ["g1"]);
+  it("ignores an empty current ghost", async () => {
+    const ids = await resolveUnboundGhostIdsForDelete("");
+    assert.deepEqual(ids, []);
   });
 });
 

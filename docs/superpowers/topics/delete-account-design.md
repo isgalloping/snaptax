@@ -91,7 +91,7 @@ Settings → Privacy & Data → Delete Account
 
 1. `getSessionFromCookies()` → `session.userId`
 2. 解析 body `orphanGhostIds`（可选，最多 20；兼容字段，不授予删除范围）
-3. `deleteUserAccount(userId, orphanGhostIds)` — `lib/receipts/accountCleanup.ts`
+3. `deleteUserAccount(userId)` — `lib/receipts/accountCleanup.ts`
 4. 204 + 清除 `SESSION_COOKIE_NAME` 与 `GHOST_COOKIE_NAME`
 
 **`deleteUserAccount` receipt scope（`userAccountReceiptFilter`）：**
@@ -114,7 +114,7 @@ Settings → Privacy & Data → Delete Account
 
 1. `getActor(request)` → 必须 `actor.kind === "ghost"`
 2. 若 `actor.bound` → **409 `GOOGLE_LOGIN_REQUIRED`**（禁止部分删除）
-3. 解析 `orphanGhostIds` 兼容字段；`deleteGhostReceipts(ghostId, orphanGhostIds)` — 服务端仅删除当前 ghost
+3. 解析 `orphanGhostIds` 兼容字段；`deleteGhostReceipts(ghostId)` — 服务端仅删除当前 ghost
 4. 擦除 receipts（`userId: null`）+ Blob + Event Store
 5. 204 + 清除 `GHOST_COOKIE_NAME`
 

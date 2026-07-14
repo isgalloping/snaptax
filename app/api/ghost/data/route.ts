@@ -7,14 +7,14 @@ import { deleteGhostReceipts } from "@/lib/receipts/accountCleanup";
 import { parseDeleteAccountOrphanGhostIds } from "@/lib/receipts/deleteAccountBody";
 import { withRequestLog } from "@/lib/server/log/withRequestLog";
 
-export const DELETE = withRequestLog("api.user", async (request, _context) => {
+export const DELETE = withRequestLog("api.user", async (request) => {
   try {
     const actor = await getActor(request);
     if (actor.kind !== "ghost") throw new Error("UNAUTHORIZED");
     if (actor.bound) throw new Error("GOOGLE_LOGIN_REQUIRED");
 
-    const orphanGhostIds = await parseDeleteAccountOrphanGhostIds(request);
-    await deleteGhostReceipts(actor.ghostId, orphanGhostIds);
+    await parseDeleteAccountOrphanGhostIds(request);
+    await deleteGhostReceipts(actor.ghostId);
 
     const res = new NextResponse(null, { status: 204 });
     res.cookies.set(GHOST_COOKIE_NAME, "", {

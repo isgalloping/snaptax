@@ -279,8 +279,8 @@ export async function handlePaddleWebhookPayload(
     processingResult: "received",
   });
 
-  if (begun.duplicate) {
-    return { ok: true, duplicate: true };
+  if (!begun.shouldProcess) {
+    return { ok: true, duplicate: begun.duplicate };
   }
 
   if (eventType === "transaction.completed") {

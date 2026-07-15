@@ -3,6 +3,9 @@ import type { Prisma } from "@prisma/client";
 
 export const WEBHOOK_CHANNEL_PADDLE = "paddle";
 
+/** Terminal outcomes — Paddle retries must not re-run business logic. */
+const TERMINAL_RESULTS = new Set(["applied", "ignored"]);
+
 export type BeginWebhookEventInput = {
   channelCode: string;
   eventId: string;
@@ -28,13 +31,20 @@ export type FinishWebhookEventPatch = {
   adjustmentStatus?: string | null;
 };
 
+export type BeginWebhookEventResult = {
+  id: string;
+  duplicate: boolean;
+  /** False when already finished (applied/ignored); true for new or stuck received/error. */
+  shouldProcess: boolean;
+};
+
 export type WebhookEventStore = {
   findUnique: (args: {
     where: {
       channelCode_eventId: { channelCode: string; eventId: string };
     };
-    select: { id: true };
-  }) => Promise<{ id: string } | null>;
+    select: { id: true; processingResult: true };
+  }) => Promise<{ id: string; processingResult: string } | null>;
   create: (args: {
     data: Record<string, unknown>;
   }) => Promise<{ id: string }>;
@@ -48,19 +58,27 @@ function normalizeChannelCode(code: string): string {
   return code.trim().toLowerCase();
 }
 
+function shouldProcessExisting(processingResult: string): boolean {
+  return !TERMINAL_RESULTS.has(processingResult);
+}
+
 export async function beginWebhookEvent(
   input: BeginWebhookEventInput,
   store: WebhookEventStore = prisma.snaptaxWebhookEvent,
-): Promise<{ id: string; duplicate: boolean }> {
+): Promise<BeginWebhookEventResult> {
   const channelCode = normalizeChannelCode(input.channelCode);
   const existing = await store.findUnique({
     where: {
       channelCode_eventId: { channelCode, eventId: input.eventId },
     },
-    select: { id: true },
+    select: { id: true, processingResult: true },
   });
   if (existing) {
-    return { id: existing.id, duplicate: true };
+    return {
+      id: existing.id,
+      duplicate: true,
+      shouldProcess: shouldProcessExisting(existing.processingResult),
+    };
   }
 
   try {
@@ -78,15 +96,21 @@ export async function beginWebhookEvent(
         processingResult: input.processingResult ?? "received",
       },
     });
-    return { id: created.id, duplicate: false };
+    return { id: created.id, duplicate: false, shouldProcess: true };
   } catch (err) {
     const again = await store.findUnique({
       where: {
         channelCode_eventId: { channelCode, eventId: input.eventId },
       },
-      select: { id: true },
+      select: { id: true, processingResult: true },
     });
-    if (again) return { id: again.id, duplicate: true };
+    if (again) {
+      return {
+        id: again.id,
+        duplicate: true,
+        shouldProcess: shouldProcessExisting(again.processingResult),
+      };
+    }
     throw err;
   }
 }

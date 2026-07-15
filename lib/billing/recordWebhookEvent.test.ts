@@ -16,7 +16,12 @@ function memoryStore(): WebhookEventStore & {
     findUnique: async ({ where }) => {
       const key = `${where.channelCode_eventId.channelCode}:${where.channelCode_eventId.eventId}`;
       const row = rows.get(key);
-      return row ? { id: String(row.id) } : null;
+      return row
+        ? {
+            id: String(row.id),
+            processingResult: String(row.processingResult ?? "received"),
+          }
+        : null;
     },
     create: async ({ data }) => {
       const id = `evt-${rows.size + 1}`;
@@ -55,11 +60,12 @@ describe("beginWebhookEvent", () => {
       store,
     );
     assert.equal(first.duplicate, false);
+    assert.equal(first.shouldProcess, true);
     const row = [...store.rows.values()][0];
     assert.equal(row.channelCode, WEBHOOK_CHANNEL_PADDLE);
   });
 
-  it("returns duplicate for same event id", async () => {
+  it("returns shouldProcess false for terminal duplicate", async () => {
     const store = memoryStore();
     const input = {
       channelCode: "paddle",
@@ -67,10 +73,32 @@ describe("beginWebhookEvent", () => {
       eventType: "transaction.completed",
       payload: {},
     };
-    await beginWebhookEvent(input, store);
+    const first = await beginWebhookEvent(input, store);
+    await finishWebhookEvent(
+      first.id,
+      { processingResult: "applied", processingReason: "ok" },
+      store,
+    );
     const second = await beginWebhookEvent(input, store);
     assert.equal(second.duplicate, true);
+    assert.equal(second.shouldProcess, false);
     assert.equal(store.rows.size, 1);
+  });
+
+  it("resumes stuck received duplicates", async () => {
+    const store = memoryStore();
+    const input = {
+      channelCode: "paddle",
+      eventId: "ntf_stuck",
+      eventType: "adjustment.updated",
+      payload: {},
+    };
+    const first = await beginWebhookEvent(input, store);
+    assert.equal(first.shouldProcess, true);
+    const second = await beginWebhookEvent(input, store);
+    assert.equal(second.duplicate, true);
+    assert.equal(second.shouldProcess, true);
+    assert.equal(second.id, first.id);
   });
 });
 

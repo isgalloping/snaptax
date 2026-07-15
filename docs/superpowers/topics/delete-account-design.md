@@ -2,7 +2,7 @@
 
 **Topic ID:** `delete-account`  
 **Status:** Consolidated · implemented  
-**Last verified:** 2026-07-14
+**Last verified:** 2026-07-15
 
 ---
 
@@ -65,7 +65,7 @@ Settings → Privacy & Data → Delete Account
 | `DeleteAccountSessionExpiredError` | `code: "SESSION_EXPIRED"` — `googleUser` 存在但 `fetchAuthMe().user == null`，或 409 `GOOGLE_LOGIN_REQUIRED` |
 | `DeleteAccountLocalClearError` | `code: "LOCAL_CLEAR_FAILED"` — 云端已删、本地 wipe 失败 |
 | `resolveDeleteRoute()` | 返回 `"user"` \| `"ghost"`；stale session 抛 `DeleteAccountSessionExpiredError` |
-| `deleteAccountAndLocalData(deps?)` | pending wipe 短路 → 在线检查 → route → orphan ids → `deleteAccountApi` → mark pending → `clearLocalAppData`（含重试） |
+| `deleteAccountAndLocalData(deps?)` | pending wipe 短路 → 在线检查 → route → compat orphan ids → `deleteAccountApi` → mark pending → `clearLocalAppData`（含重试） |
 | `finishLocalWipeAfterAccountDelete` | 仅本地 wipe（带重试） |
 
 **Local wipe 覆盖（`clearLocalAppData`）：** IndexedDB + OPFS · `snap1099_*` localStorage/sessionStorage · `snaptax_founder_widget_seen` · Cache Storage（best-effort）· 最后清除 pending wipe flag。
@@ -106,7 +106,7 @@ Settings → Privacy & Data → Delete Account
 
 执行顺序：`findMany` → `deleteReceiptBlobs` → transaction（`deleteEventStoreRecords` + receipts/entitlements/checkout_intents + `snaptaxUser.delete`）→ `logEvent`（`reason=account_deleted`）。
 
-**Blob 删除失败：** `logEvent` warn，**不阻断** DB 删除。空 pathname 已过滤去重。
+**Blob 删除失败：** `logEvent` error + **503 `BLOB_DELETE_FAILED`**，阻断 DB 删除（可重试，不假装擦除完成）。空 pathname 已过滤去重。
 
 #### `DELETE /api/ghost/data` — pure Ghost
 
@@ -115,7 +115,7 @@ Settings → Privacy & Data → Delete Account
 1. `getActor(request)` → 必须 `actor.kind === "ghost"`
 2. 若 `actor.bound` → **409 `GOOGLE_LOGIN_REQUIRED`**（禁止部分删除）
 3. 解析 `orphanGhostIds` 兼容字段；`deleteGhostReceipts(ghostId)` — 服务端仅删除当前 ghost
-4. 擦除 receipts（`userId: null`）+ Blob + Event Store
+4. 擦除 receipts（`userId: null`）+ Blob + Event Store（Blob 失败同 signed-in：503）
 5. 204 + 清除 `GHOST_COOKIE_NAME`
 
 ### 3.4 Invariants

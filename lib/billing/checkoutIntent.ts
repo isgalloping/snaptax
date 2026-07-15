@@ -169,6 +169,9 @@ export async function resolveWebhookGrantTarget(customData: {
 
   const legacyUserId = customData?.userId?.trim();
   if (legacyUserId) {
+    if (!allowPaddleLegacyUserIdGrant()) {
+      return { ok: false, reason: "legacy_user_id_disabled" };
+    }
     return {
       ok: true,
       userId: legacyUserId,
@@ -178,6 +181,16 @@ export async function resolveWebhookGrantTarget(customData: {
   }
 
   return { ok: false, reason: "missing_grant_target" };
+}
+
+/** Production forbids custom_data.userId grants without checkout intent. */
+export function allowPaddleLegacyUserIdGrant(
+  env: NodeJS.ProcessEnv = process.env,
+): boolean {
+  if (env.ALLOW_PADDLE_LEGACY_USER_ID === "1") return true;
+  if (env.VERCEL_ENV === "production") return false;
+  if (env.NODE_ENV === "production" && !env.VERCEL_ENV) return false;
+  return true;
 }
 
 export async function markCheckoutIntentConsumed(

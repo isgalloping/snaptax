@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   CHECKOUT_INTENT_TTL_MS,
+  allowPaddleLegacyUserIdGrant,
   createOrReuseCheckoutIntent,
   evaluateIntentGrant,
   isCheckoutIntentExpired,
@@ -155,5 +156,53 @@ describe("evaluateIntentGrant", () => {
       now,
     );
     assert.deepEqual(result, { ok: false, reason: "intent_not_pending" });
+  });
+});
+
+describe("allowPaddleLegacyUserIdGrant", () => {
+  it("allows legacy outside production", () => {
+    assert.equal(
+      allowPaddleLegacyUserIdGrant({
+        VERCEL_ENV: "preview",
+        NODE_ENV: "production",
+      }),
+      true,
+    );
+    assert.equal(
+      allowPaddleLegacyUserIdGrant({
+        NODE_ENV: "development",
+      }),
+      true,
+    );
+  });
+
+  it("blocks legacy in Vercel production", () => {
+    assert.equal(
+      allowPaddleLegacyUserIdGrant({
+        VERCEL_ENV: "production",
+        NODE_ENV: "production",
+      }),
+      false,
+    );
+  });
+
+  it("blocks legacy in production NODE_ENV without VERCEL_ENV", () => {
+    assert.equal(
+      allowPaddleLegacyUserIdGrant({
+        NODE_ENV: "production",
+      }),
+      false,
+    );
+  });
+
+  it("allows override via ALLOW_PADDLE_LEGACY_USER_ID=1", () => {
+    assert.equal(
+      allowPaddleLegacyUserIdGrant({
+        VERCEL_ENV: "production",
+        NODE_ENV: "production",
+        ALLOW_PADDLE_LEGACY_USER_ID: "1",
+      }),
+      true,
+    );
   });
 });

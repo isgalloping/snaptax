@@ -42,7 +42,7 @@ export async function deleteReceiptBlobs(pathnames: string[]): Promise<void> {
   } catch (err) {
     logEvent({
       ts: new Date().toISOString(),
-      level: "warn",
+      level: "error",
       module: "api.user",
       success: false,
       durationMs: 0,
@@ -53,6 +53,7 @@ export async function deleteReceiptBlobs(pathnames: string[]): Promise<void> {
           err instanceof Error ? err.message.slice(0, 120) : "unknown",
       },
     });
+    throw new Error("BLOB_DELETE_FAILED");
   }
 }
 

@@ -2,6 +2,8 @@ export function discoverOrphanGhostIds(input: {
   currentGhostId: string;
   rebindPreviousGhostId: string | null;
   historicalGhostIds: string[];
+  /** Only IDs already verified via HMAC ghost token possession. */
+  verifiedClientOrphanGhostIds?: string[];
 }): string[] {
   const candidates = new Set<string>();
 
@@ -11,8 +13,11 @@ export function discoverOrphanGhostIds(input: {
   for (const ghostId of input.historicalGhostIds) {
     if (ghostId) candidates.add(ghostId);
   }
-  // Client-supplied ghost IDs are not proof of possession; only merge IDs the
-  // server can derive from existing user state.
+  for (const ghostId of input.verifiedClientOrphanGhostIds ?? []) {
+    if (ghostId) candidates.add(ghostId);
+  }
+  // Bare client ghost IDs are not accepted — possession must be proven with
+  // verifyClientOrphanGhostPossession before reaching this list.
 
   candidates.delete(input.currentGhostId);
   return [...candidates];

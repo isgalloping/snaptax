@@ -44,7 +44,7 @@ describe("runOrphanGhostMergeForUser", () => {
     assert.equal(result.totalReceipts, expectedGhosts.length);
   });
 
-  it("does not merge ghosts provided only by the client", async () => {
+  it("does not merge untrusted clientOrphanGhostIds field (ignored)", async () => {
     const result = await runOrphanGhostMergeForUser(
       {
         userId: "user-1",
@@ -90,6 +90,43 @@ describe("runOrphanGhostMergeForUser", () => {
       mergedGhostIds: [],
       totalReceipts: 0,
     });
+  });
+
+  it("merges HMAC-verified client orphan ghost ids", async () => {
+    const result = await runOrphanGhostMergeForUser(
+      {
+        userId: "user-1",
+        currentGhostId: "ghost-new",
+        verifiedClientOrphanGhostIds: ["ghost-possessed"],
+      },
+      {
+        snaptaxGhostAccount: {
+          findUnique: async () => null,
+        },
+        snaptaxReceipt: {
+          findMany: async () => [],
+          updateMany: async ({ where }) => ({
+            count: where.ghostId === "ghost-possessed" ? 2 : 0,
+          }),
+        },
+        snaptaxReceiptEvent: {
+          findMany: async () => [],
+          updateMany: async () => ({ count: 0 }),
+        },
+        snaptaxReceiptLifecycleSnapshot: {
+          findMany: async () => [],
+          updateMany: async () => ({ count: 0 }),
+        },
+        snaptaxReceiptSyncCursor: {
+          findUnique: async () => null,
+          upsert: async () => ({}),
+          deleteMany: async () => ({ count: 0 }),
+        },
+      } as unknown as OrphanGhostMergeDb,
+    );
+
+    assert.deepEqual(result.mergedGhostIds, ["ghost-possessed"]);
+    assert.equal(result.totalReceipts, 2);
   });
 
   it("discovers historical ghosts from user-owned event store rows", async () => {

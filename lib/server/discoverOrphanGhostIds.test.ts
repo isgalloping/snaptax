@@ -13,6 +13,16 @@ describe("discoverOrphanGhostIds", () => {
     assert.deepEqual(ids.sort(), ["ghost-hist", "ghost-old"]);
   });
 
+  it("includes HMAC-verified client orphan ids", () => {
+    const ids = discoverOrphanGhostIds({
+      currentGhostId: "ghost-new",
+      rebindPreviousGhostId: null,
+      historicalGhostIds: [],
+      verifiedClientOrphanGhostIds: ["ghost-possessed", "ghost-new"],
+    });
+    assert.deepEqual(ids, ["ghost-possessed"]);
+  });
+
   it("returns empty when only current ghost is known", () => {
     assert.deepEqual(
       discoverOrphanGhostIds({

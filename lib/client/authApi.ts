@@ -1,6 +1,6 @@
 "use client";
 
-import { apiFetch, ensureGhostSession, getClientOrphanGhostIds } from "@/lib/client/ghostClient";
+import { apiFetch, ensureGhostSession, getClientOrphanGhostPossession } from "@/lib/client/ghostClient";
 import { GoogleAuthError } from "@/lib/client/googleAuthErrors";
 import { clientTimeZone } from "@/lib/time/timeZone";
 import { requestGoogleCredential } from "@/lib/client/googleAuth";
@@ -61,12 +61,13 @@ export async function signInWithGoogleCredential(
   options?: { ghostRetried?: boolean },
 ): Promise<GoogleAuthResponse> {
   const currentGhostId = await ensureGhostSession();
-  const orphanGhostIds = getClientOrphanGhostIds(currentGhostId);
-  const payload: { credential: string; orphanGhostIds?: string[] } = {
-    credential,
-  };
-  if (orphanGhostIds.length > 0) {
-    payload.orphanGhostIds = orphanGhostIds;
+  const orphanGhosts = getClientOrphanGhostPossession(currentGhostId);
+  const payload: {
+    credential: string;
+    orphanGhosts?: typeof orphanGhosts;
+  } = { credential };
+  if (orphanGhosts.length > 0) {
+    payload.orphanGhosts = orphanGhosts;
   }
 
   const res = await apiFetch("/api/auth/google", {

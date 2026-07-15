@@ -92,4 +92,37 @@ describe("buildQboExport", () => {
     const qbo = buildQboExport([sampleRow({ merchant: "AT&T" })], exportedAt);
     assert.match(qbo, /<NAME>AT&amp;T<\/NAME>/);
   });
+
+  it("escapes XML special characters in MEMO category and notes", () => {
+    const qbo = buildQboExport(
+      [
+        sampleRow({
+          categoryDisplay: "Meals & Tools <Fuel>",
+          notes: "A < B & C > D",
+        }),
+      ],
+      exportedAt,
+    );
+
+    assert.match(
+      qbo,
+      /<MEMO>Line 9 - Meals &amp; Tools &lt;Fuel&gt; · A &lt; B &amp; C &gt; D<\/MEMO>/,
+    );
+  });
+
+  it("omits the notes separator and falls back to Other expenses when memo details are blank", () => {
+    const qbo = buildQboExport(
+      [
+        sampleRow({
+          categoryDisplay: "  ",
+          notes: "  ",
+          scheduleCLine: undefined,
+        }),
+      ],
+      exportedAt,
+    );
+
+    assert.match(qbo, /<MEMO>Expense - Other expenses<\/MEMO>/);
+    assert.doesNotMatch(qbo, /Other expenses ·/);
+  });
 });

@@ -1,15 +1,21 @@
 import { z } from "zod";
+import { orphanGhostsBodyField } from "@/lib/server/orphanGhostPossessionSchema";
+import { verifyClientOrphanGhostPossession } from "@/lib/server/verifyClientOrphanGhostPossession";
+import type { ClientOrphanGhostPossession } from "@/lib/server/verifyClientOrphanGhostPossession";
 
 export const deleteAccountBodySchema = z.object({
-  orphanGhostIds: z.array(z.string().min(1)).max(20).default([]),
+  orphanGhosts: orphanGhostsBodyField,
 });
 
-/** Parse optional DELETE JSON body; empty body → []. Invalid JSON/Zod → throw. */
+/** Parse DELETE body → HMAC-verified orphan ghost IDs only. Empty body → []. */
 export async function parseDeleteAccountOrphanGhostIds(
   request: Request,
 ): Promise<string[]> {
   const text = await request.text();
   if (!text.trim()) return [];
   const json: unknown = JSON.parse(text);
-  return deleteAccountBodySchema.parse(json).orphanGhostIds;
+  const body = deleteAccountBodySchema.parse(json);
+  return verifyClientOrphanGhostPossession(
+    body.orphanGhosts as ClientOrphanGhostPossession[],
+  );
 }

@@ -6,7 +6,8 @@ import {
 import { type GoogleUser, loadGoogleUser } from "@/lib/client/authStorage";
 import {
   ensureGhostSession,
-  getClientOrphanGhostIds,
+  getClientOrphanGhostPossession,
+  type ClientOrphanGhostPossession,
 } from "@/lib/client/ghostClient";
 import {
   clearLocalAppData,
@@ -49,10 +50,12 @@ export type DeleteAccountFlowDeps = {
   fetchAuthMe?: () => Promise<AuthMeResponse>;
   loadGoogleUser?: () => GoogleUser | null;
   ensureGhostSession?: () => Promise<string>;
-  getClientOrphanGhostIds?: (currentGhostId: string) => string[];
+  getClientOrphanGhostPossession?: (
+    currentGhostId: string,
+  ) => ClientOrphanGhostPossession[];
   deleteAccountApi?: (
     useUserApi: boolean,
-    orphanGhostIds: string[],
+    orphanGhosts: ClientOrphanGhostPossession[],
   ) => Promise<void>;
   clearLocalAppData?: () => Promise<void>;
   hasPendingLocalWipe?: () => boolean;
@@ -122,7 +125,7 @@ export async function deleteAccountAndLocalData(
   const ensureGhost =
     deps.ensureGhostSession ?? (() => ensureGhostSession());
   const readOrphans =
-    deps.getClientOrphanGhostIds ?? getClientOrphanGhostIds;
+    deps.getClientOrphanGhostPossession ?? getClientOrphanGhostPossession;
   const deleteApi = deps.deleteAccountApi ?? deleteAccountApi;
   const clearLocal = deps.clearLocalAppData ?? clearLocalAppData;
   const checkPending = deps.hasPendingLocalWipe ?? hasPendingLocalWipe;
@@ -156,10 +159,10 @@ export async function deleteAccountAndLocalData(
     currentGhostId = await ensureGhost();
   }
 
-  const orphanGhostIds = readOrphans(currentGhostId);
+  const orphanGhosts = readOrphans(currentGhostId);
 
   try {
-    await deleteApi(route === "user", orphanGhostIds);
+    await deleteApi(route === "user", orphanGhosts);
   } catch (err) {
     if (
       err instanceof Error &&

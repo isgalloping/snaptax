@@ -232,13 +232,13 @@ export async function pollEntitlementReady(
 
 export async function deleteAccountApi(
   useUserApi: boolean,
-  orphanGhostIds: string[] = [],
+  orphanGhosts: { ghostId: string; token: string }[] = [],
 ): Promise<void> {
   const path = useUserApi ? "/api/users/me" : "/api/ghost/data";
   const res = await apiFetch(path, {
     method: "DELETE",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ orphanGhostIds }),
+    body: JSON.stringify({ orphanGhosts }),
   });
   if (res.status === 409) {
     let code = "";

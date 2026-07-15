@@ -42,7 +42,7 @@ export async function deleteReceiptBlobs(pathnames: string[]): Promise<void> {
   } catch (err) {
     logEvent({
       ts: new Date().toISOString(),
-      level: "warn",
+      level: "error",
       module: "api.user",
       success: false,
       durationMs: 0,
@@ -53,6 +53,7 @@ export async function deleteReceiptBlobs(pathnames: string[]): Promise<void> {
           err instanceof Error ? err.message.slice(0, 120) : "unknown",
       },
     });
+    throw new Error("BLOB_DELETE_FAILED");
   }
 }
 
@@ -93,13 +94,13 @@ export async function resolveUnboundGhostIdsForDelete(
   return deletable;
 }
 
-/** Client-known orphans mergeable into this user's delete filter (unbound or bound to user). */
+/** Client-known orphans for this user's delete filter (must already be HMAC-verified). */
 export async function resolveClientOrphanGhostIdsForUserDelete(
   userId: string,
-  clientOrphanGhostIds: string[] = [],
+  verifiedClientOrphanGhostIds: string[] = [],
 ): Promise<string[]> {
   const verified: string[] = [];
-  for (const ghostId of [...new Set(clientOrphanGhostIds)]) {
+  for (const ghostId of [...new Set(verifiedClientOrphanGhostIds)]) {
     if (!ghostId) continue;
     if (await isOrphanGhostMergeable(ghostId, userId)) {
       verified.push(ghostId);
@@ -110,11 +111,12 @@ export async function resolveClientOrphanGhostIdsForUserDelete(
 
 export async function deleteGhostReceipts(
   ghostId: string,
-  clientOrphanGhostIds: string[] = [],
+  /** HMAC-verified unbound orphan IDs only. */
+  verifiedClientOrphanGhostIds: string[] = [],
 ): Promise<void> {
   const ghostIds = await resolveUnboundGhostIdsForDelete(
     ghostId,
-    clientOrphanGhostIds,
+    verifiedClientOrphanGhostIds,
   );
   const receipts = await prisma.snaptaxReceipt.findMany({
     where: { ghostId: { in: ghostIds }, userId: null },
@@ -182,7 +184,8 @@ export async function deleteUserAccountDbRecords(
 
 export async function deleteUserAccount(
   userId: string,
-  clientOrphanGhostIds: string[] = [],
+  /** HMAC-verified client orphan IDs only. */
+  verifiedClientOrphanGhostIds: string[] = [],
 ): Promise<void> {
   const binding = await prisma.snaptaxGhostAccount.findUnique({
     where: { userId },
@@ -199,7 +202,7 @@ export async function deleteUserAccount(
     .filter((ghostId): ghostId is string => ghostId != null);
   const verifiedClientOrphans = await resolveClientOrphanGhostIdsForUserDelete(
     userId,
-    clientOrphanGhostIds,
+    verifiedClientOrphanGhostIds,
   );
   const orphanGhostIds = [
     ...new Set([...historicalGhostIds, ...verifiedClientOrphans]),

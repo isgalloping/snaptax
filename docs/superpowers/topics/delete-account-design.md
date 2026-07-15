@@ -2,7 +2,7 @@
 
 **Topic ID:** `delete-account`  
 **Status:** Consolidated · implemented  
-**Last verified:** 2026-07-14
+**Last verified:** 2026-07-15
 
 ---
 
@@ -10,7 +10,7 @@
 
 Snap1099 的 Delete Account 仅从 **Settings → Privacy & Data** 进入，经 Bottom Sheet 二次确认后执行。**必须联网**：离线时「Delete permanently」按钮禁用，不调用 API、不清本地。删除顺序恒为 **API 成功 → `clearLocalAppData()`**；API 失败则本地数据保留，用户可重试。
 
-客户端通过 `lib/client/deleteAccountFlow.ts` 按 **实时 session**（`GET /api/auth/me`）路由：有效 Google session → `DELETE /api/users/me`；纯 Ghost → `DELETE /api/ghost/data`；若 UI 缓存了 `googleUser` 但 session 已过期 → **阻断**并提示重新登录。两侧 DELETE 均提交 body `{ orphanGhostIds }`（来自 `snap1099_known_ghost_ids`），以擦除轮换 Ghost 留下的云端小票 / Blob / Event Store。
+客户端通过 `lib/client/deleteAccountFlow.ts` 按 **实时 session**（`GET /api/auth/me`）路由：有效 Google session → `DELETE /api/users/me`；纯 Ghost → `DELETE /api/ghost/data`；若 UI 缓存了 `googleUser` 但 session 已过期 → **阻断**并提示重新登录。两侧 DELETE 均提交 body `{ orphanGhosts: [{ ghostId, token }] }`（HMAC possession，来自 `snap1099_known_ghost_tokens`；裸 ID 无效），以擦除轮换 Ghost 留下的云端小票 / Blob / Event Store。
 
 服务端删除覆盖 Postgres 小票行、Vercel Blob 图像、entitlements、checkout intents、Event Store（events / snapshots / sync cursors），并级联 User / ghost binding；Ghost 路径拒绝已绑定 Google 的 ghost（**409** `GOOGLE_LOGIN_REQUIRED`）。
 
@@ -39,9 +39,9 @@ Settings → Privacy & Data → Delete Account
   → [离线] Delete permanently disabled + deleteRequiresOnline
   → [pending local wipe] → clearLocalAppData only → onAccountDeleted
   → [在线]
-       ├─ fetchAuthMe.user 有效 → DELETE /api/users/me {orphanGhostIds} → clearLocal → onAccountDeleted
+       ├─ fetchAuthMe.user 有效 → DELETE /api/users/me {orphanGhosts} → clearLocal → onAccountDeleted
        ├─ googleUser 缓存但 session null → deleteSessionExpired；不删除
-       └─ 纯 Ghost → ensureGhostSession → DELETE /api/ghost/data {orphanGhostIds} → clearLocal → onAccountDeleted
+       └─ 纯 Ghost → ensureGhostSession → DELETE /api/ghost/data {orphanGhosts} → clearLocal → onAccountDeleted
 ```
 
 | Decision | Detail |
@@ -65,7 +65,7 @@ Settings → Privacy & Data → Delete Account
 | `DeleteAccountSessionExpiredError` | `code: "SESSION_EXPIRED"` — `googleUser` 存在但 `fetchAuthMe().user == null`，或 409 `GOOGLE_LOGIN_REQUIRED` |
 | `DeleteAccountLocalClearError` | `code: "LOCAL_CLEAR_FAILED"` — 云端已删、本地 wipe 失败 |
 | `resolveDeleteRoute()` | 返回 `"user"` \| `"ghost"`；stale session 抛 `DeleteAccountSessionExpiredError` |
-| `deleteAccountAndLocalData(deps?)` | pending wipe 短路 → 在线检查 → route → orphan ids → `deleteAccountApi` → mark pending → `clearLocalAppData`（含重试） |
+| `deleteAccountAndLocalData(deps?)` | pending wipe 短路 → 在线检查 → route → orphan possession → `deleteAccountApi` → mark pending → `clearLocalAppData`（含重试） |
 | `finishLocalWipeAfterAccountDelete` | 仅本地 wipe（带重试） |
 
 **Local wipe 覆盖（`clearLocalAppData`）：** IndexedDB + OPFS · `snap1099_*` localStorage/sessionStorage · `snaptax_founder_widget_seen` · Cache Storage（best-effort）· 最后清除 pending wipe flag。
@@ -90,8 +90,8 @@ Settings → Privacy & Data → Delete Account
 **Route：** `app/api/users/me/route.ts`
 
 1. `getSessionFromCookies()` → `session.userId`
-2. 解析 body `orphanGhostIds`（可选，最多 20）
-3. `deleteUserAccount(userId, orphanGhostIds)` — `lib/receipts/accountCleanup.ts`
+2. 解析 body `orphanGhosts`（可选，最多 20；每项须 `verifyGhostToken` 且 `ghostId` 匹配）
+3. `deleteUserAccount(userId, verifiedOrphanGhostIds)` — `lib/receipts/accountCleanup.ts`
 4. 204 + 清除 `SESSION_COOKIE_NAME` 与 `GHOST_COOKIE_NAME`
 
 **`deleteUserAccount` receipt scope（`userAccountReceiptFilter`）：**
@@ -102,12 +102,12 @@ Settings → Privacy & Data → Delete Account
 //   { ghostId: <id>, userId: null }  for each id in:
 //     - 当前 boundGhostId（snaptax_ghost_account）
 //     - historicalGhostIds（该 user 小票行上 distinct ghostId）
-//     - client orphanGhostIds 经 isOrphanGhostMergeable 校验（未绑定或已绑本 user）
+//     - client orphanGhosts 经 HMAC verify + isOrphanGhostMergeable 校验（未绑定或已绑本 user）
 ```
 
 执行顺序：`findMany` → `deleteReceiptBlobs` → transaction（`deleteEventStoreRecords` + receipts/entitlements/checkout_intents + `snaptaxUser.delete`）→ `logEvent`（`reason=account_deleted`）。
 
-**Blob 删除失败：** `logEvent` warn，**不阻断** DB 删除。空 pathname 已过滤去重。
+**Blob 删除失败：** `logEvent` error + **503 `BLOB_DELETE_FAILED`**，阻断 DB 删除（可重试，不假装擦除完成）。空 pathname 已过滤去重。
 
 #### `DELETE /api/ghost/data` — pure Ghost
 
@@ -115,8 +115,8 @@ Settings → Privacy & Data → Delete Account
 
 1. `getActor(request)` → 必须 `actor.kind === "ghost"`
 2. 若 `actor.bound` → **409 `GOOGLE_LOGIN_REQUIRED`**（禁止部分删除）
-3. 解析 `orphanGhostIds`；`deleteGhostReceipts(ghostId, orphanGhostIds)` — 仅当前 ghost + **未绑定** orphans
-4. 擦除 receipts（`userId: null`）+ Blob + Event Store
+3. 解析 `orphanGhosts`（HMAC）；`deleteGhostReceipts(ghostId, verifiedOrphanGhostIds)` — 仅当前 ghost + **未绑定** orphans
+4. 擦除 receipts（`userId: null`）+ Blob + Event Store（Blob 失败同 signed-in：503）
 5. 204 + 清除 `GHOST_COOKIE_NAME`
 
 ### 3.4 Invariants

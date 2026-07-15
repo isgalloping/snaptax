@@ -36,6 +36,12 @@ export function resolveApiError(err: unknown): ResolvedApiError {
         clientMessage: "Sign in with Google to continue",
         status: 409,
       };
+    case "BLOB_DELETE_FAILED":
+      return {
+        code: "BLOB_DELETE_FAILED",
+        clientMessage: "Could not delete cloud images; please retry",
+        status: 503,
+      };
     case "INVALID_REQUEST":
       return {
         code: "INVALID_REQUEST",

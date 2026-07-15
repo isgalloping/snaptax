@@ -5,9 +5,7 @@ import {
   buildLocalTaxPack,
   type LocalTaxPackFormat,
 } from "@/lib/export/buildLocalTaxPack";
-import { buildLocalExpenseExportRows } from "@/lib/export/buildLocalExpenseRows";
 import { buildTxfExport } from "@/lib/export/buildTxf";
-import { buildQifExport } from "@/lib/export/buildQifExport";
 import { buildQboExport } from "@/lib/export/buildQboExport";
 import { exportTaxPackFilename } from "@/lib/export/exportFilenames";
 import type { ExportTaxPackMeta } from "@/lib/client/authApi";
@@ -53,28 +51,13 @@ export async function runLocalTaxExport(
     taxSeasonDate: filed.taxSeasonDate,
   });
 
+  // Refresh TXF/QBO timestamps only — reuse the same eligible rows (no second filter path).
   let content = pack.content;
-  if (params.format === "txf") {
-    const rows = buildLocalExpenseExportRows(
-      params.receipts,
-      params.taxYear,
-      params.timeZone,
-    );
-    content = buildTxfExport(rows, filed.taxSeasonDate);
-  } else if (params.format === "qif") {
-    const rows = buildLocalExpenseExportRows(
-      params.receipts,
-      params.taxYear,
-      params.timeZone,
-    );
-    content = buildQifExport(rows);
-  } else if (params.format === "qbo") {
-    const rows = buildLocalExpenseExportRows(
-      params.receipts,
-      params.taxYear,
-      params.timeZone,
-    );
-    content = buildQboExport(rows, new Date(filed.taxSeasonDate));
+  const asOf = new Date(filed.taxSeasonDate);
+  if (params.format === "txf" && pack.eligibleRows) {
+    content = buildTxfExport(pack.eligibleRows, asOf);
+  } else if (params.format === "qbo" && pack.eligibleRows) {
+    content = buildQboExport(pack.eligibleRows, asOf);
   }
 
   const filename = exportTaxPackFilename(params.format, params.taxYear);

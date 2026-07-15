@@ -75,6 +75,23 @@ Header: **`X-Tax-Region`**（`us` \| `eu`；与客户端 `snap1099_region_candid
 { "industry": "truck_driver" }
 ```
 
+### `DELETE /api/users/me` · `DELETE /api/ghost/data`
+
+Body（可选）：
+```json
+{
+  "orphanGhosts": [
+    { "ghostId": "uuid", "token": "hmac-ghost-token" }
+  ]
+}
+```
+
+| 字段 | 说明 |
+|------|------|
+| `orphanGhosts` | 可省略 / 空数组；最多 20；每项须通过 `verifyGhostToken` 且 `ghostId` 匹配；裸 ID 无效 |
+
+Signed-in → `/api/users/me`；纯 Ghost → `/api/ghost/data`（已绑定 Google 的 ghost → **409** `GOOGLE_LOGIN_REQUIRED`）。Blob 删失败 → **503** `BLOB_DELETE_FAILED`（不继续删 DB）。
+
 ---
 
 ## 3.3 小票

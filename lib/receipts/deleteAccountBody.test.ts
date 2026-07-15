@@ -1,45 +1,70 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { signGhostToken } from "@/lib/auth/ghostToken";
 import {
   deleteAccountBodySchema,
+  parseDeleteAccountOrphanGhostIds,
 } from "./deleteAccountBody.ts";
-import { verifyClientOrphanGhostPossession } from "@/lib/server/verifyClientOrphanGhostPossession";
 
 describe("deleteAccountBodySchema", () => {
-  it("defaults orphanGhosts to empty", () => {
-    assert.deepEqual(deleteAccountBodySchema.parse({}).orphanGhosts, []);
+  it("defaults orphanGhostIds to empty", () => {
+    assert.deepEqual(deleteAccountBodySchema.parse({}).orphanGhostIds, []);
   });
 
-  it("accepts up to 20 possession entries", () => {
-    const orphans = Array.from({ length: 20 }, (_, i) => ({
-      ghostId: `g-${i}`,
-      token: `t-${i}`,
-    }));
-    assert.equal(
-      deleteAccountBodySchema.parse({ orphanGhosts: orphans }).orphanGhosts.length,
-      20,
+  it("accepts up to 20 orphan ids", () => {
+    const ids = Array.from({ length: 20 }, (_, i) => `g-${i}`);
+    assert.deepEqual(
+      deleteAccountBodySchema.parse({ orphanGhostIds: ids }).orphanGhostIds,
+      ids,
     );
   });
 
-  it("rejects more than 20 orphan entries", () => {
-    const orphans = Array.from({ length: 21 }, (_, i) => ({
-      ghostId: `g-${i}`,
-      token: `t-${i}`,
-    }));
+  it("rejects more than 20 orphan ids", () => {
+    const ids = Array.from({ length: 21 }, (_, i) => `g-${i}`);
     assert.throws(() =>
-      deleteAccountBodySchema.parse({ orphanGhosts: orphans }),
+      deleteAccountBodySchema.parse({ orphanGhostIds: ids }),
     );
   });
+});
 
-  it("verified parse path ignores bare / invalid tokens", () => {
-    process.env.GHOST_HMAC_SECRET = "test-secret-min-32-chars-long!!";
-    const { token, ghostId } = signGhostToken();
-    const verified = verifyClientOrphanGhostPossession([
-      { ghostId, token },
-      { ghostId: "spoof", token },
-      { ghostId: "bare", token: "not-a-token" },
+describe("parseDeleteAccountOrphanGhostIds", () => {
+  it("treats an empty DELETE body as no compatibility orphan ids", async () => {
+    const request = new Request("https://snaptax.test/api/users/me", {
+      method: "DELETE",
+      body: "  ",
+    });
+
+    assert.deepEqual(await parseDeleteAccountOrphanGhostIds(request), []);
+  });
+
+  it("parses a valid JSON body with orphan ids", async () => {
+    const request = new Request("https://snaptax.test/api/users/me", {
+      method: "DELETE",
+      body: JSON.stringify({ orphanGhostIds: ["ghost-1", "ghost-2"] }),
+    });
+
+    assert.deepEqual(await parseDeleteAccountOrphanGhostIds(request), [
+      "ghost-1",
+      "ghost-2",
     ]);
-    assert.deepEqual(verified, [ghostId]);
+  });
+
+  it("rejects malformed JSON and invalid orphan id payloads", async () => {
+    await assert.rejects(() =>
+      parseDeleteAccountOrphanGhostIds(
+        new Request("https://snaptax.test/api/users/me", {
+          method: "DELETE",
+          body: "{",
+        }),
+      ),
+    );
+
+    await assert.rejects(() =>
+      parseDeleteAccountOrphanGhostIds(
+        new Request("https://snaptax.test/api/users/me", {
+          method: "DELETE",
+          body: JSON.stringify({ orphanGhostIds: [""] }),
+        }),
+      ),
+    );
   });
 });

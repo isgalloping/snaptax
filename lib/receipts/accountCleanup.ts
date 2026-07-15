@@ -1,7 +1,7 @@
 import { del } from "@vercel/blob";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { isOrphanGhostMergeable } from "@/lib/server/mergeOrphanGhostData";
+import { listHistoricalGhostIdsForUser } from "@/lib/server/mergeOrphanGhostData";
 import { deleteEventStoreRecords } from "@/lib/server/receiptEventStoreCleanup";
 import { logEvent } from "@/lib/server/log/logEvent";
 import { blobCommandOptions } from "@/lib/server/blob";
@@ -57,67 +57,20 @@ export async function deleteReceiptBlobs(pathnames: string[]): Promise<void> {
   }
 }
 
-export type GhostBindingLookup = {
-  snaptaxGhostAccount: {
-    findUnique: (args: {
-      where: { ghostId: string };
-      select: { userId: true };
-    }) => Promise<{ userId: string } | null>;
-  };
-};
-
-/** Ghost IDs safe to erase for a pure-Ghost delete (current + unbound client orphans). */
+/** Ghost IDs safe to erase for a pure-Ghost delete. */
 export async function resolveUnboundGhostIdsForDelete(
   currentGhostId: string,
   clientOrphanGhostIds: string[] = [],
-  db: GhostBindingLookup = prisma,
 ): Promise<string[]> {
-  const candidates = [
-    ...new Set(
-      [currentGhostId, ...clientOrphanGhostIds].filter(
-        (id): id is string => typeof id === "string" && id.length > 0,
-      ),
-    ),
-  ];
-  const deletable: string[] = [];
-  for (const ghostId of candidates) {
-    if (ghostId === currentGhostId) {
-      deletable.push(ghostId);
-      continue;
-    }
-    const binding = await db.snaptaxGhostAccount.findUnique({
-      where: { ghostId },
-      select: { userId: true },
-    });
-    if (!binding) deletable.push(ghostId);
+  void clientOrphanGhostIds;
+  if (typeof currentGhostId !== "string" || currentGhostId.length === 0) {
+    return [];
   }
-  return deletable;
+  return [currentGhostId];
 }
 
-/** Client-known orphans for this user's delete filter (must already be HMAC-verified). */
-export async function resolveClientOrphanGhostIdsForUserDelete(
-  userId: string,
-  verifiedClientOrphanGhostIds: string[] = [],
-): Promise<string[]> {
-  const verified: string[] = [];
-  for (const ghostId of [...new Set(verifiedClientOrphanGhostIds)]) {
-    if (!ghostId) continue;
-    if (await isOrphanGhostMergeable(ghostId, userId)) {
-      verified.push(ghostId);
-    }
-  }
-  return verified;
-}
-
-export async function deleteGhostReceipts(
-  ghostId: string,
-  /** HMAC-verified unbound orphan IDs only. */
-  verifiedClientOrphanGhostIds: string[] = [],
-): Promise<void> {
-  const ghostIds = await resolveUnboundGhostIdsForDelete(
-    ghostId,
-    verifiedClientOrphanGhostIds,
-  );
+export async function deleteGhostReceipts(ghostId: string): Promise<void> {
+  const ghostIds = await resolveUnboundGhostIdsForDelete(ghostId);
   const receipts = await prisma.snaptaxReceipt.findMany({
     where: { ghostId: { in: ghostIds }, userId: null },
     select: { id: true, imageUrl: true },
@@ -182,31 +135,13 @@ export async function deleteUserAccountDbRecords(
   };
 }
 
-export async function deleteUserAccount(
-  userId: string,
-  /** HMAC-verified client orphan IDs only. */
-  verifiedClientOrphanGhostIds: string[] = [],
-): Promise<void> {
+export async function deleteUserAccount(userId: string): Promise<void> {
   const binding = await prisma.snaptaxGhostAccount.findUnique({
     where: { userId },
     select: { ghostId: true },
   });
   const boundGhostId = binding?.ghostId ?? null;
-  const receiptGhostRows = await prisma.snaptaxReceipt.findMany({
-    where: { userId, ghostId: { not: null } },
-    select: { ghostId: true },
-    distinct: ["ghostId"],
-  });
-  const historicalGhostIds = receiptGhostRows
-    .map((row) => row.ghostId)
-    .filter((ghostId): ghostId is string => ghostId != null);
-  const verifiedClientOrphans = await resolveClientOrphanGhostIdsForUserDelete(
-    userId,
-    verifiedClientOrphanGhostIds,
-  );
-  const orphanGhostIds = [
-    ...new Set([...historicalGhostIds, ...verifiedClientOrphans]),
-  ];
+  const orphanGhostIds = await listHistoricalGhostIdsForUser(userId);
   const ghostIds = [
     ...new Set(
       [boundGhostId, ...orphanGhostIds].filter(

@@ -110,4 +110,68 @@ describe("validateTaxCalculatedReceiptOwnership", () => {
       },
     ]);
   });
+
+  it("accepts a user TAX_CALCULATED batch when every receipt is actor-owned", async () => {
+    const countCalls: unknown[] = [];
+    const result = await validateTaxCalculatedReceiptOwnership(
+      userActor,
+      [
+        taxCalculatedEvent("00000000-0000-0000-0000-000000000001", taxReceiptA),
+        taxCalculatedEvent("00000000-0000-0000-0000-000000000002", taxReceiptB),
+      ],
+      {
+        snaptaxReceipt: {
+          count: async (args: unknown) => {
+            countCalls.push(args);
+            return 2;
+          },
+        },
+      },
+    );
+
+    assert.deepEqual(result, { ok: true });
+    assert.deepEqual(countCalls, [
+      {
+        where: {
+          id: { in: [taxReceiptA, taxReceiptB] },
+          userId: "user-1",
+        },
+      },
+    ]);
+  });
+
+  it("rejects a ghost TAX_CALCULATED batch when any receipt is bound or belongs to another ghost", async () => {
+    const countCalls: unknown[] = [];
+    const result = await validateTaxCalculatedReceiptOwnership(
+      ghostActor,
+      [
+        taxCalculatedEvent("00000000-0000-0000-0000-000000000001", taxReceiptA),
+        taxCalculatedEvent("00000000-0000-0000-0000-000000000002", taxReceiptB),
+      ],
+      {
+        snaptaxReceipt: {
+          count: async (args: unknown) => {
+            countCalls.push(args);
+            return 1;
+          },
+        },
+      },
+    );
+
+    assert.deepEqual(result, {
+      ok: false,
+      code: "INVALID_RECEIPT",
+      message: "TAX_CALCULATED events must reference actor-owned receipts",
+      status: 403,
+    });
+    assert.deepEqual(countCalls, [
+      {
+        where: {
+          id: { in: [taxReceiptA, taxReceiptB] },
+          ghostId: "ghost-1",
+          userId: null,
+        },
+      },
+    ]);
+  });
 });

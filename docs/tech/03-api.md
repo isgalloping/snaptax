@@ -77,18 +77,16 @@ Header: **`X-Tax-Region`**（`us` \| `eu`；与客户端 `snap1099_region_candid
 
 ### `DELETE /api/users/me` · `DELETE /api/ghost/data`
 
-Body（可选）：
+Body（可选，兼容字段）：
 ```json
 {
-  "orphanGhosts": [
-    { "ghostId": "uuid", "token": "hmac-ghost-token" }
-  ]
+  "orphanGhostIds": ["uuid", "..."]
 }
 ```
 
 | 字段 | 说明 |
 |------|------|
-| `orphanGhosts` | 可省略 / 空数组；最多 20；每项须通过 `verifyGhostToken` 且 `ghostId` 匹配；裸 ID 无效 |
+| `orphanGhostIds` | 可省略 / 空数组；最多 20；**不授予删除范围**（服务端仅删除当前 cookie ghost 或 user 绑定 + 服务端历史归属） |
 
 Signed-in → `/api/users/me`；纯 Ghost → `/api/ghost/data`（已绑定 Google 的 ghost → **409** `GOOGLE_LOGIN_REQUIRED`）。Blob 删失败 → **503** `BLOB_DELETE_FAILED`（不继续删 DB）。
 

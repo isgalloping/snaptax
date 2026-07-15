@@ -112,7 +112,7 @@ describe("deleteAccountAndLocalData", () => {
   it("calls ghost API path when session has no user and no google cache", async () => {
     const order: string[] = [];
     let apiPath: boolean | null = null;
-    let sentOrphans: { ghostId: string; token: string }[] | null = null;
+    let sentOrphans: string[] | null = null;
 
     await deleteAccountAndLocalData({
       isOnline: () => true,
@@ -122,16 +122,13 @@ describe("deleteAccountAndLocalData", () => {
         order.push("ghost");
         return "g-current";
       },
-      getClientOrphanGhostPossession: (current) => {
+      getClientOrphanGhostIds: (current) => {
         assert.equal(current, "g-current");
-        return [
-          { ghostId: "g-old-a", token: "g-old-a.exp.sig" },
-          { ghostId: "g-old-b", token: "g-old-b.exp.sig" },
-        ];
+        return ["g-old-a", "g-old-b"];
       },
-      deleteAccountApi: async (useUserApi, orphanGhosts) => {
+      deleteAccountApi: async (useUserApi, orphanGhostIds) => {
         apiPath = useUserApi;
-        sentOrphans = orphanGhosts;
+        sentOrphans = orphanGhostIds;
         order.push("api");
       },
       clearLocalAppData: async () => {
@@ -140,17 +137,14 @@ describe("deleteAccountAndLocalData", () => {
     });
 
     assert.equal(apiPath, false);
-    assert.deepEqual(sentOrphans, [
-      { ghostId: "g-old-a", token: "g-old-a.exp.sig" },
-      { ghostId: "g-old-b", token: "g-old-b.exp.sig" },
-    ]);
+    assert.deepEqual(sentOrphans, ["g-old-a", "g-old-b"]);
     assert.deepEqual(order, ["ghost", "api", "local"]);
   });
 
   it("calls user API path with client orphans and skips ghost ensure", async () => {
     const order: string[] = [];
     let apiPath: boolean | null = null;
-    let sentOrphans: { ghostId: string; token: string }[] | null = null;
+    let sentOrphans: string[] | null = null;
 
     await deleteAccountAndLocalData({
       isOnline: () => true,
@@ -163,13 +157,13 @@ describe("deleteAccountAndLocalData", () => {
         order.push("ghost");
         return "unused";
       },
-      getClientOrphanGhostPossession: (current) => {
+      getClientOrphanGhostIds: (current) => {
         assert.equal(current, "g1");
-        return [{ ghostId: "g-orphan", token: "g-orphan.exp.sig" }];
+        return ["g-orphan"];
       },
-      deleteAccountApi: async (useUserApi, orphanGhosts) => {
+      deleteAccountApi: async (useUserApi, orphanGhostIds) => {
         apiPath = useUserApi;
-        sentOrphans = orphanGhosts;
+        sentOrphans = orphanGhostIds;
         order.push("api");
       },
       clearLocalAppData: async () => {
@@ -178,9 +172,7 @@ describe("deleteAccountAndLocalData", () => {
     });
 
     assert.equal(apiPath, true);
-    assert.deepEqual(sentOrphans, [
-      { ghostId: "g-orphan", token: "g-orphan.exp.sig" },
-    ]);
+    assert.deepEqual(sentOrphans, ["g-orphan"]);
     assert.deepEqual(order, ["api", "local"]);
   });
 
@@ -194,7 +186,7 @@ describe("deleteAccountAndLocalData", () => {
           fetchAuthMe: async () => ({ user: null, ghostId: "g1" }),
           loadGoogleUser: () => null,
           ensureGhostSession: async () => "g1",
-          getClientOrphanGhostPossession: () => [],
+          getClientOrphanGhostIds: () => [],
           deleteAccountApi: async () => {
             throw new Error("GOOGLE_LOGIN_REQUIRED");
           },
@@ -223,7 +215,7 @@ describe("deleteAccountAndLocalData", () => {
             ghostId: null,
           }),
           loadGoogleUser: () => null,
-          getClientOrphanGhostPossession: () => [],
+          getClientOrphanGhostIds: () => [],
           deleteAccountApi: async () => {
             throw new Error("DELETE_ACCOUNT_FAILED");
           },
@@ -250,7 +242,7 @@ describe("deleteAccountAndLocalData", () => {
             ghostId: "g1",
           }),
           loadGoogleUser: () => null,
-          getClientOrphanGhostPossession: () => [],
+          getClientOrphanGhostIds: () => [],
           hasPendingLocalWipe: () => false,
           markPendingLocalWipe: () => {
             marked = true;

@@ -38,6 +38,32 @@ export type BeginWebhookEventResult = {
   shouldProcess: boolean;
 };
 
+/** Narrow create payload — must not be `Record<string, unknown>` (breaks Prisma default assignability). */
+export type WebhookEventCreateData = {
+  channelCode: string;
+  eventId: string;
+  eventType: string;
+  occurredAt?: Date | null;
+  transactionId?: string | null;
+  adjustmentId?: string | null;
+  action?: string | null;
+  adjustmentStatus?: string | null;
+  payload: Prisma.InputJsonValue;
+  processingResult: string;
+};
+
+export type WebhookEventUpdateData = {
+  processingResult?: string;
+  processingReason?: string | null;
+  entitlementId?: string | null;
+  statusBefore?: string | null;
+  statusAfter?: string | null;
+  transactionId?: string | null;
+  adjustmentId?: string | null;
+  action?: string | null;
+  adjustmentStatus?: string | null;
+};
+
 export type WebhookEventStore = {
   findUnique: (args: {
     where: {
@@ -46,12 +72,30 @@ export type WebhookEventStore = {
     select: { id: true; processingResult: true };
   }) => Promise<{ id: string; processingResult: string } | null>;
   create: (args: {
-    data: Record<string, unknown>;
+    data: WebhookEventCreateData;
   }) => Promise<{ id: string }>;
   update: (args: {
     where: { id: string };
-    data: Record<string, unknown>;
+    data: WebhookEventUpdateData;
   }) => Promise<unknown>;
+};
+
+/**
+ * Adapter: Prisma delegate is not assignable to WebhookEventStore under
+ * strictFunctionTypes (create/update data would need Record → CreateInput).
+ */
+const prismaWebhookEventStore: WebhookEventStore = {
+  findUnique: (args) => prisma.snaptaxWebhookEvent.findUnique(args),
+  create: (args) =>
+    prisma.snaptaxWebhookEvent.create({
+      data: args.data,
+      select: { id: true },
+    }),
+  update: (args) =>
+    prisma.snaptaxWebhookEvent.update({
+      where: args.where,
+      data: args.data,
+    }),
 };
 
 function normalizeChannelCode(code: string): string {
@@ -64,7 +108,7 @@ function shouldProcessExisting(processingResult: string): boolean {
 
 export async function beginWebhookEvent(
   input: BeginWebhookEventInput,
-  store: WebhookEventStore = prisma.snaptaxWebhookEvent,
+  store: WebhookEventStore = prismaWebhookEventStore,
 ): Promise<BeginWebhookEventResult> {
   const channelCode = normalizeChannelCode(input.channelCode);
   const existing = await store.findUnique({
@@ -118,7 +162,7 @@ export async function beginWebhookEvent(
 export async function finishWebhookEvent(
   id: string,
   patch: FinishWebhookEventPatch,
-  store: WebhookEventStore = prisma.snaptaxWebhookEvent,
+  store: WebhookEventStore = prismaWebhookEventStore,
 ): Promise<void> {
   await store.update({
     where: { id },

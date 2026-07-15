@@ -1,8 +1,8 @@
 # Paddle Refund / Chargeback → Season Export Entitlement — Design
 
 **Date:** 2026-07-15  
-**Status:** Draft (pending user review)  
-**References:** `docs/tech/07-paddle-billing.md` · `docs/legal/refund.md` · `app/api/webhooks/paddle/route.ts` · `lib/billing/grantSeasonEntitlement.ts` · `prisma` `SnaptaxSeasonEntitlement`  
+**Status:** Approved  
+**References:** `docs/tech/07-paddle-billing.md` · `docs/legal/refund.md` · `app/api/webhooks/paddle/route.ts` · `lib/billing/grantSeasonEntitlement.ts` · `prisma` `SnaptaxSeasonEntitlement` · **Plan:** `docs/superpowers/plans/2026-07-15-paddle-refund-chargeback-entitlement.md`  
 **Scope:** Pause/stop/restore **tax-season Export** entitlement from Paddle refund & dispute webhooks; webhook audit log; API/client messaging; legal copy. No Admin UI, no email notifications, no Founder seat reclaim.
 
 ## Summary

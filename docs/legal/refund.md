@@ -48,6 +48,13 @@ Paddle may also offer refund options directly from your purchase receipt.
 
 A paid tax season includes **unlimited re-export for that season**. Needing another export file for the same season is not grounds for a refund — use **Export Again** in the app.
 
+## Export access after refunds and disputes
+
+- When a refund is **approved**, Export Tax Pack access for that purchased tax season is **stopped**. You may purchase the season again.
+- When a payment **dispute / chargeback** is opened, Export for that season is **paused** while the dispute is open.
+- If the dispute is resolved in our favor, Export may be **restored** automatically.
+- If the dispute is lost, access may remain paused until we review the account manually.
+
 ## Related
 
 - [Pricing](/pricing)

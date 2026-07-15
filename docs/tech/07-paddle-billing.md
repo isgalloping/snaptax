@@ -48,8 +48,10 @@ sequenceDiagram
 - **Product:** Snap1099 Tax Season Export
 - **Price:** $49 USD one-time
 - **Custom data:** `{ intentId }` — 由 `POST /api/billing/checkout-intent` 签发；**不再**传客户端 `userId`
-- **Webhook events:** `transaction.completed`
+- **Webhook events:** `transaction.completed`, `adjustment.created`, `adjustment.updated`
 - **Legacy `custom_data.userId`：** **production 禁用**（`legacy_user_id_disabled`）；preview/dev 仍接受并记 warn。紧急旁路：`ALLOW_PADDLE_LEGACY_USER_ID=1`
+- **Entitlement `status`:** `active` \| `disputed` \| `refunded` — 仅 `active` 可导出；审计表 `snaptax_webhook_events`（`channel_code=paddle`）
+- **Refund/chargeback：** approved refund → `refunded`；`chargeback_warning`/`chargeback` → `disputed`；`chargeback_reverse` → `active`（详见 design/plan）
 
 ## 7.5 Webhook 处理
 

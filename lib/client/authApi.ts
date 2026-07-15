@@ -103,11 +103,26 @@ export async function signOutApi(): Promise<void> {
   saveGoogleUser(null);
 }
 
-export async function fetchSeasonPaid(season: string): Promise<boolean> {
+export async function fetchSeasonEntitlement(
+  season: string,
+): Promise<{ paid: boolean; status: string | null; paidAt: string | null }> {
   const res = await apiFetch(`/api/entitlements/current?season=${season}`);
-  if (!res.ok) return false;
-  const data = (await res.json()) as { paid: boolean };
-  return data.paid;
+  if (!res.ok) return { paid: false, status: null, paidAt: null };
+  const data = (await res.json()) as {
+    paid: boolean;
+    status?: string | null;
+    paidAt?: string | null;
+  };
+  return {
+    paid: Boolean(data.paid),
+    status: data.status ?? null,
+    paidAt: data.paidAt ?? null,
+  };
+}
+
+export async function fetchSeasonPaid(season: string): Promise<boolean> {
+  const { paid } = await fetchSeasonEntitlement(season);
+  return paid;
 }
 
 export async function pollTaxRecalc(

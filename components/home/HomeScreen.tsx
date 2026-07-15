@@ -1700,6 +1700,7 @@ export function HomeScreen() {
         skipSoftGoogleSheet={skipSoftGoogleSheet}
         googleUser={auth.googleUser}
         seasonPaid={auth.seasonPaid}
+        entitlementStatus={auth.entitlementStatus}
         currentSeason={auth.currentSeason}
         onRefreshSeasonPaid={auth.refreshSeasonPaid}
         onUserSignedIn={auth.applyGoogleSignIn}

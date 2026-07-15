@@ -74,7 +74,7 @@ export async function getFounderProgramState(userId?: string) {
           founderTier: true,
           founderStatus: true,
           seasonEntitlements: {
-            where: { taxSeason: currentTaxSeason() },
+            where: { taxSeason: currentTaxSeason(), status: "active" },
             take: 1,
             select: { id: true },
           },

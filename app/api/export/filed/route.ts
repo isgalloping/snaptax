@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { apiError, mapErrorToResponse } from "@/lib/api/errors";
 import { getActor } from "@/lib/auth/getActor";
+import { isSeasonEntitlementPaid } from "@/lib/billing/isSeasonEntitlementPaid";
 import { prisma } from "@/lib/prisma";
 import { userAccountReceiptFilter } from "@/lib/receipts/accountCleanup";
 import { withRequestLog } from "@/lib/server/log/withRequestLog";
@@ -32,7 +33,7 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
         userId_taxSeason: { userId: actor.userId, taxSeason: season },
       },
     });
-    if (!entitlement) {
+    if (!entitlement || !isSeasonEntitlementPaid(entitlement.status)) {
       return apiError("PAYMENT_REQUIRED", "Tax season export not paid", 402);
     }
 

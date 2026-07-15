@@ -22,6 +22,9 @@ export async function ensureBypassEntitlement(
       paidAt: utcNow(),
       amount: 0,
       channelCode: "verify_bypass",
+      status: "active",
+      statusReason: "verify_bypass",
+      statusUpdatedAt: utcNow(),
     },
   });
   return true;

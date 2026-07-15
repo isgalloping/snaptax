@@ -595,6 +595,10 @@ export const DE_DE_COPY: UserCopy = {
       downloadAgain: "Download again",
       exportBlocked:
         "Export blocked. Premium license required to download official IRS documents.",
+      entitlementDisputed:
+        "Zahlungsstreit läuft. Export für diese Saison ist pausiert. Sie können erneut kaufen oder den Support kontaktieren.",
+      entitlementRefunded:
+        "Der Exportzugang für diese Saison endete nach einer Rückerstattung. Sie können erneut kaufen, um Export freizuschalten.",
       dismiss: "Dismiss",
     },
     privacyCenter: {

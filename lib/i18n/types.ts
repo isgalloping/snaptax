@@ -480,6 +480,8 @@ export type UserCopy = {
       sampleReady: string;
       downloadAgain: string;
       exportBlocked: string;
+      entitlementDisputed: string;
+      entitlementRefunded: string;
       dismiss: string;
     };
     privacyCenter: {

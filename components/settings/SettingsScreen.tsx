@@ -59,6 +59,7 @@ interface SettingsScreenProps {
   onLocalDataCleared?: () => void;
   googleUser: GoogleUser | null;
   seasonPaid: boolean;
+  entitlementStatus?: string | null;
   currentSeason: string;
   isSignedIn: boolean;
   authHydrated?: boolean;
@@ -99,6 +100,7 @@ export function SettingsScreen({
   onLocalDataCleared,
   googleUser,
   seasonPaid,
+  entitlementStatus = null,
   currentSeason,
   isSignedIn,
   authHydrated = true,
@@ -345,6 +347,12 @@ export function SettingsScreen({
 
   const showRedBanner = isSignedIn && !seasonPaid && showExportBlocked;
   const showGreenBanner = !isSignedIn && showSampleReady && !showRedBanner;
+  const exportBlockedMessage =
+    entitlementStatus === "disputed"
+      ? copy.settings.exportBanners.entitlementDisputed
+      : entitlementStatus === "refunded"
+        ? copy.settings.exportBanners.entitlementRefunded
+        : copy.settings.exportBanners.exportBlocked;
 
   if (viewState === "language") {
     return (
@@ -510,6 +518,7 @@ export function SettingsScreen({
         {showRedBanner && (
           <ExportStatusBanner
             variant="export-blocked"
+            blockedMessage={exportBlockedMessage}
             onDismiss={handleDismissExportBlocked}
           />
         )}

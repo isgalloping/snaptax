@@ -10,7 +10,7 @@ import {
 } from "@/lib/client/authStorage";
 import {
   fetchAuthMe,
-  fetchSeasonPaid,
+  fetchSeasonEntitlement,
   signInWithGoogleApi,
   type GoogleAuthResponse,
 } from "@/lib/client/authApi";
@@ -26,6 +26,9 @@ export function useAuthSession() {
   const [googleUser, setGoogleUser] = useState<GoogleUser | null>(null);
   const [industry, setIndustry] = useState<Industry | null>(null);
   const [seasonPaid, setSeasonPaidState] = useState(false);
+  const [entitlementStatus, setEntitlementStatus] = useState<string | null>(
+    null,
+  );
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
@@ -49,10 +52,11 @@ export function useAuthSession() {
             if (me.user.industry) {
               setIndustry(me.user.industry as Industry);
             }
-            const paid = await fetchSeasonPaid(seasonKey());
+            const ent = await fetchSeasonEntitlement(seasonKey());
             if (!cancelled) {
-              setSeasonPaidState(paid);
-              if (!paid) setSeasonPaid(seasonKey(), false);
+              setSeasonPaidState(ent.paid);
+              setEntitlementStatus(ent.status);
+              if (!ent.paid) setSeasonPaid(seasonKey(), false);
             }
           } else {
             setGoogleUser(null);
@@ -97,6 +101,7 @@ export function useAuthSession() {
     await signOutAndResetSession();
     setGoogleUser(null);
     setSeasonPaidState(false);
+    setEntitlementStatus(null);
     const season = seasonKey();
     setSeasonPaid(season, false);
     clearSeasonExportDone(season);
@@ -106,14 +111,16 @@ export function useAuthSession() {
     const season = seasonKey();
     setSeasonPaid(season, true);
     setSeasonPaidState(true);
+    setEntitlementStatus("active");
   }, []);
 
   const refreshSeasonPaid = useCallback(async () => {
     if (!navigator.onLine || !googleUser) return;
     const season = seasonKey();
-    const paid = await fetchSeasonPaid(season);
-    setSeasonPaidState(paid);
-    setSeasonPaid(season, paid);
+    const ent = await fetchSeasonEntitlement(season);
+    setSeasonPaidState(ent.paid);
+    setEntitlementStatus(ent.status);
+    setSeasonPaid(season, ent.paid);
   }, [googleUser]);
 
   const resetAfterAccountDelete = useCallback(() => {
@@ -121,6 +128,7 @@ export function useAuthSession() {
     setGoogleUser(null);
     setIndustry(null);
     setSeasonPaidState(false);
+    setEntitlementStatus(null);
     clearSeasonExportDone(seasonKey());
   }, []);
 
@@ -130,6 +138,7 @@ export function useAuthSession() {
     industry,
     isSignedIn: googleUser !== null,
     seasonPaid,
+    entitlementStatus,
     currentSeason: seasonKey(),
     signInWithGoogle,
     applyGoogleSignIn,

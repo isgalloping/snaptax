@@ -6,13 +6,15 @@ import {
   readGhostTokenFromCookie,
   verifyGhostToken,
 } from "@/lib/auth/ghostToken";
+import { orphanGhostsBodyField } from "@/lib/server/orphanGhostPossessionSchema";
 import { logEvent } from "@/lib/server/log/logEvent";
 import { withRequestLog } from "@/lib/server/log/withRequestLog";
 import { runOrphanGhostMergeForUser } from "@/lib/server/runOrphanGhostMergeForUser";
+import { verifyClientOrphanGhostPossession } from "@/lib/server/verifyClientOrphanGhostPossession";
 import { prisma } from "@/lib/prisma";
 
 const bodySchema = z.object({
-  orphanGhostIds: z.array(z.string().min(1)).max(20).default([]),
+  orphanGhosts: orphanGhostsBodyField,
 });
 
 export const POST = withRequestLog("api.sync", async (request, _context) => {
@@ -33,12 +35,17 @@ export const POST = withRequestLog("api.sync", async (request, _context) => {
       throw new Error("UNAUTHORIZED");
     }
 
-    bodySchema.parse(await request.json());
+    const body = bodySchema.parse(await request.json());
+    const verifiedClientOrphanGhostIds = verifyClientOrphanGhostPossession(
+      body.orphanGhosts,
+    );
+
     const result = await prisma.$transaction((tx) =>
       runOrphanGhostMergeForUser(
         {
           userId: actor.userId,
           currentGhostId,
+          verifiedClientOrphanGhostIds,
         },
         tx,
       ),

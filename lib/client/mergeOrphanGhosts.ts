@@ -1,7 +1,7 @@
 import {
   apiFetch,
   ensureGhostSession,
-  getClientOrphanGhostIds,
+  getClientOrphanGhostPossession,
 } from "@/lib/client/ghostClient";
 
 export type OrphanGhostMergeClientResult = {
@@ -15,13 +15,12 @@ export async function mergeOrphanGhostsOnLogin(): Promise<OrphanGhostMergeClient
 
   try {
     const currentGhostId = await ensureGhostSession();
-    const orphanGhostIds = getClientOrphanGhostIds(currentGhostId);
-    if (orphanGhostIds.length === 0) return null;
+    const orphanGhosts = getClientOrphanGhostPossession(currentGhostId);
 
     const res = await apiFetch("/api/sync/ghost-orphans", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ orphanGhostIds }),
+      body: JSON.stringify({ orphanGhosts }),
     });
     if (!res.ok) return null;
 

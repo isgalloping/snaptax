@@ -11,6 +11,8 @@ export type RunOrphanGhostMergeInput = {
   userId: string;
   currentGhostId: string;
   rebindPreviousGhostId?: string | null;
+  /** HMAC-verified possession; never pass untrusted client IDs here. */
+  verifiedClientOrphanGhostIds?: string[];
 };
 
 export async function runOrphanGhostMergeForUser(
@@ -22,6 +24,7 @@ export async function runOrphanGhostMergeForUser(
     currentGhostId: input.currentGhostId,
     rebindPreviousGhostId: input.rebindPreviousGhostId ?? null,
     historicalGhostIds,
+    verifiedClientOrphanGhostIds: input.verifiedClientOrphanGhostIds,
   });
 
   if (ghostIds.length === 0) {

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z, ZodError } from "zod";
 import {
   parseTaxRegionHeader,
   resolveInitialDataRegion,
@@ -14,6 +15,8 @@ import {
   signSessionToken,
 } from "@/lib/auth/session";
 import { bindGhostAndMigrateData } from "@/lib/server/bindGhostAndMigrateData";
+import { orphanGhostsBodyField } from "@/lib/server/orphanGhostPossessionSchema";
+import { verifyClientOrphanGhostPossession } from "@/lib/server/verifyClientOrphanGhostPossession";
 import { prisma } from "@/lib/prisma";
 import {
   enqueueTaxRecalc,
@@ -25,12 +28,17 @@ import { shouldRecalcOnLogin } from "@/lib/tax/shouldRecalcOnLogin";
 import type { TaxRegion } from "@/lib/tax/types";
 import { utcNow } from "@/lib/time/utc";
 
+const googleAuthBodySchema = z.object({
+  credential: z.string().min(1),
+  orphanGhosts: orphanGhostsBodyField,
+});
+
 export const POST = withRequestLog("api.auth", async (request, _context) => {
   try {
-    const body = (await request.json()) as {
-      credential?: string;
-    };
-    if (!body.credential) throw new Error("INVALID_GOOGLE_TOKEN");
+    const body = googleAuthBodySchema.parse(await request.json());
+    const verifiedClientOrphanGhostIds = verifyClientOrphanGhostPossession(
+      body.orphanGhosts,
+    );
 
     const cookieHeader = request.headers.get("cookie");
     const ghostToken = readGhostTokenFromCookie(cookieHeader);
@@ -110,6 +118,7 @@ export const POST = withRequestLog("api.auth", async (request, _context) => {
         {
           existingGhostBinding: existingBinding,
           userBinding,
+          verifiedClientOrphanGhostIds,
         },
         tx,
       ),
@@ -205,6 +214,9 @@ export const POST = withRequestLog("api.auth", async (request, _context) => {
 
     return res;
   } catch (err) {
+    if (err instanceof ZodError) {
+      return mapErrorToResponse(new Error("INVALID_REQUEST"));
+    }
     if (err instanceof Error && err.message === "GHOST_ALREADY_BOUND") {
       return NextResponse.json(
         { error: { code: "GHOST_ALREADY_BOUND", message: "Ghost already linked" } },

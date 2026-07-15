@@ -55,10 +55,14 @@ describe("mergeOrphanGhostsOnLogin", () => {
     });
   });
 
-  it("posts client-known orphan ghosts after ensuring the current ghost session", async () => {
+  it("posts HMAC-proven orphan ghosts after ensuring the current ghost session", async () => {
     const storage = installBrowserStubs({ online: true });
     storage.set("snap1099_ghost_id", "ghost-old");
     storage.set("snap1099_known_ghost_ids", JSON.stringify(["ghost-old"]));
+    storage.set(
+      "snap1099_known_ghost_tokens",
+      JSON.stringify({ "ghost-old": "ghost-old.exp.sig" }),
+    );
 
     const calls: Array<{ input: string; init?: RequestInit }> = [];
     globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -66,10 +70,16 @@ describe("mergeOrphanGhostsOnLogin", () => {
       calls.push({ input: url, init });
 
       if (url === "/api/ghost/register") {
-        return new Response(JSON.stringify({ ghostId: "ghost-current" }), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        });
+        return new Response(
+          JSON.stringify({
+            ghostId: "ghost-current",
+            ghostToken: "ghost-current.exp.sig",
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          },
+        );
       }
 
       if (url === "/api/sync/ghost-orphans") {
@@ -96,29 +106,53 @@ describe("mergeOrphanGhostsOnLogin", () => {
     assert.equal(calls[1]?.input, "/api/sync/ghost-orphans");
     assert.equal(calls[1]?.init?.method, "POST");
     assert.equal(calls[1]?.init?.credentials, "include");
-    assert.equal(calls[1]?.init?.body, JSON.stringify({ orphanGhostIds: ["ghost-old"] }));
+    assert.equal(
+      calls[1]?.init?.body,
+      JSON.stringify({
+        orphanGhosts: [{ ghostId: "ghost-old", token: "ghost-old.exp.sig" }],
+      }),
+    );
   });
 
-  it("skips the orphan merge request when the current ghost is the only known id", async () => {
+  it("still posts merge with empty orphanGhosts when only current ghost is known", async () => {
     const storage = installBrowserStubs({ online: true });
     storage.set("snap1099_ghost_id", "ghost-current");
     storage.set("snap1099_known_ghost_ids", JSON.stringify(["ghost-current"]));
+    storage.set(
+      "snap1099_known_ghost_tokens",
+      JSON.stringify({ "ghost-current": "tok" }),
+    );
 
     const calls: string[] = [];
-    globalThis.fetch = (async (input: RequestInfo | URL) => {
+    globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
       calls.push(url);
-      assert.equal(url, "/api/ghost/register");
-      return new Response(JSON.stringify({ ghostId: "ghost-current" }), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      });
+      if (url === "/api/ghost/register") {
+        return new Response(
+          JSON.stringify({ ghostId: "ghost-current", ghostToken: "tok" }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          },
+        );
+      }
+      if (url === "/api/sync/ghost-orphans") {
+        assert.equal(init?.body, JSON.stringify({ orphanGhosts: [] }));
+        return new Response(
+          JSON.stringify({ mergedGhostIds: [], totalReceipts: 0 }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          },
+        );
+      }
+      throw new Error(`unexpected fetch ${url}`);
     }) as typeof fetch;
 
     const result = await mergeOrphanGhostsOnLogin();
 
-    assert.equal(result, null);
-    assert.deepEqual(calls, ["/api/ghost/register"]);
+    assert.deepEqual(result, { mergedGhostIds: [], totalReceipts: 0 });
+    assert.deepEqual(calls, ["/api/ghost/register", "/api/sync/ghost-orphans"]);
   });
 
   it("does not create a ghost session or merge request while offline", async () => {

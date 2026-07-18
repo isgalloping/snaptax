@@ -10,7 +10,8 @@ import { withRequestLog } from "@/lib/server/log/withRequestLog";
 export const DELETE = withRequestLog("api.user", async (request) => {
   try {
     const actor = await getActor(request);
-    if (actor.kind !== "ghost") throw new Error("UNAUTHORIZED");
+    // Valid Google session must use DELETE /api/users/me — not a bare 401.
+    if (actor.kind !== "ghost") throw new Error("GOOGLE_LOGIN_REQUIRED");
     if (actor.bound) throw new Error("GOOGLE_LOGIN_REQUIRED");
 
     await parseDeleteAccountOrphanGhostIds(request);

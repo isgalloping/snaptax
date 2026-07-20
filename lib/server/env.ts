@@ -46,7 +46,7 @@ export function getAuthSecret(): string {
 }
 
 export function getOpenAiApiKey(): string {
-  return firstDefined(process.env.OPENAI_API_KEY, process.env.OPENAI_SECRET_KEY);
+  return firstDefined(process.env.OPENAI_API_KEY);
 }
 
 /** OpenAI-compatible gateway base URL (e.g. https://maxapi.pro/v1). Empty = official OpenAI. */
@@ -57,11 +57,7 @@ export function getOpenAiBaseUrl(): string | undefined {
 }
 
 export function getOpenAiModel(): string {
-  return firstDefined(
-    process.env.OPENAI_MODEL,
-    process.env.OPENAi_MODEL_NAME,
-    "gpt-4o-mini",
-  );
+  return firstDefined(process.env.OPENAI_MODEL, "gpt-4o-mini");
 }
 
 export function getOpenAiClassifyModel(): string {
@@ -166,11 +162,5 @@ export function applyEnvAliases(): void {
   }
   if (!process.env.AUTH_SECRET && getAuthSecret()) {
     process.env.AUTH_SECRET = getAuthSecret();
-  }
-  if (!process.env.OPENAI_API_KEY && getOpenAiApiKey()) {
-    process.env.OPENAI_API_KEY = getOpenAiApiKey();
-  }
-  if (!process.env.OPENAI_MODEL && getOpenAiModel()) {
-    process.env.OPENAI_MODEL = getOpenAiModel();
   }
 }

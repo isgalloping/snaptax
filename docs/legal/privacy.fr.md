@@ -1,9 +1,11 @@
-# Politique de confidentialité Snap1099
+# Politique de confidentialité SnapTax
 
-**Dernière mise à jour :** juin 2026  
+**Dernière mise à jour :** juillet 2026  
 **Juridictions applicables :** États-Unis (y compris CPRA Californie) & Union européenne (RGPD)
 
-Bienvenue sur Snap1099. Cette Politique de confidentialité explique comment nous collectons, utilisons, traitons et protégeons vos données lorsque vous utilisez l'application Snap1099 (« l'Application »).
+Bienvenue sur SnapTax. SnapTax et Snap1099 désignent la même application (« l'Application »). Cette Politique de confidentialité explique comment nous collectons, utilisons, traitons et protégeons vos données.
+
+Nous aidons les contractuels, indépendants et petites entreprises à organiser leurs reçus et préparer les exports de saison fiscale. Nous ne vendons pas vos données et ne les utilisons pas pour la publicité.
 
 ## 1. Confidentialité dès la conception & propriété des données
 

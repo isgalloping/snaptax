@@ -1,9 +1,11 @@
-# Snap1099 Datenschutzerklärung
+# SnapTax Datenschutzerklärung
 
-**Zuletzt aktualisiert:** Juni 2026  
+**Zuletzt aktualisiert:** Juli 2026  
 **Anwendbare Rechtsordnungen:** Vereinigte Staaten (einschließlich Kalifornien CPRA) & Europäische Union (DSGVO)
 
-Willkommen bei Snap1099. Diese Datenschutzerklärung erläutert, wie wir Ihre Daten erheben, verwenden, verarbeiten und schützen, wenn Sie die Snap1099-Anwendung („die App") nutzen.
+Willkommen bei SnapTax. SnapTax und Snap1099 bezeichnen dieselbe Anwendung („die App"). Diese Datenschutzerklärung erläutert, wie wir Ihre Daten erheben, verwenden, verarbeiten und schützen.
+
+Wir helfen Auftragnehmern, Selbstständigen und kleinen Unternehmen, Belege zu organisieren und Steuersaison-Exporte vorzubereiten. Wir verkaufen Ihre Daten nicht und nutzen sie nicht für Werbung.
 
 ## 1. Datenschutz by Design & Dateneigentum
 

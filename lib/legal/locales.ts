@@ -23,7 +23,7 @@ export const LEGAL_CONTACT_EMAIL = "legal@snap1099.com";
 const EN: LegalBundle = {
   privacyTitle: "Privacy Policy",
   termsTitle: "Terms of Service",
-  lastUpdatedLabel: "Last Updated: June 2026 · GDPR & CPRA",
+  lastUpdatedLabel: "Last Updated: July 2026 · GDPR & CPRA",
   openFullPage: (title) => `Open full ${title} page`,
   close: "Close",
   dataStorageLabel:
@@ -82,7 +82,14 @@ const EN: LegalBundle = {
     {
       title: "Service",
       body: [
-        "Snap1099 helps you photograph receipts, categorize expenses with AI, and export for tax prep. This is a tool, not tax or legal advice.",
+        "SnapTax helps contractors, self-employed workers, and small businesses organize receipts, track expenses, and prepare export reports for tax season.",
+        "This is a recordkeeping and export tool, not tax or legal advice. We do not file taxes or provide official government forms.",
+      ],
+    },
+    {
+      title: "Operator",
+      body: [
+        "SnapTax and Snap1099 refer to the same App, operated by the provider at legal@snap1099.com.",
       ],
     },
     {
@@ -90,6 +97,13 @@ const EN: LegalBundle = {
       body: [
         "Ghost use before Google Sign-In. Device loss without sign-in means data cannot be recovered.",
         "Tax-season export: one-time Paddle fee per season; unlimited re-export that season when paid.",
+      ],
+    },
+    {
+      title: "Export Reports",
+      body: [
+        '"Tax-ready" means organized export files for your review — not IRS or software approval.',
+        "You are responsible for verifying amounts and categories before filing.",
       ],
     },
     {
@@ -111,7 +125,7 @@ const EN: LegalBundle = {
 const FR: LegalBundle = {
   privacyTitle: "Politique de confidentialité",
   termsTitle: "Conditions d'utilisation",
-  lastUpdatedLabel: "Dernière mise à jour : juin 2026 · RGPD & CPRA",
+  lastUpdatedLabel: "Dernière mise à jour : juillet 2026 · RGPD & CPRA",
   openFullPage: (title) => `Ouvrir la page complète — ${title}`,
   close: "Fermer",
   dataStorageLabel:
@@ -170,7 +184,14 @@ const FR: LegalBundle = {
     {
       title: "Service",
       body: [
-        "Snap1099 vous aide à photographier des reçus, classer vos dépenses avec l'IA et exporter pour la préparation fiscale. Outil, pas conseil fiscal.",
+        "SnapTax aide les contractuels, indépendants et petites entreprises à organiser leurs reçus, suivre leurs dépenses et préparer des exports pour la saison fiscale.",
+        "Outil de tenue de registres et d'export, pas conseil fiscal. Nous ne déposons pas de déclarations ni ne fournissons de formulaires officiels.",
+      ],
+    },
+    {
+      title: "Exploitant",
+      body: [
+        "SnapTax et Snap1099 désignent la même Application, exploitée par le prestataire à legal@snap1099.com.",
       ],
     },
     {
@@ -178,6 +199,13 @@ const FR: LegalBundle = {
       body: [
         "Utilisation Ghost avant Google Sign-In. Perte d'appareil sans connexion = données non récupérables.",
         "Export de saison fiscale : frais unique Paddle par saison ; réexport illimité cette saison si payé.",
+      ],
+    },
+    {
+      title: "Rapports d'export",
+      body: [
+        "« Prêt pour les impôts » = fichiers organisés pour votre examen — pas approbation IRS ou logiciel.",
+        "Vous devez vérifier montants et catégories avant dépôt.",
       ],
     },
     {
@@ -199,7 +227,7 @@ const FR: LegalBundle = {
 const DE: LegalBundle = {
   privacyTitle: "Datenschutzerklärung",
   termsTitle: "Nutzungsbedingungen",
-  lastUpdatedLabel: "Zuletzt aktualisiert: Juni 2026 · DSGVO & CPRA",
+  lastUpdatedLabel: "Zuletzt aktualisiert: Juli 2026 · DSGVO & CPRA",
   openFullPage: (title) => `Vollständige Seite öffnen — ${title}`,
   close: "Schließen",
   dataStorageLabel:
@@ -258,7 +286,14 @@ const DE: LegalBundle = {
     {
       title: "Leistung",
       body: [
-        "Snap1099 hilft beim Fotografieren, KI-Kategorisieren und Exportieren für die Steuervorbereitung. Werkzeug, keine Steuerberatung.",
+        "SnapTax hilft Auftragnehmern, Selbstständigen und kleinen Unternehmen, Belege zu organisieren, Ausgaben zu verfolgen und Exporte für die Steuersaison vorzubereiten.",
+        "Aufzeichnungs- und Exportwerkzeug, keine Steuerberatung. Wir reichen keine Steuern ein und stellen keine offiziellen Behördenformulare bereit.",
+      ],
+    },
+    {
+      title: "Betreiber",
+      body: [
+        "SnapTax und Snap1099 bezeichnen dieselbe App, betrieben vom Anbieter unter legal@snap1099.com.",
       ],
     },
     {
@@ -266,6 +301,13 @@ const DE: LegalBundle = {
       body: [
         "Ghost-Nutzung vor Google-Anmeldung. Geräteverlust ohne Anmeldung = Daten nicht wiederherstellbar.",
         "Steuersaison-Export: einmalige Paddle-Gebühr pro Saison; unbegrenzter Re-Export in bezahlter Saison.",
+      ],
+    },
+    {
+      title: "Exportberichte",
+      body: [
+        "„Steuerfertig“ bedeutet organisierte Exportdateien zur Prüfung — keine IRS- oder Software-Genehmigung.",
+        "Sie sind für die Prüfung von Beträgen und Kategorien vor Abgabe verantwortlich.",
       ],
     },
     {

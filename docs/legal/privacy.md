@@ -1,9 +1,11 @@
-# Snap1099 Privacy Policy
+# SnapTax Privacy Policy
 
-**Last Updated:** June 2026  
+**Last Updated:** July 2026  
 **Applicable Jurisdictions:** United States (including California CPRA) & European Union (GDPR)
 
-Welcome to Snap1099. This Privacy Policy explains how we collect, use, process, and safeguard your data when you use the Snap1099 application ("the App").
+Welcome to SnapTax. SnapTax and Snap1099 refer to the same application ("the App"). This Privacy Policy explains how we collect, use, process, and safeguard your data when you use the App.
+
+We help contractors, self-employed workers, and small businesses organize receipts and prepare tax-season exports. We do not sell your data or use it for advertising.
 
 ## 1. Privacy by Design & Data Ownership
 

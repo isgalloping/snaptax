@@ -97,7 +97,15 @@ const EN: LegalBundle = {
     {
       title: "Service",
       body: [
-        "SnapTax helps you photograph receipts, categorize expenses with AI, and export for tax prep. This is a tool, not tax or legal advice.",
+        "SnapTax helps contractors, self-employed workers, and small businesses organize receipts, track expenses, and prepare export reports for tax season.",
+        "This is a recordkeeping and export tool, not tax or legal advice. We do not file taxes or provide official government forms.",
+      ],
+    },
+    {
+      title: "Export Reports",
+      body: [
+        '"Tax-ready" means organized export files for your review — not IRS or software approval.',
+        "You are responsible for verifying amounts and categories before filing.",
       ],
     },
     {
@@ -193,7 +201,15 @@ const FR: LegalBundle = {
     {
       title: "Service",
       body: [
-        "SnapTax vous aide à photographier des reçus, classer vos dépenses avec l'IA et exporter pour la préparation fiscale. Outil, pas conseil fiscal.",
+        "SnapTax aide les contractuels, indépendants et petites entreprises à organiser leurs reçus, suivre leurs dépenses et préparer des exports pour la saison fiscale.",
+        "Outil de tenue de registres et d'export, pas conseil fiscal. Nous ne déposons pas de déclarations ni ne fournissons de formulaires gouvernementaux officiels.",
+      ],
+    },
+    {
+      title: "Rapports d'export",
+      body: [
+        "« Prêt pour les impôts » = fichiers organisés pour votre examen — pas approbation IRS ou logiciel.",
+        "Vous êtes responsable de vérifier montants et catégories avant dépôt.",
       ],
     },
     {
@@ -289,7 +305,15 @@ const DE: LegalBundle = {
     {
       title: "Leistung",
       body: [
-        "SnapTax hilft beim Fotografieren, KI-Kategorisieren und Exportieren für die Steuervorbereitung. Werkzeug, keine Steuerberatung.",
+        "SnapTax hilft Auftragnehmern, Selbstständigen und kleinen Unternehmen, Belege zu organisieren, Ausgaben zu verfolgen und Exporte für die Steuersaison vorzubereiten.",
+        "Werkzeug zur Aufzeichnung und zum Export, keine Steuerberatung. Wir reichen keine Steuererklärungen ein und stellen keine offiziellen Behördenformulare bereit.",
+      ],
+    },
+    {
+      title: "Exportberichte",
+      body: [
+        "„Steuerfertig“ bedeutet organisierte Exportdateien zur Prüfung — keine IRS- oder Software-Genehmigung.",
+        "Sie sind für die Prüfung von Beträgen und Kategorien vor Abgabe verantwortlich.",
       ],
     },
     {

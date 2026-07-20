@@ -121,7 +121,7 @@ export const DE_DE_COPY: UserCopy = {
     landing: {
       headlineLead: "Behalten Sie mehr von Ihrem",
       headlineAccent: "harte Arbeit verdienten Geld.",
-      tagline: "Ausgaben ordnen. Unterlagen für die Steuersaison vorbereiten.",
+      tagline: "Belege organisieren und Exporte für die Steuersaison vorbereiten.",
       check1: "Funktioniert offline",
       check2: "10 Belege in 10 Sek.",
       check3: "Keine Anmeldung nötig",
@@ -211,7 +211,7 @@ export const DE_DE_COPY: UserCopy = {
       },
     },
     trustBar: {
-      message: "Die IRS sieht Ihre Belege nie.",
+      message: "Ihre Belege bleiben privat, sofern Sie sie nicht teilen.",
       learnMore: "Mehr erfahren",
     },
     exitConfirm: {
@@ -281,8 +281,8 @@ export const DE_DE_COPY: UserCopy = {
       privacyTitle: "Your Privacy & Security",
       privacyPoints: [
         {
-          title: "100% Private",
-          body: "Only you can see your receipts. Never shared with the IRS or anyone else.",
+          title: "Standardmäßig privat",
+          body: "Nur Sie sehen Ihre Belege, außer Sie teilen sie oder das Gesetz es erfordert.",
         },
         {
           title: "Secure in the U.S.",
@@ -375,15 +375,15 @@ export const DE_DE_COPY: UserCopy = {
     maybeLater: "Maybe later",
     unlockNow: "Unlock now — {price}",
     features: [
-      "Export unlimited receipts",
-      "CPA-ready Excel tax pack",
-      "All tax categories & reports",
-      "Deduction finder insights",
-      "Secure & IRS compliant",
+      "Unbegrenzter Belegexport",
+      "Tabellenexporte für Ihren CPA",
+      "Ausgabenkategorien & Zusammenfassungen",
+      "Organisierte Unterlagen für die Steuersaison",
+      "Sicheres Cloud-Backup",
     ],
     oneTimeSeason: "Einmalig für Steuersaison {season}",
     description:
-      "Exportieren Sie eine IRS-fertige Excel-Datei — an Ihren CPA senden oder in TurboTax importieren. Spart Stunden manueller Eingabe.",
+      "Organisierte Ausgabenberichte exportieren — an CPA senden oder in TurboTax importieren. Spart Stunden manueller Eingabe.",
     backupWarning:
       "Melden Sie sich mit Google an, bevor Sie das Handy wechseln, sonst gehen lokale Daten verloren.",
     openingPaddle: "Paddle wird geöffnet…",
@@ -548,7 +548,7 @@ export const DE_DE_COPY: UserCopy = {
       snap1099K: "1099-K fotografieren",
       trustLine: "Von Tausenden Selbstständigen genutzt",
       taxEstimateDisclaimer:
-        "Est. Tax Saved ist nur eine Schätzung, keine Steuerberatung. Siehe Bedingungen §6.",
+        "Est. Tax Saved ist nur eine Schätzung, keine Steuerberatung. Siehe Bedingungen §7.",
       mostPopular: "Am beliebtesten",
       states: {
         final_deadline: {
@@ -594,7 +594,7 @@ export const DE_DE_COPY: UserCopy = {
       sampleReady: "Sample export ready",
       downloadAgain: "Download again",
       exportBlocked:
-        "Export blocked. Premium license required to download official IRS documents.",
+        "Export blockiert. Bezahlter Steuersaison-Export erforderlich.",
       entitlementDisputed:
         "Zahlungsstreit läuft. Export für diese Saison ist pausiert. Sie können erneut kaufen oder den Support kontaktieren.",
       entitlementRefunded:
@@ -606,8 +606,8 @@ export const DE_DE_COPY: UserCopy = {
       gotIt: "Got it",
       points: [
         {
-          title: "100% Private",
-          body: "Only you can see your receipts. Never shared with the IRS or anyone else.",
+          title: "Standardmäßig privat",
+          body: "Nur Sie sehen Ihre Belege, außer Sie teilen sie oder das Gesetz es erfordert.",
         },
         {
           title: "Secure in the U.S.",
@@ -683,7 +683,7 @@ export const DE_DE_COPY: UserCopy = {
       buttonLocked: "IRS-Steuerpaket {season} exportieren (49 $)",
       buttonPaid: "Erneut exportieren",
       exporting: "Export läuft…",
-      shareText: "Ihr IRS-fertiger Ausgabenexport",
+      shareText: "Ihr organisierter Ausgabenexport",
       offline: "Sie sind offline. Verbinden Sie sich zum Exportieren.",
       noReceipts:
         "Keine abgeschlossenen Belege zum Exportieren. Fotografieren Sie zuerst einige Belege!",
@@ -929,7 +929,7 @@ export const DE_DE_COPY: UserCopy = {
       "Optimiertes Matrixformat für sofortigen Import in Steuersoftware.",
     formatCpaTitle: "1099-Prüfbelegpaket (ZIP)",
     formatCpaHint:
-      "Originalbelege nach IRS-Zeile sortiert — Ihr Audit-Sicherheitsnetz.",
+      "Prüfpfad mit Ihren originalen Belegfotos für Ihre Unterlagen.",
     sharing: "Teilen-Menü wird geöffnet…",
     imagesComplete: "{included} von {eligible} Belegbildern enthalten",
     imagesMissing: "{missing} Belegbilder konnten nicht eingeschlossen werden",
@@ -943,7 +943,7 @@ export const DE_DE_COPY: UserCopy = {
       "Kategorie konnte nicht gespeichert werden. Erneut versuchen.",
     formatCpaPdfTitle: "Schedule-C-Spiegel-PDF",
     formatCpaPdfHint:
-      "Alle IRS Schedule C Part II-Zeilen — zum Übertragen in FreeTaxUSA oder Papierformulare.",
+      "Schedule-C-Zusammenfassungs-PDF mit Links zu Ihren Belegfotos — zur Prüfung durch Ihren CPA.",
     formatTxfTitle: "TXF für Steuersoftware",
     formatTxfHint:
       "Buchhaltungsformat für Desktop-Steuertools (V042-Blöcke).",

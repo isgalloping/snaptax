@@ -120,7 +120,7 @@ export const EN_US_COPY: UserCopy = {
       landing: {
         headlineLead: "Keep More of Your",
         headlineAccent: "Hard Earned Money.",
-        tagline: "Organize expenses. Prepare tax-season records.",
+        tagline: "Organize receipts and prepare tax-season export reports.",
         check1: "Works Offline",
         check2: "10 Receipts in 10 Sec",
         check3: "No Signup Needed",
@@ -206,7 +206,7 @@ export const EN_US_COPY: UserCopy = {
         },
       },
       trustBar: {
-        message: "IRS never sees your receipts.",
+        message: "Your receipts stay private unless you share them.",
         learnMore: "Learn more",
       },
       exitConfirm: {
@@ -276,8 +276,8 @@ export const EN_US_COPY: UserCopy = {
         privacyTitle: "Your Privacy & Security",
         privacyPoints: [
           {
-            title: "100% Private",
-            body: "Only you can see your receipts. Never shared with the IRS or anyone else.",
+            title: "Private by default",
+            body: "Only you can see your receipts unless you share them or law requires disclosure.",
           },
           {
             title: "Secure in the U.S.",
@@ -371,14 +371,14 @@ export const EN_US_COPY: UserCopy = {
       unlockNow: "Unlock now — {price}",
       features: [
         "Export unlimited receipts",
-        "CPA-ready Excel tax pack",
-        "All tax categories & reports",
-        "Deduction finder insights",
-        "Secure & IRS compliant",
+        "Spreadsheet exports for your CPA",
+        "Expense categories & summary reports",
+        "Organized records for tax season",
+        "Secure cloud backup",
       ],
       oneTimeSeason: "One-Time for {season} Tax Season",
       description:
-        "Export an IRS-ready Excel file — send to your CPA or import into TurboTax. Saves hours of manual entry.",
+        "Export organized expense reports — send to your CPA or import into TurboTax. Saves hours of manual entry.",
       backupWarning:
         "Sign in with Google before switching phones, or local data will be lost.",
       openingPaddle: "Opening Paddle…",
@@ -539,7 +539,7 @@ export const EN_US_COPY: UserCopy = {
         snap1099K: "Snap 1099-K",
         trustLine: "Used by thousands of self-employed pros",
         taxEstimateDisclaimer:
-          "Est. Tax Saved is an estimate, not tax advice. See Terms §6.",
+          "Est. Tax Saved is an estimate, not tax advice. See Terms §7.",
         mostPopular: "Most Popular",
         states: {
           final_deadline: {
@@ -585,7 +585,7 @@ export const EN_US_COPY: UserCopy = {
         sampleReady: "Sample export ready",
         downloadAgain: "Download again",
         exportBlocked:
-          "Export blocked. Premium license required to download official IRS documents.",
+          "Export blocked. Paid tax-season export required.",
         entitlementDisputed:
           "Payment dispute in progress. Export for this season is paused. You can repurchase or contact support.",
         entitlementRefunded:
@@ -597,8 +597,8 @@ export const EN_US_COPY: UserCopy = {
         gotIt: "Got it",
         points: [
           {
-            title: "100% Private",
-            body: "Only you can see your receipts. Never shared with the IRS or anyone else.",
+            title: "Private by default",
+            body: "Only you can see your receipts unless you share them or law requires disclosure.",
           },
           {
             title: "Secure in the U.S.",
@@ -673,7 +673,7 @@ export const EN_US_COPY: UserCopy = {
         buttonLocked: "Export {season} IRS Tax Pack ($49)",
         buttonPaid: "Export Again",
         exporting: "Exporting…",
-        shareText: "Your IRS-ready expense export",
+        shareText: "Your organized expense export",
         offline: "You're offline. Connect to export.",
         noReceipts:
           "No completed receipts to export. Snap some receipts first!",
@@ -915,7 +915,7 @@ export const EN_US_COPY: UserCopy = {
         "Optimized matrix format for instant tax software uploading.",
       formatCpaTitle: "1099 Audit Receipt Pack (ZIP)",
       formatCpaHint:
-        "Original receipt photos organized by IRS line — your audit safety net.",
+        "Audit trail with your original receipt photos for your records.",
       sharing: "Opening share sheet…",
       imagesComplete: "{included} of {eligible} receipt images included",
       imagesMissing: "{missing} receipt images could not be included",
@@ -927,7 +927,7 @@ export const EN_US_COPY: UserCopy = {
       reviewSaveFailed: "Could not ocr category. Try again.",
       formatCpaPdfTitle: "Schedule C Mirror PDF",
       formatCpaPdfHint:
-        "Full IRS Schedule C Part II lines — copy into FreeTaxUSA or paper forms.",
+        "Schedule C summary PDF with links to your receipt photos — for your CPA to review.",
       formatTxfTitle: "TXF for Tax Software",
       formatTxfHint:
         "Accounting assistant format for desktop tax tools (V042 blocks).",

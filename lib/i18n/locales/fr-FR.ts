@@ -121,7 +121,7 @@ export const FR_FR_COPY: UserCopy = {
     landing: {
       headlineLead: "Gardez plus de votre",
       headlineAccent: "argent durement gagné.",
-      tagline: "Organisez vos dépenses. Préparez vos dossiers fiscaux.",
+      tagline: "Organisez vos reçus et préparez des exports pour la saison fiscale.",
       check1: "Fonctionne hors ligne",
       check2: "10 reçus en 10 sec",
       check3: "Pas d'inscription requise",
@@ -211,7 +211,7 @@ export const FR_FR_COPY: UserCopy = {
       },
     },
     trustBar: {
-      message: "L'IRS ne voit jamais vos reçus.",
+      message: "Vos reçus restent privés sauf si vous les partagez.",
       learnMore: "En savoir plus",
     },
     exitConfirm: {
@@ -281,8 +281,8 @@ export const FR_FR_COPY: UserCopy = {
       privacyTitle: "Your Privacy & Security",
       privacyPoints: [
         {
-          title: "100% Private",
-          body: "Only you can see your receipts. Never shared with the IRS or anyone else.",
+          title: "Privé par défaut",
+          body: "Seul vous voyez vos reçus, sauf partage de votre part ou obligation légale.",
         },
         {
           title: "Secure in the U.S.",
@@ -375,15 +375,15 @@ export const FR_FR_COPY: UserCopy = {
     maybeLater: "Maybe later",
     unlockNow: "Unlock now — {price}",
     features: [
-      "Export unlimited receipts",
-      "CPA-ready Excel tax pack",
-      "All tax categories & reports",
-      "Deduction finder insights",
-      "Secure & IRS compliant",
+      "Export illimité de reçus",
+      "Exports tableur pour votre CPA",
+      "Catégories de dépenses et rapports récapitulatifs",
+      "Dossiers organisés pour la saison fiscale",
+      "Sauvegarde cloud sécurisée",
     ],
     oneTimeSeason: "Paiement unique pour la saison fiscale {season}",
     description:
-      "Exportez un fichier Excel prêt pour l'IRS — envoyez-le à votre CPA ou importez-le dans TurboTax. Économise des heures de saisie manuelle.",
+      "Exportez des rapports de dépenses organisés — envoyez à votre CPA ou importez dans TurboTax. Économise des heures de saisie manuelle.",
     backupWarning:
       "Connectez-vous avec Google avant de changer de téléphone, sinon les données locales seront perdues.",
     openingPaddle: "Ouverture de Paddle…",
@@ -549,7 +549,7 @@ export const FR_FR_COPY: UserCopy = {
       snap1099K: "Photo 1099-K",
       trustLine: "Utilisé par des milliers de travailleurs indépendants",
       taxEstimateDisclaimer:
-        "Est. Tax Saved est une estimation, pas un conseil fiscal. Voir Conditions §6.",
+        "Est. Tax Saved est une estimation, pas un conseil fiscal. Voir Conditions §7.",
       mostPopular: "Le plus populaire",
       states: {
         final_deadline: {
@@ -595,7 +595,7 @@ export const FR_FR_COPY: UserCopy = {
       sampleReady: "Sample export ready",
       downloadAgain: "Download again",
       exportBlocked:
-        "Export blocked. Premium license required to download official IRS documents.",
+        "Export bloqué. Export payant de saison fiscale requis.",
       entitlementDisputed:
         "Litige de paiement en cours. L’export pour cette saison est suspendu. Vous pouvez racheter ou contacter le support.",
       entitlementRefunded:
@@ -607,8 +607,8 @@ export const FR_FR_COPY: UserCopy = {
       gotIt: "Got it",
       points: [
         {
-          title: "100% Private",
-          body: "Only you can see your receipts. Never shared with the IRS or anyone else.",
+          title: "Privé par défaut",
+          body: "Seul vous voyez vos reçus, sauf partage de votre part ou obligation légale.",
         },
         {
           title: "Secure in the U.S.",
@@ -684,7 +684,7 @@ export const FR_FR_COPY: UserCopy = {
       buttonLocked: "Exporter pack IRS {season} (49 $)",
       buttonPaid: "Exporter à nouveau",
       exporting: "Export en cours…",
-      shareText: "Votre export de dépenses prêt pour l'IRS",
+      shareText: "Votre export de dépenses organisé",
       offline: "Vous êtes hors ligne. Connectez-vous pour exporter.",
       noReceipts:
         "Aucun reçu terminé à exporter. Photographiez d'abord quelques reçus !",
@@ -930,7 +930,7 @@ export const FR_FR_COPY: UserCopy = {
       "Format matriciel optimisé pour un import instantané dans les logiciels fiscaux.",
     formatCpaTitle: "Pack de reçus d'audit 1099 (ZIP)",
     formatCpaHint:
-      "Photos originales classées par ligne IRS — votre filet de sécurité en cas d'audit.",
+      "Piste d'audit avec vos photos de reçus originales pour vos archives.",
     sharing: "Ouverture du menu de partage…",
     imagesComplete: "{included} sur {eligible} images de reçus incluses",
     imagesMissing: "{missing} images de reçus n'ont pas pu être incluses",
@@ -944,7 +944,7 @@ export const FR_FR_COPY: UserCopy = {
       "Impossible d'enregistrer la catégorie. Réessayez.",
     formatCpaPdfTitle: "PDF miroir Schedule C",
     formatCpaPdfHint:
-      "Toutes les lignes Part II du Schedule C IRS — à recopier dans FreeTaxUSA ou sur papier.",
+      "PDF récapitulatif Schedule C avec liens vers vos photos — pour examen par votre CPA.",
     formatTxfTitle: "TXF pour logiciel fiscal",
     formatTxfHint:
       "Format assistant comptable pour outils fiscaux (blocs V042).",

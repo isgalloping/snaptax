@@ -549,7 +549,7 @@ export const FR_FR_COPY: UserCopy = {
       snap1099K: "Photo 1099-K",
       trustLine: "Utilisé par des milliers de travailleurs indépendants",
       taxEstimateDisclaimer:
-        "Est. Tax Saved est une estimation, pas un conseil fiscal. Voir Conditions §8.",
+        "Est. Tax Saved est une estimation, pas un conseil fiscal. Voir Conditions §7.",
       mostPopular: "Le plus populaire",
       states: {
         final_deadline: {

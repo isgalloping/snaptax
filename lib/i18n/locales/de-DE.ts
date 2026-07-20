@@ -548,7 +548,7 @@ export const DE_DE_COPY: UserCopy = {
       snap1099K: "1099-K fotografieren",
       trustLine: "Von Tausenden Selbstständigen genutzt",
       taxEstimateDisclaimer:
-        "Est. Tax Saved ist nur eine Schätzung, keine Steuerberatung. Siehe Bedingungen §8.",
+        "Est. Tax Saved ist nur eine Schätzung, keine Steuerberatung. Siehe Bedingungen §7.",
       mostPopular: "Am beliebtesten",
       states: {
         final_deadline: {

@@ -28,14 +28,21 @@ export const POST = withRequestLog("api.auth", async (request: NextRequest, _con
   if (existingToken) {
     try {
       const { ghostId } = verifyGhostToken(existingToken);
-      return NextResponse.json({ ghostId, reused: true }, { status: 200 });
+      // Return token so the client can stash possession proof before cookie rotation.
+      return NextResponse.json(
+        { ghostId, reused: true, ghostToken: existingToken },
+        { status: 200 },
+      );
     } catch {
       // Expired or tampered — mint a new token below.
     }
   }
 
   const { token, ghostId } = signGhostToken();
-  const res = NextResponse.json({ ghostId, reused: false }, { status: 201 });
+  const res = NextResponse.json(
+    { ghostId, reused: false, ghostToken: token },
+    { status: 201 },
+  );
   res.cookies.set(GHOST_COOKIE_NAME, token, ghostCookieOptions);
   return res;
 });

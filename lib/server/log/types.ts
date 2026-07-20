@@ -3,6 +3,7 @@ export type LogLevel = "info" | "warn" | "error";
 export type LogModule =
   | "api.auth"
   | "api.receipt"
+  | "api.sync"
   | "api.user"
   | "api.entitlement"
   | "api.billing"
@@ -33,10 +34,13 @@ export type LogMeta = {
   headerRegion?: string;
   reason?: string;
   previousGhostId?: string;
+  mergedGhostIds?: string[];
   existingTransactionId?: string;
   entitlementCreated?: boolean;
   pathnameCount?: number;
   receiptCount?: number;
+  entitlementCount?: number;
+  checkoutIntentCount?: number;
   verifyBypass?: boolean;
   mockAi?: boolean;
   bypassPay?: boolean;

@@ -6,6 +6,7 @@ import { useAuthSession } from "@/lib/client/useAuthSession";
 import { useIsOnline } from "@/lib/client/useIsOnline";
 import { loadIndustry, saveIndustry } from "@/lib/client/authStorage";
 import { ensureGhostSession } from "@/lib/client/ghostClient";
+import { mergeOrphanGhostsOnLogin } from "@/lib/client/mergeOrphanGhosts";
 import { ensureTaxRegionCandidate } from "@/lib/client/taxRegion";
 import {
   apiReceiptToLocal,
@@ -15,7 +16,9 @@ import {
   type ApiReceipt,
 } from "@/lib/client/receiptApi";
 import { shouldRunHiddenBackgroundSync } from "@/lib/client/backgroundSyncGate";
+import { flushReceiptEventBatch } from "@/lib/client/flushReceiptEventBatch";
 import { schedulePhotoRetentionPurge } from "@/lib/client/photoRetentionJob";
+import { scheduleReceiptEventRetentionPrune } from "@/lib/client/receiptEventRetention";
 import { scheduleReceiptRetentionPrune } from "@/lib/client/receiptRetention";
 import { scheduleReceiptSummaryVerify } from "@/lib/client/receiptSummaryVerify";
 import { reconcileDuplicateReceipt } from "@/lib/client/reconcileDuplicateReceipt";
@@ -41,7 +44,19 @@ import {
   flushPendingDeletes,
 } from "@/lib/client/receiptDeleteFlow";
 import { pollEntitlementReady, pollTaxRecalc } from "@/lib/client/authApi";
-import { prepareExportSync } from "@/lib/client/exportPrepareFlow";
+import { PaymentSuccessSheet } from "@/components/billing/PaymentSuccessSheet";
+import { runPaymentSuccessFlow } from "@/lib/billing/runPaymentSuccessFlow";
+import type {
+  PaymentSuccessState,
+  PaymentSuccessVariant,
+} from "@/lib/billing/paymentSuccessTypes";
+import { fetchFounderProgramClient } from "@/lib/founder/fetchFounderProgramClient";
+import {
+  prepareExportSync,
+  prepareExportLocal,
+  type ExportPrepareDeps,
+} from "@/lib/client/exportPrepareFlow";
+import type { ExportFormat } from "@/lib/export/exportFilenames";
 import { restoreReceiptsFromCloud } from "@/lib/client/cloudRestoreFlow";
 import {
   markCloudRestoreAttempted,
@@ -70,6 +85,13 @@ import {
 import { ProcessingQueue } from "@/lib/client/processingQueue";
 import { ProcessingReceiptWatcher } from "@/lib/client/processingReceiptWatcher";
 import { resolveHeaderTaxSaved } from "@/lib/client/resolveHeaderTaxSaved";
+import { emitReceiptLifecycleEvent } from "@/lib/client/emitReceiptLifecycleEvent";
+import {
+  hasWorkerCatchUp,
+  isWorkerSessionActive,
+  mergeWorkerCatchUpFlags,
+  type WorkerCatchUpFlags,
+} from "@/lib/client/workerSessionGate";
 import { utcNow } from "@/lib/time/utc";
 import {
   deleteReceipt as deleteStoredReceipt,
@@ -93,7 +115,6 @@ import { InlinePrivacyNote } from "./InlinePrivacyNote";
 import { HomeScrollRegion } from "./HomeScrollRegion";
 import { WidgetStack } from "./widgets/WidgetStack";
 import { FounderProgramSheet } from "./sheets/FounderProgramSheet";
-import { finalizeFounderPurchase } from "@/lib/founder/finalizeFounderPurchase";
 import { waitForFounderActive } from "@/lib/founder/waitForFounderActive";
 import {
   HomeOverlayHost,
@@ -103,8 +124,11 @@ import type { SettingsViewState } from "@/components/settings/settingsViewState"
 import { useAppNavigation } from "@/lib/client/useAppNavigation";
 import {
   confirmAppExit,
+  mapNavKeyToTarget,
   restoreHomeNavTrap,
+  type SnapNavKey,
 } from "@/lib/client/appNavigationHistory";
+import { LEGAL_RETURN_EVENT } from "@/lib/client/legalReturnNav";
 import { shouldConfirmExitFromPopState } from "@/lib/client/homeExitGuard";
 import { useHomeExitGuard } from "@/lib/client/useHomeExitGuard";
 import { ExitConfirmSheet } from "@/components/home/ExitConfirmSheet";
@@ -116,6 +140,7 @@ import {
   type ReceiptListFilter,
 } from "@/lib/receipts/receiptBucket";
 import { SettingsScreen } from "@/components/settings/SettingsScreen";
+import { GoogleSignInSheet } from "@/components/auth/GoogleSignInSheet";
 import type { SettingsTaxStats } from "@/components/settings/TaxOverviewPanel";
 import { useTaxExportGate } from "@/components/export/useTaxExportGate";
 import { ReceiptDetailSheet } from "@/components/receipts/ReceiptDetailSheet";
@@ -132,7 +157,14 @@ import {
   ensureOnboardingDemoDone,
 } from "@/lib/onboarding/demoReceipt";
 import {
+  countDoneRealReceipts,
+  GOOGLE_SOFT_NUDGE_MIN_DONE,
+  markGoogleNudgeSessionShown,
+  wasGoogleNudgeShownThisSession,
+} from "@/lib/onboarding/googleSoftNudge";
+import {
   GOOGLE_SOFT_DISMISSED_KEY,
+  readOnboardFlag,
   writeOnboardFlag,
 } from "@/lib/onboarding/onboardingStorage";
 import { visibleReceiptsForOnboarding } from "@/lib/onboarding/onboardingReceipts";
@@ -144,6 +176,10 @@ import {
 } from "@/lib/tax/taxYearStats";
 import { clientTimeZone } from "@/lib/time/timeZone";
 import { useI18n } from "@/components/i18n/I18nProvider";
+import {
+  type CameraReturnView,
+  viewAfterCameraClose,
+} from "@/lib/client/cameraReturnNavigation";
 
 type View = "home" | "settings";
 
@@ -169,6 +205,7 @@ export function HomeScreen() {
   );
   const [industry, setIndustry] = useState<Industry | null>(null);
   const [requestSoftGoogleSheet, setRequestSoftGoogleSheet] = useState(false);
+  const [googleNudgeVisible, setGoogleNudgeVisible] = useState(false);
   const [resnapId, setResnapId] = useState<string | null>(null);
   const [selectedReceipt, setSelectedReceipt] = useState<Receipt | null>(null);
   const [cameraOpen, setCameraOpen] = useState(false);
@@ -182,7 +219,12 @@ export function HomeScreen() {
   );
   const [seasonExportTick, setSeasonExportTick] = useState(0);
   const [homeOverlay, setHomeOverlay] = useState<HomeOverlay>(null);
+  const [uploadReauthSheet, setUploadReauthSheet] = useState(false);
   const [founderSheetOpen, setFounderSheetOpen] = useState(false);
+  const [paymentSuccess, setPaymentSuccess] = useState<PaymentSuccessState | null>(
+    null,
+  );
+  const paymentSuccessRef = useRef<PaymentSuccessState | null>(null);
   const [founderRefreshTick, setFounderRefreshTick] = useState(0);
   const [exitConfirmOpen, setExitConfirmOpen] = useState(false);
   const [settingsViewState, setSettingsViewState] =
@@ -193,7 +235,11 @@ export function HomeScreen() {
   const watcherRef = useRef<ProcessingReceiptWatcher | null>(null);
   const queueRef = useRef<ProcessingQueue | null>(null);
   const flushPendingUploadsRef = useRef<
-    (opts?: { batchCapture?: boolean; skipGhostEnsure?: boolean }) => Promise<void>
+    (opts?: {
+      batchCapture?: boolean;
+      skipGhostEnsure?: boolean;
+      force?: boolean;
+    }) => Promise<void>
   >(async () => {});
   const flushPendingDeletesRef = useRef<() => Promise<void>>(async () => {});
   const uploadPendingInnerRef = useRef<
@@ -207,11 +253,15 @@ export function HomeScreen() {
     () => new Set(),
   );
   const batchFlushActiveRef = useRef(false);
+  /** Receipt ids from batch camera — keep similar-dedup off until upload succeeds. */
+  const batchSessionReceiptIdsRef = useRef(new Set<string>());
   const receiptsRef = useRef<Receipt[]>([]);
   const cameraOpenRef = useRef(false);
+  const cameraReturnViewRef = useRef<CameraReturnView | null>(null);
   const pendingMergeRef = useRef<{
     receipts: Receipt[];
   } | null>(null);
+  const pendingWorkerCatchUpRef = useRef<WorkerCatchUpFlags>({});
   const snapButtonRef = useRef<SnapButtonHandle>(null);
   const setTaxAnimatingRef = useRef<(value: boolean) => void>(() => {});
 
@@ -311,6 +361,16 @@ export function HomeScreen() {
   );
 
   useEffect(() => {
+    const onLegalReturn = (event: Event) => {
+      const key = (event as CustomEvent<SnapNavKey>).detail;
+      if (!key) return;
+      applyPopTarget(mapNavKeyToTarget(key));
+    };
+    window.addEventListener(LEGAL_RETURN_EVENT, onLegalReturn);
+    return () => window.removeEventListener(LEGAL_RETURN_EVENT, onLegalReturn);
+  }, [applyPopTarget]);
+
+  useEffect(() => {
     receiptsRef.current = receipts;
   }, [receipts]);
 
@@ -332,16 +392,112 @@ export function HomeScreen() {
 
   const handleSoftGuideDismiss = useCallback(() => {
     writeOnboardFlag(GOOGLE_SOFT_DISMISSED_KEY);
+    setGoogleNudgeVisible(false);
   }, []);
+
+  const handleGoogleNudgeDismiss = useCallback(() => {
+    handleSoftGuideDismiss();
+  }, [handleSoftGuideDismiss]);
+
+  const handleGoogleNudgeClick = useCallback(() => {
+    markGoogleNudgeSessionShown();
+    setGoogleNudgeVisible(false);
+    setRequestSoftGoogleSheet(true);
+    setView("settings");
+    setSettingsViewState("main");
+    openSettings();
+  }, [openSettings]);
 
   useEffect(() => {
     cameraOpenRef.current = cameraOpen;
   }, [cameraOpen]);
 
+  const openIncomeCapture = useCallback((returnView: CameraReturnView) => {
+    cameraReturnViewRef.current = returnView;
+    setView("home");
+    deferAfterPaint(() => {
+      snapButtonRef.current?.openCamera();
+    });
+  }, []);
+
+  const handleCameraOpenChange = useCallback((open: boolean) => {
+    setCameraOpen(open);
+    if (open) return;
+    const returnView = cameraReturnViewRef.current;
+    cameraReturnViewRef.current = null;
+    const nextView = viewAfterCameraClose(returnView);
+    if (nextView === "settings") {
+      setView("settings");
+    }
+  }, []);
+
+  useEffect(() => {
+    paymentSuccessRef.current = paymentSuccess;
+  }, [paymentSuccess]);
+
+  const runPaymentSuccessPoll = useCallback(
+    async (variant: PaymentSuccessVariant, seasonLabel: string) => {
+      await runPaymentSuccessFlow({
+        variant,
+        season: seasonLabel,
+        onPhaseChange: (phase) => {
+          setPaymentSuccess((prev) => (prev ? { ...prev, phase } : prev));
+          if (phase === "ready" && variant === "founder") {
+            setFounderRefreshTick((tick) => tick + 1);
+          }
+        },
+        onFounderNumber: (founderNumber) => {
+          setPaymentSuccess((prev) => (prev ? { ...prev, founderNumber } : prev));
+        },
+        pollEntitlementReady,
+        refreshSeasonPaid: auth.refreshSeasonPaid,
+        waitForFounderActive: variant === "founder" ? waitForFounderActive : undefined,
+        fetchFounderNumber:
+          variant === "founder"
+            ? async () => {
+                const data = await fetchFounderProgramClient();
+                return data?.user?.founderNumber ?? null;
+              }
+            : undefined,
+      });
+    },
+    [auth.refreshSeasonPaid],
+  );
+
+  const openPaymentSuccess = useCallback(
+    (variant: PaymentSuccessVariant, seasonLabel: string) => {
+      setPaymentSuccess({
+        open: true,
+        variant,
+        phase: "confirming",
+        seasonLabel,
+        founderNumber: null,
+      });
+      void runPaymentSuccessPoll(variant, seasonLabel);
+    },
+    [runPaymentSuccessPoll],
+  );
+
+  const handlePaymentSuccessClose = useCallback(() => {
+    setPaymentSuccess((prev) => (prev ? { ...prev, open: false } : null));
+  }, []);
+
+  const handlePaymentSuccessRetry = useCallback(() => {
+    const current = paymentSuccessRef.current;
+    if (!current) return;
+    setPaymentSuccess({
+      ...current,
+      phase: "confirming",
+      open: true,
+      founderNumber: null,
+    });
+    void runPaymentSuccessPoll(current.variant, current.seasonLabel);
+  }, [runPaymentSuccessPoll]);
+
   const refreshTaxAndSummary = useCallback(async () => {
     const summary = await readCurrentSeasonSummary();
     setSeasonSummary(summary);
-    setTaxSaved(summary.unfiledTaxSaved);
+    setTaxSaved(summary.totalTaxSaved);
   }, []);
 
   const refreshTaxSaved = useCallback(
@@ -370,6 +526,13 @@ export function HomeScreen() {
     [applyMergeNow],
   );
 
+  const queueWorkerCatchUp = useCallback((flags: Partial<WorkerCatchUpFlags>) => {
+    pendingWorkerCatchUpRef.current = mergeWorkerCatchUpFlags(
+      pendingWorkerCatchUpRef.current,
+      flags,
+    );
+  }, []);
+
   useEffect(() => {
     if (cameraOpen || !pendingMergeRef.current) return;
     const pending = pendingMergeRef.current;
@@ -381,10 +544,22 @@ export function HomeScreen() {
     async (
       local: StoredReceipt[],
       applyMode: "immediate" | "defer" = "defer",
+      opts?: { force?: boolean },
     ): Promise<Receipt[]> => {
       if (!navigator.onLine) {
         applyMergeNow(local);
         return local;
+      }
+      if (
+        !opts?.force &&
+        applyMode === "defer" &&
+        isWorkerSessionActive({ cameraOpen: cameraOpenRef.current })
+      ) {
+        queueWorkerCatchUp({ sync: true });
+        const visible = await loadTopByUpdatedAt(UI_RECEIPT_LIMIT).catch(() =>
+          top100ByUpdatedAt(local),
+        );
+        return visible;
       }
       try {
         const { visible } = await mergeServerReceiptsIntoLocal(local);
@@ -403,16 +578,18 @@ export function HomeScreen() {
         return visible;
       }
     },
-    [applyMergeNow, applyMergeOrDefer],
+    [applyMergeNow, applyMergeOrDefer, queueWorkerCatchUp],
   );
 
   const applyReceiptUpdate = useCallback(
     async (updated: StoredReceipt) => {
       let merged = updated;
+      let priorStatus: StoredReceipt["status"] | undefined;
       setReceipts((prev) => {
         const existing = prev.find((r) => r.id === updated.id) as
           | StoredReceipt
           | undefined;
+        priorStatus = existing?.status;
         merged = {
           ...updated,
           writeBudgetRemaining:
@@ -423,6 +600,25 @@ export function HomeScreen() {
         return top100ByUpdatedAt(next as StoredReceipt[]);
       });
       await saveReceipt(merged);
+
+      if (
+        priorStatus === "processing" &&
+        merged.status === "done" &&
+        merged.taxAmount != null
+      ) {
+        void emitReceiptLifecycleEvent(
+          {
+            receiptId: merged.id,
+            type: "TAX_CALCULATED",
+            payload: {
+              status: merged.status,
+              taxAmount: merged.taxAmount ?? null,
+              category: merged.category ?? null,
+            },
+          },
+          { cameraOpen: cameraOpenRef.current },
+        );
+      }
 
       if (merged.status === "done" && merged.taxAmount != null) {
         pulseTaxAnimating();
@@ -467,6 +663,7 @@ export function HomeScreen() {
         writeBudgetRemaining: getBudget(prior),
         photoMissing: undefined,
       };
+      batchSessionReceiptIdsRef.current.delete(prior.id);
       setReceipts((prev) => {
         const next = top100ByUpdatedAt([
           updated,
@@ -504,6 +701,8 @@ export function HomeScreen() {
         existingReceiptId,
         prior,
       );
+      batchSessionReceiptIdsRef.current.delete(localId);
+      batchSessionReceiptIdsRef.current.delete(existingReceiptId);
       setReceipts((prev) => {
         const next = top100ByUpdatedAt([
           updated,
@@ -558,7 +757,9 @@ export function HomeScreen() {
         latest.ocrDraft,
         {
           batchCapture:
-            opts?.batchCapture === true || batchFlushActiveRef.current,
+            opts?.batchCapture === true ||
+            batchFlushActiveRef.current ||
+            batchSessionReceiptIdsRef.current.has(latest.id),
         },
       );
       const updated = await persistUploadedReceipt(latest, uploaded);
@@ -578,6 +779,10 @@ export function HomeScreen() {
         );
         return;
       }
+      if (err instanceof Error && err.message === "GOOGLE_LOGIN_REQUIRED") {
+        setUploadReauthSheet(true);
+        return;
+      }
       const failed = recordWriteFailure(latest);
       await saveReceipt(failed);
       setReceipts((prev) => prev.map((r) => (r.id === failed.id ? failed : r)));
@@ -594,8 +799,20 @@ export function HomeScreen() {
   uploadPendingInnerRef.current = uploadPendingInner;
 
   const flushPendingUploads = useCallback(
-    async (opts?: { batchCapture?: boolean; skipGhostEnsure?: boolean }) => {
+    async (opts?: {
+      batchCapture?: boolean;
+      skipGhostEnsure?: boolean;
+      force?: boolean;
+    }) => {
     await ensureConvertedDemoUploadReady();
+    if (
+      !opts?.force &&
+      !opts?.batchCapture &&
+      isWorkerSessionActive({ cameraOpen: cameraOpenRef.current })
+    ) {
+      queueWorkerCatchUp({ flushUploads: true });
+      return;
+    }
     if (!opts?.skipGhostEnsure) {
       try {
         await ensureGhostSession();
@@ -615,10 +832,46 @@ export function HomeScreen() {
       }
     }
   },
-  [],
+  [queueWorkerCatchUp],
   );
 
   flushPendingUploadsRef.current = flushPendingUploads;
+
+  const runWorkerCatchUp = useCallback(async () => {
+    if (isWorkerSessionActive({ cameraOpen: cameraOpenRef.current })) return;
+    const flags = pendingWorkerCatchUpRef.current;
+    if (!hasWorkerCatchUp(flags)) return;
+    pendingWorkerCatchUpRef.current = {};
+    if (!navigator.onLine) return;
+    try {
+      await ensureGhostSession();
+    } catch {
+      pendingWorkerCatchUpRef.current = mergeWorkerCatchUpFlags({}, flags);
+      return;
+    }
+    if (flags.flushUploads) {
+      await flushPendingUploadsRef.current({ force: true });
+    }
+    if (flags.flushDeletes) {
+      await flushPendingDeletesRef.current();
+    }
+    if (flags.sync) {
+      const stored = await loadAllReceipts();
+      await syncFromServer(stored, "immediate", { force: true });
+    }
+    if (flags.reconcile) {
+      void reconcileNonDoneWindow();
+    }
+    await flushReceiptEventBatch({
+      cameraOpen: cameraOpenRef.current,
+      force: true,
+    }).catch(() => {});
+  }, [syncFromServer]);
+
+  useEffect(() => {
+    if (cameraOpen) return;
+    void runWorkerCatchUp();
+  }, [cameraOpen, runWorkerCatchUp]);
 
   useEffect(() => {
     setOcrCompleteHandler((receiptId) => {
@@ -633,6 +886,7 @@ export function HomeScreen() {
         if (!receipt?.pendingUpload || shouldSkipUploadAttempt(receipt)) return;
         if (uploadInFlightRef.current.has(receiptId)) return;
         if (batchFlushActiveRef.current) return;
+        if (isWorkerSessionActive({ cameraOpen: cameraOpenRef.current })) return;
         if (isBatchOcrUploadDeferred(receiptId)) return;
         try {
           await uploadPendingInnerRef.current(receipt);
@@ -673,6 +927,15 @@ export function HomeScreen() {
             }
           }
           if (cancelled()) return;
+          if (isWorkerSessionActive({ cameraOpen: cameraOpenRef.current })) {
+            queueWorkerCatchUp({
+              flushUploads: true,
+              flushDeletes: true,
+              sync: true,
+              reconcile: true,
+            });
+            return;
+          }
           await flushPendingUploadsRef.current();
           if (cancelled()) return;
           await flushPendingDeletesRef.current();
@@ -689,12 +952,16 @@ export function HomeScreen() {
           );
           schedulePhotoRetentionPurge();
           scheduleReceiptRetentionPrune();
+          scheduleReceiptEventRetentionPrune();
           scheduleReceiptSummaryVerify();
           void reconcileNonDoneWindow();
+          void flushReceiptEventBatch({
+            cameraOpen: cameraOpenRef.current,
+          }).catch(() => {});
         })();
       });
     },
-    [syncFromServer],
+    [syncFromServer, queueWorkerCatchUp],
   );
 
   useEffect(() => {
@@ -817,8 +1084,14 @@ export function HomeScreen() {
       } catch {
         return;
       }
+      await mergeOrphanGhostsOnLogin();
       await flushPendingUploadsRef.current();
       await flushPendingDeletesRef.current();
+      try {
+        await flushReceiptEventBatch({ force: true });
+      } catch {
+        // Event sync is best-effort; receipt merge must still run after login.
+      }
       const stored = await loadAllReceipts();
       const merged = await syncFromServer(stored, "immediate");
       const stuck = stuckIdsFromReceipts(merged as StoredReceipt[]);
@@ -842,8 +1115,8 @@ export function HomeScreen() {
     setSeasonExportTick((tick) => tick + 1);
   }, [syncFromServer]);
 
-  const handlePreExportPrepare = useCallback(async () => {
-    const merged = await prepareExportSync({
+  const exportPrepareDeps = useCallback(
+    (): ExportPrepareDeps => ({
       flushPendingUploads: () => flushPendingUploadsRef.current(),
       flushPendingDeletes: () => flushPendingDeletesRef.current(),
       loadAllReceipts,
@@ -851,10 +1124,36 @@ export function HomeScreen() {
       ensureGhostSession: async () => {
         await ensureGhostSession();
       },
-    });
-    setReceipts(merged);
-    return merged;
-  }, [syncFromServer]);
+    }),
+    [syncFromServer],
+  );
+
+  const handleExportGatePrepare = useCallback(async () => {
+    const local = await prepareExportLocal(exportPrepareDeps());
+    setReceipts(top100ByUpdatedAt(local));
+    return local;
+  }, [exportPrepareDeps]);
+
+  const handlePreExportPrepare = useCallback(
+    async (format: ExportFormat) => {
+      const isLocalFirst =
+        format === "csv" ||
+        format === "txf" ||
+        format === "qif" ||
+        format === "qbo" ||
+        format === "cpa_pdf" ||
+        format === "cpa_pack";
+      if (isLocalFirst) {
+        const local = await prepareExportLocal(exportPrepareDeps());
+        setReceipts(top100ByUpdatedAt(local));
+        return local;
+      }
+      const merged = await prepareExportSync(exportPrepareDeps());
+      setReceipts(merged);
+      return merged;
+    },
+    [exportPrepareDeps],
+  );
 
   const taxExport = useTaxExportGate({
     receipts,
@@ -863,19 +1162,16 @@ export function HomeScreen() {
     currentSeason: auth.currentSeason,
     onUserSignedIn: auth.applyGoogleSignIn,
     onPostLoginSync: handlePostLoginSync,
-    onSeasonPaid: auth.markSeasonPaid,
     refreshSeasonPaid: auth.refreshSeasonPaid,
+    onExportGatePrepare: handleExportGatePrepare,
     onPreExportPrepare: handlePreExportPrepare,
     onPostExportSync: handlePostExportSync,
     onReceiptUpdated: (updated) => {
       void applyReceiptUpdate(updated as StoredReceipt);
     },
-    onSnap1099: (kind) => {
-      setView("home");
-      window.requestAnimationFrame(() => {
-        snapButtonRef.current?.openCamera();
-      });
-    },
+    onSnap1099: () => openIncomeCapture(view),
+    onExportPaymentComplete: () =>
+      openPaymentSuccess("export", auth.currentSeason),
   });
 
   useEffect(() => {
@@ -909,8 +1205,19 @@ export function HomeScreen() {
       ) {
         return;
       }
+      if (isWorkerSessionActive({ cameraOpen: cameraOpenRef.current })) {
+        queueWorkerCatchUp({
+          flushUploads: true,
+          flushDeletes: true,
+          reconcile: document.visibilityState === "visible",
+        });
+        return;
+      }
       void flushPendingUploadsRef.current();
       void flushPendingDeletesRef.current();
+      void flushReceiptEventBatch({
+        cameraOpen: cameraOpenRef.current,
+      }).catch(() => {});
       if (document.visibilityState === "visible") {
         void reconcileNonDoneWindow();
       }
@@ -918,7 +1225,7 @@ export function HomeScreen() {
 
     const intervalId = window.setInterval(retryPending, 60_000);
     return () => window.clearInterval(intervalId);
-  }, []);
+  }, [queueWorkerCatchUp]);
 
   useEffect(() => {
     const onVisibility = () => setAppHidden(document.hidden);
@@ -989,11 +1296,55 @@ export function HomeScreen() {
     [receipts, onboardingStatus],
   );
 
+  const doneRealReceiptCount = useMemo(
+    () => countDoneRealReceipts(receipts),
+    [receipts],
+  );
+
+  const googleNudgeActivatedRef = useRef(false);
+
+  useEffect(() => {
+    if (view === "settings") {
+      setGoogleNudgeVisible(false);
+      return;
+    }
+    if (!auth.hydrated || auth.isSignedIn) {
+      setGoogleNudgeVisible(false);
+      return;
+    }
+    if (onboardingStatus !== "completed") {
+      setGoogleNudgeVisible(false);
+      return;
+    }
+    if (readOnboardFlag(GOOGLE_SOFT_DISMISSED_KEY)) {
+      setGoogleNudgeVisible(false);
+      return;
+    }
+    if (googleNudgeActivatedRef.current || wasGoogleNudgeShownThisSession()) {
+      return;
+    }
+    if (doneRealReceiptCount < GOOGLE_SOFT_NUDGE_MIN_DONE) {
+      return;
+    }
+
+    googleNudgeActivatedRef.current = true;
+    markGoogleNudgeSessionShown();
+    setGoogleNudgeVisible(true);
+    const timer = window.setTimeout(() => setGoogleNudgeVisible(false), 10_000);
+    return () => window.clearTimeout(timer);
+  }, [
+    auth.hydrated,
+    auth.isSignedIn,
+    doneRealReceiptCount,
+    onboardingStatus,
+    view,
+  ]);
+
   const headerTaxSaved = useMemo(
     () =>
       resolveHeaderTaxSaved({
         displayTaxSaved,
-        seasonUnfiledTaxSaved: seasonSummary?.unfiledTaxSaved,
+        seasonTotalTaxSaved: seasonSummary?.totalTaxSaved,
         taxSavedFallback: taxSaved,
       }),
     [displayTaxSaved, seasonSummary, taxSaved],
@@ -1137,6 +1488,7 @@ export function HomeScreen() {
         return null;
       }
       const { receipt } = result;
+      batchSessionReceiptIdsRef.current.add(receipt.id);
       setReceipts((prev) => top100ByUpdatedAt([receipt, ...prev]));
       scheduleOcrJob(receipt.id);
       return receipt.id;
@@ -1145,6 +1497,9 @@ export function HomeScreen() {
   );
 
   const handleBatchClose = useCallback(async (sessionIds: string[]) => {
+    for (const id of sessionIds) {
+      batchSessionReceiptIdsRef.current.add(id);
+    }
     batchFlushActiveRef.current = true;
     try {
       await refreshListFromLocal();
@@ -1168,6 +1523,14 @@ export function HomeScreen() {
 
   const handleBatchDone = useCallback(
     async (sessionIds: string[]) => {
+      for (const id of sessionIds) {
+        batchSessionReceiptIdsRef.current.add(id);
+      }
+      const visible = await loadTopByUpdatedAt(UI_RECEIPT_LIMIT);
+      setReceipts(visible);
+      refreshTaxSaved(visible);
+      setSyncStuckIds(stuckIdsFromReceipts(visible));
+
       batchFlushActiveRef.current = true;
       try {
         if (navigator.onLine && sessionIds.length > 0) {
@@ -1183,12 +1546,12 @@ export function HomeScreen() {
             // Local pending rows remain until next flush
           }
         }
-        const visible = await loadTopByUpdatedAt(UI_RECEIPT_LIMIT);
-        setReceipts(visible);
-        refreshTaxSaved(visible);
-        setSyncStuckIds(stuckIdsFromReceipts(visible));
+        const afterFlush = await loadTopByUpdatedAt(UI_RECEIPT_LIMIT);
+        setReceipts(afterFlush);
+        refreshTaxSaved(afterFlush);
+        setSyncStuckIds(stuckIdsFromReceipts(afterFlush));
         for (const id of sessionIds) {
-          const row = visible.find((r) => r.id === id);
+          const row = afterFlush.find((r) => r.id === id);
           if (
             row &&
             row.status === "processing" &&
@@ -1293,6 +1656,21 @@ export function HomeScreen() {
     if (actionReceipt) handleResnap(actionReceipt.id);
   }, [displayReceipts, syncStuckIds, handleResnap]);
 
+  const paymentSuccessOverlay =
+    paymentSuccess?.open ? (
+      <PaymentSuccessSheet
+        state={paymentSuccess}
+        onClose={handlePaymentSuccessClose}
+        onDownloadTaxPack={() => {
+          handlePaymentSuccessClose();
+          taxExport.triggerExportAfterPayment();
+        }}
+        onRetry={handlePaymentSuccessRetry}
+        onGotIt={handlePaymentSuccessClose}
+        onNotNow={handlePaymentSuccessClose}
+      />
+    ) : null;
+
   if (view === "settings") {
     return (
       <>
@@ -1322,6 +1700,7 @@ export function HomeScreen() {
         skipSoftGoogleSheet={skipSoftGoogleSheet}
         googleUser={auth.googleUser}
         seasonPaid={auth.seasonPaid}
+        entitlementStatus={auth.entitlementStatus}
         currentSeason={auth.currentSeason}
         onRefreshSeasonPaid={auth.refreshSeasonPaid}
         onUserSignedIn={auth.applyGoogleSignIn}
@@ -1329,6 +1708,7 @@ export function HomeScreen() {
         onSignOut={auth.signOut}
         taxStats={settingsTaxStats}
         onRequestExport={handleSettingsExport}
+        onContinueExportAfterGoogle={taxExport.continueExportAfterGoogleSignIn}
         exportBlockedTick={taxExport.exportBlockedTick}
         seasonExportTick={seasonExportTick}
         onboardingAha={
@@ -1340,12 +1720,7 @@ export function HomeScreen() {
         exportEmptyTip={taxExport.exportEmptyTip}
         exportEmptyTipKey={taxExport.exportEmptyTipKey}
         onExportEmptyTipDismiss={taxExport.clearExportEmptyTip}
-        onSnap1099={(kind) => {
-          setView("home");
-          window.requestAnimationFrame(() => {
-            snapButtonRef.current?.openCamera();
-          });
-        }}
+        onSnap1099={() => openIncomeCapture("settings")}
         isSignedIn={auth.isSignedIn}
         authHydrated={auth.hydrated}
         requestSoftGoogleSheet={requestSoftGoogleSheet}
@@ -1354,6 +1729,7 @@ export function HomeScreen() {
         onRestored={() => void refreshListFromLocal()}
       />
       {taxExport.overlays}
+      {paymentSuccessOverlay}
     </>
     );
   }
@@ -1374,6 +1750,9 @@ export function HomeScreen() {
         onExportClick={handleExportClick}
         exportBusy={taxExport.paywallExporting || taxExport.preparingExport}
         exportError={taxExport.exportError}
+        googleNudgeVisible={googleNudgeVisible}
+        onGoogleNudgeClick={handleGoogleNudgeClick}
+        onGoogleNudgeDismiss={handleGoogleNudgeDismiss}
       />
 
       <div className="relative shrink-0 px-4 pb-1.5 pt-0">
@@ -1388,7 +1767,7 @@ export function HomeScreen() {
             onBatchClose={handleBatchClose}
             onReviewDelete={handleDeleteReceipt}
             resnapId={resnapId}
-            onCameraOpenChange={setCameraOpen}
+            onCameraOpenChange={handleCameraOpenChange}
             onSyncClick={handleManualListSync}
             onSettingsClick={handleOpenSettings}
             syncing={listSyncing}
@@ -1491,6 +1870,21 @@ export function HomeScreen() {
 
       {taxExport.overlays}
 
+      {paymentSuccessOverlay}
+
+      {uploadReauthSheet && (
+        <GoogleSignInSheet
+          mode="hard-sync"
+          onClose={() => setUploadReauthSheet(false)}
+          onUserSignedIn={auth.applyGoogleSignIn}
+          onSuccess={async (result) => {
+            await handlePostLoginSync(result.taxRecalcQueued);
+            setUploadReauthSheet(false);
+            void flushPendingUploadsRef.current({ force: true });
+          }}
+        />
+      )}
+
       {founderSheetOpen && (
         <FounderProgramSheet
           onClose={() => setFounderSheetOpen(false)}
@@ -1504,16 +1898,7 @@ export function HomeScreen() {
             setFounderSheetOpen(false);
             setFounderRefreshTick((tick) => tick + 1);
           }}
-          onPaid={async () => {
-            setFounderSheetOpen(false);
-            await finalizeFounderPurchase({
-              season: auth.currentSeason,
-              pollEntitlementReady,
-              refreshSeasonPaid: auth.refreshSeasonPaid,
-              waitForFounderActive,
-            });
-            setFounderRefreshTick((tick) => tick + 1);
-          }}
+          onPaid={() => openPaymentSuccess("founder", auth.currentSeason)}
         />
       )}
 

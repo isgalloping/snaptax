@@ -1,3 +1,4 @@
+import { LEGAL_BRAND_NAME } from "@/lib/legal/operator";
 import type { ExportExpenseRow } from "@/lib/tax/exportRows";
 
 const TURBOTAX_HEADERS = [
@@ -70,7 +71,7 @@ export function buildTurboTaxCsv(rows: ExportExpenseRow[]): string {
   return lines.join("\r\n");
 }
 
-/** Full CPA detail CSV with audit columns (for CPA Audit Pack). */
+/** @deprecated Use buildAuditDetailCsv for audit ZIP; legacy CPA detail layout. */
 export function buildExpensesCsv(
   rows: ExportExpenseRow[],
   imageUrlStyle: CsvImageUrlStyle = "archive",
@@ -107,8 +108,8 @@ export function buildSummaryText(
     0,
   );
   const lines = [
-    `Snap1099 Tax Year ${taxYear} — Schedule C Summary (Expenses only)`,
-    "Income not tracked in Snap1099 — snap 1099 forms for your CPA.",
+    `${LEGAL_BRAND_NAME} Tax Year ${taxYear} — Schedule C Summary (Expenses only)`,
+    `Income not tracked in ${LEGAL_BRAND_NAME} — snap 1099 forms for your CPA.`,
     "For estimation only — not tax advice.",
     "",
     ...summaryLines.map((s) => `${s.line}: $${s.total.toFixed(2)}`),

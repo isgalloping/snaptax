@@ -2,7 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { I18nProvider } from "@/components/i18n/I18nProvider";
 import { InstallCaptureScript } from "@/components/pwa/InstallCaptureScript";
-import { PwaProvider } from "@/components/pwa/PwaProvider";
+import { PwaStandaloneEntryRedirect } from "@/components/pwa/PwaStandaloneEntryRedirect";
+import { PwaStandaloneEntryRedirectScript } from "@/components/pwa/PwaStandaloneEntryRedirectScript";
 import { USER_COPY } from "@/lib/copy/userFacing";
 import "./globals.css";
 
@@ -16,7 +17,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const APP_NAME = "Snap1099";
+const APP_NAME = "SnapTax";
 const APP_DESCRIPTION = USER_COPY.app.description;
 
 export const metadata: Metadata = {
@@ -59,11 +60,11 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="flex h-full min-h-full flex-col">
+      <body className="flex min-h-full flex-col">
         <InstallCaptureScript />
-        <I18nProvider>
-          <PwaProvider>{children}</PwaProvider>
-        </I18nProvider>
+        <PwaStandaloneEntryRedirectScript />
+        <PwaStandaloneEntryRedirect />
+        <I18nProvider>{children}</I18nProvider>
       </body>
     </html>
   );

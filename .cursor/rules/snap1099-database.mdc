@@ -35,7 +35,9 @@ alwaysApply: false
 
 ## IndexedDB stores（规范名）
 
-`snaptax_receipts` · `snaptax_receipt_photos`（**meta only**）· `snaptax_system_meta` · `snaptax_crypto_meta` ·（Phase 2）`snaptax_receipt_events`
+`snaptax_receipts` · `snaptax_receipt_photos`（**meta only**）· `snaptax_system_meta` · `snaptax_crypto_meta` · `snaptax_receipt_events`（lifecycle queue · IDB v8）
+
+**PG Event Store（shipped 2026-07-10）：** `snaptax_receipt_events` · `snaptax_receipt_sync_cursors` · `snaptax_receipt_lifecycle_snapshots`
 
 Legacy v4：`receipts` / `photos` / `system_meta` / `meta` → v5 迁移后废弃。常量单一出口：`lib/storage/idbStores.ts`。
 

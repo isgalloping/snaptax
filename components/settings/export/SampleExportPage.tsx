@@ -2,6 +2,7 @@
 
 import { useUserCopy } from "@/components/i18n/I18nProvider";
 import { SettingsSubPageShell } from "@/components/settings/SettingsSubPageShell";
+import { sampleTurboTaxCsvFilename } from "@/lib/export/exportFilenames";
 import { defaultExportTaxYear } from "@/lib/tax/season";
 
 interface SampleExportPageProps {
@@ -19,7 +20,7 @@ export function SampleExportPage({
 }: SampleExportPageProps) {
   const copy = useUserCopy().settings.exportFlow;
   const taxYear = defaultExportTaxYear();
-  const fileName = `Snap1099-SAMPLE-TurboTax-${taxYear}.csv`;
+  const fileName = sampleTurboTaxCsvFilename(taxYear);
 
   return (
     <SettingsSubPageShell title={copy.sampleTitle} onBack={onBack}>

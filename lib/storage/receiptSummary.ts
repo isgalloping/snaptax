@@ -33,7 +33,7 @@ function emptySeasonSummary(taxYear: number): ReceiptSeasonSummary {
   return {
     scopeKey: scopeKeyForTaxYear(taxYear),
     taxYear,
-    unfiledTaxSaved: 0,
+    totalTaxSaved: 0,
     totalReceiptCount: 0,
     totalDeductions: 0,
     incomeFormCount: 0,
@@ -45,7 +45,7 @@ function emptySeasonSummary(taxYear: number): ReceiptSeasonSummary {
 function clampSummary(summary: ReceiptSeasonSummary): ReceiptSeasonSummary {
   return {
     ...summary,
-    unfiledTaxSaved: Math.max(0, summary.unfiledTaxSaved),
+    totalTaxSaved: Math.max(0, summary.totalTaxSaved),
     totalReceiptCount: Math.max(0, summary.totalReceiptCount),
     totalDeductions: Math.max(0, summary.totalDeductions),
     incomeFormCount: Math.max(0, summary.incomeFormCount),
@@ -127,7 +127,7 @@ export function buildSeasonSummaryFromReceipts(
   taxYear: number,
   timeZone: string,
 ): ReceiptSeasonSummary {
-  let unfiledTaxSaved = 0;
+  let totalTaxSaved = 0;
   let totalReceiptCount = 0;
   let totalDeductions = 0;
   let incomeFormCount = 0;
@@ -135,7 +135,7 @@ export function buildSeasonSummaryFromReceipts(
 
   for (const receipt of receipts) {
     const delta = computeSummaryDelta(null, receipt, taxYear, timeZone);
-    unfiledTaxSaved += delta.unfiledTaxSaved;
+    totalTaxSaved += delta.totalTaxSaved;
     totalReceiptCount += delta.totalReceiptCount;
     totalDeductions += delta.totalDeductions;
     incomeFormCount += delta.incomeFormCount;
@@ -145,7 +145,7 @@ export function buildSeasonSummaryFromReceipts(
   return clampSummary({
     scopeKey: scopeKeyForTaxYear(taxYear),
     taxYear,
-    unfiledTaxSaved,
+    totalTaxSaved,
     totalReceiptCount,
     totalDeductions,
     incomeFormCount,
@@ -203,9 +203,9 @@ export async function readCurrentSeasonSummary(): Promise<ReceiptSeasonSummary> 
   return row ?? emptySeasonSummary(taxYear);
 }
 
-export async function readCurrentSeasonUnfiledTaxSaved(): Promise<number> {
+export async function readCurrentSeasonTotalTaxSaved(): Promise<number> {
   const summary = await readCurrentSeasonSummary();
-  return summary.unfiledTaxSaved;
+  return summary.totalTaxSaved;
 }
 
 export async function applyReceiptSummaryDelta(
@@ -223,7 +223,7 @@ export async function applyReceiptSummaryDelta(
 
   const updated = clampSummary({
     ...base,
-    unfiledTaxSaved: base.unfiledTaxSaved + delta.unfiledTaxSaved,
+    totalTaxSaved: base.totalTaxSaved + delta.totalTaxSaved,
     totalReceiptCount: base.totalReceiptCount + delta.totalReceiptCount,
     totalDeductions: base.totalDeductions + delta.totalDeductions,
     incomeFormCount: base.incomeFormCount + delta.incomeFormCount,

@@ -1,0 +1,63 @@
+---
+description: PWA 安装、manifest、营销→/app 唤起 — 改 components/pwa、lib/pwa、manifest、MarketingAppLink 时必读
+globs:
+  - components/pwa/**
+  - lib/pwa/**
+  - lib/marketing/MarketingAppLink.tsx
+  - lib/marketing/openPwaAppEntry.ts
+  - lib/marketing/shouldInterceptMarketingAppNavigation.ts
+  - components/marketing/MarketingInstall*.tsx
+  - app/manifest.ts
+  - app/(pwa)/**
+  - app/layout.tsx
+---
+
+# Snap1099 PWA 安装规范
+
+**Canonical：** `docs/tech/13-pwa-install-architecture.md`
+
+## 路由与 scope
+
+- **产品 PWA：** `/app` only — `manifest.scope` / `start_url` / `id` = `/app`
+- **营销：** `/` 等 — 不在 PWA scope；无 Serwist SW
+- **常量：** `PWA_APP_ENTRY = "/app"`（`lib/marketing/pwaEntryRedirect.ts`）
+
+## 命名
+
+| 用途 | 值 |
+|------|-----|
+| 主屏幕 / manifest | **SnapTax** |
+| 应用内 i18n 品牌 | Snap1099（可保留） |
+| 内部 storage / window | `snap1099_*` / `__snap1099*`（勿与安装名混改） |
+
+## 安装 UI 分层
+
+1. **根 layout** — `InstallCaptureScript`（全站一次，捕获 `beforeinstallprompt`）
+2. **营销** — `MarketingInstallShell`（`requireLandingDone=false`，无 `LaunchFromHomeHint`）
+3. **`/app`** — `PwaProvider`：`PwaInstallProvider` + **`AppBrowserEntryGate`**
+
+## AppBrowserEntryGate（仅 `/app`）
+
+- **平台：** Android Chrome WebAPK + iOS/iPad Safari
+- **时机：** Landing 完成后（`isLandingDone()`）
+- **Skip：** `sessionStorage.snaptax_app_entry_gate_dismissed` → 本 session 无门控、无底栏 bar、保留 header 按钮
+- **门控显示中：** `suppressWebApkGuide` + `suppressInstallBar`（避免双 UI）
+- **已安装：** Open SnapTax — **用户点击** `openPwaAppEntry()`，无自动 redirect
+
+## 营销 CTA
+
+- `MarketingAppLink`：**原生 `<a href="/app">`**
+- Android Chrome 已装：**不** intercept（WebAPK link capture）
+- Safari / Android 非 Chrome 已装：intercept → 从主屏幕打开提示
+
+## 禁止
+
+- 全局 `suppressWebApkGuide`（须在门控 active 时才算）
+- 在营销页加全屏门控
+- 改 manifest scope 为 `/` 而不更新 Serwist / 路由策略
+- 用 Next `<Link>` client 导航替代 `/app` 全页导航（破坏 Navigation Capturing）
+
+## 测试
+
+- `lib/pwa/appBrowserEntry.test.ts`
+- Manual：Android Chrome 营销 Get Started · `/app` 门控 skip · iOS manual 路径

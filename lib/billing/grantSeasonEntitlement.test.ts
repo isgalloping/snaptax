@@ -16,8 +16,10 @@ describe("grantPaddleSeasonEntitlement", () => {
       {
         findBySeason: async () => null,
         findByTransaction: async () => null,
-        createEntitlement: async () => {
+        createEntitlement: async (data) => {
           calls.push("create");
+          assert.equal(data.status, "active");
+          assert.equal(data.transactionId, "txn-1");
         },
         now: () => new Date("2026-06-13T12:00:00.000Z"),
       },
@@ -31,9 +33,8 @@ describe("grantPaddleSeasonEntitlement", () => {
     assert.deepEqual(calls, ["create"]);
   });
 
-  it("updates existing season entitlement instead of creating duplicate", async () => {
-    const calls: string[] = [];
-
+  it("repurchase replaces transactionId and sets active", async () => {
+    let updated: unknown;
     const result = await grantPaddleSeasonEntitlement(
       {
         userId: "user-1",
@@ -45,20 +46,24 @@ describe("grantPaddleSeasonEntitlement", () => {
         findBySeason: async () => ({
           id: "ent-1",
           transactionId: "txn-1",
+          status: "refunded",
         }),
-        updateEntitlement: async () => {
-          calls.push("update");
+        updateEntitlement: async (_id, data) => {
+          updated = data;
         },
         now: () => new Date("2026-06-13T12:00:00.000Z"),
       },
     );
-
-    assert.deepEqual(result, {
-      created: false,
-      duplicateSeason: true,
-      transactionId: "txn-1",
+    assert.equal(result.transactionId, "txn-2");
+    assert.equal(result.duplicateSeason, true);
+    assert.deepEqual(updated, {
+      paidAt: new Date("2026-06-13T12:00:00.000Z"),
+      amount: 49,
+      transactionId: "txn-2",
+      status: "active",
+      statusReason: "purchase_completed",
+      statusUpdatedAt: new Date("2026-06-13T12:00:00.000Z"),
     });
-    assert.deepEqual(calls, ["update"]);
   });
 
   it("updates by transaction id when season lookup misses", async () => {

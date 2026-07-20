@@ -1,53 +1,56 @@
-# Snap1099 Data Retention Policy
+# SnapTax Data Retention Policy
 
-**Last Updated:** June 2026  
-**Related:** [Privacy Policy](/privacy) · [Terms of Service](/terms) · [Security](/security)
+**Last Updated:** July 2026
 
-This summary describes how long Snap1099 keeps different types of data. Technical details may be updated as our infrastructure evolves; material changes will be reflected in our Privacy Policy.
+## Operator & Contact
 
-> **Languages:** This page is canonical in English. French and German Privacy Policies link here for retention periods (MVP).
+SnapTax is operated by Gang Huang, an individual sole proprietor ("we", "us", "our").
+
+Contact: snaptax.lightxforge@gmail.com  
+Privacy requests: snaptax.lightxforge@gmail.com (subject: Privacy Request)  
+Mailing address: Hong Kong
+
+Services are offered to users in the United States. Customer data is processed and stored in the United States as described below.
+
+## Overview
+
+This page explains how long SnapTax keeps your receipt data on your phone and on our servers in the **United States**. If we make material changes to these periods, we will update this page and our [Privacy Policy](/privacy).
 
 ## On your device
 
-| Data | Retention | Code / behavior |
-|------|-----------|-----------------|
-| Receipt records (IndexedDB) | Up to **18 months** from receipt `timestamp` | `RECEIPT_RETENTION_MONTHS = 18` in `lib/client/receiptRetention.ts`; background idle prune (~30s after load) |
-| Receipts pending upload | **Not pruned** until upload completes | `pendingUpload` guard in `shouldPruneReceipt()` |
-| Receipts in `processing` status | Kept until done, blurry, or deleted | No separate draft entity |
-| Receipt photos (full resolution, OPFS) | Until upload succeeds, or **90 days** after cloud sync | `PHOTO_FULL_RETENTION_MS = 90 × 24h` in `lib/client/photoRetention.ts`; skipped while receipt is `processing` or `pendingUpload` |
-| Thumbnails (OPFS) | With receipt row; full purge may leave thumb | `photoRetentionJob` |
-| Encryption keys (local) | Until you delete app data or **Delete Account** | OPFS + `snaptax_crypto_meta` |
+- **Receipt list:** We keep receipt records on this device for up to **18 months** from the date on the receipt. Older receipts may be removed automatically when you use the app.
+- **Waiting to upload:** Receipts that still need to upload are **not** removed until upload finishes or you delete them.
+- **Processing receipts:** Receipts being analyzed stay on this device until they are done, marked blurry, or you delete them.
+- **Receipt photos:** Full-resolution photos stay until upload succeeds. After your receipts are backed up to the cloud, local full-size photos may be removed after **90 days**. Smaller thumbnails may remain longer for the list view.
+- **Encryption keys:** Local encryption keys stay until you clear app data or use **Delete Account** in Settings.
 
 ## On our servers (United States)
 
-| Data | Retention | Code / behavior |
-|------|-----------|-----------------|
-| Receipt images & metadata (Postgres + Blob) | While Ghost session or Google account is active | Bound to `ghost_id` or `user_id` |
-| Ghost session | Cookie + Postgres rows | Migrated on Google sign-in; deleted on Delete Account |
-| Account & billing (Paddle entitlements) | As required for tax export entitlements and law | `snaptax_season_entitlements` |
-| After **Delete Account** | Cloud receipts, images, and account rows permanently deleted | Client: `deleteAccountAndLocalData()`; server: `DELETE /api/users/me` — target completion within **30 days** |
-| Rate limit buckets | Bucket rows garbage-collected after **24 hours** | `GC_RETENTION_MS = 24h` in `lib/api/dbRateLimit.ts` |
-| Export Tax Pack files | **Not stored long-term** on server (MVP) | Generated on demand; user downloads CSV/XLSX |
+- **Receipts and images:** While you use SnapTax as a Ghost session or signed-in Google account, we store receipt metadata and images on our U.S. servers so you can sync and export.
+- **Google sign-in:** When you link Google, device receipts are associated with your account and continue in the cloud.
+- **Delete Account:** Using **Delete Account** in Settings permanently deletes cloud receipts, images, season export entitlements, checkout records, and other account data tied to you (including known Ghost session leftovers on this device). We target completion within **30 days** (see [Privacy Policy](/privacy) §9). Paddle, as Merchant of Record, may retain its own payment records under its policies; deleting your SnapTax account does **not** by itself issue a refund (see [Refund Policy](/refund)).
+- **While your account is active:** Season payment / export entitlement rows are kept so we can honor Export for the tax seasons you paid for.
+- **Export Tax Pack files:** We generate export files when you request them. We do **not** keep completed export files on our servers long-term — you download them to your device.
 
 ## Logs
 
-| Data | Retention |
-|------|-----------|
-| Security and API logs (no receipt images) | Up to **90 days** on our hosting platform (Vercel default) |
-
-Structured logs exclude receipt image bytes and mask email where applicable (see `docs/superpowers/specs/2026-06-06-logging-design.md`).
+- **Security and API logs:** Up to **90 days** on our hosting platform (standard platform retention).
+- Logs **do not include receipt photos**. Where email addresses appear in logs, we **mask or limit** them to what is needed for security and operations.
 
 ## Your controls
 
-- **Export Tax Pack** — structured portability (CSV/XLSX)  
-- **Delete Account** (Settings) — erase local IndexedDB/OPFS and cloud data tied to you  
+- **Export Tax Pack** — download your records (PDF, CSV, TXF, and related formats) for portability.
+- **Delete Account** (Settings) — erase receipts on this device and cloud data tied to you.
 
-## Code constants (audit reference)
+## Related policies
 
-| Constant | Value | File |
-|----------|-------|------|
-| `RECEIPT_RETENTION_MONTHS` | 18 | `lib/client/receiptRetention.ts` |
-| `PHOTO_FULL_RETENTION_MS` | 90 days | `lib/client/photoRetention.ts` |
-| `GC_RETENTION_MS` | 24 hours | `lib/api/dbRateLimit.ts` |
+- [Privacy Policy](/privacy)
+- [Terms of Service](/terms)
+- [Pricing](/pricing)
+- [Refund Policy](/refund)
+- [All policies](/policies)
+- [Security & Incidents](/security)
 
-Questions: **legal@snap1099.com**
+## Contact
+
+Questions: **snaptax.lightxforge@gmail.com**

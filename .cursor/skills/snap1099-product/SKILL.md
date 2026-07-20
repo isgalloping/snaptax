@@ -2,9 +2,10 @@
 name: snap1099-product
 description: >-
   Implements Snap1099 MVP features per product spec — Ghost account, Google auth
-  gates, receipt capture states, Paddle paywall, PWA offline. Use when building
-  or reviewing Snap1099/snaptax UI, auth, payments, receipts, settings, or when
-  the user mentions PRD, product spec, 1099, or Snap1099 product rules.
+  gates, receipt capture states, Paddle paywall, PWA offline/install. Use when
+  building or reviewing Snap1099/snaptax UI, auth, payments, receipts, PWA,
+  marketing CTAs, settings, or when the user mentions PRD, product spec, 1099,
+  or Snap1099 product rules.
 ---
 
 # Snap1099 Product Development
@@ -12,7 +13,8 @@ description: >-
 ## Before coding
 
 1. Read `docs/product/PRODUCT-SPEC.md` (canonical summary)
-2. For backend/API work, read `docs/tech/README.md` and relevant module
+2. **PWA / install / manifest / marketing CTA:** read `docs/tech/13-pwa-install-architecture.md` + `.cursor/rules/snap1099-pwa.mdc`
+3. For backend/API work, read `docs/tech/README.md` and relevant module
 3. For database/schema changes, read `docs/tech/DB-DESIGN-SPEC.md` first (PG **and** IndexedDB `snaptax_*` stores)
 4. For copy/interaction details, read `docs/prd/0.0.1.md` relevant section
 5. Check §12 **实现状态** — backend/OpenAI/Google/Paddle 已落地；改功能前仍对照 spec
@@ -21,7 +23,7 @@ description: >-
 
 ## Decision tree: auth UI
 
-> Onboarding canonical: `docs/superpowers/specs/2026-06-12-new-user-onboarding-design.md`
+> Onboarding canonical: `docs/superpowers/topics/onboarding-aha-design.md`
 
 ```
 User action?
@@ -58,7 +60,7 @@ Database: **`snaptax`** (legacy `snap1099` migrated on first open). Object store
 | `snaptax_receipt_photos` | **Photo metadata only** (paths, sizes, purge flags) |
 | `snaptax_system_meta` | Onboarding, tombstones, KV meta |
 | `snaptax_crypto_meta` | Local encryption DEK |
-| `snaptax_receipt_events` | Phase 2 lifecycle event queue only |
+| `snaptax_receipt_events` | Lifecycle event queue（pending → flush → synced） |
 
 **Image bytes:** OPFS `snaptax/photos/{id}/` (encrypted). **Not** in IDB.
 
@@ -77,6 +79,26 @@ Legacy v4 names (`receipts`, `photos`, `system_meta`, `meta`) — migrate on `DB
 - **Coach:** `SnapCoachBanner` (0 receipts) · `FirstReceiptCoach` (1 receipt)
 - **Dismiss:** `GOOGLE_SOFT_DISMISSED_KEY` — global once for soft triggers
 
+## Decision tree: PWA / install
+
+> Canonical: `docs/tech/13-pwa-install-architecture.md`
+
+```
+Which route?
+├─ Marketing / (not /app)
+│   ├─ InstallCaptureScript (root) captures prompt
+│   ├─ MarketingInstallShell → bar + MarketingInstallButton
+│   └─ Get Started → native <a href="/app"> (Android Chrome WebAPK)
+└─ Product /app
+    ├─ standalone? → normal HomeScreen (no gate)
+    ├─ mobile browser + eligible platform?
+    │   ├─ After Landing → AppBrowserEntryGate (full-screen, skippable)
+    │   └─ Skip session → header install only; no bottom bar
+    └─ Android Edge / desktop → PwaInstallProvider bar/header only
+```
+
+**Rename install icon:** `manifest.short_name` + `appleWebApp.title` → **SnapTax** (not internal `snap1099_*` keys).
+
 ## Files to touch (typical)
 
 | Feature | Location |
@@ -86,7 +108,8 @@ Legacy v4 names (`receipts`, `photos`, `system_meta`, `meta`) — migrate on `DB
 | Camera | `components/camera/`, `lib/camera/`（含 `compressReceiptImage`） |
 | Local queue | `lib/storage/receiptDb.ts`, `lib/storage/idbStores.ts`, `lib/storage/opfs/` |
 | Onboarding | `lib/onboarding/onboardingStorage.ts`, `components/onboarding/` |
-| PWA | `app/sw.ts`, `components/pwa/` |
+| PWA / install | `docs/tech/13-pwa-install-architecture.md`, `components/pwa/`, `lib/pwa/`, `app/manifest.ts`, `components/marketing/MarketingAppLink.tsx` |
+| Marketing site | `app/(marketing)/`, `components/marketing/` |
 
 ## Additional resources
 

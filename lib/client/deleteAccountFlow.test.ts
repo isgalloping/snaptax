@@ -1,9 +1,12 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  DeleteAccountLocalClearError,
   DeleteAccountOfflineError,
   DeleteAccountSessionExpiredError,
   deleteAccountAndLocalData,
+  finishLocalWipeAfterAccountDelete,
+  isDeleteAccountLocalClearError,
   isDeleteAccountOfflineError,
   isDeleteAccountSessionExpiredError,
   resolveDeleteRoute,
@@ -109,6 +112,7 @@ describe("deleteAccountAndLocalData", () => {
   it("calls ghost API path when session has no user and no google cache", async () => {
     const order: string[] = [];
     let apiPath: boolean | null = null;
+    let sentOrphans: string[] | null = null;
 
     await deleteAccountAndLocalData({
       isOnline: () => true,
@@ -116,9 +120,15 @@ describe("deleteAccountAndLocalData", () => {
       loadGoogleUser: () => null,
       ensureGhostSession: async () => {
         order.push("ghost");
+        return "g-current";
       },
-      deleteAccountApi: async (useUserApi) => {
+      getClientOrphanGhostIds: (current) => {
+        assert.equal(current, "g-current");
+        return ["g-old-a", "g-old-b"];
+      },
+      deleteAccountApi: async (useUserApi, orphanGhostIds) => {
         apiPath = useUserApi;
+        sentOrphans = orphanGhostIds;
         order.push("api");
       },
       clearLocalAppData: async () => {
@@ -127,12 +137,14 @@ describe("deleteAccountAndLocalData", () => {
     });
 
     assert.equal(apiPath, false);
+    assert.deepEqual(sentOrphans, ["g-old-a", "g-old-b"]);
     assert.deepEqual(order, ["ghost", "api", "local"]);
   });
 
-  it("calls user API path when session has user and skips ghost ensure", async () => {
+  it("calls user API path with client orphans and skips ghost ensure", async () => {
     const order: string[] = [];
     let apiPath: boolean | null = null;
+    let sentOrphans: string[] | null = null;
 
     await deleteAccountAndLocalData({
       isOnline: () => true,
@@ -143,9 +155,15 @@ describe("deleteAccountAndLocalData", () => {
       loadGoogleUser: () => ({ email: "a@b.com", name: "A" }),
       ensureGhostSession: async () => {
         order.push("ghost");
+        return "unused";
       },
-      deleteAccountApi: async (useUserApi) => {
+      getClientOrphanGhostIds: (current) => {
+        assert.equal(current, "g1");
+        return ["g-orphan"];
+      },
+      deleteAccountApi: async (useUserApi, orphanGhostIds) => {
         apiPath = useUserApi;
+        sentOrphans = orphanGhostIds;
         order.push("api");
       },
       clearLocalAppData: async () => {
@@ -154,7 +172,35 @@ describe("deleteAccountAndLocalData", () => {
     });
 
     assert.equal(apiPath, true);
+    assert.deepEqual(sentOrphans, ["g-orphan"]);
     assert.deepEqual(order, ["api", "local"]);
+  });
+
+  it("maps GOOGLE_LOGIN_REQUIRED to session-expired error", async () => {
+    let localCleared = false;
+
+    await assert.rejects(
+      () =>
+        deleteAccountAndLocalData({
+          isOnline: () => true,
+          fetchAuthMe: async () => ({ user: null, ghostId: "g1" }),
+          loadGoogleUser: () => null,
+          ensureGhostSession: async () => "g1",
+          getClientOrphanGhostIds: () => [],
+          deleteAccountApi: async () => {
+            throw new Error("GOOGLE_LOGIN_REQUIRED");
+          },
+          clearLocalAppData: async () => {
+            localCleared = true;
+          },
+        }),
+      (err: unknown) => {
+        assert.ok(isDeleteAccountSessionExpiredError(err));
+        return true;
+      },
+    );
+
+    assert.equal(localCleared, false);
   });
 
   it("does not clear local when API fails", async () => {
@@ -169,6 +215,7 @@ describe("deleteAccountAndLocalData", () => {
             ghostId: null,
           }),
           loadGoogleUser: () => null,
+          getClientOrphanGhostIds: () => [],
           deleteAccountApi: async () => {
             throw new Error("DELETE_ACCOUNT_FAILED");
           },
@@ -180,6 +227,88 @@ describe("deleteAccountAndLocalData", () => {
     );
 
     assert.equal(localCleared, false);
+  });
+
+  it("throws LocalClearError and marks pending when wipe fails after API", async () => {
+    let marked = false;
+    let apiCalled = false;
+
+    await assert.rejects(
+      () =>
+        deleteAccountAndLocalData({
+          isOnline: () => true,
+          fetchAuthMe: async () => ({
+            user: { id: "u1", email: "a@b.com" },
+            ghostId: "g1",
+          }),
+          loadGoogleUser: () => null,
+          getClientOrphanGhostIds: () => [],
+          hasPendingLocalWipe: () => false,
+          markPendingLocalWipe: () => {
+            marked = true;
+          },
+          deleteAccountApi: async () => {
+            apiCalled = true;
+          },
+          clearLocalAppData: async () => {
+            throw new Error("IDB_FAIL");
+          },
+          localClearAttempts: 2,
+        }),
+      (err: unknown) => {
+        assert.ok(isDeleteAccountLocalClearError(err));
+        return true;
+      },
+    );
+
+    assert.equal(apiCalled, true);
+    assert.equal(marked, true);
+  });
+
+  it("finishes pending local wipe without calling delete API", async () => {
+    const order: string[] = [];
+
+    await deleteAccountAndLocalData({
+      hasPendingLocalWipe: () => true,
+      isOnline: () => false,
+      deleteAccountApi: async () => {
+        order.push("api");
+      },
+      clearLocalAppData: async () => {
+        order.push("local");
+      },
+      localClearAttempts: 1,
+    });
+
+    assert.deepEqual(order, ["local"]);
+  });
+});
+
+describe("finishLocalWipeAfterAccountDelete", () => {
+  it("retries and then surfaces LocalClearError", async () => {
+    let tries = 0;
+    await assert.rejects(
+      () =>
+        finishLocalWipeAfterAccountDelete({
+          clearLocalAppData: async () => {
+            tries += 1;
+            throw new Error("still failing");
+          },
+          localClearAttempts: 3,
+        }),
+      (err: unknown) => isDeleteAccountLocalClearError(err),
+    );
+    assert.equal(tries, 3);
+  });
+});
+
+describe("DeleteAccountLocalClearError", () => {
+  it("is recognized by isDeleteAccountLocalClearError", () => {
+    assert.ok(isDeleteAccountLocalClearError(new DeleteAccountLocalClearError()));
+    assert.equal(
+      isDeleteAccountLocalClearError(new Error("LOCAL_CLEAR_FAILED")),
+      false,
+    );
   });
 });
 

@@ -1,11 +1,19 @@
 # SnapTax Datenschutzerklärung
 
-**Zuletzt aktualisiert:** Juli 2026  
+**Zuletzt aktualisiert:** Juni 2026  
 **Anwendbare Rechtsordnungen:** Vereinigte Staaten (einschließlich Kalifornien CPRA) & Europäische Union (DSGVO)
 
-Willkommen bei SnapTax. SnapTax und Snap1099 bezeichnen dieselbe Anwendung („die App"). Diese Datenschutzerklärung erläutert, wie wir Ihre Daten erheben, verwenden, verarbeiten und schützen.
+## Betreiber & Kontakt
 
-Wir helfen Auftragnehmern, Selbstständigen und kleinen Unternehmen, Belege zu organisieren und Steuersaison-Exporte vorzubereiten. Wir verkaufen Ihre Daten nicht und nutzen sie nicht für Werbung.
+SnapTax wird betrieben von Gang Huang, Einzelunternehmer („wir", „uns", „unser").
+
+Kontakt: snaptax.lightxforge@gmail.com  
+Datenschutzanfragen: snaptax.lightxforge@gmail.com (Betreff: Privacy Request)  
+Postanschrift: Hong Kong
+
+Die Dienste werden Nutzern in den Vereinigten Staaten angeboten. Kundendaten werden in den Vereinigten Staaten verarbeitet und gespeichert, wie unten beschrieben.
+
+Willkommen bei SnapTax. Diese Datenschutzerklärung erläutert, wie wir Ihre Daten erheben, verwenden, verarbeiten und schützen, wenn Sie die SnapTax-Anwendung („die App") nutzen.
 
 ## 1. Datenschutz by Design & Dateneigentum
 
@@ -111,7 +119,7 @@ Je nach Standort haben Sie das Recht auf:
 - **Einschränkung der Verarbeitung** — uns kontaktieren, wo anwendbar.
 - **Widerspruch** — App-Nutzung beenden oder Konto löschen.
 
-Wir antworten auf verifizierte Anfragen an **legal@snap1099.com** innerhalb von **30 Tagen** (Bestätigung innerhalb von 48 Stunden angestrebt). Verlängerung um 60 Tage, wo gesetzlich erlaubt, mit Mitteilung.
+Wir antworten auf verifizierte Anfragen an **snaptax.lightxforge@gmail.com** innerhalb von **30 Tagen** (Bestätigung innerhalb von 48 Stunden angestrebt). Verlängerung um 60 Tage, wo gesetzlich erlaubt, mit Mitteilung.
 
 ## 10. Sicherheit
 
@@ -125,4 +133,4 @@ Die App richtet sich nicht an Kinder unter 13 Jahren. Wir erheben wissentlich ke
 
 Wir können diese Erklärung aktualisieren. Wesentliche Änderungen werden im Datum „Zuletzt aktualisiert" reflektiert. Fortgesetzte Nutzung gilt als Zustimmung, wo gesetzlich zulässig.
 
-**Kontakt:** **legal@snap1099.com**
+**Kontakt:** **snaptax.lightxforge@gmail.com**

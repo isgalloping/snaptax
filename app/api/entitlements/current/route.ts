@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { mapErrorToResponse } from "@/lib/api/errors";
 import { getActor } from "@/lib/auth/getActor";
+import { isSeasonEntitlementPaid } from "@/lib/billing/isSeasonEntitlementPaid";
 import { prisma } from "@/lib/prisma";
 import { currentTaxSeason } from "@/lib/tax/season";
 import { withRequestLog } from "@/lib/server/log/withRequestLog";
@@ -43,8 +44,9 @@ export const GET = withRequestLog("api.entitlement", async (request, _context) =
 
     return NextResponse.json({
       season,
-      paid: Boolean(entitlement),
+      paid: isSeasonEntitlementPaid(entitlement?.status),
       paidAt: entitlement?.paidAt.toISOString() ?? null,
+      status: entitlement?.status ?? null,
     });
   } catch (err) {
     return mapErrorToResponse(err);

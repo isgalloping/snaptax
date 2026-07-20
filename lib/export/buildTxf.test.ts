@@ -36,7 +36,7 @@ describe("buildTxfExport", () => {
       [sampleRow()],
       new Date("2026-02-15T12:00:00.000Z"),
     );
-    assert.match(txf, /^V042\nSnap1099 Export\nD 02\/15\/2026\n/);
+    assert.match(txf, /^V042\nSnapTax Export\nD 02\/15\/2026\n/);
     assert.match(txf, /\^[\s\S]*TD 2222[\s\S]*P OpenAI[\s\S]*D 01\/15\/2026[\s\S]*M 1099 Business Expense[\s\S]*\$ 20\.00/);
   });
 

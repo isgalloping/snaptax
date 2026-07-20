@@ -1,9 +1,19 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import type { LegalDoc } from "@/lib/legal/content";
 import { getLegalBundle, getLegalSections, getLegalTitle } from "@/lib/legal/content";
-import { useI18n } from "@/components/i18n/I18nProvider";
+import type { ParsedLegalMarkdown } from "@/lib/legal/markdownDoc";
+import { omitLegalHubSections } from "@/lib/legal/omitLegalHubSections";
+import { useI18n, useUserCopy } from "@/components/i18n/I18nProvider";
+import { LegalMarkdownSections } from "@/components/legal/LegalMarkdownSections";
 import { useDialogEscape } from "@/lib/ui/useDialogEscape";
+
+const MARKDOWN_DOCS = new Set<LegalDoc>(["data-retention", "security"]);
+
+function isMarkdownLegalDoc(doc: LegalDoc): doc is "data-retention" | "security" {
+  return MARKDOWN_DOCS.has(doc);
+}
 
 interface LegalSheetProps {
   doc: LegalDoc | null;
@@ -12,12 +22,65 @@ interface LegalSheetProps {
 
 export function LegalSheet({ doc, onClose }: LegalSheetProps) {
   const { locale } = useI18n();
+  const privacyCopy = useUserCopy().settings.privacyData;
   useDialogEscape(doc != null, onClose);
+
+  const [markdownDoc, setMarkdownDoc] = useState<ParsedLegalMarkdown | null>(null);
+  const [markdownLocalized, setMarkdownLocalized] = useState(true);
+  const [markdownError, setMarkdownError] = useState(false);
+  const [loadingMarkdown, setLoadingMarkdown] = useState(false);
+
+  useEffect(() => {
+    if (!doc || !MARKDOWN_DOCS.has(doc)) {
+      setMarkdownDoc(null);
+      setMarkdownLocalized(true);
+      setMarkdownError(false);
+      setLoadingMarkdown(false);
+      return;
+    }
+
+    let cancelled = false;
+    setLoadingMarkdown(true);
+    setMarkdownError(false);
+
+    void fetch(`/api/legal/document?file=${doc}&locale=${encodeURIComponent(locale)}`)
+      .then(async (res) => {
+        if (!res.ok) throw new Error("load failed");
+        return (await res.json()) as ParsedLegalMarkdown & { localized?: boolean };
+      })
+      .then((parsed) => {
+        if (!cancelled) {
+          setMarkdownDoc(parsed);
+          setMarkdownLocalized(parsed.localized !== false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setMarkdownDoc(null);
+          setMarkdownError(true);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingMarkdown(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [doc, locale]);
+
   if (!doc) return null;
 
   const bundle = getLegalBundle(locale);
-  const sections = getLegalSections(doc, locale);
-  const title = getLegalTitle(doc, locale);
+  const isMarkdown = isMarkdownLegalDoc(doc);
+  const sections = isMarkdown ? [] : getLegalSections(doc, locale);
+  const title = isMarkdown
+    ? (markdownDoc?.title ??
+      (doc === "data-retention"
+        ? privacyCopy.dataRetention
+        : privacyCopy.security))
+    : getLegalTitle(doc, locale);
+  const showEnglishOnly = isMarkdown && locale !== "en-US" && !markdownLocalized;
 
   return (
     <div
@@ -50,27 +113,39 @@ export function LegalSheet({ doc, onClose }: LegalSheetProps) {
         </div>
         <div className="overflow-y-auto p-6 pb-10">
           <p className="mb-6 text-xs text-zinc-400">{bundle.lastUpdatedLabel}</p>
-          {sections.map((section) => (
-            <section key={section.title} className="mb-6">
-              <h3 className="mb-2 text-sm font-bold uppercase tracking-wider text-yellow-400">
-                {section.title}
-              </h3>
-              {section.body.map((paragraph) => (
-                <p
-                  key={paragraph.slice(0, 40)}
-                  className="mb-3 text-sm leading-relaxed text-zinc-300"
-                >
-                  {paragraph}
-                </p>
-              ))}
-            </section>
-          ))}
-          <a
-            href={doc === "privacy" ? "/privacy" : "/terms"}
-            className="inline-block min-h-12 text-sm font-bold text-yellow-400 underline"
-          >
-            {bundle.openFullPage(title)}
-          </a>
+          {showEnglishOnly && (
+            <p className="mb-4 rounded-xl border border-zinc-600 bg-zinc-800/80 p-3 text-xs font-bold text-zinc-300">
+              {privacyCopy.englishOnlyNotice}
+            </p>
+          )}
+          {isMarkdown ? (
+            loadingMarkdown ? (
+              <p className="text-sm text-zinc-400">{privacyCopy.loadingLegal}</p>
+            ) : markdownError || !markdownDoc ? (
+              <p className="text-sm text-zinc-300">{privacyCopy.legalLoadFailed}</p>
+            ) : (
+              <LegalMarkdownSections
+                sections={omitLegalHubSections(markdownDoc.sections)}
+                headingLevel="h3"
+              />
+            )
+          ) : (
+            sections.map((section) => (
+              <section key={section.title} className="mb-6">
+                <h3 className="mb-2 text-sm font-bold uppercase tracking-wider text-yellow-400">
+                  {section.title}
+                </h3>
+                {section.body.map((paragraph) => (
+                  <p
+                    key={paragraph.slice(0, 40)}
+                    className="mb-3 text-sm leading-relaxed text-zinc-300"
+                  >
+                    {paragraph}
+                  </p>
+                ))}
+              </section>
+            ))
+          )}
         </div>
       </div>
     </div>

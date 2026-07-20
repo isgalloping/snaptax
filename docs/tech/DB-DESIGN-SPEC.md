@@ -52,8 +52,8 @@
 | `snaptax_receipt_photos` | **图片元数据 only**（OPFS 路径、尺寸、同步/回收状态）；**像素在 OPFS**，见 [`12-local-image-storage-design.md`](./12-local-image-storage-design.md) | —（Blob 在 Vercel Blob；pathname 在 receipt 行） |
 | `snaptax_system_meta` | 客户端元数据（`onboarding_status`、`deleted_receipt_ids` 等 KV） | — |
 | `snaptax_crypto_meta` | 本地加密 DEK / 密钥材料 | — |
-| `snaptax_receipt_events` | **第二阶段** append-only 生命周期事件队列 | Postgres Event Store（待定） |
-| `snaptax_receipts_summary` | **当前税季**聚合（省税/张数/deductions）；写路径增量 + idle 校验 — [`2026-06-29-receipt-summary-local-design.md`](../superpowers/specs/2026-06-29-receipt-summary-local-design.md) | — |
+| `snaptax_receipt_events` | append-only 生命周期事件队列（pending → flush → synced） | `snaptax_receipt_events` |
+| `snaptax_receipts_summary` | **当前税季**聚合（省税/张数/deductions）；写路径增量 + idle 校验 — [`receipt-sync-lifecycle-design.md`](../superpowers/topics/receipt-sync-lifecycle-design.md) §3.5 | — |
 
 #### 遗留名 → 规范名（v4 → v5 迁移）
 
@@ -224,7 +224,11 @@ prisma/migrations/（deploy 用）
 | `snaptax_users` | OAuth 用户主数据 |
 | `snaptax_ghost_account` | Ghost ↔ User 一对一绑定 |
 | `snaptax_receipts` | 小票元数据（图 pathname 在 `image_url`） |
-| `snaptax_season_entitlements` | 报税季付费权益 |
+| `snaptax_season_entitlements` | 报税季付费权益（`status`: `active` \| `disputed` \| `refunded`） |
+| `snaptax_webhook_events` | 支付渠道 Webhook 审计（`(channel_code, event_id)` 幂等） |
+| `snaptax_receipt_events` | append-only 客户端生命周期事件 |
+| `snaptax_receipt_sync_cursors` | per-actor event ingest 高水位 |
+| `snaptax_receipt_lifecycle_snapshots` | `TAX_CALCULATED` append-only 状态快照 |
 
 **禁止：** 在 `users` 表冗余 entitlements；在 `season_entitlements` 存 `auth_channel`（已通过 `user_id` FK 表达）。
 

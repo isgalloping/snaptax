@@ -4,8 +4,15 @@ import {
   type AuthMeResponse,
 } from "@/lib/client/authApi";
 import { type GoogleUser, loadGoogleUser } from "@/lib/client/authStorage";
-import { ensureGhostSession } from "@/lib/client/ghostClient";
-import { clearLocalAppData } from "@/lib/storage/clearLocalData";
+import {
+  ensureGhostSession,
+  getClientOrphanGhostIds,
+} from "@/lib/client/ghostClient";
+import {
+  clearLocalAppData,
+  hasPendingLocalWipe,
+  markPendingLocalWipe,
+} from "@/lib/storage/clearLocalData";
 
 export class DeleteAccountOfflineError extends Error {
   readonly code = "OFFLINE" as const;
@@ -25,15 +32,32 @@ export class DeleteAccountSessionExpiredError extends Error {
   }
 }
 
+/** Cloud erase succeeded; local wipe failed — retry finishLocalWipeAfterAccountDelete. */
+export class DeleteAccountLocalClearError extends Error {
+  readonly code = "LOCAL_CLEAR_FAILED" as const;
+
+  constructor() {
+    super("LOCAL_CLEAR_FAILED");
+    this.name = "DeleteAccountLocalClearError";
+  }
+}
+
 export type DeleteAccountRoute = "user" | "ghost";
 
 export type DeleteAccountFlowDeps = {
   isOnline?: () => boolean;
   fetchAuthMe?: () => Promise<AuthMeResponse>;
   loadGoogleUser?: () => GoogleUser | null;
-  ensureGhostSession?: () => Promise<void>;
-  deleteAccountApi?: (useUserApi: boolean) => Promise<void>;
+  ensureGhostSession?: () => Promise<string>;
+  getClientOrphanGhostIds?: (currentGhostId: string) => string[];
+  deleteAccountApi?: (
+    useUserApi: boolean,
+    orphanGhostIds: string[],
+  ) => Promise<void>;
   clearLocalAppData?: () => Promise<void>;
+  hasPendingLocalWipe?: () => boolean;
+  markPendingLocalWipe?: () => void;
+  localClearAttempts?: number;
 };
 
 export async function resolveDeleteRoute(
@@ -56,6 +80,37 @@ export async function resolveDeleteUsesUserApi(
   return route === "user";
 }
 
+async function clearLocalWithRetry(
+  clearLocal: () => Promise<void>,
+  attempts: number,
+): Promise<void> {
+  let lastError: unknown;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      await clearLocal();
+      return;
+    } catch (err) {
+      lastError = err;
+    }
+  }
+  throw lastError instanceof Error
+    ? lastError
+    : new Error("LOCAL_CLEAR_FAILED");
+}
+
+/** Finish device wipe when cloud delete already succeeded. */
+export async function finishLocalWipeAfterAccountDelete(
+  deps: Pick<DeleteAccountFlowDeps, "clearLocalAppData" | "localClearAttempts"> = {},
+): Promise<void> {
+  const clearLocal = deps.clearLocalAppData ?? clearLocalAppData;
+  const attempts = deps.localClearAttempts ?? 3;
+  try {
+    await clearLocalWithRetry(clearLocal, attempts);
+  } catch {
+    throw new DeleteAccountLocalClearError();
+  }
+}
+
 export async function deleteAccountAndLocalData(
   deps: DeleteAccountFlowDeps = {},
 ): Promise<void> {
@@ -66,21 +121,61 @@ export async function deleteAccountAndLocalData(
   const readGoogleUser = deps.loadGoogleUser ?? loadGoogleUser;
   const ensureGhost =
     deps.ensureGhostSession ?? (() => ensureGhostSession());
+  const readOrphans =
+    deps.getClientOrphanGhostIds ?? getClientOrphanGhostIds;
   const deleteApi = deps.deleteAccountApi ?? deleteAccountApi;
   const clearLocal = deps.clearLocalAppData ?? clearLocalAppData;
+  const checkPending = deps.hasPendingLocalWipe ?? hasPendingLocalWipe;
+  const markPending = deps.markPendingLocalWipe ?? markPendingLocalWipe;
+  const attempts = deps.localClearAttempts ?? 3;
+
+  if (checkPending()) {
+    await finishLocalWipeAfterAccountDelete({
+      clearLocalAppData: clearLocal,
+      localClearAttempts: attempts,
+    });
+    return;
+  }
 
   if (!isOnline()) {
     throw new DeleteAccountOfflineError();
   }
 
-  const route = await resolveDeleteRoute(fetchMe, readGoogleUser);
-
-  if (route === "ghost") {
-    await ensureGhost();
+  const me = await fetchMe();
+  let route: DeleteAccountRoute;
+  if (me.user != null) {
+    route = "user";
+  } else if (readGoogleUser() != null) {
+    throw new DeleteAccountSessionExpiredError();
+  } else {
+    route = "ghost";
   }
 
-  await deleteApi(route === "user");
-  await clearLocal();
+  let currentGhostId = me.ghostId ?? "";
+  if (route === "ghost") {
+    currentGhostId = await ensureGhost();
+  }
+
+  const orphanGhostIds = readOrphans(currentGhostId);
+
+  try {
+    await deleteApi(route === "user", orphanGhostIds);
+  } catch (err) {
+    if (
+      err instanceof Error &&
+      err.message === "GOOGLE_LOGIN_REQUIRED"
+    ) {
+      throw new DeleteAccountSessionExpiredError();
+    }
+    throw err;
+  }
+
+  markPending();
+  try {
+    await clearLocalWithRetry(clearLocal, attempts);
+  } catch {
+    throw new DeleteAccountLocalClearError();
+  }
 }
 
 export function isDeleteAccountOfflineError(
@@ -93,4 +188,10 @@ export function isDeleteAccountSessionExpiredError(
   err: unknown,
 ): err is DeleteAccountSessionExpiredError {
   return err instanceof DeleteAccountSessionExpiredError;
+}
+
+export function isDeleteAccountLocalClearError(
+  err: unknown,
+): err is DeleteAccountLocalClearError {
+  return err instanceof DeleteAccountLocalClearError;
 }

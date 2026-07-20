@@ -3,14 +3,14 @@ export const USER_COPY = {
     description: "Snap receipts, auto-categorize. Simple 1099 bookkeeping.",
   },
   pwa: {
-    title: "Add Snap1099 to Home Screen",
+    title: "Add SnapTax to Home Screen",
     subtitle:
       "Open like a native app — snap receipts one-handed on the job site",
     install: "Install",
     howToInstall: "How to add",
     dismiss: "Not now",
     manualHint: "Tap ⋮ in Chrome, then Install app",
-    manualSheetTitle: "Install Snap1099",
+    manualSheetTitle: "Install SnapTax",
     manualSheetLead:
       "Your browser can't install automatically — follow these steps:",
     manualGotIt: "Got it",
@@ -18,22 +18,22 @@ export const USER_COPY = {
       chromiumAndroid: [
         "Tap the ⋮ menu (top-right of Chrome).",
         'Tap "Install app" or "Add to Home screen".',
-        "Confirm — Snap1099 opens from your home screen like a native app.",
+        "Confirm — SnapTax opens from your home screen like a native app.",
       ],
       chromiumDesktop: [
         "Tap the ⋮ menu (top-right of Chrome or Edge).",
-        'Tap "Apps" → "Install Snap1099" (or "Install this site").',
-        "Confirm — Snap1099 opens in its own window.",
+        'Tap "Apps" → "Install SnapTax" (or "Install this site").',
+        "Confirm — SnapTax opens in its own window.",
       ],
       iosSafari: [
         "Tap the Share button (square with arrow) at the bottom of Safari.",
         'Scroll and tap "Add to Home Screen".',
-        'Tap "Add" — open Snap1099 from your home screen.',
+        'Tap "Add" — open SnapTax from your home screen.',
       ],
       macosSafari: [
         "Tap the Share button in Safari's toolbar.",
         'Choose "Add to Dock".',
-        "Snap1099 appears in your Dock like a native app.",
+        "SnapTax appears in your Dock like a native app.",
       ],
     },
   },

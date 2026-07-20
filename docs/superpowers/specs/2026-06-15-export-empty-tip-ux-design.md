@@ -1,21 +1,7 @@
-# Export Empty Tip UX — Design
+# [Archived] 2026 06 15 export empty tip ux
 
-**Date:** 2026-06-15  
-**Status:** Approved  
-**Scope:** Settings export section — long bar tip above button when no exportable receipts.
+> **Status:** Archived · superseded by consolidated topic spec  
+> **Current truth:** [export-pipeline-design.md](../topics/export-pipeline-design.md)  
+> **Full text:** [2026-06-15-export-empty-tip-ux-design.md](../archive/specs/2026-06-15-export-empty-tip-ux-design.md)
 
-## Behavior
-
-- Trigger: gate blocks export (`hasExportableReceipts === false`)
-- Placement: above EXPORT button in Settings `TAX SEASON EXPORT` section
-- Style: full-width yellow bar (`border-yellow-500/70`, `bg-yellow-950/60`)
-- Animation: 5s CSS fade (`opacity 1` → `0`), then clear state
-- Other export errors: unchanged bottom `displayError` (offline, failed, etc.)
-- Scope: Settings only (not TaxHeader)
-
-## Files
-
-- `components/export/ExportEmptyTip.tsx`
-- `app/globals.css` — `@keyframes export-empty-tip-fade`
-- `components/export/useTaxExportGate.tsx` — `exportEmptyTip` state
-- `components/settings/SettingsScreen.tsx` — layout
+Do not use this stub for implementation decisions.

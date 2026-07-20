@@ -13,6 +13,7 @@ import {
   mountGoogleSignInButton,
   type GoogleSignInMount,
 } from "@/lib/client/googleAuth";
+import { waitForGisButtonInHost } from "@/lib/client/waitForGisButton";
 
 interface GoogleSignInButtonHostProps {
   active: boolean;
@@ -22,7 +23,9 @@ interface GoogleSignInButtonHostProps {
 }
 
 /**
- * English branded button with invisible GIS overlay (credential flow stays in-sheet).
+ * English branded shell with a near-transparent GIS overlay on top.
+ * Mobile WebViews ignore programmatic .click() on hidden GIS iframes and often
+ * block opacity-0 touch targets — use opacity ~0.02 so real taps reach GIS.
  */
 export function GoogleSignInButtonHost({
   active,
@@ -34,6 +37,7 @@ export function GoogleSignInButtonHost({
   const googleCtaLabel = useUserCopy().settings.account.googleCta;
   const [preparing, setPreparing] = useState(true);
   const [signingIn, setSigningIn] = useState(false);
+  const [gisReady, setGisReady] = useState(false);
   const [inlineError, setInlineError] = useState<string | null>(null);
   const hostRef = useRef<HTMLDivElement>(null);
   const mountRef = useRef<GoogleSignInMount | null>(null);
@@ -71,12 +75,10 @@ export function GoogleSignInButtonHost({
       mountRef.current = null;
       setPreparing(false);
       setSigningIn(false);
+      setGisReady(false);
       signingInRef.current = false;
       return;
     }
-
-    const host = hostRef.current;
-    if (!host) return;
 
     let cancelled = false;
 
@@ -106,12 +108,17 @@ export function GoogleSignInButtonHost({
       })();
     };
 
-    void (async () => {
+    const mountGis = async (): Promise<boolean> => {
+      const host = hostRef.current;
+      if (!host) return false;
+
       setPreparing(true);
       setInlineError(null);
+      setGisReady(false);
+
       try {
         await ensureGhostSession();
-        if (cancelled) return;
+        if (cancelled) return false;
         mountRef.current?.cleanup();
         mountRef.current = await mountGoogleSignInButton(host, {
           onCredential: handleCredential,
@@ -119,10 +126,28 @@ export function GoogleSignInButtonHost({
             if (!cancelled) handleAuthError(error);
           },
         });
+        const gisButton = await waitForGisButtonInHost(host);
+        if (cancelled) return false;
+        if (!gisButton) {
+          handleAuthError(new Error("GIS_BUTTON_FAILED"));
+          return false;
+        }
+        setGisReady(true);
+        return true;
       } catch (error) {
         if (!cancelled) handleAuthError(error);
+        return false;
       } finally {
         if (!cancelled) setPreparing(false);
+      }
+    };
+
+    void (async () => {
+      const mounted = await mountGis();
+      if (!mounted && !cancelled) {
+        requestAnimationFrame(() => {
+          if (!cancelled) void mountGis();
+        });
       }
     })();
 
@@ -130,15 +155,17 @@ export function GoogleSignInButtonHost({
       cancelled = true;
       mountRef.current?.cleanup();
       mountRef.current = null;
+      setGisReady(false);
     };
   }, [active, errorMessages]);
 
   const busy = preparing || signingIn;
+  const touchEnabled = gisReady && !busy;
 
   return (
     <div className={className}>
       <div className="relative min-h-16 w-full">
-        <div aria-hidden="true">
+        <div className="relative z-[1]" aria-hidden="true">
           <ContinueWithGoogleButton
             onClick={() => {}}
             disabled={busy}
@@ -147,11 +174,13 @@ export function GoogleSignInButtonHost({
         </div>
         <div
           ref={hostRef}
-          className={`absolute inset-0 flex items-center justify-center overflow-hidden ${
-            busy ? "pointer-events-none opacity-60" : "cursor-pointer opacity-0"
+          className={`absolute inset-0 z-[2] flex items-center justify-center overflow-hidden ${
+            touchEnabled
+              ? "cursor-pointer opacity-[0.02]"
+              : "pointer-events-none opacity-60"
           }`}
           role="button"
-          tabIndex={busy ? -1 : 0}
+          tabIndex={touchEnabled ? 0 : -1}
           aria-busy={busy}
           aria-label={googleCtaLabel}
         />

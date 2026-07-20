@@ -4,26 +4,36 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { Receipt } from "@/lib/types";
 import { useI18n } from "@/components/i18n/I18nProvider";
 import {
-  availableTaxYears,
   incomeFormsInTaxYear,
   taxYearDeductions,
   receiptsInTaxYear,
 } from "@/lib/tax/taxYearStats";
-import { pickDefaultExportTaxYear } from "@/lib/tax/exportGate";
-import { defaultExportTaxYear } from "@/lib/tax/season";
+import {
+  exportPickerTaxYears,
+  pickDefaultExportTaxYear,
+} from "@/lib/tax/exportGate";
+import { filingTaxYearForSeason } from "@/lib/tax/season";
 import { receiptsNeedingExportReview } from "@/lib/tax/exportReview";
 import { formatCurrency } from "@/lib/format";
 import { clientTimeZone } from "@/lib/time/timeZone";
+import { runLocalTaxExport } from "@/lib/client/runLocalTaxExport";
+import { runLocalCpaExport } from "@/lib/client/runLocalCpaExport";
+import type { LocalCpaPackProgress } from "@/lib/export/buildLocalCpaPackZip";
 import {
   exportTaxPack,
-  type ExportFormat,
   type ExportTaxPackMeta,
 } from "@/lib/client/authApi";
+import {
+  exportPreviewCsvFilename,
+  exportShareTitle,
+  type ExportFormat,
+} from "@/lib/export/exportFilenames";
 import {
   canShareTaxPackFile,
   downloadTaxPackFile,
   shareTaxPackFile,
 } from "@/lib/export/shareTaxPack";
+import { countLocalExportReceiptsInTaxYear } from "@/lib/export/countLocalExportReceipts";
 import { buildLocalTurboTaxCsv } from "@/lib/export/buildLocalTurboTaxCsv";
 import { setPendingIncomeCapture } from "@/lib/export/incomeCapture";
 import type { IncomeCaptureKind } from "@/lib/export/incomeCapture";
@@ -33,8 +43,10 @@ type Step = 1 | 2 | 3 | 4;
 
 interface ExportEngineSheetProps {
   receipts: Receipt[];
+  currentSeason: string;
+  taxpayerName?: string;
   onClose: () => void;
-  onPreExportPrepare?: () => Promise<void | Receipt[]>;
+  onPreExportPrepare?: (format: ExportFormat) => Promise<void | Receipt[]>;
   onExported?: () => void | Promise<void>;
   onPaymentRequired?: () => void;
   onReceiptUpdated?: (receipt: Receipt) => void;
@@ -46,6 +58,8 @@ const FAST_RAMP_MS = 300;
 
 export function ExportEngineSheet({
   receipts,
+  currentSeason,
+  taxpayerName,
   onClose,
   onPreExportPrepare,
   onExported,
@@ -56,21 +70,23 @@ export function ExportEngineSheet({
   const { copy } = useI18n();
   const t = copy.exportEngine;
   const timeZone = clientTimeZone();
-  const defaultYear = Number(defaultExportTaxYear());
+  const [activeReceipts, setActiveReceipts] = useState(receipts);
 
-  const years = useMemo(() => {
-    const found = availableTaxYears(receipts, timeZone);
-    if (found.length === 0) return [defaultYear];
-    if (!found.includes(defaultYear)) return [defaultYear, ...found];
-    return found;
-  }, [receipts, timeZone, defaultYear]);
+  useEffect(() => {
+    setActiveReceipts(receipts);
+  }, [receipts]);
+
+  const years = useMemo(
+    () => exportPickerTaxYears(activeReceipts, timeZone, currentSeason),
+    [activeReceipts, timeZone, currentSeason],
+  );
 
   const [step, setStep] = useState<Step>(1);
   const [taxYear, setTaxYear] = useState<number>(() =>
-    pickDefaultExportTaxYear(receipts, timeZone),
+    pickDefaultExportTaxYear(activeReceipts, timeZone, currentSeason),
   );
   const [step1Hint, setStep1Hint] = useState<string | null>(null);
-  const [format, setFormat] = useState<ExportFormat>("csv");
+  const [format, setFormat] = useState<ExportFormat>("cpa_pdf");
   const [generating, setGenerating] = useState(false);
   const [previewing, setPreviewing] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -80,33 +96,33 @@ export function ExportEngineSheet({
   const [sharing, setSharing] = useState(false);
   const [shareStatus, setShareStatus] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const autoSharedRef = useRef(false);
   const progressTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const yearReceipts = receiptsInTaxYear(receipts, taxYear, timeZone);
-  const yearDeductions = taxYearDeductions(receipts, taxYear, timeZone);
-  const incomeFormCount = incomeFormsInTaxYear(receipts, taxYear, timeZone);
+  const yearReceipts = receiptsInTaxYear(activeReceipts, taxYear, timeZone);
+  const yearDeductions = taxYearDeductions(activeReceipts, taxYear, timeZone);
+  const incomeFormCount = incomeFormsInTaxYear(activeReceipts, taxYear, timeZone);
   const reviewReceipts = useMemo(
     () => receiptsNeedingExportReview(yearReceipts),
     [yearReceipts],
   );
   const includesReview = reviewReceipts.length > 0;
   const totalSteps = includesReview ? 4 : 3;
+  const formatStep: Step = includesReview ? 3 : 2;
+  const generateStep: Step = includesReview ? 4 : 3;
   const canContinueStep1 = yearReceipts.length > 0;
 
   useEffect(() => {
-    if (receiptsInTaxYear(receipts, taxYear, timeZone).length > 0) return;
-    const next = pickDefaultExportTaxYear(receipts, timeZone);
-    if (receiptsInTaxYear(receipts, next, timeZone).length > 0) {
+    if (receiptsInTaxYear(activeReceipts, taxYear, timeZone).length > 0) return;
+    const next = pickDefaultExportTaxYear(
+      activeReceipts,
+      timeZone,
+      currentSeason,
+    );
+    if (receiptsInTaxYear(activeReceipts, next, timeZone).length > 0) {
       setTaxYear(next);
       setStep1Hint(null);
     }
-  }, [receipts, taxYear, timeZone]);
-
-  const displayStep = useMemo(() => {
-    if (!includesReview && step >= 2) return step - 1;
-    return step;
-  }, [includesReview, step]);
+  }, [activeReceipts, taxYear, timeZone, currentSeason]);
 
   const clearProgressTimer = () => {
     if (progressTimerRef.current) {
@@ -157,7 +173,7 @@ export function ExportEngineSheet({
     try {
       const result = await shareTaxPackFile(
         file,
-        `Snap1099 ${taxYear}`,
+        exportShareTitle(taxYear),
         copy.settings.export.shareText,
       );
       if (result === "unsupported") {
@@ -172,20 +188,13 @@ export function ExportEngineSheet({
     }
   };
 
-  useEffect(() => {
-    if (!readyFile || autoSharedRef.current) return;
-    if (!canShareTaxPackFile(readyFile)) return;
-    autoSharedRef.current = true;
-    void handleShare(readyFile);
-  }, [readyFile]);
-
   const handleSaveToPhone = (file: File) => {
     downloadTaxPackFile(file);
     setShareStatus(t.savedToPhoneHint);
   };
 
   const goToFormatStep = () => {
-    setStep(includesReview ? 3 : 2);
+    setStep(formatStep);
   };
 
   const handleContinueFromYear = () => {
@@ -205,15 +214,15 @@ export function ExportEngineSheet({
     setErrorMessage(null);
     setPreviewing(true);
     try {
-      const csv = buildLocalTurboTaxCsv(receipts, taxYear, timeZone);
+      const csv = buildLocalTurboTaxCsv(activeReceipts, taxYear, timeZone);
       const file = new File(
         [csv],
-        `Snap1099-${taxYear}-TurboTax-Preview.csv`,
+        exportPreviewCsvFilename(taxYear),
         { type: "text/csv" },
       );
       const result = await shareTaxPackFile(
         file,
-        `Snap1099 ${taxYear} Preview`,
+        exportShareTitle(taxYear, "Preview"),
         copy.settings.export.shareText,
       );
       if (result === "unsupported") {
@@ -229,9 +238,20 @@ export function ExportEngineSheet({
     }
   };
 
+  const applyPackProgress = (event: LocalCpaPackProgress) => {
+    const total = Math.max(1, event.total);
+    setProgress(15 + (event.completed / total) * 73);
+    setProgressLabel(t.progressFetchingImages);
+  };
+
+  const finishPackProgress = () => {
+    clearProgressTimer();
+    setProgress(95);
+    setProgressLabel(t.progressFinalizing);
+  };
+
   const handleGenerate = async () => {
     setErrorMessage(null);
-    autoSharedRef.current = false;
     setShareStatus(null);
     if (!navigator.onLine) {
       setErrorMessage(copy.settings.export.offline);
@@ -240,16 +260,54 @@ export function ExportEngineSheet({
     setGenerating(true);
     setReadyFile(null);
     setExportMeta(null);
-    setStep(4);
-    startProgressRamp(format, yearReceipts.length);
+    setStep(generateStep);
     try {
+      let receiptsForExport = activeReceipts;
       if (onPreExportPrepare) {
-        await onPreExportPrepare();
+        const merged = await onPreExportPrepare(format);
+        if (merged && merged.length > 0) {
+          receiptsForExport = merged;
+          setActiveReceipts(merged);
+        }
       }
-      const result = await exportTaxPack({
-        taxYear: String(taxYear),
-        format,
-      });
+      const exportReceiptCount = countLocalExportReceiptsInTaxYear(
+        receiptsForExport,
+        taxYear,
+        timeZone,
+      );
+      if (format === "cpa_pack") {
+        clearProgressTimer();
+        setProgress(5);
+        setProgressLabel(t.progressBuildingPdf);
+      } else {
+        startProgressRamp(format, exportReceiptCount);
+      }
+      const taxYearStr = String(taxYear);
+      const result =
+        format === "csv" || format === "txf" || format === "qif" || format === "qbo"
+          ? await runLocalTaxExport({
+              receipts: receiptsForExport,
+              taxYear,
+              timeZone,
+              format,
+            })
+          : format === "cpa_pdf" || format === "cpa_pack"
+            ? await runLocalCpaExport({
+                receipts: receiptsForExport,
+                taxYear,
+                timeZone,
+                format,
+                taxpayerName,
+                onPackProgress:
+                  format === "cpa_pack" ? applyPackProgress : undefined,
+              })
+            : await exportTaxPack({
+                taxYear: taxYearStr,
+                format,
+              });
+      if (format === "cpa_pack") {
+        finishPackProgress();
+      }
       finishProgress();
       setReadyFile(result.file);
       setExportMeta(result.meta);
@@ -271,6 +329,13 @@ export function ExportEngineSheet({
           setErrorMessage(t.pdfFailed);
         } else if (err.message === "EXPORT_TIMEOUT") {
           setErrorMessage(t.exportTimeout);
+        } else if (err.message === "NOT_FOUND") {
+          setErrorMessage(t.filedSyncNotFound);
+        } else if (
+          err.message === "EXPORT_FILED_SYNC_FAILED" ||
+          err.message === "INVALID_EXPORT_TAX_YEAR"
+        ) {
+          setErrorMessage(t.filedSyncFailed);
         } else {
           setErrorMessage(copy.settings.export.failed);
         }
@@ -288,9 +353,13 @@ export function ExportEngineSheet({
       ? t.formatCsvTitle
       : format === "txf"
         ? t.formatTxfTitle
-        : format === "cpa_pdf"
-          ? t.formatCpaPdfTitle
-          : t.formatCpaTitle;
+        : format === "qif"
+          ? t.formatQifTitle
+          : format === "qbo"
+            ? t.formatQboTitle
+            : format === "cpa_pdf"
+            ? t.formatCpaPdfTitle
+            : t.formatCpaTitle;
 
   const imageWarning =
     exportMeta?.imagesMissing != null && exportMeta.imagesMissing > 0
@@ -314,7 +383,7 @@ export function ExportEngineSheet({
             </p>
             <p className="mt-1 text-xs font-bold uppercase tracking-wider text-zinc-400">
               {t.stepLabel
-                .replace("{step}", String(displayStep))
+                .replace("{step}", String(step))
                 .replace("{total}", String(totalSteps))}
             </p>
           </div>
@@ -330,11 +399,16 @@ export function ExportEngineSheet({
 
         {step === 1 && (
           <>
-            <p className="mb-4 text-sm font-bold text-zinc-300">{t.step1Heading}</p>
+            <p className="mb-1 text-sm font-bold text-zinc-300">{t.step1Heading}</p>
+            <p className="mb-4 text-xs leading-relaxed text-zinc-500">
+              {t.step1SeasonHint
+                .replace("{season}", currentSeason)
+                .replace("{year}", String(filingTaxYearForSeason(currentSeason)))}
+            </p>
             <div className="space-y-3">
               {years.map((year) => {
-                const count = receiptsInTaxYear(receipts, year, timeZone).length;
-                const deductions = taxYearDeductions(receipts, year, timeZone);
+                const count = receiptsInTaxYear(activeReceipts, year, timeZone).length;
+                const deductions = taxYearDeductions(activeReceipts, year, timeZone);
                 const selected = taxYear === year;
                 const disabled = count === 0;
                 return (
@@ -430,7 +504,7 @@ export function ExportEngineSheet({
           </>
         )}
 
-        {step === 3 && (
+        {step === formatStep && (
           <>
             <p className="mb-1 text-xs font-bold text-zinc-400">
               {t.yearSummary
@@ -440,6 +514,40 @@ export function ExportEngineSheet({
             </p>
             <p className="mb-4 text-sm font-bold text-zinc-300">{t.stepFormatHeading}</p>
             <div className="space-y-3">
+              <button
+                type="button"
+                onClick={() => setFormat("cpa_pdf")}
+                className={`w-full min-h-[88px] rounded-xl border-2 p-4 text-left transition-transform active:scale-95 ${
+                  format === "cpa_pdf"
+                    ? "border-yellow-500 bg-yellow-950"
+                    : "border-zinc-600 bg-zinc-800"
+                }`}
+              >
+                <p className="text-sm font-black uppercase tracking-wider text-white">
+                  {format === "cpa_pdf" ? "✓ " : ""}
+                  {t.formatCpaPdfTitle}
+                </p>
+                <p className="mt-2 text-xs leading-relaxed text-zinc-400">
+                  {t.formatCpaPdfHint}
+                </p>
+              </button>
+              <button
+                type="button"
+                onClick={() => setFormat("txf")}
+                className={`w-full min-h-[88px] rounded-xl border-2 p-4 text-left transition-transform active:scale-95 ${
+                  format === "txf"
+                    ? "border-yellow-500 bg-yellow-950"
+                    : "border-zinc-600 bg-zinc-800"
+                }`}
+              >
+                <p className="text-sm font-black uppercase tracking-wider text-white">
+                  {format === "txf" ? "✓ " : ""}
+                  {t.formatTxfTitle}
+                </p>
+                <p className="mt-2 text-xs leading-relaxed text-zinc-400">
+                  {t.formatTxfHint}
+                </p>
+              </button>
               <button
                 type="button"
                 onClick={() => setFormat("csv")}
@@ -476,36 +584,36 @@ export function ExportEngineSheet({
               </button>
               <button
                 type="button"
-                onClick={() => setFormat("cpa_pdf")}
+                onClick={() => setFormat("qif")}
                 className={`w-full min-h-[88px] rounded-xl border-2 p-4 text-left transition-transform active:scale-95 ${
-                  format === "cpa_pdf"
+                  format === "qif"
                     ? "border-yellow-500 bg-yellow-950"
                     : "border-zinc-600 bg-zinc-800"
                 }`}
               >
                 <p className="text-sm font-black uppercase tracking-wider text-white">
-                  {format === "cpa_pdf" ? "✓ " : ""}
-                  {t.formatCpaPdfTitle}
+                  {format === "qif" ? "✓ " : ""}
+                  {t.formatQifTitle}
                 </p>
                 <p className="mt-2 text-xs leading-relaxed text-zinc-400">
-                  {t.formatCpaPdfHint}
+                  {t.formatQifHint}
                 </p>
               </button>
               <button
                 type="button"
-                onClick={() => setFormat("txf")}
+                onClick={() => setFormat("qbo")}
                 className={`w-full min-h-[88px] rounded-xl border-2 p-4 text-left transition-transform active:scale-95 ${
-                  format === "txf"
+                  format === "qbo"
                     ? "border-yellow-500 bg-yellow-950"
                     : "border-zinc-600 bg-zinc-800"
                 }`}
               >
                 <p className="text-sm font-black uppercase tracking-wider text-white">
-                  {format === "txf" ? "✓ " : ""}
-                  {t.formatTxfTitle}
+                  {format === "qbo" ? "✓ " : ""}
+                  {t.formatQboTitle}
                 </p>
                 <p className="mt-2 text-xs leading-relaxed text-zinc-400">
-                  {t.formatTxfHint}
+                  {t.formatQboHint}
                 </p>
               </button>
             </div>
@@ -585,7 +693,7 @@ export function ExportEngineSheet({
           </>
         )}
 
-        {step === 4 && (
+        {step === generateStep && (
           <>
             <p className="mb-4 text-sm font-bold text-zinc-300">{t.step3Heading}</p>
             {(generating || readyFile) && (

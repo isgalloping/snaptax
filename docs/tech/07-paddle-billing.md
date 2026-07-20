@@ -48,8 +48,10 @@ sequenceDiagram
 - **Product:** Snap1099 Tax Season Export
 - **Price:** $49 USD one-time
 - **Custom data:** `{ intentId }` — 由 `POST /api/billing/checkout-intent` 签发；**不再**传客户端 `userId`
-- **Webhook events:** `transaction.completed`
-- **Legacy（30 天兼容）：** `{ userId, taxSeason }` 仍接受但记 warn 日志
+- **Webhook events:** `transaction.completed`, `adjustment.created`, `adjustment.updated`
+- **Legacy `custom_data.userId`：** **production 禁用**（`legacy_user_id_disabled`）；preview/dev 仍接受并记 warn。紧急旁路：`ALLOW_PADDLE_LEGACY_USER_ID=1`
+- **Entitlement `status`:** `active` \| `disputed` \| `refunded` — 仅 `active` 可导出；审计表 `snaptax_webhook_events`（`channel_code=paddle`）
+- **Refund/chargeback：** approved refund → `refunded`；`chargeback_warning`/`chargeback` → `disputed`；`chargeback_reverse` → `active`（详见 design/plan）
 
 ## 7.5 Webhook 处理
 
@@ -57,7 +59,8 @@ sequenceDiagram
 // 伪代码
 verifyPaddleSignature(req)
 validate amount/status/currency
-grant = resolve intentId → checkout_intents.userId (or legacy userId warn)
+grant = resolve intentId → checkout_intents.userId
+// production：拒绝无 intent 的 legacy userId
 // 过期 intent 仍发放权益（intent_expired_but_granted warn）
 grantPaddleSeasonEntitlement(userId + taxSeason) // 同季重复购买 update 不 500
 mark intent consumed

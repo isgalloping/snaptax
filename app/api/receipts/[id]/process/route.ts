@@ -122,13 +122,20 @@ export const POST = withRequestLog(
           status: result.status,
           taxAmount: result.taxAmount,
         });
-      } catch {
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message.slice(0, 200) : "unknown";
         logEvent({
           ...baseLogEntry("biz.openai", request, actor),
           level: "warn",
           success: false,
           durationMs: Date.now() - visionStart,
-          meta: { receiptId: id, status: "processing", reason: "process_failed" },
+          meta: {
+            receiptId: id,
+            status: "processing",
+            reason: "process_failed",
+            errorMessage,
+          },
         });
 
         return NextResponse.json({

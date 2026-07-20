@@ -32,6 +32,14 @@ export type UserCopy = {
       iosSafari: string[];
       macosSafari: string[];
     };
+    appEntryGate: {
+      installTitle: string;
+      openTitle: string;
+      continueInBrowser: string;
+      addedToHomeScreen: string;
+      postInstallTitle: string;
+      postInstallSteps: string[];
+    };
   };
   camera: {
     opening: string;
@@ -323,6 +331,32 @@ export type UserCopy = {
     openingExport: string;
     back: string;
   };
+  paymentSuccess: {
+    export: {
+      confirmingTitle: string;
+      confirmingHint: string;
+      readyTitle: string;
+      readyHint: string;
+      download: string;
+      notNow: string;
+      errorTitle: string;
+      errorHint: string;
+      retry: string;
+      close: string;
+    };
+    founder: {
+      confirmingTitle: string;
+      confirmingHint: string;
+      readyTitle: string;
+      readyHint: string;
+      readyHintNoNumber: string;
+      gotIt: string;
+      errorTitle: string;
+      errorHint: string;
+      retry: string;
+      close: string;
+    };
+  };
   auth: {
     googleSignIn: {
       soft: { title: string; body: string };
@@ -408,6 +442,7 @@ export type UserCopy = {
       deductions: string;
       income: string;
       incomeForms: string;
+      exportedStatus: string;
     };
     exportCard: {
       compatLine: string;
@@ -445,6 +480,8 @@ export type UserCopy = {
       sampleReady: string;
       downloadAgain: string;
       exportBlocked: string;
+      entitlementDisputed: string;
+      entitlementRefunded: string;
       dismiss: string;
     };
     privacyCenter: {
@@ -472,11 +509,19 @@ export type UserCopy = {
       terms: string;
       dataStorage: string;
       dataStorageValue: string;
+      dataStorageOpenPrivacy: string;
       contactPrefix: string;
+      contactDsrNote: string;
       dataRetention: string;
       security: string;
+      pricing: string;
+      refundPolicy: string;
+      englishOnlyNotice: string;
+      loadingLegal: string;
+      legalLoadFailed: string;
       deleteAccount: string;
       deleteFailed: string;
+      deleteLocalClearFailed: string;
       deleteRequiresOnline: string;
       deleteSessionExpired: string;
       deleteTitle: string;
@@ -586,6 +631,7 @@ export type UserCopy = {
     close: string;
     stepLabel: string;
     step1Heading: string;
+    step1SeasonHint: string;
     step2Heading: string;
     stepFormatHeading: string;
     step3Heading: string;
@@ -622,6 +668,10 @@ export type UserCopy = {
     formatCpaPdfHint: string;
     formatTxfTitle: string;
     formatTxfHint: string;
+    formatQifTitle: string;
+    formatQifHint: string;
+    formatQboTitle: string;
+    formatQboHint: string;
     snap1099Title: string;
     snap1099Hint: string;
     snap1099NecButton: string;
@@ -636,5 +686,7 @@ export type UserCopy = {
     progressFinalizing: string;
     pdfFailed: string;
     exportTimeout: string;
+    filedSyncNotFound: string;
+    filedSyncFailed: string;
   };
 };

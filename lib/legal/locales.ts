@@ -1,6 +1,13 @@
 import type { Locale } from "@/lib/i18n";
+import {
+  LEGAL_BRAND_NAME,
+  LEGAL_MAILING_ADDRESS,
+  LEGAL_OPERATOR_NAME,
+} from "./operator";
 
-export type LegalDoc = "privacy" | "terms";
+export type LocalizedLegalDoc = "privacy" | "terms";
+
+export type LegalDoc = LocalizedLegalDoc | "data-retention" | "security";
 
 export interface LegalSection {
   title: string;
@@ -18,7 +25,7 @@ export interface LegalBundle {
   dataStorageLabel: string;
 }
 
-export const LEGAL_CONTACT_EMAIL = "legal@snap1099.com";
+export const LEGAL_CONTACT_EMAIL = "snaptax.lightxforge@gmail.com";
 
 const EN: LegalBundle = {
   privacyTitle: "Privacy Policy",
@@ -29,6 +36,14 @@ const EN: LegalBundle = {
   dataStorageLabel:
     "Processed and stored in the United States. See Privacy Policy for international transfers.",
   privacy: [
+    {
+      title: "Operator & Contact",
+      body: [
+        `${LEGAL_BRAND_NAME} is operated by ${LEGAL_OPERATOR_NAME}, an individual sole proprietor.`,
+        `Contact: ${LEGAL_CONTACT_EMAIL}. Mailing address: ${LEGAL_MAILING_ADDRESS}.`,
+        "Customer data is processed and stored in the United States.",
+      ],
+    },
     {
       title: "Privacy by Design & Ownership",
       body: [
@@ -65,7 +80,7 @@ const EN: LegalBundle = {
       ],
     },
     {
-      title: "No Sale (CPRA)",
+      title: "No Sale",
       body: [
         "We do not sell your personal information. Zero ads. No sharing with data brokers.",
       ],
@@ -73,7 +88,7 @@ const EN: LegalBundle = {
     {
       title: "Your Rights",
       body: [
-        "Access, rectification, erasure (Delete Account), portability (Export), restrict processing, and object — contact legal@snap1099.com.",
+        "Under GDPR and applicable US state privacy laws (including CPRA), you may have rights to access, rectification, erasure (Delete Account), portability (Export), restrict processing, and object — contact snaptax.lightxforge@gmail.com.",
         "We respond within 30 days (acknowledgment targeted within 48 hours).",
       ],
     },
@@ -87,9 +102,10 @@ const EN: LegalBundle = {
       ],
     },
     {
-      title: "Operator",
+      title: "Export Reports",
       body: [
-        "SnapTax and Snap1099 refer to the same App, operated by the provider at legal@snap1099.com.",
+        '"Tax-ready" means organized export files for your review — not IRS or software approval.',
+        "You are responsible for verifying amounts and categories before filing.",
       ],
     },
     {
@@ -97,13 +113,6 @@ const EN: LegalBundle = {
       body: [
         "Ghost use before Google Sign-In. Device loss without sign-in means data cannot be recovered.",
         "Tax-season export: one-time Paddle fee per season; unlimited re-export that season when paid.",
-      ],
-    },
-    {
-      title: "Export Reports",
-      body: [
-        '"Tax-ready" means organized export files for your review — not IRS or software approval.',
-        "You are responsible for verifying amounts and categories before filing.",
       ],
     },
     {
@@ -116,7 +125,7 @@ const EN: LegalBundle = {
       title: "Privacy & Contact",
       body: [
         "Governed by our Privacy Policy. U.S. processing when snapping online.",
-        "Contact: legal@snap1099.com",
+        "Contact: snaptax.lightxforge@gmail.com",
       ],
     },
   ],
@@ -131,6 +140,14 @@ const FR: LegalBundle = {
   dataStorageLabel:
     "Traitement et stockage aux États-Unis. Voir la Politique de confidentialité pour les transferts internationaux.",
   privacy: [
+    {
+      title: "Exploitant & contact",
+      body: [
+        `${LEGAL_BRAND_NAME} est exploité par ${LEGAL_OPERATOR_NAME}, entrepreneur individuel.`,
+        `Contact : ${LEGAL_CONTACT_EMAIL}. Adresse postale : ${LEGAL_MAILING_ADDRESS}.`,
+        "Les données clients sont traitées et stockées aux États-Unis.",
+      ],
+    },
     {
       title: "Confidentialité dès la conception & propriété",
       body: [
@@ -167,7 +184,7 @@ const FR: LegalBundle = {
       ],
     },
     {
-      title: "Aucune vente (CPRA)",
+      title: "Aucune vente",
       body: [
         "Nous ne vendons pas vos informations personnelles. Zéro publicité. Aucun partage avec des courtiers.",
       ],
@@ -175,7 +192,7 @@ const FR: LegalBundle = {
     {
       title: "Vos droits",
       body: [
-        "Accès, rectification, effacement (Supprimer le compte), portabilité (Export), limitation et opposition — legal@snap1099.com.",
+        "En vertu du RGPD et des lois américaines sur la vie privée applicables (y compris le CPRA), vous pouvez disposer de droits d'accès, de rectification, d'effacement (Supprimer le compte), de portabilité (Export), de limitation et d'opposition — snaptax.lightxforge@gmail.com.",
         "Réponse sous 30 jours (accusé visé sous 48 heures).",
       ],
     },
@@ -185,13 +202,14 @@ const FR: LegalBundle = {
       title: "Service",
       body: [
         "SnapTax aide les contractuels, indépendants et petites entreprises à organiser leurs reçus, suivre leurs dépenses et préparer des exports pour la saison fiscale.",
-        "Outil de tenue de registres et d'export, pas conseil fiscal. Nous ne déposons pas de déclarations ni ne fournissons de formulaires officiels.",
+        "Outil de tenue de registres et d'export, pas conseil fiscal. Nous ne déposons pas de déclarations ni ne fournissons de formulaires gouvernementaux officiels.",
       ],
     },
     {
-      title: "Exploitant",
+      title: "Rapports d'export",
       body: [
-        "SnapTax et Snap1099 désignent la même Application, exploitée par le prestataire à legal@snap1099.com.",
+        "« Prêt pour les impôts » = fichiers organisés pour votre examen — pas approbation IRS ou logiciel.",
+        "Vous êtes responsable de vérifier montants et catégories avant dépôt.",
       ],
     },
     {
@@ -199,13 +217,6 @@ const FR: LegalBundle = {
       body: [
         "Utilisation Ghost avant Google Sign-In. Perte d'appareil sans connexion = données non récupérables.",
         "Export de saison fiscale : frais unique Paddle par saison ; réexport illimité cette saison si payé.",
-      ],
-    },
-    {
-      title: "Rapports d'export",
-      body: [
-        "« Prêt pour les impôts » = fichiers organisés pour votre examen — pas approbation IRS ou logiciel.",
-        "Vous devez vérifier montants et catégories avant dépôt.",
       ],
     },
     {
@@ -218,7 +229,7 @@ const FR: LegalBundle = {
       title: "Confidentialité & contact",
       body: [
         "Régi par notre Politique de confidentialité. Traitement aux États-Unis lors d'une photo en ligne.",
-        "Contact : legal@snap1099.com",
+        "Contact : snaptax.lightxforge@gmail.com",
       ],
     },
   ],
@@ -233,6 +244,14 @@ const DE: LegalBundle = {
   dataStorageLabel:
     "Verarbeitung und Speicherung in den Vereinigten Staaten. Internationale Übermittlungen siehe Datenschutzerklärung.",
   privacy: [
+    {
+      title: "Betreiber & Kontakt",
+      body: [
+        `${LEGAL_BRAND_NAME} wird betrieben von ${LEGAL_OPERATOR_NAME}, einem Einzelunternehmer.`,
+        `Kontakt: ${LEGAL_CONTACT_EMAIL}. Postanschrift: ${LEGAL_MAILING_ADDRESS}.`,
+        "Kundendaten werden in den Vereinigten Staaten verarbeitet und gespeichert.",
+      ],
+    },
     {
       title: "Datenschutz by Design & Eigentum",
       body: [
@@ -269,7 +288,7 @@ const DE: LegalBundle = {
       ],
     },
     {
-      title: "Kein Verkauf (CPRA)",
+      title: "Kein Verkauf",
       body: [
         "Wir verkaufen Ihre personenbezogenen Daten nicht. Keine Werbung. Kein Teilen mit Brokern.",
       ],
@@ -277,7 +296,7 @@ const DE: LegalBundle = {
     {
       title: "Ihre Rechte",
       body: [
-        "Auskunft, Berichtigung, Löschung (Konto löschen), Übertragbarkeit (Export), Einschränkung und Widerspruch — legal@snap1099.com.",
+        "Nach DSGVO und anwendbarem US-Datenschutzrecht (einschließlich CPRA) können Ihnen Rechte auf Auskunft, Berichtigung, Löschung (Konto löschen), Übertragbarkeit (Export), Einschränkung und Widerspruch zustehen — snaptax.lightxforge@gmail.com.",
         "Antwort innerhalb von 30 Tagen (Bestätigung innerhalb von 48 Stunden angestrebt).",
       ],
     },
@@ -287,20 +306,7 @@ const DE: LegalBundle = {
       title: "Leistung",
       body: [
         "SnapTax hilft Auftragnehmern, Selbstständigen und kleinen Unternehmen, Belege zu organisieren, Ausgaben zu verfolgen und Exporte für die Steuersaison vorzubereiten.",
-        "Aufzeichnungs- und Exportwerkzeug, keine Steuerberatung. Wir reichen keine Steuern ein und stellen keine offiziellen Behördenformulare bereit.",
-      ],
-    },
-    {
-      title: "Betreiber",
-      body: [
-        "SnapTax und Snap1099 bezeichnen dieselbe App, betrieben vom Anbieter unter legal@snap1099.com.",
-      ],
-    },
-    {
-      title: "Konten & Zahlungen",
-      body: [
-        "Ghost-Nutzung vor Google-Anmeldung. Geräteverlust ohne Anmeldung = Daten nicht wiederherstellbar.",
-        "Steuersaison-Export: einmalige Paddle-Gebühr pro Saison; unbegrenzter Re-Export in bezahlter Saison.",
+        "Werkzeug zur Aufzeichnung und zum Export, keine Steuerberatung. Wir reichen keine Steuererklärungen ein und stellen keine offiziellen Behördenformulare bereit.",
       ],
     },
     {
@@ -308,6 +314,13 @@ const DE: LegalBundle = {
       body: [
         "„Steuerfertig“ bedeutet organisierte Exportdateien zur Prüfung — keine IRS- oder Software-Genehmigung.",
         "Sie sind für die Prüfung von Beträgen und Kategorien vor Abgabe verantwortlich.",
+      ],
+    },
+    {
+      title: "Konten & Zahlungen",
+      body: [
+        "Ghost-Nutzung vor Google-Anmeldung. Geräteverlust ohne Anmeldung = Daten nicht wiederherstellbar.",
+        "Steuersaison-Export: einmalige Paddle-Gebühr pro Saison; unbegrenzter Re-Export in bezahlter Saison.",
       ],
     },
     {
@@ -320,7 +333,7 @@ const DE: LegalBundle = {
       title: "Datenschutz & Kontakt",
       body: [
         "Unterliegt unserer Datenschutzerklärung. US-Verarbeitung beim Online-Fotografieren.",
-        "Kontakt: legal@snap1099.com",
+        "Kontakt: snaptax.lightxforge@gmail.com",
       ],
     },
   ],
@@ -337,14 +350,14 @@ export function getLegalBundle(locale: Locale): LegalBundle {
 }
 
 export function getLegalSections(
-  doc: LegalDoc,
+  doc: LocalizedLegalDoc,
   locale: Locale,
 ): LegalSection[] {
   const bundle = getLegalBundle(locale);
   return doc === "privacy" ? bundle.privacy : bundle.terms;
 }
 
-export function getLegalTitle(doc: LegalDoc, locale: Locale): string {
+export function getLegalTitle(doc: LocalizedLegalDoc, locale: Locale): string {
   const bundle = getLegalBundle(locale);
   return doc === "privacy" ? bundle.privacyTitle : bundle.termsTitle;
 }

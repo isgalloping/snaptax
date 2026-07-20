@@ -1,11 +1,19 @@
 # Politique de confidentialité SnapTax
 
-**Dernière mise à jour :** juillet 2026  
+**Dernière mise à jour :** juin 2026  
 **Juridictions applicables :** États-Unis (y compris CPRA Californie) & Union européenne (RGPD)
 
-Bienvenue sur SnapTax. SnapTax et Snap1099 désignent la même application (« l'Application »). Cette Politique de confidentialité explique comment nous collectons, utilisons, traitons et protégeons vos données.
+## Exploitant & contact
 
-Nous aidons les contractuels, indépendants et petites entreprises à organiser leurs reçus et préparer les exports de saison fiscale. Nous ne vendons pas vos données et ne les utilisons pas pour la publicité.
+SnapTax est exploité par Gang Huang, entrepreneur individuel (« nous », « notre »).
+
+Contact : snaptax.lightxforge@gmail.com  
+Demandes de confidentialité : snaptax.lightxforge@gmail.com (objet : Privacy Request)  
+Adresse postale : Hong Kong
+
+Les services sont proposés aux utilisateurs aux États-Unis. Les données client sont traitées et stockées aux États-Unis comme décrit ci-dessous.
+
+Bienvenue sur SnapTax. Cette Politique de confidentialité explique comment nous collectons, utilisons, traitons et protégeons vos données lorsque vous utilisez l'application SnapTax (« l'Application »).
 
 ## 1. Confidentialité dès la conception & propriété des données
 
@@ -111,7 +119,7 @@ Selon votre localisation, vous pouvez :
 - **Limiter le traitement** — nous contacter pour limiter certains traitements le cas échéant.
 - **Vous opposer** — cesser d'utiliser l'Application ou supprimer votre compte.
 
-Nous répondons aux demandes vérifiées à **legal@snap1099.com** sous **30 jours** (accusé de réception visé sous 48 heures). Nous pouvons prolonger de 60 jours lorsque la loi le permet, avec notification.
+Nous répondons aux demandes vérifiées à **snaptax.lightxforge@gmail.com** sous **30 jours** (accusé de réception visé sous 48 heures). Nous pouvons prolonger de 60 jours lorsque la loi le permet, avec notification.
 
 ## 10. Sécurité
 
@@ -125,4 +133,4 @@ L'Application n'est pas destinée aux enfants de moins de 13 ans. Nous ne collec
 
 Nous pouvons mettre à jour cette Politique. Les changements importants seront reflétés dans la date « Dernière mise à jour ». L'utilisation continue après modification vaut acceptation lorsque la loi le permet.
 
-**Contact :** **legal@snap1099.com**
+**Contact :** **snaptax.lightxforge@gmail.com**

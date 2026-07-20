@@ -17,12 +17,12 @@ We are writing to inform you of a security incident that may have affected your 
 1. Sign in with Google if you have not already — this protects multi-device recovery.  
 2. Review your receipts in the app for anything unfamiliar.  
 3. Change your Google password if you reuse it elsewhere.  
-4. Contact us at **legal@snap1099.com** with subject **Security Report** if you have questions.
+4. Contact us at **snaptax.lightxforge@gmail.com** with subject **Security Report** if you have questions.
 
 We sincerely apologize for this incident. Protecting your business receipt data is our priority.
 
 Snap1099 Security Team  
-legal@snap1099.com
+snaptax.lightxforge@gmail.com
 
 ---
 

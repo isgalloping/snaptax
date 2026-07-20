@@ -7,7 +7,7 @@
 **Canonical product spec:** [`docs/product/PRODUCT-SPEC.md`](../../product/PRODUCT-SPEC.md)  
 **Related:**
 
-- [`2026-06-10-landing-flags-design.md`](./2026-06-10-landing-flags-design.md) — superseded landing A/B (not in scope)
+- [`topics/onboarding-aha-design.md`](../topics/onboarding-aha-design.md) §5.1 — superseded landing A/B (not in scope)
 - [`docs/tech/07-paddle-billing.md`](../../tech/07-paddle-billing.md) — entitlement / Paywall
 - [`docs/tech/06-receipt-ai-pipeline.md`](../../tech/06-receipt-ai-pipeline.md) — OpenAI Vision pipeline
 - [Vercel Flags SDK](https://vercel.com/docs/flags/vercel-flags/sdks/flags-sdk)

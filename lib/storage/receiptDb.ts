@@ -27,6 +27,7 @@ import {
   IDB_LEGACY_SYSTEM_META,
   IDB_STORE_CRYPTO_META,
   IDB_STORE_RECEIPT_PHOTOS,
+  IDB_STORE_RECEIPT_EVENTS,
   IDB_STORE_RECEIPT_SUMMARY,
   IDB_STORE_RECEIPTS,
   IDB_STORE_SYSTEM_META,
@@ -290,6 +291,16 @@ function migrateToSnaptaxStores(
     !db.objectStoreNames.contains(IDB_STORE_RECEIPT_SUMMARY)
   ) {
     db.createObjectStore(IDB_STORE_RECEIPT_SUMMARY, { keyPath: "scopeKey" });
+  }
+  if (
+    oldVersion < 8 &&
+    !db.objectStoreNames.contains(IDB_STORE_RECEIPT_EVENTS)
+  ) {
+    const eventStore = db.createObjectStore(IDB_STORE_RECEIPT_EVENTS, {
+      keyPath: "id",
+    });
+    eventStore.createIndex("bySyncStatus", "syncStatus", { unique: false });
+    eventStore.createIndex("byReceiptId", "receiptId", { unique: false });
   }
 
   const finishReceiptSummaryBootstrap = (): void => {
@@ -683,6 +694,28 @@ export async function saveReceipt(receipt: StoredReceipt): Promise<void> {
   await applyReceiptSummaryDelta(db, old, receipt);
 }
 
+/** Atomic multi-row put in one IDB transaction (summary deltas run after commit). */
+export async function saveReceiptsBatch(receipts: StoredReceipt[]): Promise<void> {
+  if (receipts.length === 0) return;
+  const db = await openDb();
+  const olds = await Promise.all(
+    receipts.map((receipt) => getReceiptById(db, receipt.id)),
+  );
+  const receiptsStore = receiptsStoreName(db);
+  await new Promise<void>((resolve, reject) => {
+    const tx = db.transaction(receiptsStore, "readwrite");
+    const store = tx.objectStore(receiptsStore);
+    for (const receipt of receipts) {
+      store.put(enrichRow(receipt));
+    }
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+  for (let i = 0; i < receipts.length; i++) {
+    await applyReceiptSummaryDelta(db, olds[i] ?? null, receipts[i]!);
+  }
+}
+
 export async function deleteReceipt(id: string): Promise<void> {
   const db = await openDb();
   const old = await getReceiptById(db, id);
@@ -826,6 +859,9 @@ export async function clearAllLocalData(): Promise<void> {
     if (db.objectStoreNames.contains(IDB_STORE_RECEIPT_SUMMARY)) {
       stores.push(IDB_STORE_RECEIPT_SUMMARY);
     }
+    if (db.objectStoreNames.contains(IDB_STORE_RECEIPT_EVENTS)) {
+      stores.push(IDB_STORE_RECEIPT_EVENTS);
+    }
     if (db.objectStoreNames.contains(cryptoStore)) {
       stores.push(cryptoStore);
     }
@@ -840,6 +876,9 @@ export async function clearAllLocalData(): Promise<void> {
     }
     if (db.objectStoreNames.contains(IDB_STORE_RECEIPT_SUMMARY)) {
       tx.objectStore(IDB_STORE_RECEIPT_SUMMARY).clear();
+    }
+    if (db.objectStoreNames.contains(IDB_STORE_RECEIPT_EVENTS)) {
+      tx.objectStore(IDB_STORE_RECEIPT_EVENTS).clear();
     }
     if (db.objectStoreNames.contains(cryptoStore)) {
       tx.objectStore(cryptoStore).clear();

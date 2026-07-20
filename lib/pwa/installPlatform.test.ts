@@ -2,6 +2,7 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import {
   detectInstallPlatform,
+  isAndroidChromeWebApkBrowser,
   isInstallPlatformEligible,
   manualCopyKeyForPlatform,
   supportsNativeInstallPrompt,
@@ -48,6 +49,21 @@ describe("detectInstallPlatform", () => {
     const ua =
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36";
     assert.equal(detectInstallPlatform(ua), "chromium-desktop");
+  });
+});
+
+describe("isAndroidChromeWebApkBrowser", () => {
+  it("matches Chrome but not Edge or Opera on Android", () => {
+    const chrome =
+      "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 Chrome/120.0.0.0 Mobile Safari/537.36";
+    const edge =
+      "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 Chrome/120.0.0.0 Mobile Safari/537.36 EdgA/120.0.0.0";
+    const opera =
+      "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 Chrome/91.0.4472.114 Mobile Safari/537.36 OPR/64.0.2254.54253";
+
+    assert.equal(isAndroidChromeWebApkBrowser(chrome), true);
+    assert.equal(isAndroidChromeWebApkBrowser(edge), false);
+    assert.equal(isAndroidChromeWebApkBrowser(opera), false);
   });
 });
 

@@ -18,11 +18,11 @@ describe("shareApp", () => {
 
   it("buildAppSharePayload combines message and url", () => {
     const payload = buildAppSharePayload({
-      message: "Try Snap1099",
-      title: "Snap1099",
+      message: "Try SnapTax",
+      title: "SnapTax",
       url: "https://app.snap1099.com",
     });
-    assert.equal(payload.combinedText, "Try Snap1099 https://app.snap1099.com");
+    assert.equal(payload.combinedText, "Try SnapTax https://app.snap1099.com");
   });
 
   it("buildWhatsAppShareUrl encodes text", () => {
@@ -33,10 +33,10 @@ describe("shareApp", () => {
   it("buildFacebookShareUrl encodes url and quote", () => {
     const url = buildFacebookShareUrl(
       "https://app.snap1099.com",
-      "Try Snap1099",
+      "Try SnapTax",
     );
     assert.match(url, /^https:\/\/www\.facebook\.com\/sharer\/sharer\.php\?/);
     assert.match(url, /u=https%3A%2F%2Fapp\.snap1099\.com/);
-    assert.match(url, /quote=Try\+Snap1099/);
+    assert.match(url, /quote=Try\+SnapTax/);
   });
 });

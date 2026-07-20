@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-14  
 **Status:** Approved  
-**Amends:** [`2026-06-14-onboarding-optional-signup-design.md`](./2026-06-14-onboarding-optional-signup-design.md) §6
+**Amends:** [`topics/onboarding-aha-design.md`](../topics/onboarding-aha-design.md) §5.7（原 `2026-06-14-onboarding-optional-signup-design.md` §6，已归档）
 
 **Brainstorming approved:** 2026-06-14 — symptom B (GIS OK, POST fails); production env configured; onboarding must not prompt login.
 

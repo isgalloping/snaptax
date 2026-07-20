@@ -4,6 +4,10 @@ import type { FounderStatus, FounderTier } from "@/lib/founder/types";
 import { FOUNDER_SEATS_TOTAL } from "@/lib/founder/types";
 import { nextSeatNumber, tierForSeat } from "@/lib/founder/tiers";
 import { resolveFounderProgramConfig } from "@/lib/server/founderConfig";
+import {
+  resolveEffectiveFounderStatus,
+  shouldPersistFounderStatusSync,
+} from "@/lib/server/founderSeasonStatus";
 
 export type FounderCheckoutUser = {
   founderStatus: FounderStatus;
@@ -28,10 +32,7 @@ export function resolveFounderCheckoutSkuTier(
 
   if (user?.founderNumber != null) {
     const status = user.founderStatus;
-    if (
-      (status === "active" || status === "lapsed") &&
-      user.founderTier != null
-    ) {
+    if (status === "active" && user.founderTier != null) {
       return { ok: true, skuTier: user.founderTier };
     }
   }
@@ -73,7 +74,7 @@ export async function getFounderProgramState(userId?: string) {
           founderTier: true,
           founderStatus: true,
           seasonEntitlements: {
-            where: { taxSeason: currentTaxSeason() },
+            where: { taxSeason: currentTaxSeason(), status: "active" },
             take: 1,
             select: { id: true },
           },
@@ -81,7 +82,25 @@ export async function getFounderProgramState(userId?: string) {
       })
     : null;
 
-  const founderStatus = normalizeFounderStatus(user?.founderStatus);
+  const founderNumber = user?.founderNumber ?? null;
+  const currentSeasonEntitled = (user?.seasonEntitlements.length ?? 0) > 0;
+  const storedStatus = normalizeFounderStatus(user?.founderStatus);
+  const founderStatus = resolveEffectiveFounderStatus({
+    storedStatus,
+    founderNumber,
+    currentSeasonEntitled,
+  });
+
+  if (
+    userId &&
+    user &&
+    shouldPersistFounderStatusSync(storedStatus, founderStatus, founderNumber)
+  ) {
+    await prisma.snaptaxUser.update({
+      where: { id: userId },
+      data: { founderStatus },
+    });
+  }
 
   return {
     enabled: config.enabled,
@@ -95,7 +114,7 @@ export async function getFounderProgramState(userId?: string) {
           founderStatus,
           founderTier: (user.founderTier as FounderTier | null) ?? null,
           founderNumber: user.founderNumber,
-          currentSeasonEntitled: user.seasonEntitlements.length > 0,
+          currentSeasonEntitled,
         }
       : null,
   };

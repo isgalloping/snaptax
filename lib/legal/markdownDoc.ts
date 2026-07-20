@@ -1,7 +1,16 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
-export type LegalMarkdownFile = "data-retention.md" | "security-incident.md";
+/** Locales with optional localized markdown siblings (`*.fr.md`, `*.de.md`). */
+export type LegalMarkdownLocale = "en-US" | "fr-FR" | "de-DE";
+
+export type LegalMarkdownFile =
+  | "data-retention.md"
+  | "security-incident.md"
+  | "pricing.md"
+  | "refund.md"
+  | "cookies.md"
+  | "disclaimer.md";
 
 export type LegalMarkdownSection = {
   title: string;
@@ -14,8 +23,38 @@ export type ParsedLegalMarkdown = {
   sections: LegalMarkdownSection[];
 };
 
-export function loadLegalMarkdown(file: LegalMarkdownFile): string {
-  return readFileSync(join(process.cwd(), "docs/legal", file), "utf8");
+function localizedLegalMarkdownFilename(
+  file: LegalMarkdownFile,
+  locale: LegalMarkdownLocale,
+): string {
+  if (locale === "en-US") return file;
+  const suffix = locale === "fr-FR" ? ".fr" : ".de";
+  return file.replace(/\.md$/, `${suffix}.md`);
+}
+
+/** Load markdown; falls back to English base file when locale variant is missing. */
+export function loadLegalMarkdown(
+  file: LegalMarkdownFile,
+  locale: LegalMarkdownLocale = "en-US",
+): string {
+  const dir = join(process.cwd(), "docs/legal");
+  if (locale !== "en-US") {
+    const localized = localizedLegalMarkdownFilename(file, locale);
+    const localizedPath = join(dir, localized);
+    if (existsSync(localizedPath)) {
+      return readFileSync(localizedPath, "utf8");
+    }
+  }
+  return readFileSync(join(dir, file), "utf8");
+}
+
+export function hasLocalizedLegalMarkdown(
+  file: LegalMarkdownFile,
+  locale: LegalMarkdownLocale,
+): boolean {
+  if (locale === "en-US") return true;
+  const localized = localizedLegalMarkdownFilename(file, locale);
+  return existsSync(join(process.cwd(), "docs/legal", localized));
 }
 
 /** Minimal markdown: # title, ## sections, paragraphs and `-` bullets. */

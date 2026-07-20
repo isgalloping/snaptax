@@ -1,29 +1,7 @@
-# Settings Account Email Mask — Design
+# [Archived] Settings email mask
 
-**Date:** 2026-06-16  
-**Status:** Approved  
-**Scope:** Account status line shows masked email only.
+> **Status:** Archived · superseded by consolidated topic spec  
+> **Current truth:** [settings-design.md](../topics/settings-design.md)  
+> **Full text:** [2026-06-16-settings-email-mask-design.md](../archive/specs/2026-06-16-settings-email-mask-design.md)
 
-## Display
-
-- Before: `Signed in · full@email.com · Cloud backup on`
-- After: `abc***@gmail.com` (first 3 local chars + `***` + `@domain`)
-
-## Rules
-
-| local part | Output |
-|------------|--------|
-| ≥ 3 chars | first 3 + `***` + `@domain` |
-| 1–2 chars | all local + `***` + `@domain` |
-| invalid | `***` |
-
-## Scope
-
-- `AccountStatusBlock` only
-- SyncInstructionsSheet / Paywall keep full email
-
-## Files
-
-- `lib/client/maskEmail.ts`
-- `lib/client/maskEmail.test.ts`
-- `components/auth/AccountStatusBlock.tsx`
+Do not use this stub for implementation decisions.

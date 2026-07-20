@@ -12,7 +12,11 @@ export interface SettingsTaxStats {
   totalIncomeGross: number;
 }
 
-type TaxOverviewPanelProps = SettingsTaxStats;
+type TaxOverviewPanelProps = SettingsTaxStats & {
+  /** Subtle badge when current season tax pack was exported (does not change numbers). */
+  showExportedStatus?: boolean;
+  exportedSeasonLabel?: string;
+};
 
 const EMPTY_AMOUNT = "$—";
 
@@ -28,6 +32,8 @@ export function TaxOverviewPanel({
   totalDeductions,
   incomeFormCount,
   totalIncomeGross,
+  showExportedStatus = false,
+  exportedSeasonLabel,
 }: TaxOverviewPanelProps) {
   const copy = useUserCopy().settings.taxOverview;
 
@@ -67,6 +73,13 @@ export function TaxOverviewPanel({
           </p>
           <p className="mt-0.5 text-[11px] font-bold uppercase tracking-wider text-zinc-500">
             {copy.incomeForms.replace("{count}", String(incomeFormCount))}
+          </p>
+        </div>
+      )}
+      {showExportedStatus && exportedSeasonLabel && (
+        <div className="border-t border-zinc-700 px-4 py-2.5 text-center">
+          <p className={settingsVisual.taxOverview.exportedStatus}>
+            {copy.exportedStatus.replace("{season}", exportedSeasonLabel)}
           </p>
         </div>
       )}

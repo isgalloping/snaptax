@@ -59,6 +59,7 @@ interface SettingsScreenProps {
   onLocalDataCleared?: () => void;
   googleUser: GoogleUser | null;
   seasonPaid: boolean;
+  entitlementStatus?: string | null;
   currentSeason: string;
   isSignedIn: boolean;
   authHydrated?: boolean;
@@ -67,6 +68,9 @@ interface SettingsScreenProps {
   onSignOut?: () => Promise<void>;
   taxStats: SettingsTaxStats;
   onRequestExport: () => void;
+  onContinueExportAfterGoogle?: (result: {
+    taxRecalcQueued: number;
+  }) => void | Promise<void>;
   exportBusy?: boolean;
   exportError?: string | null;
   exportEmptyTip?: string | null;
@@ -96,6 +100,7 @@ export function SettingsScreen({
   onLocalDataCleared,
   googleUser,
   seasonPaid,
+  entitlementStatus = null,
   currentSeason,
   isSignedIn,
   authHydrated = true,
@@ -104,6 +109,7 @@ export function SettingsScreen({
   onSignOut,
   taxStats,
   onRequestExport,
+  onContinueExportAfterGoogle,
   exportBusy = false,
   exportError = null,
   exportEmptyTip = null,
@@ -134,7 +140,6 @@ export function SettingsScreen({
   const [sampleDownloading, setSampleDownloading] = useState(false);
   const [showSampleReady, setShowSampleReady] = useState(false);
   const [showExportBlocked, setShowExportBlocked] = useState(false);
-  const firstVisitHandled = useRef(false);
   const [founderStatus, setFounderStatus] = useState<FounderStatus>("none");
   const [founderTier, setFounderTier] = useState<FounderTier | null>(null);
   const [founderNumber, setFounderNumber] = useState<number | null>(null);
@@ -216,21 +221,13 @@ export function SettingsScreen({
   }, [isSignedIn, authHydrated, onRefreshSeasonPaid]);
 
   useEffect(() => {
-    if (firstVisitHandled.current) return;
-    firstVisitHandled.current = true;
+    if (skipSoftGoogleSheet || isSignedIn) return;
+    if (readOnboardFlag(GOOGLE_SOFT_DISMISSED_KEY)) return;
+    if (readOnboardFlag(SETTINGS_VISITED_KEY)) return;
 
-    const settingsVisited = readOnboardFlag(SETTINGS_VISITED_KEY);
     writeOnboardFlag(SETTINGS_VISITED_KEY);
-
-    if (
-      !skipSoftGoogleSheet &&
-      !isSignedIn &&
-      !settingsVisited &&
-      !readOnboardFlag(GOOGLE_SOFT_DISMISSED_KEY)
-    ) {
-      const timer = window.setTimeout(() => setGoogleSheet("soft"), 300);
-      return () => window.clearTimeout(timer);
-    }
+    const timer = window.setTimeout(() => setGoogleSheet("soft"), 300);
+    return () => window.clearTimeout(timer);
   }, [isSignedIn, skipSoftGoogleSheet]);
 
   useEffect(() => {
@@ -272,8 +269,15 @@ export function SettingsScreen({
 
   const handleGoogleSuccess = async (result: { taxRecalcQueued: number }) => {
     const closingSoftSheet = googleSheet === "soft";
+    const continueExportFromSample =
+      googleSheet === "hard-export" && viewState === "sample-export";
     if (!closingSoftSheet) {
       setGoogleSheet(null);
+    }
+    if (continueExportFromSample && onContinueExportAfterGoogle) {
+      onViewStateChange("main");
+      await onContinueExportAfterGoogle(result);
+      return;
     }
     await onPostLoginSync?.(result.taxRecalcQueued);
   };
@@ -343,6 +347,12 @@ export function SettingsScreen({
 
   const showRedBanner = isSignedIn && !seasonPaid && showExportBlocked;
   const showGreenBanner = !isSignedIn && showSampleReady && !showRedBanner;
+  const exportBlockedMessage =
+    entitlementStatus === "disputed"
+      ? copy.settings.exportBanners.entitlementDisputed
+      : entitlementStatus === "refunded"
+        ? copy.settings.exportBanners.entitlementRefunded
+        : copy.settings.exportBanners.exportBlocked;
 
   if (viewState === "language") {
     return (
@@ -486,7 +496,11 @@ export function SettingsScreen({
           }}
         />
 
-        <TaxOverviewPanel {...taxStats} />
+        <TaxOverviewPanel
+          {...taxStats}
+          showExportedStatus={isSignedIn && seasonPaid && seasonExportDone}
+          exportedSeasonLabel={currentSeason}
+        />
 
         <TaxExportCard
           currentSeason={currentSeason}
@@ -504,6 +518,7 @@ export function SettingsScreen({
         {showRedBanner && (
           <ExportStatusBanner
             variant="export-blocked"
+            blockedMessage={exportBlockedMessage}
             onDismiss={handleDismissExportBlocked}
           />
         )}
@@ -521,7 +536,12 @@ export function SettingsScreen({
 
         <ShareAppSection />
 
-        <RestoreFromCloudSection onRestored={onRestored} />
+        <RestoreFromCloudSection
+          googleUser={googleUser}
+          onUserSignedIn={onUserSignedIn}
+          onPostLoginSync={onPostLoginSync}
+          onRestored={onRestored}
+        />
 
         {isSignedIn && onSignOut && (
           <button

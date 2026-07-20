@@ -61,4 +61,4 @@ npm run test:unit
 
 ## Contact
 
-Accessibility feedback: **legal@snap1099.com** (subject: Accessibility)
+Accessibility feedback: **snaptax.lightxforge@gmail.com** (subject: Accessibility)

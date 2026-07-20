@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-10  
 **Status:** Implemented  
-**Builds on:** [`2026-06-09-post-batch-review-flow-design.md`](./2026-06-09-post-batch-review-flow-design.md)  
+**Builds on:** [`topics/capture-pipeline-design.md`](../topics/capture-pipeline-design.md)  
 **References:** batch camera mockup (FLASH DONE + DONE & REVIEW dual CTAs)
 
 ## Problem
@@ -104,7 +104,7 @@ handleBatchPreviewEnter = () => {
 | `components/camera/CameraOverlay.tsx` | 四控件 footer；`batchPreview` phase |
 | `components/camera/BatchCountBadge.tsx` | `onPress` → batchPreview |
 | `components/home/SnapButton.tsx` | `handleFlashDone` / `handleBatchPreviewEnter` |
-| `docs/superpowers/specs/2026-06-09-post-batch-review-flow-design.md` | 注记 Live Done 已拆双 CTA |
+| `docs/superpowers/topics/capture-pipeline-design.md` | 注记 Live Done 已拆双 CTA |
 | `docs/product/PRODUCT-SPEC.md` | §3.1 更新 |
 
 ---

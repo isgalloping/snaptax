@@ -1,6 +1,6 @@
 "use client";
 
-import { apiFetch, ensureGhostSession } from "@/lib/client/ghostClient";
+import { apiFetch, ensureGhostSession, getClientOrphanGhostPossession } from "@/lib/client/ghostClient";
 import { GoogleAuthError } from "@/lib/client/googleAuthErrors";
 import { clientTimeZone } from "@/lib/time/timeZone";
 import { requestGoogleCredential } from "@/lib/client/googleAuth";
@@ -10,6 +10,10 @@ import {
   setSeasonPaid,
 } from "@/lib/client/authStorage";
 import { fetchReceiptList } from "@/lib/client/receiptApi";
+import {
+  exportTaxPackFilename,
+  type ExportFormat,
+} from "@/lib/export/exportFilenames";
 
 export type AuthMeResponse = {
   user: {
@@ -56,10 +60,20 @@ export async function signInWithGoogleCredential(
   credential: string,
   options?: { ghostRetried?: boolean },
 ): Promise<GoogleAuthResponse> {
+  const currentGhostId = await ensureGhostSession();
+  const orphanGhosts = getClientOrphanGhostPossession(currentGhostId);
+  const payload: {
+    credential: string;
+    orphanGhosts?: typeof orphanGhosts;
+  } = { credential };
+  if (orphanGhosts.length > 0) {
+    payload.orphanGhosts = orphanGhosts;
+  }
+
   const res = await apiFetch("/api/auth/google", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ credential }),
+    body: JSON.stringify(payload),
   });
 
   if (res.status === 401 && !options?.ghostRetried) {
@@ -89,11 +103,26 @@ export async function signOutApi(): Promise<void> {
   saveGoogleUser(null);
 }
 
-export async function fetchSeasonPaid(season: string): Promise<boolean> {
+export async function fetchSeasonEntitlement(
+  season: string,
+): Promise<{ paid: boolean; status: string | null; paidAt: string | null }> {
   const res = await apiFetch(`/api/entitlements/current?season=${season}`);
-  if (!res.ok) return false;
-  const data = (await res.json()) as { paid: boolean };
-  return data.paid;
+  if (!res.ok) return { paid: false, status: null, paidAt: null };
+  const data = (await res.json()) as {
+    paid: boolean;
+    status?: string | null;
+    paidAt?: string | null;
+  };
+  return {
+    paid: Boolean(data.paid),
+    status: data.status ?? null,
+    paidAt: data.paidAt ?? null,
+  };
+}
+
+export async function fetchSeasonPaid(season: string): Promise<boolean> {
+  const { paid } = await fetchSeasonEntitlement(season);
+  return paid;
 }
 
 export async function pollTaxRecalc(
@@ -108,7 +137,7 @@ export async function pollTaxRecalc(
   }
 }
 
-export type ExportFormat = "csv" | "cpa_pack" | "cpa_pdf" | "txf" | "xlsx";
+export type { ExportFormat } from "@/lib/export/exportFilenames";
 
 export type ExportTaxPackParams = {
   taxYear: string;
@@ -152,11 +181,7 @@ function parseExportFilename(
     const match = disposition.match(/filename="([^"]+)"/i);
     if (match?.[1]) return match[1];
   }
-  if (format === "csv") return `Snap1099-${taxYear}-TurboTax-Expenses.csv`;
-  if (format === "cpa_pack") return `Snap1099-${taxYear}-CPA-Audit-Pack.zip`;
-  if (format === "cpa_pdf") return `Snap1099-${taxYear}-CPA-Summary.pdf`;
-  if (format === "txf") return `Snap1099-${taxYear}-Expenses.txf`;
-  return `Snap1099-${taxYear}-Tax-Pack.xlsx`;
+  return exportTaxPackFilename(format, taxYear);
 }
 
 export async function exportTaxPack(
@@ -220,9 +245,28 @@ export async function pollEntitlementReady(
   return false;
 }
 
-export async function deleteAccountApi(useUserApi: boolean): Promise<void> {
+export async function deleteAccountApi(
+  useUserApi: boolean,
+  orphanGhostIds: string[] = [],
+): Promise<void> {
   const path = useUserApi ? "/api/users/me" : "/api/ghost/data";
-  const res = await apiFetch(path, { method: "DELETE" });
+  const res = await apiFetch(path, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ orphanGhostIds }),
+  });
+  if (res.status === 409) {
+    let code = "";
+    try {
+      const body = (await res.json()) as { error?: { code?: string } };
+      code = body.error?.code ?? "";
+    } catch {
+      /* ignore */
+    }
+    if (code === "GOOGLE_LOGIN_REQUIRED") {
+      throw new Error("GOOGLE_LOGIN_REQUIRED");
+    }
+  }
   if (!res.ok && res.status !== 204) throw new Error("DELETE_ACCOUNT_FAILED");
   if (useUserApi) saveGoogleUser(null);
 }

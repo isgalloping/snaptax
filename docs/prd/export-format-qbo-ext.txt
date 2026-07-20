@@ -1,0 +1,72 @@
+QIF 字段标签映射说明：
+!Type:Cash：声明该账户类型。自雇蓝领工人的收据流水，在 QuickBooks 中通常作为“现金”或“垫付费用账户”导入。
+
+D (Date)：交易日期。格式必须为 MM/DD/YYYY 或 MM/DD/YY（例如：12/14/2025）。
+
+T (Amount)：交易金额。因为扫描的是支出收据，金额前面必须带有负号 -（例如：-75.50）。
+
+P (Payee/Merchant)：商户名称（例如：Home Depot）。
+
+L (Category)：会计科目。关键细节： 这里需要映射到 QuickBooks 默认的类目，建议把 IRS 的行号也带上（例如：Job Expenses:Supplies (Line 22)），这样系统导入后会自动匹配。
+
+M (Memo)：备注。用户手写的 Tag 或 AI 识别出的商品明细（例如：DeWalt Drill）。
+
+^：单笔交易的结束符。
+
+3. OFX / QBO (Open Financial Exchange) 详细格式规范
+OFX/QBO 格式基于 XML 逻辑。如果用户使用的是 QuickBooks Online（网页版），通过 .QBO 文件导入可以将收据直接伪装成“银行卡流水（Bank Feeds）”，让用户在 QuickBooks 内部无脑点击“Review & Match（核对并匹配）”。
+
+📄 QBO 文件内容模版与示例
+XML
+OFXHEADER:100
+DATA:OFXSGML
+VERSION:102
+SECURITY:NONE
+ENCODING:USASCII
+CHARSET:1252
+
+<OFX>
+  <SIGNONMSGSRSV1>
+    <SONRS>
+      <STATUS>
+        <CODE>0</CODE>
+        <SEVERITY>INFO</SEVERITY>
+      </STATUS>
+      <DTSERVER>20260415000000</DTSERVER>
+      <LANGUAGE>ENG</LANGUAGE>
+      <INTU.BID>3000</INTU.BID> <!-- 3000 通常代表通用兼容银行代码 -->
+    </SONRS>
+  </SIGNONMSGSRSV1>
+  <BANKMSGSRSV1>
+    <BANKTRAN_LIST>
+      <STMTTRN>
+        <TRNTYPE>DEBIT</TRNTYPE>
+        <DTPOSTED>20251214000000</DTPOSTED>
+        <TRNAMT>-75.50</TRNAMT>
+        <FITID>SNPTX20251214001</FITID> <!-- 唯一交易ID，防止在 QuickBooks 中重复导入 -->
+        <NAME>Shell Gas</NAME>
+        <MEMO>Line 9 - Car & Truck Expenses</MEMO>
+      </STMTTRN>
+      <STMTTRN>
+        <TRNTYPE>DEBIT</TRNTYPE>
+        <DTPOSTED>20251025000000</DTPOSTED>
+        <TRNAMT>-340.00</TRNAMT>
+        <FITID>SNPTX20251025002</FITID>
+        <NAME>Home Depot</NAME>
+        <MEMO>Line 22 - Supplies</MEMO>
+      </STMTTRN>
+    </BANKTRAN_LIST>
+  </BANKMSGSRSV1>
+</OFX>
+🔤 QBO/OFX 关键核心标签说明：
+<TRNTYPE>DEBIT：声明这是一笔支出（扣款）。
+
+<DTPOSTED>：入账日期。格式为 YYYYMMDDHHMMSS。SnapTax 默认可以将时分秒统一设为 000000。
+
+<TRNAMT>：交易金额。支出必须用负数表示（如 -340.00）。
+
+<FITID> (Financial Institution Transaction ID)：极其重要！ 必须是你在数据库里为该笔收据生成的唯一字符串。QuickBooks 靠这个 ID 来去重，如果用户多次导入同一个文件，相同的 FITID 不会产生重复记账。
+
+<NAME>：商户名称，限 32 个字符。
+
+<MEMO>：备注，建议在这里强行塞入 Line X - Expense Category，以便用户在 QuickBooks 的“网银流水”里一键分类。

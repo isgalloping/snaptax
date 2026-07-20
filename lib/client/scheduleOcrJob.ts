@@ -112,7 +112,10 @@ async function persistOcrDraft(
 }
 
 /** Queue full or device skip — persist skipped draft and finalize. */
-export async function persistSkippedOcrDraft(receiptId: string): Promise<void> {
+export async function persistSkippedOcrDraft(
+  receiptId: string,
+  reason = "queue_or_env_skip",
+): Promise<void> {
   const draft = buildOcrDraft({
     text: "",
     confidence: 0,
@@ -120,8 +123,43 @@ export async function persistSkippedOcrDraft(receiptId: string): Promise<void> {
     durationMs: 0,
   });
   await persistOcrDraft(receiptId, draft);
+  emitOcrCompletedLifecycleEvent(
+    receiptId,
+    buildOcrSkippedLifecyclePayload(reason),
+  );
   markOcrFinished(receiptId);
   notifyOcrComplete(receiptId);
+}
+
+export function buildOcrSkippedLifecyclePayload(
+  reason: string,
+): Record<string, unknown> {
+  return { source: "skipped", reason, engine: "skipped" };
+}
+
+export function buildOcrLocalSuccessLifecyclePayload(draft: {
+  engine: string;
+  confidence: number;
+}): Record<string, unknown> {
+  return {
+    source: "local_ocr",
+    engine: draft.engine,
+    confidence: draft.confidence,
+  };
+}
+
+function emitOcrCompletedLifecycleEvent(
+  receiptId: string,
+  payload: Record<string, unknown>,
+): void {
+  void import("@/lib/client/emitReceiptLifecycleEvent").then(
+    ({ emitReceiptLifecycleEvent }) =>
+      emitReceiptLifecycleEvent({
+        receiptId,
+        type: "OCR_COMPLETED",
+        payload,
+      }),
+  );
 }
 
 function notifyOcrComplete(receiptId: string): void {
@@ -145,6 +183,10 @@ async function processReceiptOcr(receiptId: string): Promise<void> {
           durationMs: 0,
         }),
       );
+      emitOcrCompletedLifecycleEvent(
+        receiptId,
+        buildOcrSkippedLifecyclePayload("no_photo"),
+      );
       return;
     }
 
@@ -152,6 +194,10 @@ async function processReceiptOcr(receiptId: string): Promise<void> {
     const result = await runOcrInWorker(receiptId, blob);
     if (result.kind === "ok") {
       await persistOcrDraft(receiptId, result.draft);
+      emitOcrCompletedLifecycleEvent(
+        receiptId,
+        buildOcrLocalSuccessLifecyclePayload(result.draft),
+      );
       if (
         typeof window !== "undefined" &&
         process.env.NODE_ENV === "development"
@@ -171,6 +217,12 @@ async function processReceiptOcr(receiptId: string): Promise<void> {
           durationMs: Date.now() - started,
         }),
       );
+      emitOcrCompletedLifecycleEvent(
+        receiptId,
+        buildOcrSkippedLifecyclePayload(
+          result.kind === "err" ? result.reason : "local_ocr_failed",
+        ),
+      );
     }
   } finally {
     markOcrFinished(receiptId);
@@ -185,6 +237,7 @@ function pumpQueue(): void {
     running += 1;
     void processReceiptOcr(id)
       .catch(() => {
+        emitOcrCompletedLifecycleEvent(id, buildOcrSkippedLifecyclePayload("process_error"));
         markOcrFinished(id);
         notifyOcrComplete(id);
       })
@@ -275,7 +328,7 @@ export function scheduleOcrJob(receiptId: string): void {
   ocrScheduled.add(receiptId);
 
   if (shouldSkipLocalOcr()) {
-    void persistSkippedOcrDraft(receiptId).catch(() => {
+    void persistSkippedOcrDraft(receiptId, "env_skip").catch(() => {
       markOcrFinished(receiptId);
       notifyOcrComplete(receiptId);
     });
@@ -283,7 +336,7 @@ export function scheduleOcrJob(receiptId: string): void {
   }
 
   if (!shouldEnqueueOcrJob()) {
-    void persistSkippedOcrDraft(receiptId).catch(() => {
+    void persistSkippedOcrDraft(receiptId, "queue_full").catch(() => {
       markOcrFinished(receiptId);
       notifyOcrComplete(receiptId);
     });

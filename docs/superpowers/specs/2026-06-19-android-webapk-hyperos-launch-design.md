@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-19  
 **Status:** Approved  
-**Builds on:** `2026-06-19-android-pwa-standalone-launch-design.md`, `2026-06-10-pwa-cross-browser-install-design.md`  
+**Builds on:** [`archive/specs/2026-06-19-android-pwa-standalone-launch-design.md`](../archive/specs/2026-06-19-android-pwa-standalone-launch-design.md), [`archive/specs/2026-06-10-pwa-cross-browser-install-design.md`](../archive/specs/2026-06-10-pwa-cross-browser-install-design.md) · canonical: [`docs/tech/13-pwa-install-architecture.md`](../../tech/13-pwa-install-architecture.md)  
 **Scope:** Fix HyperOS/MIUI launch failure when user denies Chrome permission; reduce WebAPK desync; guide users through pre/post install.
 
 ## Problem
@@ -102,7 +102,7 @@ Existing `installWebApkLead` and `launchFromHomeHint` remain unchanged.
 | `lib/i18n/locales/de-DE.ts` | **Modify** |
 | `lib/i18n/locales/fr-FR.ts` | **Modify** |
 | `lib/copy/userFacing.ts` | **Modify** — fallback if referenced |
-| `docs/superpowers/specs/2026-06-19-android-pwa-standalone-launch-design.md` | **Modify** — cross-ref + note `start_url` superseded |
+| [`archive/specs/2026-06-19-android-pwa-standalone-launch-design.md`](../archive/specs/2026-06-19-android-pwa-standalone-launch-design.md) | Historical — `start_url` superseded; see [`docs/tech/13-pwa-install-architecture.md`](../../tech/13-pwa-install-architecture.md) |
 
 ## Testing
 

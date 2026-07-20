@@ -26,10 +26,11 @@ sequenceDiagram
 
 **规则：**
 
-1. **服务端** `POST /api/ghost/register` 签发 token；载荷 `{ ghostId, exp }` + HMAC（`GHOST_HMAC_SECRET`）。
+1. **服务端** `POST /api/ghost/register` 签发 token；载荷 `{ ghostId, exp }` + HMAC（`GHOST_HMAC_SECRET`）。响应体同时返回 `ghostToken`（与 Cookie 同值），供客户端持久化 possession proof。
 2. 客户端 **不可** 仅发送 localStorage 裸 UUID 作为信任依据。
 3. `localStorage.snap1099_ghost_id` 可选，**仅** UI 调试；权威身份在 Cookie。
-4. **`snaptax_ghost_account` 仅 Google 绑定后 INSERT**（一对一 Ghost ↔ User）。
+4. `localStorage.snap1099_known_ghost_ids` + `snap1099_known_ghost_tokens`：登记见过的 Ghost 及其 HMAC token（最多 20）。轮换后旧 token 用于登录 orphan merge / delete（服务端 `verifyGhostToken` 校验）。
+5. **`snaptax_ghost_account` 仅 Google 绑定后 INSERT/UPDATE**（一对一 Ghost ↔ User；同一 user 重新绑定新 Ghost 时记录旧 ghost 并迁移数据）。
 
 ## 5.3 Google 登录流程
 
@@ -43,15 +44,34 @@ sequenceDiagram
 
     User->>Client: Continue with Google
     Client->>GIS: 获取 credential (JWT)
-    Client->>API: POST /api/auth/google + Cookie snap1099_ghost
-    API->>API: 验证 JWT + Ghost HMAC
-    API->>DB: upsert snaptax_users, insert snaptax_ghost_account
-    API->>DB: migrate receipts ghost→user
+    Client->>Client: getClientOrphanGhostPossession(currentGhost)
+    Client->>API: POST /api/auth/google { credential, orphanGhosts:[{ghostId,token}] } + Cookie snap1099_ghost
+    API->>API: 验证 JWT + Ghost HMAC；orphanGhosts token 须通过 verifyGhostToken 且 ghostId 匹配
+    API->>DB: upsert snaptax_users, bind/rebind snaptax_ghost_account
+    API->>DB: migrate current ghost receipts + Event Store
+    API->>DB: merge orphan ghosts（receipts + Event Store）
     API->>Client: Set-Cookie snap1099_session
-    Client->>Client: 上传 IndexedDB pending
+    Client->>Client: mergeOrphanGhostsOnLogin（best-effort）
+    Client->>Client: 上传 pending / delete tombstones / flush events / syncFromServer
 ```
 
-**Request：** `credential`（Google ID Token）；Cookie **`snap1099_ghost` 必填**。Header `X-Ghost-Id` **可选**，若存在须与 token 内 `ghostId` 一致。
+**Request：** `credential`（Google ID Token）；`orphanGhosts?: { ghostId, token }[]`（客户端已知旧 Ghost 的 HMAC possession，最多 20；裸 ID 无效）。Cookie **`snap1099_ghost` 必填**。Header `X-Ghost-Id` **可选**，若存在须与 token 内 `ghostId` 一致。
+
+### 5.3.1 Orphan Ghost merge
+
+Orphan Ghost 指用户设备曾经拿到过、但尚未绑定 Google 的旧 Ghost。常见来源：cookie 过期后重新登记、登录前跨 session 轮换、或同一 Google user 从旧 Ghost rebind 到新 Ghost。
+
+| 阶段 | 入口 | 发现来源 | 行为 |
+|------|------|----------|------|
+| Google bind 事务 | `POST /api/auth/google` → `bindGhostAndMigrateData` | rebind 前旧 Ghost、服务端历史 `ghost_id`（receipts/events/snapshots）、**HMAC 校验通过**的 `orphanGhosts` | 迁移当前 Ghost receipts + Event Store；随后合并 orphan receipts / events / snapshots / cursor |
+| 登录后补偿 | `POST /api/sync/ghost-orphans` → `runOrphanGhostMergeForUser` | 同上（可空 `orphanGhosts` 也跑服务端历史） | best-effort 补齐 rotate 后遗漏的数据；失败不阻塞正常 sync |
+
+约束：
+
+- 当前 Ghost 会从候选集合中移除。
+- 已绑定到其他 user 的 Ghost 会被跳过，禁止抢占。
+- 裸 `ghostId` / 伪造 token **不**进入 merge。
+- 没有 receipts / events / snapshots / cursor 变化的 Ghost 不会出现在 `mergedGhostIds`。
 
 ## 5.4 Session
 
@@ -86,6 +106,6 @@ Google Console 回调：`https://{domain}/api/auth/callback/google`
 ## 5.7 安全
 
 - 验证 ID Token：`aud`, `iss`, `exp`
-- Ghost 绑定仅允许一次；已绑定 ghost 拒绝绑到其他 user
+- Ghost 绑定仅允许一次；已绑定 ghost 拒绝绑到其他 user（`409 GHOST_ALREADY_BOUND`）
 - Rate limit 登录端点（Vercel KV 或 middleware）
 - Google 绑定后：小票写/删须 Session（见 api-security ADR）

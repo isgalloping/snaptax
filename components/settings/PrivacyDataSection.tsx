@@ -1,15 +1,26 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { LegalDoc } from "@/lib/legal/content";
 import { LEGAL_CONTACT_EMAIL } from "@/lib/legal/content";
 import { useUserCopy } from "@/components/i18n/I18nProvider";
+import {
+  consumeLegalReturnNav,
+  LEGAL_RETURN_EVENT,
+  saveLegalReturnNav,
+} from "@/lib/client/legalReturnNav";
+import {
+  LegalInAppFullPageOverlay,
+  type InAppLegalFullPage,
+} from "@/components/legal/LegalInAppFullPageOverlay";
 import { LegalSheet } from "@/components/legal/LegalSheet";
 import {
   deleteAccountAndLocalData,
+  isDeleteAccountLocalClearError,
   isDeleteAccountOfflineError,
   isDeleteAccountSessionExpiredError,
 } from "@/lib/client/deleteAccountFlow";
+import { hasPendingLocalWipe } from "@/lib/storage/clearLocalData";
 import { useDialogEscape } from "@/lib/ui/useDialogEscape";
 
 interface PrivacyDataSectionProps {
@@ -58,6 +69,9 @@ export function PrivacyDataSection({
 }: PrivacyDataSectionProps) {
   const copy = useUserCopy().settings.privacyData;
   const [legalDoc, setLegalDoc] = useState<LegalDoc | null>(null);
+  const [fullPageLegal, setFullPageLegal] = useState<InAppLegalFullPage | null>(
+    null,
+  );
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -83,6 +97,22 @@ export function PrivacyDataSection({
     }
   });
 
+  const closeFullPageLegal = useCallback(() => {
+    setFullPageLegal(null);
+    consumeLegalReturnNav();
+  }, []);
+
+  const openFullPageLegal = useCallback((page: InAppLegalFullPage) => {
+    saveLegalReturnNav({ kind: "settings", page: "privacy-center" });
+    setFullPageLegal(page);
+  }, []);
+
+  useEffect(() => {
+    const onLegalReturn = () => setFullPageLegal(null);
+    window.addEventListener(LEGAL_RETURN_EVENT, onLegalReturn);
+    return () => window.removeEventListener(LEGAL_RETURN_EVENT, onLegalReturn);
+  }, []);
+
   const handleDelete = async () => {
     setDeleting(true);
     setError(null);
@@ -95,6 +125,8 @@ export function PrivacyDataSection({
         setError(copy.deleteRequiresOnline);
       } else if (isDeleteAccountSessionExpiredError(err)) {
         setError(copy.deleteSessionExpired);
+      } else if (isDeleteAccountLocalClearError(err)) {
+        setError(copy.deleteLocalClearFailed);
       } else {
         setError(copy.deleteFailed);
       }
@@ -104,6 +136,9 @@ export function PrivacyDataSection({
   };
 
   const offline = !isOnline;
+  const pendingLocalWipe =
+    typeof window !== "undefined" && hasPendingLocalWipe();
+  const deleteBlockedByOffline = offline && !pendingLocalWipe;
 
   return (
     <>
@@ -120,20 +155,42 @@ export function PrivacyDataSection({
             label={copy.terms}
             onClick={() => setLegalDoc("terms")}
           />
-          <SettingsRow label={copy.dataRetention} href="/data-retention" />
-          <SettingsRow label={copy.security} href="/security" />
-          <div className="rounded-xl border-2 border-zinc-600 bg-zinc-800 p-4">
+          <SettingsRow
+            label={copy.pricing}
+            onClick={() => openFullPageLegal("pricing")}
+          />
+          <SettingsRow
+            label={copy.refundPolicy}
+            onClick={() => openFullPageLegal("refund")}
+          />
+          <SettingsRow
+            label={copy.dataRetention}
+            onClick={() => setLegalDoc("data-retention")}
+          />
+          <SettingsRow
+            label={copy.security}
+            onClick={() => setLegalDoc("security")}
+          />
+          <button
+            type="button"
+            onClick={() => setLegalDoc("privacy")}
+            aria-label={copy.dataStorageOpenPrivacy}
+            className="w-full rounded-xl border-2 border-zinc-600 bg-zinc-800 p-4 text-left transition-transform active:scale-95"
+          >
             <p className="text-xs font-bold uppercase tracking-wider text-zinc-400">
               {copy.dataStorage}
             </p>
             <p className="mt-2 text-sm font-bold text-yellow-400">
               {copy.dataStorageValue}
             </p>
-          </div>
+          </button>
           <SettingsRow
             label={`${copy.contactPrefix}: ${LEGAL_CONTACT_EMAIL}`}
             href={`mailto:${LEGAL_CONTACT_EMAIL}`}
           />
+          <p className="px-1 text-xs leading-relaxed text-zinc-500">
+            {copy.contactDsrNote}
+          </p>
           <SettingsRow
             label={copy.deleteAccount}
             destructive
@@ -151,6 +208,13 @@ export function PrivacyDataSection({
       </section>
 
       <LegalSheet doc={legalDoc} onClose={() => setLegalDoc(null)} />
+
+      {fullPageLegal && (
+        <LegalInAppFullPageOverlay
+          page={fullPageLegal}
+          onClose={closeFullPageLegal}
+        />
+      )}
 
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-end bg-black/70">
@@ -171,7 +235,7 @@ export function PrivacyDataSection({
                 ? copy.deleteSignedInWarning
                 : copy.deleteGhostWarning}
             </p>
-            {offline && (
+            {deleteBlockedByOffline && (
               <p className="mt-4 text-sm font-bold text-yellow-400" role="alert">
                 {copy.deleteRequiresOnline}
               </p>
@@ -183,7 +247,7 @@ export function PrivacyDataSection({
             )}
             <button
               type="button"
-              disabled={deleting || offline}
+              disabled={deleting || deleteBlockedByOffline}
               onClick={() => void handleDelete()}
               className="mt-6 w-full min-h-16 rounded-xl border-2 border-red-600 bg-red-950 py-4 text-lg font-black uppercase tracking-wider text-red-400 transition-transform active:scale-95 disabled:opacity-60"
             >

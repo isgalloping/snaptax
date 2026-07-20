@@ -18,16 +18,16 @@ describe("computeSummaryDelta", () => {
   it("insert processing receipt increments totalReceiptCount only", () => {
     const d = computeSummaryDelta(null, receipt({ id: "1" }), YEAR, TZ);
     assert.equal(d.totalReceiptCount, 1);
-    assert.equal(d.unfiledTaxSaved, 0);
+    assert.equal(d.totalTaxSaved, 0);
   });
 
-  it("done unfiled receipt adds taxAmount to unfiledTaxSaved", () => {
+  it("done receipt adds taxAmount to totalTaxSaved", () => {
     const next = receipt({ id: "1", status: "done", taxAmount: 12.5 });
     const d = computeSummaryDelta(null, next, YEAR, TZ);
-    assert.equal(d.unfiledTaxSaved, 12.5);
+    assert.equal(d.totalTaxSaved, 12.5);
   });
 
-  it("filed receipt does not add to unfiledTaxSaved", () => {
+  it("filed done receipt still adds to totalTaxSaved", () => {
     const next = receipt({
       id: "1",
       status: "done",
@@ -36,11 +36,11 @@ describe("computeSummaryDelta", () => {
       taxSeasonDate: new Date("2026-04-01T00:00:00.000Z"),
     });
     const d = computeSummaryDelta(null, next, YEAR, TZ);
-    assert.equal(d.unfiledTaxSaved, 0);
+    assert.equal(d.totalTaxSaved, 12.5);
     assert.equal(d.totalReceiptCount, 1);
   });
 
-  it("export filed transition subtracts prior unfiled tax", () => {
+  it("export filed transition does not change totalTaxSaved", () => {
     const prev = receipt({ id: "1", status: "done", taxAmount: 10 });
     const next = receipt({
       id: "1",
@@ -50,14 +50,14 @@ describe("computeSummaryDelta", () => {
       taxSeasonDate: new Date("2026-04-15T00:00:00.000Z"),
     });
     const d = computeSummaryDelta(prev, next, YEAR, TZ);
-    assert.equal(d.unfiledTaxSaved, -10);
+    assert.equal(d.totalTaxSaved, 0);
     assert.equal(d.totalReceiptCount, 0);
   });
 
   it("delete removes contributions", () => {
     const prev = receipt({ id: "1", status: "done", taxAmount: 5 });
     const d = computeSummaryDelta(prev, null, YEAR, TZ);
-    assert.equal(d.unfiledTaxSaved, -5);
+    assert.equal(d.totalTaxSaved, -5);
     assert.equal(d.totalReceiptCount, -1);
   });
 
@@ -67,6 +67,18 @@ describe("computeSummaryDelta", () => {
       timestamp: new Date("2025-01-01T00:00:00.000Z"),
     });
     const d = computeSummaryDelta(null, next, YEAR, TZ);
+    assert.equal(d.totalReceiptCount, 0);
+  });
+
+  it("excludes onboarding demo from tax saved and receipt count", () => {
+    const demo = receipt({
+      id: "demo",
+      status: "done",
+      taxAmount: 28.5,
+      isOnboardingDemo: true,
+    });
+    const d = computeSummaryDelta(null, demo, YEAR, TZ);
+    assert.equal(d.totalTaxSaved, 0);
     assert.equal(d.totalReceiptCount, 0);
   });
 });

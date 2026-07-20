@@ -5,7 +5,7 @@ export const EN_US_COPY: UserCopy = {
       description: "Snap receipts, auto-categorize. Simple 1099 bookkeeping.",
     },
     pwa: {
-      title: "Add Snap1099 to Home Screen",
+      title: "Add SnapTax to Home Screen",
       subtitle:
         "Open like a native app — snap receipts one-handed on the job site",
       install: "Install",
@@ -13,23 +13,23 @@ export const EN_US_COPY: UserCopy = {
       dismiss: "Not now",
       dismissInstallAria: "Dismiss install instructions",
       manualHint: "Tap ⋮ in Chrome, then Install app",
-      manualSheetTitle: "Install Snap1099",
+      manualSheetTitle: "Install SnapTax",
       manualSheetLead:
         "Your browser can't install automatically — follow these steps:",
       manualGotIt: "Got it",
       installWebApkLead:
-        "Use Install app — not a bookmark shortcut. Snap1099 opens full-screen from your home screen.",
+        "Use Install app — not a bookmark shortcut. SnapTax opens full-screen from your home screen.",
       launchFromHomeHint:
-        "Open Snap1099 from your home screen icon, not inside Chrome.",
+        "Open SnapTax from your home screen icon, not inside Chrome.",
       launchFromHomeGotIt: "Got it",
       webApkGuide: {
         preInstallTitle: "Before you install",
         preInstallBody:
-          "After install, open Snap1099 from your home screen — not inside Chrome. On some Android phones, the first launch asks to open Chrome. Tap Always allow. Denying will prevent the app from opening.",
+          "After install, open SnapTax from your home screen — not inside Chrome. On some Android phones, the first launch asks to open Chrome. Tap Always allow. Denying will prevent the app from opening.",
         continueInstall: "Continue install",
-        postInstallTitle: "Snap1099 installed",
+        postInstallTitle: "SnapTax installed",
         postInstallSteps: [
-          "Go to your home screen and tap the Snap1099 icon.",
+          "Go to your home screen and tap the SnapTax icon.",
           "If your phone asks to open Chrome, tap Always allow.",
           "The app opens full-screen with no address bar.",
         ],
@@ -38,23 +38,35 @@ export const EN_US_COPY: UserCopy = {
       manualSteps: {
         chromiumAndroid: [
           'Tap the ⋮ menu (top-right of Chrome), then tap "Install app" (not a shortcut).',
-          "Confirm — Snap1099 opens from your home screen like a native app.",
+          "Confirm — SnapTax opens from your home screen like a native app.",
           "On first launch from your home screen, if asked to open Chrome, tap Always allow. Denying blocks the app from opening.",
         ],
         chromiumDesktop: [
           "Tap the ⋮ menu (top-right of Chrome or Edge).",
-          'Tap "Apps" → "Install Snap1099" (or "Install this site").',
-          "Confirm — Snap1099 opens in its own window.",
+          'Tap "Apps" → "Install SnapTax" (or "Install this site").',
+          "Confirm — SnapTax opens in its own window.",
         ],
         iosSafari: [
           "Tap the Share button (square with arrow) at the bottom of Safari.",
           'Scroll and tap "Add to Home Screen".',
-          'Tap "Add" — open Snap1099 from your home screen.',
+          'Tap "Add" — open SnapTax from your home screen.',
         ],
         macosSafari: [
           "Tap the Share button in Safari's toolbar.",
           'Choose "Add to Dock".',
-          "Snap1099 appears in your Dock like a native app.",
+          "SnapTax appears in your Dock like a native app.",
+        ],
+      },
+      appEntryGate: {
+        installTitle: "Install SnapTax",
+        openTitle: "Open SnapTax",
+        continueInBrowser: "Continue in browser",
+        addedToHomeScreen: "Added to Home Screen",
+        postInstallTitle: "SnapTax installed",
+        postInstallSteps: [
+          "Go to your home screen and tap the SnapTax icon.",
+          "If your phone asks to open Chrome, tap Always allow.",
+          "The app opens full-screen with no address bar.",
         ],
       },
     },
@@ -115,7 +127,7 @@ export const EN_US_COPY: UserCopy = {
         cta: "Let's Go! ⚡",
         ctaCountdown: "Let's Go! ({seconds})",
         ctaAria: "Start onboarding",
-        ariaStatus: "Loading Snap1099",
+        ariaStatus: "Loading SnapTax",
       },
       snapCoach: "Tap SNAP RECEIPT — photo any work receipt.",
       dismissCoach: "Dismiss hint",
@@ -150,7 +162,7 @@ export const EN_US_COPY: UserCopy = {
         tracked: "tracked",
         exportTaxPack: "Export tax pack",
         cpaIrsReady: "CPA /IRS Ready",
-        installApp: "Add Snap1099 to home screen",
+        installApp: "Add SnapTax to home screen",
         installShortLabel: "ADD HOME",
         syncReceipts: "Sync receipts",
         settings: "Settings",
@@ -198,7 +210,7 @@ export const EN_US_COPY: UserCopy = {
         learnMore: "Learn more",
       },
       exitConfirm: {
-        title: "Leave Snap1099?",
+        title: "Leave SnapTax?",
         body: "Your receipts stay saved on this device.",
         stay: "Stay",
         exit: "Exit",
@@ -379,6 +391,34 @@ export const EN_US_COPY: UserCopy = {
       openingExport: "Opening export…",
       back: "< BACK",
     },
+    paymentSuccess: {
+      export: {
+        confirmingTitle: "Payment successful",
+        confirmingHint: "Confirming your {season} Tax Pack…",
+        readyTitle: "{season} Tax Pack unlocked",
+        readyHint: "You can export unlimited times this tax season.",
+        download: "Download Tax Pack",
+        notNow: "Not now",
+        errorTitle: "Still confirming payment",
+        errorHint:
+          "Your payment may have gone through. Tap Try again or check Settings in a moment.",
+        retry: "Try again",
+        close: "Close",
+      },
+      founder: {
+        confirmingTitle: "Payment successful",
+        confirmingHint: "Setting up your Founder benefits…",
+        readyTitle: "You're a Super Founder!",
+        readyHint: "{season} paid · Super Founder #{number}",
+        readyHintNoNumber: "{season} paid",
+        gotIt: "Got it",
+        errorTitle: "Still confirming payment",
+        errorHint:
+          "Your Founder purchase may have gone through. Tap Try again or check Settings in a moment.",
+        retry: "Try again",
+        close: "Close",
+      },
+    },
     auth: {
       googleSignIn: {
         soft: {
@@ -418,7 +458,7 @@ export const EN_US_COPY: UserCopy = {
       syncInstructions: {
         title: "View on all devices",
         steps: [
-          "1. Open Snap1099 on your other phone, tablet, or computer.",
+          "1. Open SnapTax on your other phone, tablet, or computer.",
           "2. Tap Settings and choose Continue with Google.",
           "3. Sign in with the same Google account — receipts sync automatically.",
         ],
@@ -490,6 +530,7 @@ export const EN_US_COPY: UserCopy = {
         deductions: "Deductions",
         income: "Income",
         incomeForms: "{count} forms",
+        exportedStatus: "Exported · {season} season",
       },
       exportCard: {
         compatLine: "TurboTax & H&R Block Compatible",
@@ -498,7 +539,7 @@ export const EN_US_COPY: UserCopy = {
         snap1099K: "Snap 1099-K",
         trustLine: "Used by thousands of self-employed pros",
         taxEstimateDisclaimer:
-          "Est. Tax Saved is an estimate, not tax advice. See Terms §8.",
+          "Est. Tax Saved is an estimate, not tax advice. See Terms §7.",
         mostPopular: "Most Popular",
         states: {
           final_deadline: {
@@ -545,6 +586,10 @@ export const EN_US_COPY: UserCopy = {
         downloadAgain: "Download again",
         exportBlocked:
           "Export blocked. Paid tax-season export required.",
+        entitlementDisputed:
+          "Payment dispute in progress. Export for this season is paused. You can repurchase or contact support.",
+        entitlementRefunded:
+          "This season’s export access ended after a refund. You can purchase again to unlock Export.",
         dismiss: "Dismiss",
       },
       privacyCenter: {
@@ -579,8 +624,8 @@ export const EN_US_COPY: UserCopy = {
         moreTitle: "More options",
         moreSubtitle: "SMS, Email, AirDrop & more",
         message:
-          "Hey — I've been using Snap1099 to track my 1099 receipts and ocr on taxes. Free for contractors — thought you'd find it useful:",
-        shareTitle: "Snap1099 — Receipts to IRS tax pack",
+          "Hey — I've been using SnapTax to track my 1099 receipts and ocr on taxes. Free for contractors — thought you'd find it useful:",
+        shareTitle: "SnapTax — Receipts to IRS tax pack",
         linkCopied: "Link copied",
         shareFailed: "Could not share. Link copied instead.",
       },
@@ -591,11 +636,21 @@ export const EN_US_COPY: UserCopy = {
         dataStorage: "Data storage",
         dataStorageValue:
           "Processed and stored in the United States. See Privacy Policy for international transfers.",
+        dataStorageOpenPrivacy: "Open Privacy Policy",
         contactPrefix: "Contact",
+        contactDsrNote:
+          "Privacy requests: we aim to confirm within 48 hours and respond within 30 days.",
         dataRetention: "Data Retention",
         security: "Security & Incidents",
+        pricing: "Pricing",
+        refundPolicy: "Refund Policy",
+        englishOnlyNotice: "This document is available in English only.",
+        loadingLegal: "Loading…",
+        legalLoadFailed: "Could not load this document. Try again or open the full page.",
         deleteAccount: "Delete Account",
         deleteFailed: "Delete failed. Please try again.",
+        deleteLocalClearFailed:
+          "Cloud data was deleted, but clearing this device failed. Tap Delete permanently again to finish.",
         deleteRequiresOnline:
           "Connect to the internet to delete your account and cloud data.",
         deleteSessionExpired:
@@ -628,7 +683,7 @@ export const EN_US_COPY: UserCopy = {
       },
       help: {
         title: "Help",
-        button: "How to Use Snap1099",
+        button: "How to Use SnapTax",
         hint: "Quick guides for snapping, saving, and tax export.",
       },
     },
@@ -637,7 +692,7 @@ export const EN_US_COPY: UserCopy = {
       backToApp: "< BACK",
       backToTopics: "< BACK",
       allTopics: "All topics",
-      contact: "Need more help? legal@snap1099.com",
+      contact: "Need more help? snaptax.lightxforge@gmail.com",
       tocTitle: "Topics",
       toc: {
         quickStart: "Quick start (30 sec)",
@@ -652,7 +707,7 @@ export const EN_US_COPY: UserCopy = {
         quickStart: {
           title: "Get started in 30 seconds",
           steps: [
-            "Open Snap1099. **No sign-up needed.**",
+            "Open SnapTax. **No sign-up needed.**",
             "Tap the big yellow **SNAP RECEIPT** button.",
             "Point your camera at the receipt. Tap shutter. **Done — go back to work.**",
             "When you have signal, the app reads the receipt and shows the amount.",
@@ -799,7 +854,7 @@ export const EN_US_COPY: UserCopy = {
             },
             {
               q: "I got a new phone. Where are my receipts?",
-              a: "Open Snap1099 → **Continue with Google** with the **same account**. They sync back.",
+              a: "Open SnapTax → **Continue with Google** with the **same account**. They sync back.",
             },
             {
               q: "I never signed in and got a new phone.",
@@ -831,6 +886,8 @@ export const EN_US_COPY: UserCopy = {
       close: "Close",
       stepLabel: "Step {step} of {total}",
       step1Heading: "Select tax year",
+      step1SeasonHint:
+        "Your {season} season covers {year} calendar-year receipts (Jan 1 – Dec 31).",
       step2Heading: "Review categories",
       stepFormatHeading: "Choose export format",
       step3Heading: "Your tax pack",
@@ -853,10 +910,10 @@ export const EN_US_COPY: UserCopy = {
       shareFailedHint: "Could not open share. Tap Save to Phone instead.",
       savedToPhoneHint: "Saved to your phone. Check Downloads to attach or send.",
       yearSummary: "{year} · {amount} · {count} receipts",
-      formatCsvTitle: "CSV for TurboTax / Tax Software",
+      formatCsvTitle: "TurboTax CSV",
       formatCsvHint:
         "Optimized matrix format for instant tax software uploading.",
-      formatCpaTitle: "CPA Audit Pack (ZIP + Receipt Images)",
+      formatCpaTitle: "1099 Audit Receipt Pack (ZIP)",
       formatCpaHint:
         "Audit trail with your original receipt photos for your records.",
       sharing: "Opening share sheet…",
@@ -868,22 +925,28 @@ export const EN_US_COPY: UserCopy = {
       reviewUnknownMerchant: "Unknown merchant",
       reviewSaving: "Saving…",
       reviewSaveFailed: "Could not ocr category. Try again.",
-      formatCpaPdfTitle: "CPA Summary PDF (Links to Receipts)",
+      formatCpaPdfTitle: "Schedule C Mirror PDF",
       formatCpaPdfHint:
-        "Summary PDF with clickable links to your receipt photos.",
+        "Schedule C summary PDF with links to your receipt photos — for your CPA to review.",
       formatTxfTitle: "TXF for Tax Software",
       formatTxfHint:
         "Accounting assistant format for desktop tax tools (V042 blocks).",
+      formatQifTitle: "QuickBooks QIF",
+      formatQifHint:
+        "Import deductible expenses into QuickBooks or Quicken (.qif).",
+      formatQboTitle: "QuickBooks Online",
+      formatQboHint:
+        "Import as bank feed in QuickBooks Online (.qbo Web Connect).",
       snap1099Title: "1099 income forms",
       snap1099Hint:
-        "Snap your 1099-NEC or 1099-K — included in CPA Audit Pack under 01_Income_Documents.",
+        "Snap 1099-NEC / 1099-K — included in Audit Pack under 01_Income_Documents.",
       snap1099NecButton: "1099-NEC →",
       snap1099KButton: "1099-K →",
       incomeFormsLabel: "{count} income forms (1099)",
       turboTaxSteps: [
         "Open TurboTax Self-Employed → Business",
         "Choose Import / Upload expenses from CSV",
-        "Select this Snap1099 CSV file",
+        "Select this SnapTax CSV file",
         "Map columns if prompted (Date, Amount, Category)",
       ],
       previewCsv: "Preview CSV locally",
@@ -896,5 +959,9 @@ export const EN_US_COPY: UserCopy = {
       pdfFailed:
         "PDF export failed. Try CSV or CPA Audit Pack, or try again later.",
       exportTimeout: "Export timed out. Check your connection and try again.",
+      filedSyncNotFound:
+        "Some receipts aren't synced to the cloud yet. Wait for sync to finish, then tap Export Again.",
+      filedSyncFailed:
+        "Your tax pack was built but filing status couldn't be saved. Try Export Again.",
     },
   };

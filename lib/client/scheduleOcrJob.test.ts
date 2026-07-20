@@ -5,6 +5,8 @@ import {
   OCR_MAX_QUEUE_DEPTH,
   activeOcrQueueDepth,
   beginBatchCaptureDefer,
+  buildOcrLocalSuccessLifecyclePayload,
+  buildOcrSkippedLifecyclePayload,
   endBatchCaptureDefer,
   isBatchOcrUploadDeferred,
   isOcrJobPending,
@@ -127,6 +129,38 @@ describe("shouldBlockUploadForOcr", () => {
     resetOcrJobStateForTests();
     simulateOcrJobScheduledForTests("r1", { inQueue: true });
     assert.equal(shouldBlockUploadForOcr({ id: "r1" }), true);
+  });
+});
+
+describe("ocr lifecycle payloads", () => {
+  it("buildOcrSkippedLifecyclePayload covers skip reasons", () => {
+    for (const reason of [
+      "no_photo",
+      "env_skip",
+      "queue_full",
+      "timeout",
+      "process_error",
+    ]) {
+      assert.deepEqual(buildOcrSkippedLifecyclePayload(reason), {
+        source: "skipped",
+        reason,
+        engine: "skipped",
+      });
+    }
+  });
+
+  it("buildOcrLocalSuccessLifecyclePayload maps local OCR draft", () => {
+    assert.deepEqual(
+      buildOcrLocalSuccessLifecyclePayload({
+        engine: "tesseract",
+        confidence: 0.82,
+      }),
+      {
+        source: "local_ocr",
+        engine: "tesseract",
+        confidence: 0.82,
+      },
+    );
   });
 });
 

@@ -266,7 +266,7 @@ export const MARKETING_COPY = {
   },
   footer: {
     tagline:
-      "SnapTax helps contractors and small businesses track expenses and save money at tax time.",
+      "SnapTax helps contractors and small businesses organize receipts, track expenses, and prepare tax-ready reports for tax season.",
     copyrightHolder: "LightXForge",
     social: [
       { id: "facebook", label: "Facebook", href: "#" },

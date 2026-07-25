@@ -924,6 +924,16 @@ export const FR_FR_COPY: UserCopy = {
       "Partage impossible. Appuyez sur Enregistrer sur le téléphone.",
     savedToPhoneHint:
       "Enregistré sur votre téléphone. Consultez Téléchargements pour joindre ou envoyer.",
+    fileSavedTitle: "FICHIER ENREGISTRÉ",
+    fileSavedChromeStep1: "Ouvrez le menu Chrome (en haut à droite)",
+    fileSavedChromeStep2: "Appuyez sur Téléchargements",
+    fileSavedChromeStep3: "Trouvez votre fichier ci-dessous",
+    fileSavedCopy: "COPIER",
+    fileSavedCopied: "Copié",
+    fileSavedCopyFailed: "Échec de la copie — appui long sur le nom du fichier",
+    fileSavedGotIt: "Compris",
+    shareMayNeedDownloadsHint:
+      "Si Partager ne s'ouvre pas, enregistrez sur le téléphone et joignez depuis Téléchargements.",
     yearSummary: "{year} · {amount} · {count} reçus",
     formatCsvTitle: "CSV TurboTax",
     formatCsvHint:

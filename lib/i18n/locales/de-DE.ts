@@ -923,6 +923,16 @@ export const DE_DE_COPY: UserCopy = {
       "Teilen fehlgeschlagen. Tippen Sie stattdessen auf Auf Handy speichern.",
     savedToPhoneHint:
       "Auf Ihrem Handy gespeichert. Prüfen Sie Downloads zum Anhängen oder Senden.",
+    fileSavedTitle: "DATEI GESPEICHERT",
+    fileSavedChromeStep1: "Chrome-Menü öffnen (oben rechts)",
+    fileSavedChromeStep2: "Auf Downloads tippen",
+    fileSavedChromeStep3: "Datei unten finden",
+    fileSavedCopy: "KOPIEREN",
+    fileSavedCopied: "Kopiert",
+    fileSavedCopyFailed: "Kopieren fehlgeschlagen — Dateiname lange drücken",
+    fileSavedGotIt: "Verstanden",
+    shareMayNeedDownloadsHint:
+      "Wenn Teilen nicht öffnet, auf dem Handy speichern und aus Downloads anhängen.",
     yearSummary: "{year} · {amount} · {count} Belege",
     formatCsvTitle: "TurboTax CSV",
     formatCsvHint:

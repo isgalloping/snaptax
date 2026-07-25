@@ -651,6 +651,15 @@ export type UserCopy = {
     shareUnsupportedHint: string;
     shareFailedHint: string;
     savedToPhoneHint: string;
+    fileSavedTitle: string;
+    fileSavedChromeStep1: string;
+    fileSavedChromeStep2: string;
+    fileSavedChromeStep3: string;
+    fileSavedCopy: string;
+    fileSavedCopied: string;
+    fileSavedCopyFailed: string;
+    fileSavedGotIt: string;
+    shareMayNeedDownloadsHint: string;
     yearSummary: string;
     formatCsvTitle: string;
     formatCsvHint: string;

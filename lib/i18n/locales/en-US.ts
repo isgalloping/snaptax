@@ -909,6 +909,16 @@ export const EN_US_COPY: UserCopy = {
         "Tap Save to Phone, then attach this file from Downloads in email or WhatsApp.",
       shareFailedHint: "Could not open share. Tap Save to Phone instead.",
       savedToPhoneHint: "Saved to your phone. Check Downloads to attach or send.",
+      fileSavedTitle: "FILE SAVED",
+      fileSavedChromeStep1: "Open Chrome menu (top right)",
+      fileSavedChromeStep2: "Tap Downloads",
+      fileSavedChromeStep3: "Find your file below",
+      fileSavedCopy: "COPY",
+      fileSavedCopied: "Copied",
+      fileSavedCopyFailed: "Copy failed — long-press the filename to copy",
+      fileSavedGotIt: "Got it",
+      shareMayNeedDownloadsHint:
+        "If Share doesn't open, save to phone and attach from Downloads.",
       yearSummary: "{year} · {amount} · {count} receipts",
       formatCsvTitle: "TurboTax CSV",
       formatCsvHint:

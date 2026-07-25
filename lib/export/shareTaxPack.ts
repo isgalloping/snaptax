@@ -30,7 +30,7 @@ export async function shareTaxPackFile(
   title: string,
   text: string,
 ): Promise<ShareTaxPackResult> {
-  if (!canShareTaxPackFile(file)) {
+  if (typeof navigator === "undefined" || !navigator.share) {
     return "unsupported";
   }
   try {

@@ -129,15 +129,24 @@ Expenses-Detail.csv
 ## 8.5 客户端分享
 
 ```typescript
-const file = new File([blob], filename, { type: blob.type })
-if (navigator.canShare?.({ files: [file] })) {
-  await navigator.share({ files: [file], title: 'SnapTax Tax Pack' })
-} else {
-  // trigger explicit download via Save to Phone — never fallback download on share failure
-}
+// shareTaxPackFile — always attempts navigator.share when API exists (no pre-flight canShare gate)
+const result = await shareTaxPackFile(file, title, text)
+// "shared" | "cancelled" | "unsupported" | "failed"
 ```
 
-分享取消（`AbortError`）不视为错误。`canShare` 为 false 或 share 失败时 **不** 自动下载；Step 4 提供 **Save to Phone**（`<a download>`）与条件可用的 **Share** 按钮。
+Step 4 主操作 **Save to Phone**（`<a download>`）。**Share** 按钮在 `readyFile` 存在时始终可点（仅 `sharing` 中 disabled）；不再以 `navigator.canShare({ files })` 隐藏 Share。
+
+`shareTaxPackFile` 在 `navigator.share` 存在时直接调用（忽略 pre-flight `canShare`）。分享取消（`AbortError`）→ `cancelled`，不视为错误。
+
+| Result | Step 4 行为 |
+|--------|-------------|
+| `shared` | 完成 |
+| `cancelled` | 停留 ready，显示 `sharingHint` |
+| `unsupported` / `failed` | Sheet 内 **File Saved guide**（Chrome Downloads 三步 + COPY filename）；**不** 自动下载 |
+
+Android Chrome 上 `cpa_pack`（ZIP）常因 `canShare` false 无法原生分享；用户可先 **Save to Phone**，再点 Share → 若仍失败则进入 File Saved guide 协助从 Downloads 定位文件。
+
+Preview CSV（Step 3）行为不变：`unsupported` 仍自动下载；`failed` 显示错误文案。
 
 ## 8.6 重复导出
 

@@ -28,7 +28,7 @@ Snap1099 导出是 **唯一付费转化路径**（$49/税季 Paddle）。硬门�
 
 **空状态：** 零 `done` 小票 → gate 阻断 + Settings 黄条 5s 淡出提示；Step 1 选中年份无小票 → 红字提示 + CONTINUE 可点并显示同文案。
 
-**分享：** Step 4 主操作 **Save to Phone**；仅 `navigator.canShare({ files })` 为真时显示 Share；分享失败/取消 **不** 自动下载。
+**分享：** Step 4 主操作 **Save to Phone**；`readyFile` 存在时 **Share** 始终可点；`shareTaxPackFile` 有 `navigator.share` 即尝试（忽略 pre-flight `canShare`）；`unsupported`/`failed` → Sheet 内 **File Saved guide**；分享失败 **不** 自动下载。
 
 ---
 
@@ -243,6 +243,13 @@ Shared row + image plumbing for client CPA export:
 | Tests | `runLocalCpaExport.test.ts` — deps 注入 orchestration 契约 |
 
 **Server hybrid retained:** `POST /api/export/tax-pack` still serves `xlsx` and fallback; CPA formats no longer call it from UI.
+
+### 3.11 Share delivery UX (2026-07-25)
+
+- Share button always tappable when `readyFile` exists (`sharing` only disables).
+- `shareTaxPackFile` attempts `navigator.share` whenever API exists (ignores pre-flight `canShare`).
+- `unsupported` / `failed` → in-sheet **File Saved guide** (Chrome Downloads + COPY filename).
+- Share failure never auto-downloads (2026-06-19).
 
 ---
 

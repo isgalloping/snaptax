@@ -1,3 +1,5 @@
+import { envSpecialMinAmountCents } from "@/lib/server/env";
+
 export type PaddleWebhookPayload = {
   event_type?: string;
   data?: {
@@ -41,6 +43,11 @@ function envMinAmountCents(): number {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 500;
 }
 
+function minAmountCentsForSku(skuTier: string | undefined): number {
+  if (skuTier === "SPECIAL") return envSpecialMinAmountCents();
+  return envMinAmountCents();
+}
+
 function envCurrency(): string {
   return (process.env.PADDLE_CURRENCY ?? "USD").trim().toUpperCase();
 }
@@ -81,7 +88,8 @@ export function validatePaddleTransaction(
     return { ok: false, reason: "missing_total" };
   }
 
-  const minCents = envMinAmountCents();
+  const skuTier = data.custom_data?.skuTier;
+  const minCents = minAmountCentsForSku(skuTier);
   if (totalCents < minCents) {
     return { ok: false, reason: "amount_too_low" };
   }

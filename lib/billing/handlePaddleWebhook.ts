@@ -14,7 +14,7 @@ import {
   beginWebhookEvent,
   finishWebhookEvent,
 } from "@/lib/billing/recordWebhookEvent";
-import type { FounderTier } from "@/lib/founder/types";
+import { isFounderSkuTier } from "@/lib/billing/founderSkuTier";
 import { prisma } from "@/lib/prisma";
 import { assignFounderSeatOnFirstPurchase } from "@/lib/server/assignFounderSeat";
 import { currentTaxSeason } from "@/lib/tax/season";
@@ -24,16 +24,6 @@ export type PaddleNotificationPayload = PaddleWebhookPayload & {
   event_id?: string;
   occurred_at?: string;
 };
-
-function isFounderSkuTier(
-  tier: string | undefined,
-): tier is Exclude<FounderTier, "DEFAULT"> {
-  return (
-    tier === "FOUNDER_LEVEL_SUPER" ||
-    tier === "EARLY" ||
-    tier === "FOUNDER"
-  );
-}
 
 async function handleTransactionCompleted(
   payload: PaddleWebhookPayload,
@@ -143,6 +133,7 @@ async function handleTransactionCompleted(
 
   const skuTierFromIntent = grant.skuTier ?? undefined;
   const skuTierFromCustomData = validated.customData?.skuTier;
+  const effectiveSkuTier = skuTierFromIntent ?? skuTierFromCustomData;
   const founderSkuTier = isFounderSkuTier(skuTierFromIntent)
     ? skuTierFromIntent
     : isFounderSkuTier(skuTierFromCustomData)
@@ -207,6 +198,9 @@ async function handleTransactionCompleted(
       taxSeason,
       intentId: grant.intentId ?? null,
       entitlementCreated: entitlement.created,
+      ...(effectiveSkuTier === "SPECIAL"
+        ? { internal_test_checkout: true }
+        : {}),
     },
   });
 

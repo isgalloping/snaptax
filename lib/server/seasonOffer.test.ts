@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
-import { describe, it } from "node:test";
+import { afterEach, describe, it } from "node:test";
+import { buildSpecialSeasonOffer } from "@/lib/billing/specialCheckout";
 import { buildFounderTierConfigs } from "./founderConfig";
-import { resolveSeasonOfferFromState } from "./seasonOffer";
+import {
+  resolveSeasonOfferForActor,
+  resolveSeasonOfferFromState,
+} from "./seasonOffer";
 
 const tiers = buildFounderTierConfigs({
   FOUNDER_LEVEL_SUPER: 5,
@@ -69,5 +73,71 @@ describe("resolveSeasonOfferFromState", () => {
     });
     assert.equal(offer.priceUsd, 10);
     assert.equal(offer.skuTier, "EARLY");
+  });
+});
+
+describe("buildSpecialSeasonOffer", () => {
+  it("resolveSpecialSeasonOffer returns internal test offer", () => {
+    const offer = buildSpecialSeasonOffer("2025");
+    assert.equal(offer.skuTier, "SPECIAL");
+    assert.equal(offer.priceLabel, "Test price");
+  });
+});
+
+describe("resolveSeasonOfferForActor", () => {
+  const origSpecial = process.env.FOUNDER_LEVEL_SPECIAL;
+
+  afterEach(() => {
+    if (origSpecial === undefined) delete process.env.FOUNDER_LEVEL_SPECIAL;
+    else process.env.FOUNDER_LEVEL_SPECIAL = origSpecial;
+  });
+
+  it("returns SPECIAL when actor is eligible", () => {
+    const actor = { kind: "user" as const, userId: "u1", email: "test@example.com" };
+    process.env.FOUNDER_LEVEL_SPECIAL = "pri_special";
+    const offer = resolveSeasonOfferForActor({
+      actor,
+      verfyUser: "test@example.com",
+      enabled: true,
+      tiers,
+      user: null,
+      claimedCount: 0,
+      programOpen: true,
+      taxSeason: "2025",
+    });
+    assert.equal(offer.skuTier, "SPECIAL");
+    assert.equal(offer.priceDisplay, "internal_test");
+  });
+
+  it("falls through to founder pricing when actor is not eligible", () => {
+    const actor = { kind: "user" as const, userId: "u1", email: "other@example.com" };
+    process.env.FOUNDER_LEVEL_SPECIAL = "pri_special";
+    const offer = resolveSeasonOfferForActor({
+      actor,
+      verfyUser: "test@example.com",
+      enabled: true,
+      tiers,
+      user: null,
+      claimedCount: 0,
+      programOpen: true,
+      taxSeason: "2026",
+    });
+    assert.equal(offer.skuTier, "FOUNDER_LEVEL_SUPER");
+    assert.equal(offer.priceUsd, 5);
+  });
+
+  it("falls through when actor is null", () => {
+    process.env.FOUNDER_LEVEL_SPECIAL = "pri_special";
+    const offer = resolveSeasonOfferForActor({
+      actor: null,
+      verfyUser: "test@example.com",
+      enabled: true,
+      tiers,
+      user: null,
+      claimedCount: 0,
+      programOpen: true,
+      taxSeason: "2026",
+    });
+    assert.equal(offer.skuTier, "FOUNDER_LEVEL_SUPER");
   });
 });

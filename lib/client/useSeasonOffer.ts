@@ -18,7 +18,7 @@ const DEFAULT_PRICE_USD = 29;
 
 function isValidSeasonOffer(data: ClientSeasonOffer): boolean {
   if (data.priceDisplay === "internal_test") {
-    return typeof data.priceUsd === "number" && data.priceUsd >= 0;
+    return typeof data.priceUsd === "number" && data.priceUsd > 0;
   }
   if (typeof data.priceUsd === "number" && data.priceUsd > 0) {
     return true;

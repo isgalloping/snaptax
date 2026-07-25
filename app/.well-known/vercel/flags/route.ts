@@ -7,20 +7,13 @@ import {
   founderPriceSuperFlag,
   founderProgramEnabledFlag,
 } from "@/flags/founder";
-import {
-  isMockAIFlag,
-  isNeedPayFlag,
-  runModelFlag,
-  verfyUserFlag,
-} from "@/flags/verify";
+import { specialPriceFlag, specialUsersFlag } from "@/flags/special";
 
 export async function GET() {
   return NextResponse.json(
     getProviderData({
-      runModelFlag,
-      verfyUserFlag,
-      isNeedPayFlag,
-      isMockAIFlag,
+      specialUsersFlag,
+      specialPriceFlag,
       founderProgramEnabledFlag,
       founderPriceSuperFlag,
       founderPriceEarlyFlag,

@@ -29,7 +29,7 @@ import {
   type ExportFormat,
 } from "@/lib/export/exportFilenames";
 import {
-  canShareTaxPackFile,
+  isWebShareAvailable,
   shareTaxPackFile,
 } from "@/lib/export/shareTaxPack";
 import {
@@ -757,7 +757,7 @@ export function ExportEngineSheet({
                   {sharing
                     ? t.sharing
                     : shareStatus ??
-                      (canShareTaxPackFile(readyFile)
+                      (isWebShareAvailable()
                         ? t.sharingHint
                         : t.shareUnsupportedHint)}
                 </p>
@@ -771,7 +771,7 @@ export function ExportEngineSheet({
                 </button>
                 <button
                   type="button"
-                  disabled={sharing || !canShareTaxPackFile(readyFile)}
+                  disabled={sharing}
                   onClick={() => void handleShare(readyFile)}
                   className="mt-3 w-full min-h-14 rounded-xl border-2 border-zinc-600 bg-zinc-800 py-3 text-sm font-black uppercase tracking-wider text-white transition-transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
                 >

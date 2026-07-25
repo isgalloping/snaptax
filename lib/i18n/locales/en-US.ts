@@ -970,7 +970,8 @@ export const EN_US_COPY: UserCopy = {
         copyFailed: "Long-press the name to copy",
         searchTip: "Paste this name in your file manager search",
         sendToApp: "Send to email / app",
-        sendUnsupported: "Save first, then attach from Downloads",
+        sendUnsupported: "Sharing isn't available here — attach from Downloads",
+        sendFailed: "Could not open share. Attach from Downloads instead.",
         sendSuccess: "Shared — check your email app",
         gotIt: "Got it",
         steps: {

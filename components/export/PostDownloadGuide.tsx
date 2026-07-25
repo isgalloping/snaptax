@@ -4,7 +4,7 @@ import { useCallback, useState } from "react";
 import { useUserCopy } from "@/components/i18n/I18nProvider";
 import { detectExportPlatform } from "@/lib/export/detectExportPlatform";
 import {
-  canShareTaxPackFile,
+  isWebShareAvailable,
   shareTaxPackFile,
   type ShareTaxPackResult,
 } from "@/lib/export/shareTaxPack";
@@ -18,6 +18,8 @@ interface PostDownloadGuideProps {
   showShare?: boolean;
   onDismiss: () => void;
 }
+
+type ShareFeedbackTone = "success" | "error" | "neutral";
 
 export function PostDownloadGuide({
   fileName,
@@ -39,10 +41,13 @@ export function PostDownloadGuide({
           : copy.steps.other;
 
   const [copyStatus, setCopyStatus] = useState<string | null>(null);
-  const [shareStatus, setShareStatus] = useState<string | null>(null);
+  const [shareFeedback, setShareFeedback] = useState<{
+    tone: ShareFeedbackTone;
+    message: string;
+  } | null>(null);
   const [sharing, setSharing] = useState(false);
 
-  const canShare = Boolean(file && showShare && canShareTaxPackFile(file));
+  const shareAvailable = Boolean(file && showShare && isWebShareAvailable());
 
   const handleCopy = useCallback(async () => {
     try {
@@ -55,9 +60,9 @@ export function PostDownloadGuide({
   }, [copy.copyFailed, copy.copySuccess, fileName]);
 
   const handleShare = useCallback(async () => {
-    if (!file || !canShare) return;
+    if (!file || !shareAvailable) return;
     setSharing(true);
-    setShareStatus(null);
+    setShareFeedback(null);
     try {
       const result: ShareTaxPackResult = await shareTaxPackFile(
         file,
@@ -65,14 +70,26 @@ export function PostDownloadGuide({
         shareText,
       );
       if (result === "shared") {
-        setShareStatus(copy.sendSuccess);
+        setShareFeedback({ tone: "success", message: copy.sendSuccess });
       } else if (result === "cancelled") {
-        setShareStatus(null);
+        setShareFeedback(null);
+      } else if (result === "unsupported") {
+        setShareFeedback({ tone: "neutral", message: copy.sendUnsupported });
+      } else {
+        setShareFeedback({ tone: "error", message: copy.sendFailed });
       }
     } finally {
       setSharing(false);
     }
-  }, [canShare, copy.sendSuccess, file, shareText, shareTitle]);
+  }, [
+    copy.sendFailed,
+    copy.sendSuccess,
+    copy.sendUnsupported,
+    file,
+    shareAvailable,
+    shareText,
+    shareTitle,
+  ]);
 
   return (
     <section
@@ -114,20 +131,24 @@ export function PostDownloadGuide({
         <>
           <button
             type="button"
-            disabled={sharing || !canShare}
+            disabled={sharing || !shareAvailable}
             onClick={() => void handleShare()}
             className="mt-4 w-full min-h-14 rounded-xl border-2 border-zinc-600 bg-zinc-800 py-3 text-sm font-black uppercase tracking-wider text-white transition-transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {copy.sendToApp}
           </button>
-          {!canShare && (
-            <p className="mt-2 text-center text-xs text-zinc-500">
-              {copy.sendUnsupported}
-            </p>
-          )}
-          {shareStatus && (
-            <p className="mt-2 text-center text-xs font-bold text-green-400" role="status">
-              {shareStatus}
+          {shareFeedback && (
+            <p
+              className={`mt-2 text-center text-xs font-bold ${
+                shareFeedback.tone === "success"
+                  ? "text-green-400"
+                  : shareFeedback.tone === "error"
+                    ? "text-amber-400"
+                    : "text-zinc-400"
+              }`}
+              role="status"
+            >
+              {shareFeedback.message}
             </p>
           )}
         </>

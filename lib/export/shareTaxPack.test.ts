@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import {
   canShareTaxPackFile,
   downloadTaxPackFile,
+  isWebShareAvailable,
   shareTaxPackFile,
 } from "./shareTaxPack.ts";
 
@@ -94,6 +95,12 @@ describe("shareTaxPack", () => {
     }
   });
 
+  it("isWebShareAvailable returns false without navigator.share", () => {
+    withNavigator({ share: undefined }, () => {
+      assert.equal(isWebShareAvailable(), false);
+    });
+  });
+
   it("canShareTaxPackFile returns false without navigator.share", () => {
     withNavigator({ share: undefined }, () => {
       const file = new File(["zip"], "pack.zip", { type: "application/zip" });
@@ -114,16 +121,45 @@ describe("shareTaxPack", () => {
     );
   });
 
-  it("shareTaxPackFile returns unsupported when canShare is false", async () => {
+  it("shareTaxPackFile attempts share when canShare is false but share exists", async () => {
+    let shareCalled = false;
     await withNavigator(
       {
-        share: () => Promise.resolve(),
         canShare: () => false,
+        share: async () => {
+          shareCalled = true;
+        },
+      },
+      async () => {
+        const file = new File(["zip"], "SnapTax-2026-Audit-Trail.zip", {
+          type: "application/zip",
+        });
+        const result = await shareTaxPackFile(file, "SnapTax", "Export");
+        assert.equal(shareCalled, true);
+        assert.equal(result, "shared");
+      },
+    );
+  });
+
+  it("shareTaxPackFile returns unsupported when navigator.share is missing", async () => {
+    await withNavigator({ share: undefined }, async () => {
+      const file = new File(["zip"], "pack.zip", { type: "application/zip" });
+      const result = await shareTaxPackFile(file, "SnapTax", "Export");
+      assert.equal(result, "unsupported");
+    });
+  });
+
+  it("shareTaxPackFile returns failed when canShare is false and share throws", async () => {
+    await withNavigator(
+      {
+        canShare: () => false,
+        share: () =>
+          Promise.reject(new DOMException("Not allowed", "NotAllowedError")),
       },
       async () => {
         const file = new File(["zip"], "pack.zip", { type: "application/zip" });
         const result = await shareTaxPackFile(file, "SnapTax", "Export");
-        assert.equal(result, "unsupported");
+        assert.equal(result, "failed");
       },
     );
   });

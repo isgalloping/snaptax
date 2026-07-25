@@ -988,7 +988,10 @@ export const FR_FR_COPY: UserCopy = {
       copyFailed: "Appui long sur le nom pour copier",
       searchTip: "Collez ce nom dans la recherche de fichiers",
       sendToApp: "Envoyer par e-mail / app",
-      sendUnsupported: "Enregistrez d'abord, puis joignez depuis Téléchargements",
+      sendUnsupported:
+        "Partage indisponible ici — joignez depuis Téléchargements",
+      sendFailed:
+        "Impossible d'ouvrir le partage. Joignez depuis Téléchargements.",
       sendSuccess: "Partagé — vérifiez votre app e-mail",
       gotIt: "Compris",
       steps: {

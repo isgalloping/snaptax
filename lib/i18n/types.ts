@@ -688,5 +688,22 @@ export type UserCopy = {
     exportTimeout: string;
     filedSyncNotFound: string;
     filedSyncFailed: string;
+    postDownloadGuide: {
+      title: string;
+      copyButton: string;
+      copySuccess: string;
+      copyFailed: string;
+      searchTip: string;
+      sendToApp: string;
+      sendUnsupported: string;
+      sendSuccess: string;
+      gotIt: string;
+      steps: {
+        androidChrome: string[];
+        iosSafari: string[];
+        desktopChrome: string[];
+        other: string[];
+      };
+    };
   };
 };

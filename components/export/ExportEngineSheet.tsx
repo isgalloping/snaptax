@@ -30,9 +30,13 @@ import {
 } from "@/lib/export/exportFilenames";
 import {
   canShareTaxPackFile,
-  downloadTaxPackFile,
   shareTaxPackFile,
 } from "@/lib/export/shareTaxPack";
+import {
+  downloadWithGuide,
+  type DownloadedFileInfo,
+} from "@/lib/export/downloadWithGuide";
+import { PostDownloadGuide } from "@/components/export/PostDownloadGuide";
 import { countLocalExportReceiptsInTaxYear } from "@/lib/export/countLocalExportReceipts";
 import { buildLocalTurboTaxCsv } from "@/lib/export/buildLocalTurboTaxCsv";
 import { setPendingIncomeCapture } from "@/lib/export/incomeCapture";
@@ -96,6 +100,9 @@ export function ExportEngineSheet({
   const [sharing, setSharing] = useState(false);
   const [shareStatus, setShareStatus] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [postDownloadGuide, setPostDownloadGuide] =
+    useState<DownloadedFileInfo | null>(null);
+  const [saveDebounce, setSaveDebounce] = useState(false);
   const progressTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const yearReceipts = receiptsInTaxYear(activeReceipts, taxYear, timeZone);
@@ -189,8 +196,13 @@ export function ExportEngineSheet({
   };
 
   const handleSaveToPhone = (file: File) => {
-    downloadTaxPackFile(file);
-    setShareStatus(t.savedToPhoneHint);
+    if (saveDebounce) return;
+    setSaveDebounce(true);
+    setPostDownloadGuide(null);
+    downloadWithGuide(file, {
+      onDownloaded: (info) => setPostDownloadGuide(info),
+    });
+    window.setTimeout(() => setSaveDebounce(false), 300);
   };
 
   const goToFormatStep = () => {
@@ -226,8 +238,9 @@ export function ExportEngineSheet({
         copy.settings.export.shareText,
       );
       if (result === "unsupported") {
-        downloadTaxPackFile(file);
-        setShareStatus(t.savedToPhoneHint);
+        downloadWithGuide(file, {
+          onDownloaded: (info) => setPostDownloadGuide(info),
+        });
       } else if (result === "failed") {
         setErrorMessage(t.shareFailedHint);
       }
@@ -253,6 +266,7 @@ export function ExportEngineSheet({
   const handleGenerate = async () => {
     setErrorMessage(null);
     setShareStatus(null);
+    setPostDownloadGuide(null);
     if (!navigator.onLine) {
       setErrorMessage(copy.settings.export.offline);
       return;
@@ -690,6 +704,16 @@ export function ExportEngineSheet({
                 {t.generate}
               </button>
             </div>
+
+            {postDownloadGuide && (
+              <PostDownloadGuide
+                fileName={postDownloadGuide.fileName}
+                file={postDownloadGuide.file}
+                shareTitle={exportShareTitle(taxYear, "Preview")}
+                shareText={copy.settings.export.shareText}
+                onDismiss={() => setPostDownloadGuide(null)}
+              />
+            )}
           </>
         )}
 
@@ -739,8 +763,9 @@ export function ExportEngineSheet({
                 </p>
                 <button
                   type="button"
+                  disabled={saveDebounce}
                   onClick={() => handleSaveToPhone(readyFile)}
-                  className="mt-6 w-full min-h-16 rounded-xl border-4 border-white bg-yellow-500 py-4 text-lg font-black uppercase tracking-wider text-black transition-transform active:scale-95"
+                  className="mt-6 w-full min-h-16 rounded-xl border-4 border-white bg-yellow-500 py-4 text-lg font-black uppercase tracking-wider text-black transition-transform active:scale-95 disabled:opacity-60"
                 >
                   {t.saveToPhone}
                 </button>
@@ -752,6 +777,15 @@ export function ExportEngineSheet({
                 >
                   {t.share}
                 </button>
+                {postDownloadGuide && (
+                  <PostDownloadGuide
+                    fileName={postDownloadGuide.fileName}
+                    file={postDownloadGuide.file}
+                    shareTitle={exportShareTitle(taxYear)}
+                    shareText={copy.settings.export.shareText}
+                    onDismiss={() => setPostDownloadGuide(null)}
+                  />
+                )}
               </div>
             ) : null}
           </>

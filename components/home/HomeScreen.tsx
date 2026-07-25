@@ -151,6 +151,10 @@ import { SnapFocusRing } from "@/components/onboarding/SnapFocusRing";
 import { SnapTooltip } from "@/components/onboarding/SnapTooltip";
 import { useOnboardingFlow } from "@/components/onboarding/useOnboardingFlow";
 import { downloadOnboardingSampleCsv } from "@/lib/export/downloadOnboardingSampleCsv";
+import type { DownloadedFileInfo } from "@/lib/export/downloadWithGuide";
+import { exportShareTitle } from "@/lib/export/exportFilenames";
+import { defaultExportTaxYear } from "@/lib/tax/season";
+import { PostDownloadGuide } from "@/components/export/PostDownloadGuide";
 import {
   convertDemoReceiptAfterLogin,
   ensureConvertedDemoUploadReady,
@@ -227,6 +231,8 @@ export function HomeScreen() {
   const paymentSuccessRef = useRef<PaymentSuccessState | null>(null);
   const [founderRefreshTick, setFounderRefreshTick] = useState(0);
   const [exitConfirmOpen, setExitConfirmOpen] = useState(false);
+  const [ahaPostDownloadGuide, setAhaPostDownloadGuide] =
+    useState<DownloadedFileInfo | null>(null);
   const [settingsViewState, setSettingsViewState] =
     useState<SettingsViewState>("main");
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -1410,7 +1416,9 @@ export function HomeScreen() {
       void (async () => {
         const demo = await ensureOnboardingDemoDone();
         await refreshListFromLocal();
-        downloadOnboardingSampleCsv(demo);
+        downloadOnboardingSampleCsv(demo, {
+          onDownloaded: setAhaPostDownloadGuide,
+        });
         await completeAhaCoach();
       })();
       return;
@@ -1907,6 +1915,20 @@ export function HomeScreen() {
         onStay={handleExitConfirmStay}
         onExit={handleExitConfirmExit}
       />
+
+      {ahaPostDownloadGuide && (
+        <div className="fixed inset-0 z-50 flex items-end bg-black/70">
+          <div className="max-h-[92vh] w-full overflow-y-auto rounded-t-3xl border-t-4 border-yellow-500 bg-zinc-900 p-6 pb-10">
+            <PostDownloadGuide
+              fileName={ahaPostDownloadGuide.fileName}
+              file={ahaPostDownloadGuide.file}
+              shareTitle={exportShareTitle(Number(defaultExportTaxYear()), "Sample")}
+              shareText={copy.settings.export.shareText}
+              onDismiss={() => setAhaPostDownloadGuide(null)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

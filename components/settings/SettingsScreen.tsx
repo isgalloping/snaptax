@@ -7,6 +7,10 @@ import type { GoogleAuthResponse } from "@/lib/client/authApi";
 import { saveIndustry } from "@/lib/client/authStorage";
 import { apiFetch } from "@/lib/client/ghostClient";
 import { downloadOnboardingSampleCsv } from "@/lib/export/downloadOnboardingSampleCsv";
+import type { DownloadedFileInfo } from "@/lib/export/downloadWithGuide";
+import { exportShareTitle } from "@/lib/export/exportFilenames";
+import { PostDownloadGuide } from "@/components/export/PostDownloadGuide";
+import { defaultExportTaxYear } from "@/lib/tax/season";
 import { ensureOnboardingDemoDone } from "@/lib/onboarding/demoReceipt";
 import {
   GOOGLE_SOFT_DISMISSED_KEY,
@@ -138,6 +142,10 @@ export function SettingsScreen({
     () => typeof navigator !== "undefined" && navigator.onLine,
   );
   const [sampleDownloading, setSampleDownloading] = useState(false);
+  const [samplePostDownloadGuide, setSamplePostDownloadGuide] =
+    useState<DownloadedFileInfo | null>(null);
+  const [bannerPostDownloadGuide, setBannerPostDownloadGuide] =
+    useState<DownloadedFileInfo | null>(null);
   const [showSampleReady, setShowSampleReady] = useState(false);
   const [showExportBlocked, setShowExportBlocked] = useState(false);
   const [founderStatus, setFounderStatus] = useState<FounderStatus>("none");
@@ -321,14 +329,22 @@ export function SettingsScreen({
     setSampleDownloading(true);
     try {
       const demo = await ensureOnboardingDemoDone();
-      downloadOnboardingSampleCsv(demo);
+      downloadOnboardingSampleCsv(demo, {
+        onDownloaded: setSamplePostDownloadGuide,
+      });
+    } finally {
+      setSampleDownloading(false);
+    }
+  };
+
+  const handleSamplePostDownloadDismiss = () => {
+    setSamplePostDownloadGuide(null);
+    void (async () => {
       if (onboardingAha) {
         await onSampleExportAhaComplete?.();
       }
       onReplaceSettingsPage("export-completed");
-    } finally {
-      setSampleDownloading(false);
-    }
+    })();
   };
 
   const handleViewStatus = () => {
@@ -337,7 +353,9 @@ export function SettingsScreen({
 
   const handleDownloadAgain = async () => {
     const demo = await ensureOnboardingDemoDone();
-    downloadOnboardingSampleCsv(demo);
+    downloadOnboardingSampleCsv(demo, {
+      onDownloaded: setBannerPostDownloadGuide,
+    });
   };
 
   const handleDismissExportBlocked = () => {
@@ -445,6 +463,10 @@ export function SettingsScreen({
             setGoogleSheet("hard-export");
           }}
           downloading={sampleDownloading}
+          postDownloadGuide={samplePostDownloadGuide}
+          onDismissPostDownload={handleSamplePostDownloadDismiss}
+          shareTitle={exportShareTitle(Number(defaultExportTaxYear()), "Sample")}
+          shareText={copy.settings.export.shareText}
         />
         {googleSheet && (
           <GoogleSignInSheet
@@ -526,6 +548,16 @@ export function SettingsScreen({
           <ExportStatusBanner
             variant="sample-ready"
             onDownloadAgain={() => void handleDownloadAgain()}
+          />
+        )}
+
+        {bannerPostDownloadGuide && (
+          <PostDownloadGuide
+            fileName={bannerPostDownloadGuide.fileName}
+            file={bannerPostDownloadGuide.file}
+            shareTitle={exportShareTitle(Number(defaultExportTaxYear()), "Sample")}
+            shareText={copy.settings.export.shareText}
+            onDismiss={() => setBannerPostDownloadGuide(null)}
           />
         )}
 

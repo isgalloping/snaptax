@@ -4,11 +4,11 @@ import { mapErrorToResponse } from "@/lib/api/errors";
 import { getActor } from "@/lib/auth/getActor";
 import { createOrReuseCheckoutIntent } from "@/lib/billing/checkoutIntent";
 import { resolveCheckoutSkuTier } from "@/lib/billing/resolveCheckoutSkuTier";
-import { verfyUserFlag } from "@/flags/verify";
+import { specialPriceFlag, specialUsersFlag } from "@/flags/special";
 import type { PublicFounderTier } from "@/lib/founder/types";
 import { resolveFounderProgramConfig } from "@/lib/server/founderConfig";
 import { getFounderProgramState } from "@/lib/server/founderProgram";
-import { getPaddlePriceIdSpecial } from "@/lib/server/env";
+import { getSpecialLevelUserPriceId } from "@/lib/server/env";
 import { currentTaxSeason } from "@/lib/tax/season";
 import { withRequestLog } from "@/lib/server/log/withRequestLog";
 
@@ -37,13 +37,17 @@ export const POST = withRequestLog(
       const body = bodySchema.parse(raw);
       const taxSeason = body.taxSeason ?? currentTaxSeason();
 
-      const verfyUser = await verfyUserFlag();
+      const [specialUsers, specialPriceUsd] = await Promise.all([
+        specialUsersFlag(),
+        specialPriceFlag(),
+      ]);
       const config = await resolveFounderProgramConfig();
       const state = await getFounderProgramState(actor.userId);
 
       const { skuTier: resolvedSkuTier, isSpecial } = resolveCheckoutSkuTier({
         actor,
-        verfyUser,
+        specialUsers,
+        specialPriceUsd,
         body: { ...body, taxSeason },
         founderUser: state.user,
         claimedCount: state.claimedCount,
@@ -53,7 +57,7 @@ export const POST = withRequestLog(
       });
 
       const paddlePriceId = isSpecial
-        ? getPaddlePriceIdSpecial()
+        ? getSpecialLevelUserPriceId()
         : config.tiers[resolvedSkuTier as PublicFounderTier].paddlePriceId;
 
       if (isSpecial && !paddlePriceId) {

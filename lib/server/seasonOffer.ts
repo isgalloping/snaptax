@@ -35,7 +35,8 @@ export type ResolveSeasonOfferInput = {
 
 export type ResolveSeasonOfferForActorInput = ResolveSeasonOfferInput & {
   actor: Actor | null;
-  verfyUser: string;
+  specialUsers: string;
+  specialPriceUsd: number;
 };
 
 /** Flag-driven season display + checkout tier (founder seats 1–50, else DEFAULT). */
@@ -73,25 +74,33 @@ export function resolveSeasonOfferForActor(
 ): SeasonOffer {
   if (
     input.actor &&
-    resolveSpecialCheckoutEligible(input.actor, input.verfyUser)
+    resolveSpecialCheckoutEligible(
+      input.actor,
+      input.specialUsers,
+      input.specialPriceUsd,
+    )
   ) {
-    return buildSpecialSeasonOffer(input.taxSeason);
+    return buildSpecialSeasonOffer(input.taxSeason, input.specialPriceUsd);
   }
   return resolveSeasonOfferFromState(input);
 }
 
 export async function getSeasonOffer(
   userId?: string,
-  options?: { actor?: Actor | null; verfyUser?: string },
+  options?: {
+    actor?: Actor | null;
+    specialUsers?: string;
+    specialPriceUsd?: number;
+  },
 ): Promise<SeasonOffer> {
   const config = await resolveFounderProgramConfig();
   const state = await getFounderProgramState(userId);
   const taxSeason = currentTaxSeason();
-  const verfyUser = options?.verfyUser ?? "";
 
   return resolveSeasonOfferForActor({
     actor: options?.actor ?? null,
-    verfyUser,
+    specialUsers: options?.specialUsers ?? "",
+    specialPriceUsd: options?.specialPriceUsd ?? 0,
     enabled: config.enabled,
     tiers: config.tiers,
     user: state.user,

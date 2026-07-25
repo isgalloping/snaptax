@@ -10,7 +10,8 @@ import type { FounderTierConfig } from "@/lib/server/founderConfig";
 
 export type ResolveCheckoutSkuTierInput = {
   actor: Actor;
-  verfyUser: string;
+  specialUsers: string;
+  specialPriceUsd: number;
   body: { founderPurchase?: boolean; skuTier?: FounderTier; taxSeason: string };
   founderUser: FounderCheckoutUser | null;
   claimedCount: number;
@@ -26,7 +27,13 @@ export type ResolveCheckoutSkuTierResult =
 export function resolveCheckoutSkuTier(
   input: ResolveCheckoutSkuTierInput,
 ): ResolveCheckoutSkuTierResult {
-  if (resolveSpecialCheckoutEligible(input.actor, input.verfyUser)) {
+  if (
+    resolveSpecialCheckoutEligible(
+      input.actor,
+      input.specialUsers,
+      input.specialPriceUsd,
+    )
+  ) {
     return { skuTier: "SPECIAL", isSpecial: true };
   }
 

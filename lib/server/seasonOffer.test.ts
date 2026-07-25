@@ -78,26 +78,27 @@ describe("resolveSeasonOfferFromState", () => {
 
 describe("buildSpecialSeasonOffer", () => {
   it("resolveSpecialSeasonOffer returns internal test offer", () => {
-    const offer = buildSpecialSeasonOffer("2025");
+    const offer = buildSpecialSeasonOffer("2025", 1);
     assert.equal(offer.skuTier, "SPECIAL");
-    assert.equal(offer.priceLabel, "Test price");
+    assert.equal(offer.priceLabel, "$1.00");
   });
 });
 
 describe("resolveSeasonOfferForActor", () => {
-  const origSpecial = process.env.FOUNDER_LEVEL_SPECIAL;
+  const origSpecial = process.env.SPECIAL_LEVEL_USER;
 
   afterEach(() => {
-    if (origSpecial === undefined) delete process.env.FOUNDER_LEVEL_SPECIAL;
-    else process.env.FOUNDER_LEVEL_SPECIAL = origSpecial;
+    if (origSpecial === undefined) delete process.env.SPECIAL_LEVEL_USER;
+    else process.env.SPECIAL_LEVEL_USER = origSpecial;
   });
 
   it("returns SPECIAL when actor is eligible", () => {
     const actor = { kind: "user" as const, userId: "u1", email: "test@example.com" };
-    process.env.FOUNDER_LEVEL_SPECIAL = "pri_special";
+    process.env.SPECIAL_LEVEL_USER = "pri_special";
     const offer = resolveSeasonOfferForActor({
       actor,
-      verfyUser: "test@example.com",
+      specialUsers: "test@example.com",
+      specialPriceUsd: 1,
       enabled: true,
       tiers,
       user: null,
@@ -111,10 +112,11 @@ describe("resolveSeasonOfferForActor", () => {
 
   it("falls through to founder pricing when actor is not eligible", () => {
     const actor = { kind: "user" as const, userId: "u1", email: "other@example.com" };
-    process.env.FOUNDER_LEVEL_SPECIAL = "pri_special";
+    process.env.SPECIAL_LEVEL_USER = "pri_special";
     const offer = resolveSeasonOfferForActor({
       actor,
-      verfyUser: "test@example.com",
+      specialUsers: "test@example.com",
+      specialPriceUsd: 1,
       enabled: true,
       tiers,
       user: null,
@@ -127,10 +129,11 @@ describe("resolveSeasonOfferForActor", () => {
   });
 
   it("falls through when actor is null", () => {
-    process.env.FOUNDER_LEVEL_SPECIAL = "pri_special";
+    process.env.SPECIAL_LEVEL_USER = "pri_special";
     const offer = resolveSeasonOfferForActor({
       actor: null,
-      verfyUser: "test@example.com",
+      specialUsers: "test@example.com",
+      specialPriceUsd: 1,
       enabled: true,
       tiers,
       user: null,

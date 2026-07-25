@@ -11,18 +11,19 @@ const mockTiers = buildFounderTierConfigs({
 });
 
 describe("resolveCheckoutSkuTier", () => {
-  const origSpecial = process.env.FOUNDER_LEVEL_SPECIAL;
+  const origSpecial = process.env.SPECIAL_LEVEL_USER;
 
   afterEach(() => {
-    if (origSpecial === undefined) delete process.env.FOUNDER_LEVEL_SPECIAL;
-    else process.env.FOUNDER_LEVEL_SPECIAL = origSpecial;
+    if (origSpecial === undefined) delete process.env.SPECIAL_LEVEL_USER;
+    else process.env.SPECIAL_LEVEL_USER = origSpecial;
   });
 
   it("forces SPECIAL for whitelisted user even when founder program full", () => {
-    process.env.FOUNDER_LEVEL_SPECIAL = "pri_special";
+    process.env.SPECIAL_LEVEL_USER = "pri_special";
     const result = resolveCheckoutSkuTier({
       actor: { kind: "user", userId: "u1", email: "test@example.com" },
-      verfyUser: "test@example.com",
+      specialUsers: "test@example.com",
+      specialPriceUsd: 1,
       body: { founderPurchase: true, taxSeason: "2025" },
       founderUser: null,
       claimedCount: 50,
@@ -34,12 +35,13 @@ describe("resolveCheckoutSkuTier", () => {
   });
 
   it("throws FOUNDER_PROGRAM_FULL for non-eligible user when program full", () => {
-    process.env.FOUNDER_LEVEL_SPECIAL = "pri_special";
+    process.env.SPECIAL_LEVEL_USER = "pri_special";
     assert.throws(
       () =>
         resolveCheckoutSkuTier({
           actor: { kind: "user", userId: "u1", email: "other@example.com" },
-          verfyUser: "test@example.com",
+          specialUsers: "test@example.com",
+          specialPriceUsd: 1,
           body: { founderPurchase: true, taxSeason: "2025" },
           founderUser: null,
           claimedCount: 50,
@@ -52,10 +54,11 @@ describe("resolveCheckoutSkuTier", () => {
   });
 
   it("rejects client SPECIAL skuTier for non-whitelisted user", () => {
-    process.env.FOUNDER_LEVEL_SPECIAL = "pri_special";
+    process.env.SPECIAL_LEVEL_USER = "pri_special";
     const result = resolveCheckoutSkuTier({
       actor: { kind: "user", userId: "u1", email: "other@example.com" },
-      verfyUser: "test@example.com",
+      specialUsers: "test@example.com",
+      specialPriceUsd: 1,
       body: { skuTier: "SPECIAL", taxSeason: "2026" },
       founderUser: null,
       claimedCount: 0,
@@ -67,10 +70,11 @@ describe("resolveCheckoutSkuTier", () => {
   });
 
   it("uses explicit body skuTier when not founder purchase", () => {
-    process.env.FOUNDER_LEVEL_SPECIAL = "pri_special";
+    process.env.SPECIAL_LEVEL_USER = "pri_special";
     const result = resolveCheckoutSkuTier({
       actor: { kind: "user", userId: "u1", email: "other@example.com" },
-      verfyUser: "test@example.com",
+      specialUsers: "test@example.com",
+      specialPriceUsd: 1,
       body: { skuTier: "DEFAULT", taxSeason: "2025" },
       founderUser: null,
       claimedCount: 0,
@@ -82,10 +86,11 @@ describe("resolveCheckoutSkuTier", () => {
   });
 
   it("falls through to season offer when no founderPurchase or skuTier", () => {
-    process.env.FOUNDER_LEVEL_SPECIAL = "pri_special";
+    process.env.SPECIAL_LEVEL_USER = "pri_special";
     const result = resolveCheckoutSkuTier({
       actor: { kind: "user", userId: "u1", email: "other@example.com" },
-      verfyUser: "test@example.com",
+      specialUsers: "test@example.com",
+      specialPriceUsd: 1,
       body: { taxSeason: "2026" },
       founderUser: null,
       claimedCount: 0,

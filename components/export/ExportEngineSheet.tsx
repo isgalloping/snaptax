@@ -29,6 +29,7 @@ import {
   type ExportFormat,
 } from "@/lib/export/exportFilenames";
 import {
+  isWebShareAvailable,
   shareTaxPackFile,
 } from "@/lib/export/shareTaxPack";
 import {
@@ -756,7 +757,7 @@ export function ExportEngineSheet({
                   {sharing
                     ? t.sharing
                     : shareStatus ??
-                      (typeof navigator !== "undefined" && navigator.share
+                      (isWebShareAvailable()
                         ? t.sharingHint
                         : t.shareUnsupportedHint)}
                 </p>

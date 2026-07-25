@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import {
   canShareTaxPackFile,
   downloadTaxPackFile,
+  isWebShareAvailable,
   shareTaxPackFile,
 } from "./shareTaxPack.ts";
 
@@ -92,6 +93,12 @@ describe("shareTaxPack", () => {
         value: originalUrl,
       });
     }
+  });
+
+  it("isWebShareAvailable returns false without navigator.share", () => {
+    withNavigator({ share: undefined }, () => {
+      assert.equal(isWebShareAvailable(), false);
+    });
   });
 
   it("canShareTaxPackFile returns false without navigator.share", () => {

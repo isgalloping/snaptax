@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import { useUserCopy } from "@/components/i18n/I18nProvider";
 import { detectExportPlatform } from "@/lib/export/detectExportPlatform";
 import {
+  isWebShareAvailable,
   shareTaxPackFile,
   type ShareTaxPackResult,
 } from "@/lib/export/shareTaxPack";
@@ -46,9 +47,7 @@ export function PostDownloadGuide({
   } | null>(null);
   const [sharing, setSharing] = useState(false);
 
-  const shareAvailable = Boolean(
-    file && showShare && typeof navigator !== "undefined" && navigator.share,
-  );
+  const shareAvailable = Boolean(file && showShare && isWebShareAvailable());
 
   const handleCopy = useCallback(async () => {
     try {

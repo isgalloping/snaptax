@@ -2,6 +2,12 @@
 
 export type ShareTaxPackResult = "shared" | "cancelled" | "unsupported" | "failed";
 
+/** Runtime Web Share API probe (DOM typings always include navigator.share). */
+export function isWebShareAvailable(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return "share" in navigator && typeof navigator.share === "function";
+}
+
 export function downloadTaxPackFile(file: File): void {
   const url = URL.createObjectURL(file);
   const a = document.createElement("a");
@@ -14,7 +20,7 @@ export function downloadTaxPackFile(file: File): void {
 }
 
 export function canShareTaxPackFile(file: File): boolean {
-  if (typeof navigator === "undefined" || !navigator.share) return false;
+  if (!isWebShareAvailable()) return false;
   if (typeof navigator.canShare !== "function") {
     return file.type.startsWith("text/") || file.type === "application/pdf";
   }
@@ -30,7 +36,7 @@ export async function shareTaxPackFile(
   title: string,
   text: string,
 ): Promise<ShareTaxPackResult> {
-  if (typeof navigator === "undefined" || !navigator.share) {
+  if (!isWebShareAvailable()) {
     return "unsupported";
   }
   try {

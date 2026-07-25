@@ -40,7 +40,7 @@ export function resolveCheckoutSkuTier(
     return { skuTier: resolution.skuTier, isSpecial: false };
   }
 
-  if (input.body.skuTier != null) {
+  if (input.body.skuTier != null && input.body.skuTier !== "SPECIAL") {
     return { skuTier: input.body.skuTier, isSpecial: false };
   }
 

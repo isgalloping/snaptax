@@ -51,6 +51,21 @@ describe("resolveCheckoutSkuTier", () => {
     );
   });
 
+  it("rejects client SPECIAL skuTier for non-whitelisted user", () => {
+    process.env.FOUNDER_LEVEL_SPECIAL = "pri_special";
+    const result = resolveCheckoutSkuTier({
+      actor: { kind: "user", userId: "u1", email: "other@example.com" },
+      verfyUser: "test@example.com",
+      body: { skuTier: "SPECIAL", taxSeason: "2026" },
+      founderUser: null,
+      claimedCount: 0,
+      programOpen: true,
+      enabled: true,
+      tiers: mockTiers,
+    });
+    assert.deepEqual(result, { skuTier: "FOUNDER_LEVEL_SUPER", isSpecial: false });
+  });
+
   it("uses explicit body skuTier when not founder purchase", () => {
     process.env.FOUNDER_LEVEL_SPECIAL = "pri_special";
     const result = resolveCheckoutSkuTier({

@@ -114,18 +114,32 @@ describe("shareTaxPack", () => {
     );
   });
 
-  it("shareTaxPackFile returns unsupported when canShare is false", async () => {
+  it("shareTaxPackFile attempts share when canShare is false but share exists", async () => {
+    let shareCalled = false;
     await withNavigator(
       {
-        share: () => Promise.resolve(),
         canShare: () => false,
+        share: async () => {
+          shareCalled = true;
+        },
       },
       async () => {
-        const file = new File(["zip"], "pack.zip", { type: "application/zip" });
+        const file = new File(["zip"], "SnapTax-2026-Audit-Trail.zip", {
+          type: "application/zip",
+        });
         const result = await shareTaxPackFile(file, "SnapTax", "Export");
-        assert.equal(result, "unsupported");
+        assert.equal(shareCalled, true);
+        assert.equal(result, "shared");
       },
     );
+  });
+
+  it("shareTaxPackFile returns unsupported when navigator.share is missing", async () => {
+    await withNavigator({ share: undefined }, async () => {
+      const file = new File(["zip"], "pack.zip", { type: "application/zip" });
+      const result = await shareTaxPackFile(file, "SnapTax", "Export");
+      assert.equal(result, "unsupported");
+    });
   });
 
   it("shareTaxPackFile returns shared on success", async () => {

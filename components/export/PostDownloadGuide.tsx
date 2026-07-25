@@ -4,7 +4,6 @@ import { useCallback, useState } from "react";
 import { useUserCopy } from "@/components/i18n/I18nProvider";
 import { detectExportPlatform } from "@/lib/export/detectExportPlatform";
 import {
-  canShareTaxPackFile,
   shareTaxPackFile,
   type ShareTaxPackResult,
 } from "@/lib/export/shareTaxPack";
@@ -42,7 +41,9 @@ export function PostDownloadGuide({
   const [shareStatus, setShareStatus] = useState<string | null>(null);
   const [sharing, setSharing] = useState(false);
 
-  const canShare = Boolean(file && showShare && canShareTaxPackFile(file));
+  const shareAvailable = Boolean(
+    file && showShare && typeof navigator !== "undefined" && navigator.share,
+  );
 
   const handleCopy = useCallback(async () => {
     try {
@@ -55,7 +56,7 @@ export function PostDownloadGuide({
   }, [copy.copyFailed, copy.copySuccess, fileName]);
 
   const handleShare = useCallback(async () => {
-    if (!file || !canShare) return;
+    if (!file || !shareAvailable) return;
     setSharing(true);
     setShareStatus(null);
     try {
@@ -68,11 +69,13 @@ export function PostDownloadGuide({
         setShareStatus(copy.sendSuccess);
       } else if (result === "cancelled") {
         setShareStatus(null);
+      } else {
+        setShareStatus(copy.sendUnsupported);
       }
     } finally {
       setSharing(false);
     }
-  }, [canShare, copy.sendSuccess, file, shareText, shareTitle]);
+  }, [copy.sendSuccess, copy.sendUnsupported, file, shareAvailable, shareText, shareTitle]);
 
   return (
     <section
@@ -114,17 +117,12 @@ export function PostDownloadGuide({
         <>
           <button
             type="button"
-            disabled={sharing || !canShare}
+            disabled={sharing || !shareAvailable}
             onClick={() => void handleShare()}
             className="mt-4 w-full min-h-14 rounded-xl border-2 border-zinc-600 bg-zinc-800 py-3 text-sm font-black uppercase tracking-wider text-white transition-transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {copy.sendToApp}
           </button>
-          {!canShare && (
-            <p className="mt-2 text-center text-xs text-zinc-500">
-              {copy.sendUnsupported}
-            </p>
-          )}
           {shareStatus && (
             <p className="mt-2 text-center text-xs font-bold text-green-400" role="status">
               {shareStatus}

@@ -109,28 +109,35 @@ describe("validatePaddleTransaction", () => {
     if (!result.ok) assert.equal(result.reason, "invalid_currency");
   });
 
-  it("accepts SPECIAL tier at special min ($1) but rejects below", () => {
-    process.env.PADDLE_SPECIAL_MIN_AMOUNT_CENTS = "100";
-    const ok = validatePaddleTransaction({
-      ...basePayload,
-      data: {
-        ...basePayload.data!,
-        details: { totals: { total: "100", currency_code: "USD" } },
-        custom_data: { intentId: "intent-uuid", skuTier: "SPECIAL" },
+  it("uses custom minAmountCents when provided", () => {
+    const result = validatePaddleTransaction(
+      {
+        ...basePayload,
+        data: {
+          ...basePayload.data!,
+          details: { totals: { total: "100", currency_code: "USD" } },
+          custom_data: { intentId: "intent-uuid", skuTier: "SPECIAL" },
+        },
       },
-    });
-    assert.equal(ok.ok, true);
+      { minAmountCents: 100 },
+    );
+    assert.equal(result.ok, true);
+  });
 
-    const low = validatePaddleTransaction({
-      ...basePayload,
-      data: {
-        ...basePayload.data!,
-        details: { totals: { total: "50", currency_code: "USD" } },
-        custom_data: { intentId: "intent-uuid", skuTier: "SPECIAL" },
+  it("rejects below custom min", () => {
+    const result = validatePaddleTransaction(
+      {
+        ...basePayload,
+        data: {
+          ...basePayload.data!,
+          details: { totals: { total: "50", currency_code: "USD" } },
+          custom_data: { intentId: "intent-uuid", skuTier: "SPECIAL" },
+        },
       },
-    });
-    assert.equal(low.ok, false);
-    if (!low.ok) assert.equal(low.reason, "amount_too_low");
+      { minAmountCents: 100 },
+    );
+    assert.equal(result.ok, false);
+    if (!result.ok) assert.equal(result.reason, "amount_too_low");
   });
 });
 

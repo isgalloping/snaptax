@@ -1,7 +1,9 @@
+import { specialPriceFlag } from "@/flags/special";
 import {
   validatePaddleTransaction,
   type PaddleWebhookPayload,
 } from "@/lib/billing/validatePaddleTransaction";
+import { founderPriceUsdToCents } from "@/lib/founder/pricing";
 import {
   markCheckoutIntentConsumed,
   resolveWebhookGrantTarget,
@@ -29,7 +31,21 @@ async function handleTransactionCompleted(
   payload: PaddleWebhookPayload,
   auditId: string,
 ): Promise<{ ok: true; ignored?: boolean }> {
-  const validated = validatePaddleTransaction(payload);
+  const skuTierHint = payload.data?.custom_data?.skuTier;
+  let minAmountCents: number | undefined;
+  if (skuTierHint === "SPECIAL") {
+    const specialPrice = await specialPriceFlag();
+    if (specialPrice <= 0) {
+      await finishWebhookEvent(auditId, {
+        processingResult: "ignored",
+        processingReason: "special_price_unconfigured",
+      });
+      return { ok: true, ignored: true };
+    }
+    minAmountCents = founderPriceUsdToCents(specialPrice);
+  }
+
+  const validated = validatePaddleTransaction(payload, { minAmountCents });
   if (!validated.ok) {
     logEvent({
       ts: new Date().toISOString(),

@@ -41,7 +41,7 @@ function envMinAmountCents(): number {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 500;
 }
 
-function minAmountCentsForSku(_skuTier: string | undefined): number {
+function minAmountCentsForSku(): number {
   return envMinAmountCents();
 }
 
@@ -86,9 +86,7 @@ export function validatePaddleTransaction(
     return { ok: false, reason: "missing_total" };
   }
 
-  const skuTier = data.custom_data?.skuTier;
-  const minCents =
-    options?.minAmountCents ?? minAmountCentsForSku(skuTier);
+  const minCents = options?.minAmountCents ?? minAmountCentsForSku();
   if (totalCents < minCents) {
     return { ok: false, reason: "amount_too_low" };
   }

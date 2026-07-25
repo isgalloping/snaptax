@@ -1,9 +1,9 @@
 import { specialPriceFlag } from "@/flags/special";
+import { resolveSpecialWebhookMinAmountCents } from "@/lib/billing/resolveSpecialWebhookMin";
 import {
   validatePaddleTransaction,
   type PaddleWebhookPayload,
 } from "@/lib/billing/validatePaddleTransaction";
-import { founderPriceUsdToCents } from "@/lib/founder/pricing";
 import {
   markCheckoutIntentConsumed,
   resolveWebhookGrantTarget,
@@ -31,19 +31,21 @@ async function handleTransactionCompleted(
   payload: PaddleWebhookPayload,
   auditId: string,
 ): Promise<{ ok: true; ignored?: boolean }> {
-  const skuTierHint = payload.data?.custom_data?.skuTier;
-  let minAmountCents: number | undefined;
-  if (skuTierHint === "SPECIAL") {
-    const specialPrice = await specialPriceFlag();
-    if (specialPrice <= 0) {
-      await finishWebhookEvent(auditId, {
-        processingResult: "ignored",
-        processingReason: "special_price_unconfigured",
-      });
-      return { ok: true, ignored: true };
-    }
-    minAmountCents = founderPriceUsdToCents(specialPrice);
+  const intentId = payload.data?.custom_data?.intentId;
+  const minResolution = await resolveSpecialWebhookMinAmountCents(intentId, {
+    getSpecialPriceUsd: specialPriceFlag,
+  });
+  if (minResolution.kind === "error") {
+    await finishWebhookEvent(auditId, {
+      processingResult: "ignored",
+      processingReason: minResolution.reason,
+    });
+    return { ok: true, ignored: true };
   }
+  const minAmountCents =
+    minResolution.kind === "special"
+      ? minResolution.minAmountCents
+      : undefined;
 
   const validated = validatePaddleTransaction(payload, { minAmountCents });
   if (!validated.ok) {
@@ -66,6 +68,19 @@ async function handleTransactionCompleted(
   }
 
   const grant = await resolveWebhookGrantTarget(validated.customData);
+  if (
+    grant.ok &&
+    validated.customData?.skuTier === "SPECIAL" &&
+    grant.skuTier !== "SPECIAL"
+  ) {
+    await finishWebhookEvent(auditId, {
+      processingResult: "ignored",
+      processingReason: "sku_tier_mismatch",
+      transactionId: validated.transactionId,
+    });
+    return { ok: true, ignored: true };
+  }
+
   if (!grant.ok) {
     logEvent({
       ts: new Date().toISOString(),
@@ -215,7 +230,7 @@ async function handleTransactionCompleted(
       intentId: grant.intentId ?? null,
       entitlementCreated: entitlement.created,
       ...(effectiveSkuTier === "SPECIAL"
-        ? { skuTier: "SPECIAL", internal_test_checkout: true }
+        ? { skuTier: "SPECIAL", internalTestCheckout: true }
         : {}),
     },
   });

@@ -15,10 +15,10 @@ export const specialUsersFlag = flag<string>({
   defaultValue: "",
 });
 
-/** Season price in USD for internal test users (e.g. 1 = $1.00). */
+/** Display + webhook min for SPECIAL_LEVEL_USER Paddle SKU (e.g. 1 = $1.00). */
 export const specialPriceFlag = flag<number>({
   key: "specialPrice",
   adapter: vercelAdapter(),
   identify,
-  defaultValue: 0,
+  defaultValue: 1,
 });

@@ -46,6 +46,8 @@ export type LogMeta = {
   event?: string;
   founderNumber?: number | null;
   tier?: string;
+  skuTier?: string;
+  internalTestCheckout?: boolean;
   founderPurchase?: boolean;
 };
 

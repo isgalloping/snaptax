@@ -19,7 +19,6 @@ import { logEvent } from "@/lib/server/log/logEvent";
 import { baseLogEntry } from "@/lib/server/log/context";
 import { blobCommandOptions } from "@/lib/server/blob";
 import { ocrDraftFromAiRaw } from "@/lib/ocr/ocrDraftSchema";
-import { resolveVerifyContext } from "@/lib/verify/context";
 import { incomeFormTypeFromReceipt } from "@/lib/export/incomeDocuments";
 
 export const maxDuration = 60;
@@ -76,20 +75,6 @@ export const POST = withRequestLog(
       }
 
       const visionStart = Date.now();
-      const verify = await resolveVerifyContext(actor);
-      if (verify.canBypass) {
-        logEvent({
-          ...baseLogEntry("biz.verify", request, actor),
-          level: "info",
-          success: true,
-          durationMs: 0,
-          meta: {
-            verifyBypass: true,
-            mockAi: verify.canMockAi,
-            bypassPay: verify.canBypassPay,
-          },
-        });
-      }
       try {
         const ocrDraft = ocrDraftFromAiRaw(receipt.aiRaw);
         const result = await processReceiptTax({
@@ -98,7 +83,6 @@ export const POST = withRequestLog(
           imageBuffer: bytes,
           mime,
           industry,
-          canMockAi: verify.canMockAi,
           captureKind: incomeFormTypeFromReceipt(receipt),
           ocrDraft,
           logContext: { request, actor },
@@ -113,7 +97,6 @@ export const POST = withRequestLog(
             receiptId: id,
             status: result.status,
             dataRegion: receipt.dataRegion,
-            ...(verify.canMockAi ? { reason: "verify_mock" } : {}),
           },
         });
 

@@ -1,7 +1,9 @@
 # 生产验证白名单 + Vercel Flags — Design
 
+> **Removed:** Verify bypass (`runModel`, `verfyUser`, `isNeedPay`, `isMockAI`) is deleted by [`2026-07-25-special-checkout-refactor-design.md`](./2026-07-25-special-checkout-refactor-design.md). Internal testing uses SPECIAL Paddle checkout only.
+
 **Date:** 2026-06-13  
-**Status:** Approved (implemented)  
+**Status:** Approved (implemented) · **Scheduled for removal**  
 **Scope:** Production verify-mode bypass for a single whitelisted Google user — mock AI receipts and optional payment skip — controlled by Vercel Flags.
 
 **Canonical product spec:** [`docs/product/PRODUCT-SPEC.md`](../../product/PRODUCT-SPEC.md)  

@@ -1,5 +1,7 @@
 # Founder SPECIAL Internal Test Checkout — Design
 
+> **Superseded (config/flags):** [`2026-07-25-special-checkout-refactor-design.md`](./2026-07-25-special-checkout-refactor-design.md) — use that spec for `SPECIAL_LEVEL_USER`, `specialUsers`, `specialPrice`, and verify flag removal. Core SPECIAL skuTier / no-seat behavior below remains valid unless contradicted.
+
 **Status:** Approved (brainstorming)  
 **Date:** 2026-07-25  
 **Scope:** Internal-only Paddle checkout price for whitelisted test accounts in production, preview, and local dev.

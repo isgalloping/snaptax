@@ -5,7 +5,6 @@ import { initializePaddle, Paddle } from "@paddle/paddle-js";
 import { useUserCopy } from "@/components/i18n/I18nProvider";
 import { useSeasonOffer } from "@/lib/client/useSeasonOffer";
 import { apiFetch } from "@/lib/client/ghostClient";
-import { formatCurrency } from "@/lib/format";
 import {
   isPaddleCheckoutClosed,
   isPaddleCheckoutCompleted,
@@ -54,7 +53,7 @@ export function PaywallSheet({
   onPaid,
 }: PaywallSheetProps) {
   const copy = useUserCopy().paywall;
-  const { priceUsd } = useSeasonOffer();
+  const { priceLabel } = useSeasonOffer();
   const [paying, setPaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const paddleRef = useRef<Paddle | null>(null);
@@ -151,8 +150,6 @@ export function PaywallSheet({
     onDismissWithoutPay?.();
     onClose();
   };
-
-  const priceLabel = formatCurrency(priceUsd);
 
   function withPrice(template: string): string {
     return template.replace("{price}", priceLabel);

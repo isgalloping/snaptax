@@ -32,6 +32,8 @@ type FounderProgramResponse = {
     founderNumber: number | null;
     currentSeasonEntitled: boolean;
   } | null;
+  internalTestCheckout?: boolean;
+  internalTestPriceLabel?: string;
 };
 
 interface WidgetStackProps {
@@ -49,6 +51,14 @@ interface WidgetStackProps {
 }
 
 function buildFounderPreview(program: FounderProgramResponse): FounderWidgetPreview {
+  if (program.internalTestCheckout && program.internalTestPriceLabel) {
+    return {
+      priceUsd: 0,
+      priceLabel: program.internalTestPriceLabel,
+      remaining: program.remaining,
+    };
+  }
+
   const displayTier = resolveDisplayTier({
     claimedCount: program.claimedCount,
     user: program.user,

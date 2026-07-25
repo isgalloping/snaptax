@@ -173,7 +173,7 @@ export function FounderProgramSheet({
         setError(copy.paymentUnavailable);
         return;
       }
-      if (!fresh.programOpen) {
+      if (!fresh.internalTestCheckout && !fresh.programOpen) {
         logFounderEvent("founder_purchase_fail");
         notifyProgramFull(fresh.seatsTotal);
         return;
@@ -222,13 +222,19 @@ export function FounderProgramSheet({
   const displayTier = program ? resolveDisplayTier(program) : null;
   const priceUsd =
     displayTier && program ? program.tiers[displayTier]?.priceUsd : null;
+  const priceDisplay =
+    program?.internalTestCheckout && program.internalTestPriceLabel
+      ? program.internalTestPriceLabel
+      : priceUsd != null
+        ? formatCurrency(priceUsd)
+        : null;
   const alreadyEntitled = program?.user?.currentSeasonEntitled === true;
   const seatsUrgent = program != null && isFounderScarcityUrgent(program.remaining);
   const programFull =
     program != null ? formatProgramFull(copy.programFull, program.seatsTotal) : null;
   const claimLabel =
-    priceUsd != null
-      ? copy.becomeFounder.replace("{price}", formatCurrency(priceUsd))
+    priceDisplay != null
+      ? copy.becomeFounder.replace("{price}", priceDisplay)
       : copy.becomeFounder.replace("{price}", "…");
 
   const offerBlock =
@@ -241,9 +247,9 @@ export function FounderProgramSheet({
             .replace("{remaining}", String(program.remaining))
             .replace("{total}", String(program.seatsTotal))}
         </p>
-        {priceUsd != null && (
+        {priceDisplay != null && (
           <p className="mt-4 text-lg font-black text-white">
-            {copy.seasonPrice.replace("{price}", formatCurrency(priceUsd))}
+            {copy.seasonPrice.replace("{price}", priceDisplay)}
           </p>
         )}
         <p className="mt-2 text-xs font-bold text-zinc-400">

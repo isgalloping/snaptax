@@ -47,3 +47,17 @@ test("resolveDisplayTier uses DEFAULT for lapsed founders", () => {
     "DEFAULT",
   );
 });
+
+test("resolveDisplayTier ignores SPECIAL tier (internal checkout only)", () => {
+  assert.equal(
+    resolveDisplayTier({
+      claimedCount: 0,
+      user: {
+        founderNumber: null,
+        founderStatus: "none",
+        founderTier: "SPECIAL",
+      },
+    }),
+    "FOUNDER_LEVEL_SUPER",
+  );
+});

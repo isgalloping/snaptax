@@ -27,4 +27,12 @@ describe("buildFounderRows", () => {
       assert.doesNotMatch(row.note.toLowerCase(), /for life/);
     }
   });
+
+  it("excludes SPECIAL from public founder rows", () => {
+    const rows = buildFounderRows(tiers);
+    for (const row of rows) {
+      assert.notEqual(row.tier, "SPECIAL");
+    }
+    assert.doesNotMatch(JSON.stringify(rows), /SPECIAL/);
+  });
 });

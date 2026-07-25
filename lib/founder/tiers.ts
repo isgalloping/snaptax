@@ -1,7 +1,7 @@
-import { FOUNDER_SEATS_TOTAL, type FounderTier } from "./types";
+import { FOUNDER_SEATS_TOTAL, type PublicFounderTier } from "./types";
 export { FOUNDER_SEATS_TOTAL };
 
-export function tierForSeat(seat: number): FounderTier | null {
+export function tierForSeat(seat: number): PublicFounderTier | null {
   if (seat < 1 || seat > 50) return null;
   if (seat <= 10) return "FOUNDER_LEVEL_SUPER";
   if (seat <= 30) return "EARLY";
@@ -13,7 +13,7 @@ export function nextSeatNumber(claimedCount: number): number | null {
   return claimedCount + 1;
 }
 
-export function tierDisplayLabel(tier: FounderTier): string {
+export function tierDisplayLabel(tier: PublicFounderTier): string {
   switch (tier) {
     case "FOUNDER_LEVEL_SUPER":
       return "Super Founder";

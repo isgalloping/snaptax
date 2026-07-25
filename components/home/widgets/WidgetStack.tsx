@@ -8,7 +8,7 @@ import {
   readFounderWidgetSeen,
 } from "@/lib/founder/founderStorage";
 import { resolveDisplayTier } from "@/lib/founder/resolveDisplayTier";
-import type { FounderStatus, FounderTier } from "@/lib/founder/types";
+import type { FounderStatus, FounderTier, PublicFounderTier } from "@/lib/founder/types";
 import { isFounderWidgetVisible } from "@/lib/founder/visibility";
 import { shouldHoldWidgetPagerForFounderCheck } from "@/lib/founder/widgetPagerGate";
 import { logFounderEvent } from "@/lib/founder/logFounderEvent";
@@ -25,7 +25,7 @@ type FounderProgramResponse = {
   claimedCount: number;
   remaining: number;
   programOpen: boolean;
-  tiers: Record<FounderTier, FounderTierConfig>;
+  tiers: Record<PublicFounderTier, FounderTierConfig>;
   user: {
     founderStatus: FounderStatus;
     founderTier: FounderTier | null;

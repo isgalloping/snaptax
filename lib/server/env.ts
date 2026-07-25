@@ -152,6 +152,17 @@ export function getPaddleWebhookSecret(): string {
   return firstDefined(process.env.PADDLE_WEBHOOK_SECRET);
 }
 
+export function getPaddlePriceIdSpecial(): string {
+  return (process.env.FOUNDER_LEVEL_SPECIAL ?? "").trim();
+}
+
+export function envSpecialMinAmountCents(): number {
+  const raw = process.env.PADDLE_SPECIAL_MIN_AMOUNT_CENTS;
+  if (raw == null || raw.trim() === "") return 100;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 100;
+}
+
 export function applyEnvAliases(): void {
   if (!process.env.DATABASE_URL && getDatabaseUrl()) {
     process.env.DATABASE_URL = getDatabaseUrl();

@@ -142,6 +142,21 @@ describe("shareTaxPack", () => {
     });
   });
 
+  it("shareTaxPackFile returns failed when canShare is false and share throws", async () => {
+    await withNavigator(
+      {
+        canShare: () => false,
+        share: () =>
+          Promise.reject(new DOMException("Not allowed", "NotAllowedError")),
+      },
+      async () => {
+        const file = new File(["zip"], "pack.zip", { type: "application/zip" });
+        const result = await shareTaxPackFile(file, "SnapTax", "Export");
+        assert.equal(result, "failed");
+      },
+    );
+  });
+
   it("shareTaxPackFile returns shared on success", async () => {
     await withNavigator(
       {

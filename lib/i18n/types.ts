@@ -696,6 +696,7 @@ export type UserCopy = {
       searchTip: string;
       sendToApp: string;
       sendUnsupported: string;
+      sendFailed: string;
       sendSuccess: string;
       gotIt: string;
       steps: {

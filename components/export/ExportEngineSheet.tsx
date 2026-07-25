@@ -29,7 +29,6 @@ import {
   type ExportFormat,
 } from "@/lib/export/exportFilenames";
 import {
-  canShareTaxPackFile,
   shareTaxPackFile,
 } from "@/lib/export/shareTaxPack";
 import {
@@ -757,7 +756,7 @@ export function ExportEngineSheet({
                   {sharing
                     ? t.sharing
                     : shareStatus ??
-                      (canShareTaxPackFile(readyFile)
+                      (typeof navigator !== "undefined" && navigator.share
                         ? t.sharingHint
                         : t.shareUnsupportedHint)}
                 </p>

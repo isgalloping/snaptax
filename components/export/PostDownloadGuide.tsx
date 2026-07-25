@@ -18,6 +18,8 @@ interface PostDownloadGuideProps {
   onDismiss: () => void;
 }
 
+type ShareFeedbackTone = "success" | "error" | "neutral";
+
 export function PostDownloadGuide({
   fileName,
   file,
@@ -38,7 +40,10 @@ export function PostDownloadGuide({
           : copy.steps.other;
 
   const [copyStatus, setCopyStatus] = useState<string | null>(null);
-  const [shareStatus, setShareStatus] = useState<string | null>(null);
+  const [shareFeedback, setShareFeedback] = useState<{
+    tone: ShareFeedbackTone;
+    message: string;
+  } | null>(null);
   const [sharing, setSharing] = useState(false);
 
   const shareAvailable = Boolean(
@@ -58,7 +63,7 @@ export function PostDownloadGuide({
   const handleShare = useCallback(async () => {
     if (!file || !shareAvailable) return;
     setSharing(true);
-    setShareStatus(null);
+    setShareFeedback(null);
     try {
       const result: ShareTaxPackResult = await shareTaxPackFile(
         file,
@@ -66,16 +71,26 @@ export function PostDownloadGuide({
         shareText,
       );
       if (result === "shared") {
-        setShareStatus(copy.sendSuccess);
+        setShareFeedback({ tone: "success", message: copy.sendSuccess });
       } else if (result === "cancelled") {
-        setShareStatus(null);
+        setShareFeedback(null);
+      } else if (result === "unsupported") {
+        setShareFeedback({ tone: "neutral", message: copy.sendUnsupported });
       } else {
-        setShareStatus(copy.sendUnsupported);
+        setShareFeedback({ tone: "error", message: copy.sendFailed });
       }
     } finally {
       setSharing(false);
     }
-  }, [copy.sendSuccess, copy.sendUnsupported, file, shareAvailable, shareText, shareTitle]);
+  }, [
+    copy.sendFailed,
+    copy.sendSuccess,
+    copy.sendUnsupported,
+    file,
+    shareAvailable,
+    shareText,
+    shareTitle,
+  ]);
 
   return (
     <section
@@ -123,9 +138,18 @@ export function PostDownloadGuide({
           >
             {copy.sendToApp}
           </button>
-          {shareStatus && (
-            <p className="mt-2 text-center text-xs font-bold text-green-400" role="status">
-              {shareStatus}
+          {shareFeedback && (
+            <p
+              className={`mt-2 text-center text-xs font-bold ${
+                shareFeedback.tone === "success"
+                  ? "text-green-400"
+                  : shareFeedback.tone === "error"
+                    ? "text-amber-400"
+                    : "text-zinc-400"
+              }`}
+              role="status"
+            >
+              {shareFeedback.message}
             </p>
           )}
         </>

@@ -987,7 +987,10 @@ export const DE_DE_COPY: UserCopy = {
       copyFailed: "Namen lange drücken zum Kopieren",
       searchTip: "Namen in der Dateisuche einfügen",
       sendToApp: "Per E-Mail / App senden",
-      sendUnsupported: "Zuerst speichern, dann aus Downloads anhängen",
+      sendUnsupported:
+        "Teilen hier nicht verfügbar — aus Downloads anhängen",
+      sendFailed:
+        "Teilen konnte nicht geöffnet werden. Aus Downloads anhängen.",
       sendSuccess: "Geteilt — E-Mail-App prüfen",
       gotIt: "Verstanden",
       steps: {

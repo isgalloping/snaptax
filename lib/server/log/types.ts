@@ -14,8 +14,7 @@ export type LogModule =
   | "biz.ghost"
   | "biz.paddle"
   | "biz.founder"
-  | "biz.export"
-  | "biz.verify";
+  | "biz.export";
 
 export type LogMeta = {
   receiptId?: string;
@@ -41,15 +40,14 @@ export type LogMeta = {
   receiptCount?: number;
   entitlementCount?: number;
   checkoutIntentCount?: number;
-  verifyBypass?: boolean;
-  mockAi?: boolean;
-  bypassPay?: boolean;
   stage?: string;
   extractionSource?: string;
   engine?: string;
   event?: string;
   founderNumber?: number | null;
   tier?: string;
+  skuTier?: string;
+  internalTestCheckout?: boolean;
   founderPurchase?: boolean;
 };
 

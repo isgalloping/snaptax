@@ -3,7 +3,6 @@
 import { ExportEmptyTip } from "@/components/export/ExportEmptyTip";
 import { useUserCopy } from "@/components/i18n/I18nProvider";
 import { useSeasonOffer } from "@/lib/client/useSeasonOffer";
-import { formatCurrency } from "@/lib/format";
 import { resolveExportCardState } from "@/lib/settings/resolveExportCardState";
 import { settingsVisual } from "@/lib/ui/settingsVisual";
 import type { IncomeCaptureKind } from "@/lib/export/incomeCapture";
@@ -74,8 +73,7 @@ export function TaxExportCard({
   const copy = useUserCopy().settings;
   const cardCopy = copy.exportCard;
   const exportCopy = copy.export;
-  const { priceUsd } = useSeasonOffer();
-  const priceLabel = formatCurrency(priceUsd);
+  const { priceLabel } = useSeasonOffer();
 
   const state = resolveExportCardState({
     isSignedIn,

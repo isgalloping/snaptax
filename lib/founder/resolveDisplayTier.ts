@@ -1,5 +1,5 @@
 import { nextSeatNumber, tierForSeat } from "./tiers";
-import type { FounderStatus, FounderTier } from "./types";
+import type { FounderStatus, FounderTier, PublicFounderTier } from "./types";
 
 export type FounderDisplayTierInput = {
   claimedCount: number;
@@ -11,13 +11,14 @@ export type FounderDisplayTierInput = {
 };
 
 /** Tier shown in founder widget / sheet for the current viewer. */
-export function resolveDisplayTier(input: FounderDisplayTierInput): FounderTier {
+export function resolveDisplayTier(input: FounderDisplayTierInput): PublicFounderTier {
   const user = input.user;
 
   if (user?.founderNumber != null) {
     const status = user.founderStatus;
-    if (status === "active" && user.founderTier != null) {
-      return user.founderTier;
+    const lockedTier = user.founderTier;
+    if (status === "active" && lockedTier != null && lockedTier !== "SPECIAL") {
+      return lockedTier;
     }
   }
 

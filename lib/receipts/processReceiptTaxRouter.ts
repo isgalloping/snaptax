@@ -35,9 +35,7 @@ export function ocrDraftToStructured(draft: OcrDraftPayload): StructuredReceipt 
 
 export function pickReceiptTaxRoute(
   ocrDraft: OcrDraftPayload | null | undefined,
-  canMockAi?: boolean,
 ): ReceiptTaxRoute {
-  if (canMockAi) return "vision_fallback";
   if (shouldUseVisionFallback(ocrDraft)) return "vision_fallback";
   return "text_classify";
 }
@@ -198,9 +196,8 @@ export async function routeStandardReceiptTax(params: {
   mime: "image/jpeg" | "image/png";
   industry?: string | null;
   ocrDraft?: OcrDraftPayload | null;
-  canMockAi?: boolean;
 }): Promise<{ result: VisionProcessResult; route: ReceiptTaxRoute }> {
-  const route = pickReceiptTaxRoute(params.ocrDraft, params.canMockAi);
+  const route = pickReceiptTaxRoute(params.ocrDraft);
   if (route === "text_classify" && params.ocrDraft) {
     try {
       const result = await runTextClassifyPath({

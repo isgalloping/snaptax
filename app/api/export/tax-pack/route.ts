@@ -32,8 +32,6 @@ import {
   isIncomeDocument,
 } from "@/lib/export/incomeDocuments";
 import { logEvent } from "@/lib/server/log/logEvent";
-import { resolveVerifyContext } from "@/lib/verify/context";
-import { ensureBypassEntitlement } from "@/lib/verify/ensureBypassEntitlement";
 import { userAccountReceiptFilter } from "@/lib/receipts/accountCleanup";
 
 export const maxDuration = 60;
@@ -52,10 +50,6 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
     if (actor.kind !== "user") throw new Error("UNAUTHORIZED");
 
     const season = currentTaxSeason();
-    const verify = await resolveVerifyContext(actor);
-    if (verify.canBypassPay) {
-      await ensureBypassEntitlement(actor.userId, season);
-    }
     const entitlement = await prisma.snaptaxSeasonEntitlement.findUnique({
       where: {
         userId_taxSeason: { userId: actor.userId, taxSeason: season },

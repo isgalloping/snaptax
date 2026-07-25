@@ -11,9 +11,6 @@ import { filterReceiptsByTaxYear } from "@/lib/tax/exportRows";
 import { currentTaxSeason } from "@/lib/tax/season";
 import { parseRequestTimeZone } from "@/lib/time/timeZone";
 import { utcNow } from "@/lib/time/utc";
-import { ensureBypassEntitlement } from "@/lib/verify/ensureBypassEntitlement";
-import { resolveVerifyContext } from "@/lib/verify/context";
-
 const filedBodySchema = z.object({
   taxYear: z.string().regex(/^\d{4}$/),
 });
@@ -24,10 +21,6 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
     if (actor.kind !== "user") throw new Error("UNAUTHORIZED");
 
     const season = currentTaxSeason();
-    const verify = await resolveVerifyContext(actor);
-    if (verify.canBypassPay) {
-      await ensureBypassEntitlement(actor.userId, season);
-    }
     const entitlement = await prisma.snaptaxSeasonEntitlement.findUnique({
       where: {
         userId_taxSeason: { userId: actor.userId, taxSeason: season },

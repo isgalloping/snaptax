@@ -53,9 +53,8 @@ describe("pickReceiptTaxRoute", () => {
     assert.equal(pickReceiptTaxRoute(goodDraft), "text_classify");
   });
 
-  it("falls back to vision without draft or mock", () => {
+  it("falls back to vision without draft", () => {
     assert.equal(pickReceiptTaxRoute(null), "vision_fallback");
-    assert.equal(pickReceiptTaxRoute(goodDraft, true), "vision_fallback");
   });
 
   it("falls back to vision for low quality local OCR drafts", () => {

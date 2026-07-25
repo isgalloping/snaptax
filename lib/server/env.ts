@@ -152,6 +152,10 @@ export function getPaddleWebhookSecret(): string {
   return firstDefined(process.env.PADDLE_WEBHOOK_SECRET);
 }
 
+export function getSpecialLevelUserPriceId(): string {
+  return (process.env.SPECIAL_LEVEL_USER ?? "").trim();
+}
+
 export function applyEnvAliases(): void {
   if (!process.env.DATABASE_URL && getDatabaseUrl()) {
     process.env.DATABASE_URL = getDatabaseUrl();

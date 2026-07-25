@@ -22,6 +22,8 @@ export type FounderProgramClientState = {
     founderNumber: number | null;
     currentSeasonEntitled: boolean;
   } | null;
+  internalTestCheckout?: boolean;
+  internalTestPriceLabel?: string;
 };
 
 export async function fetchFounderProgramClient(): Promise<FounderProgramClientState | null> {

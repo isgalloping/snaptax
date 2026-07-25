@@ -1,10 +1,10 @@
-import type { FounderTier } from "@/lib/founder/types";
+import type { PublicFounderTier } from "@/lib/founder/types";
 import { formatCurrency } from "@/lib/format";
 import { getFounderProgramState } from "@/lib/server/founderProgram";
 import type { FounderTierConfig } from "@/lib/server/founderConfig";
 import { getSeasonOffer } from "@/lib/server/seasonOffer";
 
-const FOUNDER_TIER_LABELS: Record<FounderTier, string> = {
+const FOUNDER_TIER_LABELS: Record<PublicFounderTier, string> = {
   FOUNDER_LEVEL_SUPER: "Super Founder",
   EARLY: "Early",
   FOUNDER: "Founder",
@@ -12,7 +12,7 @@ const FOUNDER_TIER_LABELS: Record<FounderTier, string> = {
 };
 
 export type PricingFounderTierRow = {
-  tier: FounderTier;
+  tier: PublicFounderTier;
   label: string;
   seatRange: string;
   priceLabel: string;
@@ -22,7 +22,7 @@ export type PricingFounderTierRow = {
 export type PricingPageLiveData = {
   taxSeason: string;
   priceLabel: string;
-  skuTier: FounderTier;
+  skuTier: PublicFounderTier;
   showFounderTable: boolean;
   founderSeatsRemaining: number | null;
   founderRows: PricingFounderTierRow[];
@@ -35,9 +35,9 @@ function formatSeatRange(seatRange: [number, number] | null): string {
 
 /** @internal exported for unit tests */
 export function buildFounderRows(
-  tiers: Record<FounderTier, FounderTierConfig>,
+  tiers: Record<PublicFounderTier, FounderTierConfig>,
 ): PricingFounderTierRow[] {
-  const order: FounderTier[] = [
+  const order: PublicFounderTier[] = [
     "FOUNDER_LEVEL_SUPER",
     "EARLY",
     "FOUNDER",
@@ -69,11 +69,13 @@ export async function loadPricingPageLiveData(): Promise<PricingPageLiveData> {
   ]);
 
   const showFounderTable = state.enabled && state.programOpen;
+  const skuTier: PublicFounderTier =
+    offer.skuTier === "SPECIAL" ? "DEFAULT" : offer.skuTier;
 
   return {
     taxSeason: offer.taxSeason,
     priceLabel: formatCurrency(offer.priceUsd),
-    skuTier: offer.skuTier,
+    skuTier,
     showFounderTable,
     founderSeatsRemaining: showFounderTable ? state.remaining : null,
     founderRows: showFounderTable ? buildFounderRows(state.tiers) : [],

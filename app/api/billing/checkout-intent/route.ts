@@ -3,13 +3,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { mapErrorToResponse } from "@/lib/api/errors";
 import { getActor } from "@/lib/auth/getActor";
 import { createOrReuseCheckoutIntent } from "@/lib/billing/checkoutIntent";
-import type { FounderTier } from "@/lib/founder/types";
+import { resolveCheckoutSkuTier } from "@/lib/billing/resolveCheckoutSkuTier";
+import { specialPriceFlag, specialUsersFlag } from "@/flags/special";
+import type { PublicFounderTier } from "@/lib/founder/types";
 import { resolveFounderProgramConfig } from "@/lib/server/founderConfig";
-import {
-  getFounderProgramState,
-  resolveFounderCheckoutSkuTier,
-} from "@/lib/server/founderProgram";
-import { resolveSeasonOfferFromState } from "@/lib/server/seasonOffer";
+import { getFounderProgramState } from "@/lib/server/founderProgram";
+import { getSpecialLevelUserPriceId } from "@/lib/server/env";
 import { currentTaxSeason } from "@/lib/tax/season";
 import { withRequestLog } from "@/lib/server/log/withRequestLog";
 
@@ -18,6 +17,7 @@ const founderTierSchema = z.enum([
   "EARLY",
   "FOUNDER",
   "DEFAULT",
+  "SPECIAL",
 ]);
 
 const bodySchema = z.object({
@@ -37,37 +37,32 @@ export const POST = withRequestLog(
       const body = bodySchema.parse(raw);
       const taxSeason = body.taxSeason ?? currentTaxSeason();
 
-      let resolvedSkuTier: FounderTier;
-
-      if (body.founderPurchase) {
-        const state = await getFounderProgramState(actor.userId);
-        const resolution = resolveFounderCheckoutSkuTier({
-          user: state.user,
-          claimedCount: state.claimedCount,
-          programOpen: state.programOpen,
-        });
-        if (!resolution.ok) {
-          throw new Error(resolution.error);
-        }
-        resolvedSkuTier = resolution.skuTier;
-      } else if (body.skuTier != null) {
-        resolvedSkuTier = body.skuTier;
-      } else {
-        const config = await resolveFounderProgramConfig();
-        const state = await getFounderProgramState(actor.userId);
-        const offer = resolveSeasonOfferFromState({
-          enabled: config.enabled,
-          tiers: config.tiers,
-          user: state.user,
-          claimedCount: state.claimedCount,
-          programOpen: state.programOpen,
-          taxSeason,
-        });
-        resolvedSkuTier = offer.skuTier;
-      }
-
+      const [specialUsers, specialPriceUsd] = await Promise.all([
+        specialUsersFlag(),
+        specialPriceFlag(),
+      ]);
       const config = await resolveFounderProgramConfig();
-      const tierConfig = config.tiers[resolvedSkuTier];
+      const state = await getFounderProgramState(actor.userId);
+
+      const { skuTier: resolvedSkuTier, isSpecial } = resolveCheckoutSkuTier({
+        actor,
+        specialUsers,
+        specialPriceUsd,
+        body: { ...body, taxSeason },
+        founderUser: state.user,
+        claimedCount: state.claimedCount,
+        programOpen: state.programOpen,
+        enabled: config.enabled,
+        tiers: config.tiers,
+      });
+
+      const paddlePriceId = isSpecial
+        ? getSpecialLevelUserPriceId()
+        : config.tiers[resolvedSkuTier as PublicFounderTier].paddlePriceId;
+
+      if (isSpecial && !paddlePriceId) {
+        throw new Error("PADDLE_SPECIAL_PRICE_MISSING");
+      }
 
       const { intentId, expiresAt } = await createOrReuseCheckoutIntent(
         actor.userId,
@@ -80,7 +75,7 @@ export const POST = withRequestLog(
         taxSeason,
         expiresAt: expiresAt.toISOString(),
         skuTier: resolvedSkuTier,
-        paddlePriceId: tierConfig.paddlePriceId,
+        paddlePriceId,
       });
     } catch (err) {
       return mapErrorToResponse(err);

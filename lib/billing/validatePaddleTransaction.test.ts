@@ -4,6 +4,7 @@ import {
   parsePaddleTotalCents,
   validatePaddleTransaction,
 } from "./validatePaddleTransaction";
+import { isFounderSkuTier } from "./founderSkuTier";
 
 describe("parsePaddleTotalCents", () => {
   it("parses Paddle totals in cents", () => {
@@ -106,5 +107,43 @@ describe("validatePaddleTransaction", () => {
     });
     assert.equal(result.ok, false);
     if (!result.ok) assert.equal(result.reason, "invalid_currency");
+  });
+
+  it("uses custom minAmountCents when provided", () => {
+    const result = validatePaddleTransaction(
+      {
+        ...basePayload,
+        data: {
+          ...basePayload.data!,
+          details: { totals: { total: "100", currency_code: "USD" } },
+          custom_data: { intentId: "intent-uuid", skuTier: "SPECIAL" },
+        },
+      },
+      { minAmountCents: 100 },
+    );
+    assert.equal(result.ok, true);
+  });
+
+  it("rejects below custom min", () => {
+    const result = validatePaddleTransaction(
+      {
+        ...basePayload,
+        data: {
+          ...basePayload.data!,
+          details: { totals: { total: "50", currency_code: "USD" } },
+          custom_data: { intentId: "intent-uuid", skuTier: "SPECIAL" },
+        },
+      },
+      { minAmountCents: 100 },
+    );
+    assert.equal(result.ok, false);
+    if (!result.ok) assert.equal(result.reason, "amount_too_low");
+  });
+});
+
+describe("isFounderSkuTier", () => {
+  it("excludes SPECIAL from founder seat assignment tiers", () => {
+    assert.equal(isFounderSkuTier("SPECIAL"), false);
+    assert.equal(isFounderSkuTier("FOUNDER"), true);
   });
 });

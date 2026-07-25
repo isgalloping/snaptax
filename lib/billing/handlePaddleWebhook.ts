@@ -199,7 +199,7 @@ async function handleTransactionCompleted(
       intentId: grant.intentId ?? null,
       entitlementCreated: entitlement.created,
       ...(effectiveSkuTier === "SPECIAL"
-        ? { internal_test_checkout: true }
+        ? { skuTier: "SPECIAL", internal_test_checkout: true }
         : {}),
     },
   });

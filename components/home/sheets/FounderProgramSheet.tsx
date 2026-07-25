@@ -24,6 +24,7 @@ import {
 type CheckoutIntentBody = {
   intentId?: string;
   paddlePriceId?: string;
+  skuTier?: string;
   error?: { code?: string };
 };
 
@@ -208,6 +209,8 @@ export function FounderProgramSheet({
         items: [{ priceId: intentData.paddlePriceId, quantity: 1 }],
         customData: {
           intentId: intentData.intentId,
+          founderPurchase: true,
+          ...(intentData.skuTier ? { skuTier: intentData.skuTier } : {}),
         },
         customer: userEmail ? { email: userEmail } : undefined,
       });

@@ -26,11 +26,7 @@ export const GET = withRequestLog(
 
       return NextResponse.json({
         ...offer,
-        priceLabel:
-          offer.priceLabel ??
-          (offer.priceDisplay === "internal_test"
-            ? offer.priceLabel
-            : formatCurrency(offer.priceUsd)),
+        priceLabel: offer.priceLabel ?? formatCurrency(offer.priceUsd),
       });
     } catch (err) {
       return mapErrorToResponse(err);

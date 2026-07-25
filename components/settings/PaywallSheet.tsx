@@ -126,6 +126,7 @@ export function PaywallSheet({
       const intentData = (await intentRes.json()) as {
         intentId?: string;
         paddlePriceId?: string;
+        skuTier?: string;
       };
       if (!intentData.intentId || !intentData.paddlePriceId) {
         setError(copy.paymentUnavailable);
@@ -136,6 +137,7 @@ export function PaywallSheet({
         items: [{ priceId: intentData.paddlePriceId, quantity: 1 }],
         customData: {
           intentId: intentData.intentId,
+          ...(intentData.skuTier ? { skuTier: intentData.skuTier } : {}),
         },
         customer: { email: userId },
       });

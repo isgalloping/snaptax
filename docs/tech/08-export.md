@@ -191,3 +191,17 @@ if (navigator.canShare?.({ files: [file] })) {
 | 未付费 | 402 PAYMENT_REQUIRED |
 | 该税年无 done 小票 | 422 NO_RECEIPTS |
 | 未登录 | 401 UNAUTHORIZED |
+
+## 8.9 Post-download guide（Save to Phone 后）
+
+所有本地下载（`<a download>`）经 `downloadWithGuide()` 统一触发；Save to Phone 成功后宿主 Sheet 内展开 `PostDownloadGuide`。
+
+| 项 | 说明 |
+|----|------|
+| 触发 | 仅 Save to Phone / 本地下载成功（非 Share Sheet 成功路径） |
+| 平台 | `detectExportPlatform()` → android-chrome / ios-safari / desktop-chrome / other |
+| UI | 宿主内就地展开；Got it 收起；每次 Save 再展开 |
+| 能力 | 平台图示 + 步骤文案；可复制文件名；可选 Share 发邮件/应用 |
+| 覆盖 | ExportEngineSheet Step 4、CSV Preview 回退、样例 CSV（Settings / Home AHA） |
+
+实现：`lib/export/downloadWithGuide.ts` · `components/export/PostDownloadGuide.tsx` · i18n `exportEngine.postDownloadGuide`。

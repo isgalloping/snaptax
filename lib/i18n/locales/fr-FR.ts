@@ -981,5 +981,38 @@ export const FR_FR_COPY: UserCopy = {
       "Certains reçus ne sont pas encore synchronisés. Attendez la fin de la sync, puis réessayez Exporter.",
     filedSyncFailed:
       "Votre pack fiscal a été créé, mais le statut « déposé » n'a pas pu être enregistré. Réessayez Exporter.",
+    postDownloadGuide: {
+      title: "Fichier enregistré",
+      copyButton: "Copier",
+      copySuccess: "Copié — recherchez ce nom dans Téléchargements",
+      copyFailed: "Appui long sur le nom pour copier",
+      searchTip: "Collez ce nom dans la recherche de fichiers",
+      sendToApp: "Envoyer par e-mail / app",
+      sendUnsupported: "Enregistrez d'abord, puis joignez depuis Téléchargements",
+      sendSuccess: "Partagé — vérifiez votre app e-mail",
+      gotIt: "Compris",
+      steps: {
+        androidChrome: [
+          "1. Ouvrez le menu Chrome ⋮ (en haut à droite)",
+          "2. Appuyez sur Téléchargements",
+          "3. Trouvez votre fichier ci-dessous",
+        ],
+        iosSafari: [
+          "1. Appuyez sur Partager sur le téléchargement",
+          "2. Choisissez Enregistrer dans Fichiers",
+          "3. Ouvrez l'app Fichiers",
+        ],
+        desktopChrome: [
+          "1. Cliquez sur l'icône de téléchargement dans Chrome",
+          "2. Ouvrez votre dossier Téléchargements",
+          "3. Trouvez votre fichier ci-dessous",
+        ],
+        other: [
+          "1. Ouvrez les Téléchargements du navigateur",
+          "2. Trouvez votre fichier ci-dessous",
+          "3. Joignez-le dans votre e-mail ou app fiscale",
+        ],
+      },
+    },
   },
 };

@@ -980,5 +980,38 @@ export const DE_DE_COPY: UserCopy = {
       "Einige Belege sind noch nicht in der Cloud. Warten Sie auf die Synchronisation und tippen Sie erneut auf Export.",
     filedSyncFailed:
       "Ihr Steuerpaket wurde erstellt, aber der Hinterlegungsstatus konnte nicht gespeichert werden. Export erneut versuchen.",
+    postDownloadGuide: {
+      title: "Datei gespeichert",
+      copyButton: "Kopieren",
+      copySuccess: "Kopiert — diesen Namen in Downloads suchen",
+      copyFailed: "Namen lange drücken zum Kopieren",
+      searchTip: "Namen in der Dateisuche einfügen",
+      sendToApp: "Per E-Mail / App senden",
+      sendUnsupported: "Zuerst speichern, dann aus Downloads anhängen",
+      sendSuccess: "Geteilt — E-Mail-App prüfen",
+      gotIt: "Verstanden",
+      steps: {
+        androidChrome: [
+          "1. Chrome-Menü ⋮ öffnen (oben rechts)",
+          "2. Downloads antippen",
+          "3. Datei unten finden",
+        ],
+        iosSafari: [
+          "1. Teilen beim Download antippen",
+          "2. In Dateien sichern wählen",
+          "3. App Dateien öffnen",
+        ],
+        desktopChrome: [
+          "1. Download-Symbol in Chrome klicken",
+          "2. Downloads-Ordner öffnen",
+          "3. Datei unten finden",
+        ],
+        other: [
+          "1. Browser-Downloads öffnen",
+          "2. Datei unten finden",
+          "3. In E-Mail oder Steuer-App anhängen",
+        ],
+      },
+    },
   },
 };

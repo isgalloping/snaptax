@@ -963,5 +963,38 @@ export const EN_US_COPY: UserCopy = {
         "Some receipts aren't synced to the cloud yet. Wait for sync to finish, then tap Export Again.",
       filedSyncFailed:
         "Your tax pack was built but filing status couldn't be saved. Try Export Again.",
+      postDownloadGuide: {
+        title: "File saved",
+        copyButton: "Copy",
+        copySuccess: "Copied — search this name in Downloads",
+        copyFailed: "Long-press the name to copy",
+        searchTip: "Paste this name in your file manager search",
+        sendToApp: "Send to email / app",
+        sendUnsupported: "Save first, then attach from Downloads",
+        sendSuccess: "Shared — check your email app",
+        gotIt: "Got it",
+        steps: {
+          androidChrome: [
+            "1. Open Chrome menu ⋮ (top right)",
+            "2. Tap Downloads",
+            "3. Find your file below",
+          ],
+          iosSafari: [
+            "1. Tap Share on the download",
+            "2. Choose Save to Files",
+            "3. Open the Files app to find it",
+          ],
+          desktopChrome: [
+            "1. Click the download icon in Chrome",
+            "2. Open your Downloads folder",
+            "3. Find your file below",
+          ],
+          other: [
+            "1. Open your browser Downloads",
+            "2. Find your file below",
+            "3. Attach it in email or your tax app",
+          ],
+        },
+      },
     },
   };

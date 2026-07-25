@@ -3,16 +3,23 @@ import type { Receipt } from "@/lib/types";
 import { clientTimeZone } from "@/lib/time/timeZone";
 import { defaultExportTaxYear } from "@/lib/tax/season";
 import { buildLocalTurboTaxCsv } from "./buildLocalTurboTaxCsv";
-import { downloadTaxPackFile } from "./shareTaxPack";
+import {
+  downloadWithGuide,
+  type DownloadedFileInfo,
+} from "./downloadWithGuide";
 
-export function downloadOnboardingSampleCsv(demoReceipt: Receipt): void {
+export function buildOnboardingSampleFile(demoReceipt: Receipt): File {
   const taxYear = Number(defaultExportTaxYear());
   const timeZone = clientTimeZone();
   const csv = buildLocalTurboTaxCsv([demoReceipt], taxYear, timeZone);
-  const file = new File(
-    [csv],
-    sampleTurboTaxCsvFilename(taxYear),
-    { type: "text/csv;charset=utf-8" },
-  );
-  downloadTaxPackFile(file);
+  return new File([csv], sampleTurboTaxCsvFilename(taxYear), {
+    type: "text/csv;charset=utf-8",
+  });
+}
+
+export function downloadOnboardingSampleCsv(
+  demoReceipt: Receipt,
+  opts?: { onDownloaded?: (info: DownloadedFileInfo) => void },
+): void {
+  downloadWithGuide(buildOnboardingSampleFile(demoReceipt), opts);
 }

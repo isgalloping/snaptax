@@ -40,6 +40,7 @@ import type { IncomeCaptureKind } from "@/lib/export/incomeCapture";
 import { ExportCategoryReview } from "@/components/export/ExportCategoryReview";
 
 type Step = 1 | 2 | 3 | 4;
+type DeliveryView = "ready" | "fileSavedGuide";
 
 interface ExportEngineSheetProps {
   receipts: Receipt[];
@@ -92,6 +93,8 @@ export function ExportEngineSheet({
   const [progress, setProgress] = useState(0);
   const [progressLabel, setProgressLabel] = useState("");
   const [readyFile, setReadyFile] = useState<File | null>(null);
+  const [deliveryView, setDeliveryView] = useState<DeliveryView>("ready");
+  const [copyHint, setCopyHint] = useState<string | null>(null);
   const [exportMeta, setExportMeta] = useState<ExportTaxPackMeta | null>(null);
   const [sharing, setSharing] = useState(false);
   const [shareStatus, setShareStatus] = useState<string | null>(null);
@@ -167,24 +170,50 @@ export function ExportEngineSheet({
 
   useEffect(() => () => clearProgressTimer(), []);
 
+  const handleClose = () => {
+    setDeliveryView("ready");
+    setCopyHint(null);
+    onClose();
+  };
+
   const handleShare = async (file: File) => {
     setSharing(true);
     setShareStatus(null);
+    setCopyHint(null);
     try {
       const result = await shareTaxPackFile(
         file,
         exportShareTitle(taxYear),
         copy.settings.export.shareText,
       );
-      if (result === "unsupported") {
-        setShareStatus(t.shareUnsupportedHint);
-      } else if (result === "failed") {
-        setShareStatus(t.shareFailedHint);
+      if (result === "unsupported" || result === "failed") {
+        setDeliveryView("fileSavedGuide");
       } else if (result === "cancelled") {
         setShareStatus(t.sharingHint);
       }
     } finally {
       setSharing(false);
+    }
+  };
+
+  const handleCopyFilename = async (filename: string) => {
+    setCopyHint(null);
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(filename);
+      } else {
+        const ta = document.createElement("textarea");
+        ta.value = filename;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        ta.remove();
+      }
+      setCopyHint(t.fileSavedCopied);
+    } catch {
+      setCopyHint(t.fileSavedCopyFailed);
     }
   };
 
@@ -253,6 +282,8 @@ export function ExportEngineSheet({
   const handleGenerate = async () => {
     setErrorMessage(null);
     setShareStatus(null);
+    setDeliveryView("ready");
+    setCopyHint(null);
     if (!navigator.onLine) {
       setErrorMessage(copy.settings.export.offline);
       return;
@@ -389,7 +420,7 @@ export function ExportEngineSheet({
           </div>
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleClose}
             className="flex min-h-11 min-w-11 items-center justify-center rounded-xl border-2 border-zinc-600 bg-zinc-800 text-lg font-black text-zinc-300 transition-transform active:scale-95"
             aria-label={t.close}
           >
@@ -630,7 +661,7 @@ export function ExportEngineSheet({
                   type="button"
                   onClick={() => {
                     setPendingIncomeCapture("1099-NEC");
-                    onClose();
+                    handleClose();
                     onSnap1099?.("1099-NEC");
                   }}
                   className="min-h-12 rounded-lg border-2 border-yellow-500 bg-yellow-950 py-3 text-[11px] font-black uppercase tracking-wider text-yellow-400 transition-transform active:scale-95"
@@ -641,7 +672,7 @@ export function ExportEngineSheet({
                   type="button"
                   onClick={() => {
                     setPendingIncomeCapture("1099-K");
-                    onClose();
+                    handleClose();
                     onSnap1099?.("1099-K");
                   }}
                   className="min-h-12 rounded-lg border-2 border-zinc-600 bg-zinc-800 py-3 text-[11px] font-black uppercase tracking-wider text-white transition-transform active:scale-95"
@@ -718,41 +749,78 @@ export function ExportEngineSheet({
                 </p>
               </div>
             ) : readyFile ? (
-              <div className="py-6 text-center">
-                <p className="text-sm font-bold text-green-400">{t.ready}</p>
-                <p className="mt-2 truncate text-xs text-zinc-400">{readyFile.name}</p>
-                {imageSummary && (
-                  <p className="mt-2 text-xs text-zinc-400">{imageSummary}</p>
-                )}
-                {imageWarning && (
-                  <p className="mt-1 text-xs font-bold text-amber-400" role="status">
-                    {imageWarning}
+              deliveryView === "fileSavedGuide" ? (
+                <div className="py-4 text-center">
+                  <p className="text-sm font-black uppercase tracking-wider text-yellow-400">
+                    {t.fileSavedTitle}
                   </p>
-                )}
-                <p className="mt-2 text-xs text-zinc-500" role="status">
-                  {sharing
-                    ? t.sharing
-                    : shareStatus ??
-                      (canShareTaxPackFile(readyFile)
-                        ? t.sharingHint
-                        : t.shareUnsupportedHint)}
-                </p>
-                <button
-                  type="button"
-                  onClick={() => handleSaveToPhone(readyFile)}
-                  className="mt-6 w-full min-h-16 rounded-xl border-4 border-white bg-yellow-500 py-4 text-lg font-black uppercase tracking-wider text-black transition-transform active:scale-95"
-                >
-                  {t.saveToPhone}
-                </button>
-                <button
-                  type="button"
-                  disabled={sharing || !canShareTaxPackFile(readyFile)}
-                  onClick={() => void handleShare(readyFile)}
-                  className="mt-3 w-full min-h-14 rounded-xl border-2 border-zinc-600 bg-zinc-800 py-3 text-sm font-black uppercase tracking-wider text-white transition-transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {t.share}
-                </button>
-              </div>
+                  <ol className="mx-auto mt-4 max-w-xs space-y-2 text-left text-xs text-zinc-300">
+                    <li>1. {t.fileSavedChromeStep1}</li>
+                    <li>2. {t.fileSavedChromeStep2}</li>
+                    <li>3. {t.fileSavedChromeStep3}</li>
+                  </ol>
+                  <div className="mt-4 flex items-center justify-between gap-2 rounded-xl border-2 border-zinc-600 bg-zinc-800 px-4 py-3">
+                    <span className="min-w-0 truncate text-xs font-bold text-zinc-200">
+                      {readyFile.name}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => void handleCopyFilename(readyFile.name)}
+                      className="shrink-0 min-h-11 rounded-lg border-2 border-zinc-500 px-3 text-xs font-black uppercase text-white active:scale-95"
+                    >
+                      {t.fileSavedCopy}
+                    </button>
+                  </div>
+                  {copyHint && (
+                    <p className="mt-2 text-xs text-zinc-400" role="status">
+                      {copyHint}
+                    </p>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setDeliveryView("ready")}
+                    className="mt-6 w-full min-h-14 rounded-xl border-2 border-zinc-600 bg-zinc-800 py-3 text-sm font-black uppercase tracking-wider text-white active:scale-95"
+                  >
+                    {t.fileSavedGotIt}
+                  </button>
+                </div>
+              ) : (
+                <div className="py-6 text-center">
+                  <p className="text-sm font-bold text-green-400">{t.ready}</p>
+                  <p className="mt-2 truncate text-xs text-zinc-400">{readyFile.name}</p>
+                  {imageSummary && (
+                    <p className="mt-2 text-xs text-zinc-400">{imageSummary}</p>
+                  )}
+                  {imageWarning && (
+                    <p className="mt-1 text-xs font-bold text-amber-400" role="status">
+                      {imageWarning}
+                    </p>
+                  )}
+                  <p className="mt-2 text-xs text-zinc-500" role="status">
+                    {sharing
+                      ? t.sharing
+                      : shareStatus ??
+                        (readyFile && canShareTaxPackFile(readyFile)
+                          ? t.sharingHint
+                          : t.shareMayNeedDownloadsHint)}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => handleSaveToPhone(readyFile)}
+                    className="mt-6 w-full min-h-16 rounded-xl border-4 border-white bg-yellow-500 py-4 text-lg font-black uppercase tracking-wider text-black transition-transform active:scale-95"
+                  >
+                    {t.saveToPhone}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={sharing}
+                    onClick={() => void handleShare(readyFile)}
+                    className="mt-3 w-full min-h-14 rounded-xl border-2 border-zinc-600 bg-zinc-800 py-3 text-sm font-black uppercase tracking-wider text-white transition-transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {t.share}
+                  </button>
+                </div>
+              )
             ) : null}
           </>
         )}

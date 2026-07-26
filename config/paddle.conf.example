@@ -1,5 +1,7 @@
 # 复制为 paddle.conf（已 gitignore），值来自 Paddle Dashboard / .env.local
-PADDLE_SNAPTAX_PRODUCTION_KEY=pro_xxx
-PADDLE_SNAPTAX_PRICE_KEY=pri_xxx
-PADDLE_SNAPTAX_API_KEY=pdl_sdbx_apikey_xxx
-PADDLE_SNAPTAX_CLIENT_SIDE_TOKEN=test_xxx
+# Overlay 集成仅需 client-side token + webhook secret（无 Paddle REST API Key）
+PADDLE_SNAPTAX_CLIENT_SIDE_TOKEN=test_xxx   # build 时注入 NEXT_PUBLIC_*
+FOUNDER_LEVEL_DEFAULT=pri_xxx
+FOUNDER_LEVEL_SUPER=pri_xxx
+FOUNDER_LEVEL_EARLY=pri_xxx
+FOUNDER_LEVEL_FOUNDER=pri_xxx

@@ -67,7 +67,7 @@ export function PaywallSheet({
   });
 
   useEffect(() => {
-    const token = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN;
+    const token = process.env.NEXT_PUBLIC_PADDLE_SNAPTAX_CLIENT_SIDE_TOKEN;
     if (!token) return;
 
     void initializePaddle({

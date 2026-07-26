@@ -34,10 +34,6 @@ describe("buildFounderTierConfigs", () => {
 
 describe("getPaddlePriceIdForFounderTier", () => {
   const envKeys = [
-    "PADDLE_PRICE_ID_FOUNDER_SUPER",
-    "PADDLE_PRICE_ID_FOUNDER_EARLY",
-    "PADDLE_PRICE_ID_FOUNDER",
-    "PADDLE_PRICE_ID",
     "FOUNDER_LEVEL_SUPER",
     "FOUNDER_LEVEL_EARLY",
     "FOUNDER_LEVEL_FOUNDER",
@@ -54,11 +50,11 @@ describe("getPaddlePriceIdForFounderTier", () => {
     }
   });
 
-  it("resolves tier-specific Paddle price IDs from env", () => {
-    process.env.PADDLE_PRICE_ID_FOUNDER_SUPER = "pri_super";
-    process.env.PADDLE_PRICE_ID_FOUNDER_EARLY = "pri_early";
-    process.env.PADDLE_PRICE_ID_FOUNDER = "pri_founder";
-    process.env.PADDLE_PRICE_ID = "pri_default";
+  it("resolves tier-specific Paddle price IDs from FOUNDER_LEVEL_* env", () => {
+    process.env.FOUNDER_LEVEL_SUPER = "pri_super";
+    process.env.FOUNDER_LEVEL_EARLY = "pri_early";
+    process.env.FOUNDER_LEVEL_FOUNDER = "pri_founder";
+    process.env.FOUNDER_LEVEL_DEFAULT = "pri_default";
 
     assert.equal(getPaddlePriceIdForFounderTier("FOUNDER_LEVEL_SUPER"), "pri_super");
     assert.equal(getPaddlePriceIdForFounderTier("EARLY"), "pri_early");
@@ -67,27 +63,11 @@ describe("getPaddlePriceIdForFounderTier", () => {
     assert.equal(getPaddlePriceIdForFounderTier("unknown"), "pri_default");
   });
 
-  it("falls back to FOUNDER_LEVEL_* env names from Vercel", () => {
-    delete process.env.PADDLE_PRICE_ID_FOUNDER_SUPER;
-    delete process.env.PADDLE_PRICE_ID_FOUNDER_EARLY;
-    delete process.env.PADDLE_PRICE_ID_FOUNDER;
-    delete process.env.PADDLE_PRICE_ID;
-    process.env.FOUNDER_LEVEL_SUPER = "pri_vercel_super";
-    process.env.FOUNDER_LEVEL_EARLY = "pri_vercel_early";
-    process.env.FOUNDER_LEVEL_FOUNDER = "pri_vercel_founder";
-    process.env.FOUNDER_LEVEL_DEFAULT = "pri_vercel_default";
-
-    assert.equal(getPaddlePriceIdForFounderTier("FOUNDER_LEVEL_SUPER"), "pri_vercel_super");
-    assert.equal(getPaddlePriceIdForFounderTier("EARLY"), "pri_vercel_early");
-    assert.equal(getPaddlePriceIdForFounderTier("FOUNDER"), "pri_vercel_founder");
-    assert.equal(getPaddlePriceIdForFounderTier("DEFAULT"), "pri_vercel_default");
-  });
-
   it("wires paddle price IDs into tier config", () => {
-    process.env.PADDLE_PRICE_ID_FOUNDER_SUPER = "pri_super";
-    process.env.PADDLE_PRICE_ID_FOUNDER_EARLY = "pri_early";
-    process.env.PADDLE_PRICE_ID_FOUNDER = "pri_founder";
-    process.env.PADDLE_PRICE_ID = "pri_default";
+    process.env.FOUNDER_LEVEL_SUPER = "pri_super";
+    process.env.FOUNDER_LEVEL_EARLY = "pri_early";
+    process.env.FOUNDER_LEVEL_FOUNDER = "pri_founder";
+    process.env.FOUNDER_LEVEL_DEFAULT = "pri_default";
 
     const tiers = buildFounderTierConfigs({
       FOUNDER_LEVEL_SUPER: 5,

@@ -105,44 +105,21 @@ export function getGoogleClientSecret(): string {
 }
 
 export function getPaddleClientToken(): string {
-  return firstDefined(
-    process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN,
-    process.env.PADDLE_SNAPTAX_CLIENT_SIDE_TOKEN,
-  );
-}
-
-export function getPaddleApiKey(): string {
-  return firstDefined(
-    process.env.PADDLE_API_KEY,
-    process.env.PADDLE_SNAPTAX_API_KEY,
-  );
+  return firstDefined(process.env.PADDLE_SNAPTAX_CLIENT_SIDE_TOKEN);
 }
 
 export function getPaddlePriceId(): string {
-  return firstDefined(
-    process.env.PADDLE_PRICE_ID,
-    process.env.FOUNDER_LEVEL_DEFAULT,
-    process.env.PADDLE_SNAPTAX_PRICE_KEY,
-  );
+  return firstDefined(process.env.FOUNDER_LEVEL_DEFAULT);
 }
 
 export function getPaddlePriceIdForFounderTier(tier: string): string {
   switch (tier) {
     case "FOUNDER_LEVEL_SUPER":
-      return firstDefined(
-        process.env.PADDLE_PRICE_ID_FOUNDER_SUPER,
-        process.env.FOUNDER_LEVEL_SUPER,
-      );
+      return firstDefined(process.env.FOUNDER_LEVEL_SUPER);
     case "EARLY":
-      return firstDefined(
-        process.env.PADDLE_PRICE_ID_FOUNDER_EARLY,
-        process.env.FOUNDER_LEVEL_EARLY,
-      );
+      return firstDefined(process.env.FOUNDER_LEVEL_EARLY);
     case "FOUNDER":
-      return firstDefined(
-        process.env.PADDLE_PRICE_ID_FOUNDER,
-        process.env.FOUNDER_LEVEL_FOUNDER,
-      );
+      return firstDefined(process.env.FOUNDER_LEVEL_FOUNDER);
     default:
       return getPaddlePriceId();
   }

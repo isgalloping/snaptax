@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { PwaProvider } from "@/components/pwa/PwaProvider";
+import { getAppDisplayName } from "@/lib/site/appDisplayName";
 
 export const metadata: Metadata = {
-  title: "SnapTax",
+  title: getAppDisplayName(),
   robots: {
     index: false,
     follow: false,

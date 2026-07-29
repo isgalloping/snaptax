@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useUserCopy } from "@/components/i18n/I18nProvider";
 import { readPwaInstalledLocally } from "@/lib/pwa/installedDetect";
+import { readAppEntryGateDismissed } from "@/lib/pwa/appBrowserEntry";
 import { isStandaloneDisplayMode } from "@/lib/pwa/deferredInstall";
 import { getInstallPlatform } from "@/lib/pwa/installPlatform";
 
@@ -13,6 +14,7 @@ function shouldShowLaunchFromHomeHint(): boolean {
   if (isStandaloneDisplayMode()) return false;
   if (getInstallPlatform() !== "chromium-android") return false;
   if (!readPwaInstalledLocally()) return false;
+  if (readAppEntryGateDismissed()) return false;
   try {
     return sessionStorage.getItem(LAUNCH_HINT_DISMISSED_KEY) !== "1";
   } catch {

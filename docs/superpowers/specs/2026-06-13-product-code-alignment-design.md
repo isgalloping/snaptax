@@ -20,7 +20,7 @@
 | 项 | 动作 | 负责层 |
 |----|------|--------|
 | PRODUCT-SPEC §12 里程碑 | 更新为 2026-06-13 真实状态 | 文档 |
-| §3.1 快门 cooldown | 改为 **300ms**（以 `2026-06-10-camera-live-footer-column-ratio-design` 为准） | 文档 |
+| §3.1 快门 cooldown | 改为 **300ms**（以 [`camera-live-footer-design.md`](../topics/camera-live-footer-design.md) 为准） | 文档 |
 | Coach / Nudge / 首次 Settings soft Sheet | 接线 `HomeScreen` + `SettingsScreen` | 代码 |
 | `GOOGLE_SOFT_DISMISSED_KEY` | Not now 写入；T1/T2 共用 | 代码 |
 | Paywall 无 Paddle env | **阻断**并红字提示，禁止 `onPaid()` 假成功 | 代码 |

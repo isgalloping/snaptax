@@ -1,7 +1,14 @@
 import type { MetadataRoute } from "next";
 import { USER_COPY } from "@/lib/copy/userFacing";
+import { getAppDisplayName } from "@/lib/site/appDisplayName";
 
-export default function manifest(): MetadataRoute.Manifest {
+/** Chrome link capture — not yet in Next.js MetadataRoute.Manifest typings. */
+type AppManifest = MetadataRoute.Manifest & {
+  capture_links: "existing-client-navigate";
+};
+
+export default function manifest(): AppManifest {
+  const displayName = getAppDisplayName();
   return {
     id: "/app",
     related_applications: [
@@ -11,8 +18,8 @@ export default function manifest(): MetadataRoute.Manifest {
         id: "/app",
       },
     ],
-    name: "Snap1099",
-    short_name: "Snap1099",
+    name: displayName,
+    short_name: displayName,
     description: USER_COPY.app.description,
     start_url: "/app",
     scope: "/app",
@@ -21,6 +28,8 @@ export default function manifest(): MetadataRoute.Manifest {
     launch_handler: {
       client_mode: "navigate-existing",
     },
+    // Desktop Chrome 96+ / Navigation Capturing: open in-scope links in the PWA.
+    capture_links: "existing-client-navigate",
     orientation: "portrait",
     background_color: "#000000",
     theme_color: "#000000",

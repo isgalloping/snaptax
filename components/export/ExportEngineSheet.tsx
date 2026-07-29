@@ -16,16 +16,28 @@ import { filingTaxYearForSeason } from "@/lib/tax/season";
 import { receiptsNeedingExportReview } from "@/lib/tax/exportReview";
 import { formatCurrency } from "@/lib/format";
 import { clientTimeZone } from "@/lib/time/timeZone";
+import { runLocalTaxExport } from "@/lib/client/runLocalTaxExport";
+import { runLocalCpaExport } from "@/lib/client/runLocalCpaExport";
+import type { LocalCpaPackProgress } from "@/lib/export/buildLocalCpaPackZip";
 import {
   exportTaxPack,
-  type ExportFormat,
   type ExportTaxPackMeta,
 } from "@/lib/client/authApi";
 import {
-  canShareTaxPackFile,
-  downloadTaxPackFile,
+  exportPreviewCsvFilename,
+  exportShareTitle,
+  type ExportFormat,
+} from "@/lib/export/exportFilenames";
+import {
+  isWebShareAvailable,
   shareTaxPackFile,
 } from "@/lib/export/shareTaxPack";
+import {
+  downloadWithGuide,
+  type DownloadedFileInfo,
+} from "@/lib/export/downloadWithGuide";
+import { PostDownloadGuide } from "@/components/export/PostDownloadGuide";
+import { countLocalExportReceiptsInTaxYear } from "@/lib/export/countLocalExportReceipts";
 import { buildLocalTurboTaxCsv } from "@/lib/export/buildLocalTurboTaxCsv";
 import { setPendingIncomeCapture } from "@/lib/export/incomeCapture";
 import type { IncomeCaptureKind } from "@/lib/export/incomeCapture";
@@ -36,8 +48,9 @@ type Step = 1 | 2 | 3 | 4;
 interface ExportEngineSheetProps {
   receipts: Receipt[];
   currentSeason: string;
+  taxpayerName?: string;
   onClose: () => void;
-  onPreExportPrepare?: () => Promise<void | Receipt[]>;
+  onPreExportPrepare?: (format: ExportFormat) => Promise<void | Receipt[]>;
   onExported?: () => void | Promise<void>;
   onPaymentRequired?: () => void;
   onReceiptUpdated?: (receipt: Receipt) => void;
@@ -50,6 +63,7 @@ const FAST_RAMP_MS = 300;
 export function ExportEngineSheet({
   receipts,
   currentSeason,
+  taxpayerName,
   onClose,
   onPreExportPrepare,
   onExported,
@@ -86,7 +100,9 @@ export function ExportEngineSheet({
   const [sharing, setSharing] = useState(false);
   const [shareStatus, setShareStatus] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const autoSharedRef = useRef(false);
+  const [postDownloadGuide, setPostDownloadGuide] =
+    useState<DownloadedFileInfo | null>(null);
+  const [saveDebounce, setSaveDebounce] = useState(false);
   const progressTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const yearReceipts = receiptsInTaxYear(activeReceipts, taxYear, timeZone);
@@ -164,7 +180,7 @@ export function ExportEngineSheet({
     try {
       const result = await shareTaxPackFile(
         file,
-        `Snap1099 ${taxYear}`,
+        exportShareTitle(taxYear),
         copy.settings.export.shareText,
       );
       if (result === "unsupported") {
@@ -179,16 +195,14 @@ export function ExportEngineSheet({
     }
   };
 
-  useEffect(() => {
-    if (!readyFile || autoSharedRef.current) return;
-    if (!canShareTaxPackFile(readyFile)) return;
-    autoSharedRef.current = true;
-    void handleShare(readyFile);
-  }, [readyFile]);
-
   const handleSaveToPhone = (file: File) => {
-    downloadTaxPackFile(file);
-    setShareStatus(t.savedToPhoneHint);
+    if (saveDebounce) return;
+    setSaveDebounce(true);
+    setPostDownloadGuide(null);
+    downloadWithGuide(file, {
+      onDownloaded: (info) => setPostDownloadGuide(info),
+    });
+    window.setTimeout(() => setSaveDebounce(false), 300);
   };
 
   const goToFormatStep = () => {
@@ -215,17 +229,18 @@ export function ExportEngineSheet({
       const csv = buildLocalTurboTaxCsv(activeReceipts, taxYear, timeZone);
       const file = new File(
         [csv],
-        `Snap1099-${taxYear}-TurboTax-Preview.csv`,
+        exportPreviewCsvFilename(taxYear),
         { type: "text/csv" },
       );
       const result = await shareTaxPackFile(
         file,
-        `Snap1099 ${taxYear} Preview`,
+        exportShareTitle(taxYear, "Preview"),
         copy.settings.export.shareText,
       );
       if (result === "unsupported") {
-        downloadTaxPackFile(file);
-        setShareStatus(t.savedToPhoneHint);
+        downloadWithGuide(file, {
+          onDownloaded: (info) => setPostDownloadGuide(info),
+        });
       } else if (result === "failed") {
         setErrorMessage(t.shareFailedHint);
       }
@@ -236,10 +251,22 @@ export function ExportEngineSheet({
     }
   };
 
+  const applyPackProgress = (event: LocalCpaPackProgress) => {
+    const total = Math.max(1, event.total);
+    setProgress(15 + (event.completed / total) * 73);
+    setProgressLabel(t.progressFetchingImages);
+  };
+
+  const finishPackProgress = () => {
+    clearProgressTimer();
+    setProgress(95);
+    setProgressLabel(t.progressFinalizing);
+  };
+
   const handleGenerate = async () => {
     setErrorMessage(null);
-    autoSharedRef.current = false;
     setShareStatus(null);
+    setPostDownloadGuide(null);
     if (!navigator.onLine) {
       setErrorMessage(copy.settings.export.offline);
       return;
@@ -251,22 +278,50 @@ export function ExportEngineSheet({
     try {
       let receiptsForExport = activeReceipts;
       if (onPreExportPrepare) {
-        const merged = await onPreExportPrepare();
+        const merged = await onPreExportPrepare(format);
         if (merged && merged.length > 0) {
           receiptsForExport = merged;
           setActiveReceipts(merged);
         }
       }
-      const exportReceiptCount = receiptsInTaxYear(
+      const exportReceiptCount = countLocalExportReceiptsInTaxYear(
         receiptsForExport,
         taxYear,
         timeZone,
-      ).length;
-      startProgressRamp(format, exportReceiptCount);
-      const result = await exportTaxPack({
-        taxYear: String(taxYear),
-        format,
-      });
+      );
+      if (format === "cpa_pack") {
+        clearProgressTimer();
+        setProgress(5);
+        setProgressLabel(t.progressBuildingPdf);
+      } else {
+        startProgressRamp(format, exportReceiptCount);
+      }
+      const taxYearStr = String(taxYear);
+      const result =
+        format === "csv" || format === "txf" || format === "qif" || format === "qbo"
+          ? await runLocalTaxExport({
+              receipts: receiptsForExport,
+              taxYear,
+              timeZone,
+              format,
+            })
+          : format === "cpa_pdf" || format === "cpa_pack"
+            ? await runLocalCpaExport({
+                receipts: receiptsForExport,
+                taxYear,
+                timeZone,
+                format,
+                taxpayerName,
+                onPackProgress:
+                  format === "cpa_pack" ? applyPackProgress : undefined,
+              })
+            : await exportTaxPack({
+                taxYear: taxYearStr,
+                format,
+              });
+      if (format === "cpa_pack") {
+        finishPackProgress();
+      }
       finishProgress();
       setReadyFile(result.file);
       setExportMeta(result.meta);
@@ -288,6 +343,13 @@ export function ExportEngineSheet({
           setErrorMessage(t.pdfFailed);
         } else if (err.message === "EXPORT_TIMEOUT") {
           setErrorMessage(t.exportTimeout);
+        } else if (err.message === "NOT_FOUND") {
+          setErrorMessage(t.filedSyncNotFound);
+        } else if (
+          err.message === "EXPORT_FILED_SYNC_FAILED" ||
+          err.message === "INVALID_EXPORT_TAX_YEAR"
+        ) {
+          setErrorMessage(t.filedSyncFailed);
         } else {
           setErrorMessage(copy.settings.export.failed);
         }
@@ -305,9 +367,13 @@ export function ExportEngineSheet({
       ? t.formatCsvTitle
       : format === "txf"
         ? t.formatTxfTitle
-        : format === "cpa_pdf"
-          ? t.formatCpaPdfTitle
-          : t.formatCpaTitle;
+        : format === "qif"
+          ? t.formatQifTitle
+          : format === "qbo"
+            ? t.formatQboTitle
+            : format === "cpa_pdf"
+            ? t.formatCpaPdfTitle
+            : t.formatCpaTitle;
 
   const imageWarning =
     exportMeta?.imagesMissing != null && exportMeta.imagesMissing > 0
@@ -530,6 +596,40 @@ export function ExportEngineSheet({
                   {t.formatCpaHint}
                 </p>
               </button>
+              <button
+                type="button"
+                onClick={() => setFormat("qif")}
+                className={`w-full min-h-[88px] rounded-xl border-2 p-4 text-left transition-transform active:scale-95 ${
+                  format === "qif"
+                    ? "border-yellow-500 bg-yellow-950"
+                    : "border-zinc-600 bg-zinc-800"
+                }`}
+              >
+                <p className="text-sm font-black uppercase tracking-wider text-white">
+                  {format === "qif" ? "✓ " : ""}
+                  {t.formatQifTitle}
+                </p>
+                <p className="mt-2 text-xs leading-relaxed text-zinc-400">
+                  {t.formatQifHint}
+                </p>
+              </button>
+              <button
+                type="button"
+                onClick={() => setFormat("qbo")}
+                className={`w-full min-h-[88px] rounded-xl border-2 p-4 text-left transition-transform active:scale-95 ${
+                  format === "qbo"
+                    ? "border-yellow-500 bg-yellow-950"
+                    : "border-zinc-600 bg-zinc-800"
+                }`}
+              >
+                <p className="text-sm font-black uppercase tracking-wider text-white">
+                  {format === "qbo" ? "✓ " : ""}
+                  {t.formatQboTitle}
+                </p>
+                <p className="mt-2 text-xs leading-relaxed text-zinc-400">
+                  {t.formatQboHint}
+                </p>
+              </button>
             </div>
 
             <div className="mt-4 rounded-xl border-2 border-zinc-700 bg-zinc-950 p-4">
@@ -604,6 +704,16 @@ export function ExportEngineSheet({
                 {t.generate}
               </button>
             </div>
+
+            {postDownloadGuide && (
+              <PostDownloadGuide
+                fileName={postDownloadGuide.fileName}
+                file={postDownloadGuide.file}
+                shareTitle={exportShareTitle(taxYear, "Preview")}
+                shareText={copy.settings.export.shareText}
+                onDismiss={() => setPostDownloadGuide(null)}
+              />
+            )}
           </>
         )}
 
@@ -647,25 +757,35 @@ export function ExportEngineSheet({
                   {sharing
                     ? t.sharing
                     : shareStatus ??
-                      (canShareTaxPackFile(readyFile)
+                      (isWebShareAvailable()
                         ? t.sharingHint
                         : t.shareUnsupportedHint)}
                 </p>
                 <button
                   type="button"
+                  disabled={saveDebounce}
                   onClick={() => handleSaveToPhone(readyFile)}
-                  className="mt-6 w-full min-h-16 rounded-xl border-4 border-white bg-yellow-500 py-4 text-lg font-black uppercase tracking-wider text-black transition-transform active:scale-95"
+                  className="mt-6 w-full min-h-16 rounded-xl border-4 border-white bg-yellow-500 py-4 text-lg font-black uppercase tracking-wider text-black transition-transform active:scale-95 disabled:opacity-60"
                 >
                   {t.saveToPhone}
                 </button>
                 <button
                   type="button"
-                  disabled={sharing || !canShareTaxPackFile(readyFile)}
+                  disabled={sharing}
                   onClick={() => void handleShare(readyFile)}
                   className="mt-3 w-full min-h-14 rounded-xl border-2 border-zinc-600 bg-zinc-800 py-3 text-sm font-black uppercase tracking-wider text-white transition-transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {t.share}
                 </button>
+                {postDownloadGuide && (
+                  <PostDownloadGuide
+                    fileName={postDownloadGuide.fileName}
+                    file={postDownloadGuide.file}
+                    shareTitle={exportShareTitle(taxYear)}
+                    shareText={copy.settings.export.shareText}
+                    onDismiss={() => setPostDownloadGuide(null)}
+                  />
+                )}
               </div>
             ) : null}
           </>

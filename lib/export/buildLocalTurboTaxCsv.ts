@@ -1,11 +1,5 @@
-import { isIncomeFormType } from "@/lib/export/incomeDocuments";
-import { finalizeExportRows } from "@/lib/export/mapping/finalizeExportRows";
-import { receiptToSnaptaxStub } from "@/lib/receipts/snaptaxReceiptStub";
+import { buildLocalExpenseExportRows } from "@/lib/export/buildLocalExpenseRows";
 import { buildTurboTaxCsv } from "@/lib/tax/exportCsv";
-import {
-  buildExportExpenseRow,
-  filterReceiptsByTaxYear,
-} from "@/lib/tax/exportRows";
 import type { Receipt } from "@/lib/types";
 
 /**
@@ -17,16 +11,6 @@ export function buildLocalTurboTaxCsv(
   taxYear: number,
   timeZone: string,
 ): string {
-  const snaptaxReceipts = receipts
-    .filter((r) => r.status === "done" && !isIncomeFormType(r.category))
-    .map(receiptToSnaptaxStub);
-  const filtered = filterReceiptsByTaxYear(
-    snaptaxReceipts,
-    taxYear,
-    timeZone,
-  );
-  const rows = filtered.map((r) =>
-    buildExportExpenseRow(r, timeZone, "us"),
-  );
-  return buildTurboTaxCsv(finalizeExportRows(rows));
+  const rows = buildLocalExpenseExportRows(receipts, taxYear, timeZone);
+  return buildTurboTaxCsv(rows);
 }

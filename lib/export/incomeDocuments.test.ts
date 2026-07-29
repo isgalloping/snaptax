@@ -62,7 +62,7 @@ describe("buildExportIncomeRow", () => {
     assert.equal(row!.taxYear, null);
     assert.match(
       row!.incomeArchivePath,
-      /^01_Income_Documents\/1099_NEC_ClientA_20251231\.jpg$/,
+      /^01_Income_Documents\/1099_NEC_ClientA_20251231_00000000000000000000000000000001\.jpg$/,
     );
   });
 
@@ -72,6 +72,21 @@ describe("buildExportIncomeRow", () => {
       "UTC",
     );
     assert.equal(row!.taxYear, 2024);
+  });
+
+  it("keeps archive paths unique for same-day forms from the same payer", () => {
+    const first = buildExportIncomeRow(
+      incomeReceipt({ id: "00000000-0000-0000-0000-000000000101" }),
+      "UTC",
+    );
+    const second = buildExportIncomeRow(
+      incomeReceipt({ id: "00000000-0000-0000-0000-000000000202" }),
+      "UTC",
+    );
+
+    assert.ok(first);
+    assert.ok(second);
+    assert.notEqual(first!.incomeArchivePath, second!.incomeArchivePath);
   });
 });
 

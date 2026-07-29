@@ -1,6 +1,7 @@
 "use client";
 
 import { useServerInsertedHTML } from "next/navigation";
+import "@/lib/pwa/deferredInstall";
 import { INLINE_INSTALL_CAPTURE_SCRIPT } from "@/lib/pwa/installCaptureScript";
 
 /** Injects PWA install capture via SSR stream — avoids React 19 script-in-tree warnings. */

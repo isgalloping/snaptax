@@ -2,7 +2,7 @@
 
 **Last Updated:** July 2026  
 **Public page:** [data-retention.md](../legal/data-retention.md) (`/data-retention`)  
-**Compliance:** [`2026-06-30-compliance-p2-data-lifecycle.md`](../superpowers/specs/2026-06-30-compliance-p2-data-lifecycle.md)
+**Compliance:** [`compliance-program-design.md`](../superpowers/topics/compliance-program-design.md) §7
 
 Engineering audit reference. **Not linked from the public app.** Values here must match the user-facing Data Retention Policy and running code.
 
@@ -14,6 +14,8 @@ Engineering audit reference. **Not linked from the public app.** Values here mus
 | Receipts pending upload | **Not pruned** until upload completes | `pendingUpload` guard in `shouldPruneReceipt()` |
 | Receipts in `processing` status | Kept until done, blurry, or deleted | No separate draft entity |
 | Receipt photos (full resolution, OPFS) | Until upload succeeds, or **90 days** after cloud sync | `PHOTO_FULL_RETENTION_MS = 90 × 24h` in `lib/client/photoRetention.ts`; skipped while receipt is `processing` or `pendingUpload` |
+| Synced receipt lifecycle events (IndexedDB) | **90 days** after server sync | `RECEIPT_EVENT_RETENTION_MS` in `lib/storage/receiptEventQueue.ts`; idle prune ~45s after load (staggered vs photo/receipt jobs) |
+| Receipt lifecycle events (server Postgres) | **18 months** from `client_created_at` | `RECEIPT_EVENT_SERVER_RETENTION_MONTHS = 18` in `lib/server/pruneReceiptEvents.ts`; sampled lazy GC on ingest |
 | Thumbnails (OPFS) | With receipt row; full purge may leave thumb | `photoRetentionJob` |
 | Encryption keys (local) | Until you delete app data or **Delete Account** | OPFS + `snaptax_crypto_meta` |
 
@@ -23,9 +25,9 @@ Engineering audit reference. **Not linked from the public app.** Values here mus
 |------|-----------|-----------------|
 | Receipt images & metadata (Postgres + Blob) | While Ghost session or Google account is active | Bound to `ghost_id` or `user_id` |
 | Ghost session | Cookie + Postgres rows | Migrated on Google sign-in; deleted on Delete Account |
-| Account & billing (Paddle entitlements) | As required for tax export entitlements and law | `snaptax_season_entitlements` |
-| After **Delete Account** | Cloud receipts, images, and account rows permanently deleted | Client: `deleteAccountAndLocalData()`; server: `DELETE /api/users/me` — target completion within **30 days** |
-| Rate limit buckets | Bucket rows garbage-collected after **24 hours** | `GC_RETENTION_MS = 24h` in `lib/api/dbRateLimit.ts` |
+| Account & billing (Paddle entitlements) | While account active (honor Export); **removed on Delete Account** | `snaptax_season_entitlements` (+ checkout intents); Paddle MoR may keep external payment records |
+| After **Delete Account** | Cloud receipts, images, event store, entitlements, checkout intents, user/ghost binding permanently deleted; Blob delete must succeed or API returns **503** `BLOB_DELETE_FAILED` | Client: `deleteAccountAndLocalData()`; server: `DELETE /api/users/me` or `DELETE /api/ghost/data` (client `orphanGhostIds` is compatibility-only, not deletion authority) — target completion within **30 days** |
+| Rate limit buckets | Bucket rows garbage-collected after **24 hours** (not cleared on Delete Account) | `GC_RETENTION_MS = 24h` in `lib/api/dbRateLimit.ts` |
 | Export Tax Pack files | **Not stored long-term** on server (MVP) | Generated on demand; user downloads |
 
 ## Logs
@@ -42,6 +44,8 @@ Structured logs exclude receipt image bytes and mask email where applicable. See
 |----------|-------|------|
 | `RECEIPT_RETENTION_MONTHS` | 18 | `lib/client/receiptRetention.ts` |
 | `PHOTO_FULL_RETENTION_MS` | 90 days | `lib/client/photoRetention.ts` |
+| `RECEIPT_EVENT_RETENTION_MS` | 90 days | `lib/storage/receiptEventQueue.ts` |
+| `RECEIPT_EVENT_SERVER_RETENTION_MONTHS` | 18 months | `lib/server/pruneReceiptEvents.ts` |
 | `GC_RETENTION_MS` | 24 hours | `lib/api/dbRateLimit.ts` |
 
 ## Verification

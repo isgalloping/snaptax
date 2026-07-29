@@ -12,6 +12,12 @@ test("resolveApiError maps known codes", () => {
   assert.equal(r.status, 401);
 });
 
+test("resolveApiError maps GOOGLE_LOGIN_REQUIRED to 409", () => {
+  const r = resolveApiError(new Error("GOOGLE_LOGIN_REQUIRED"));
+  assert.equal(r.code, "GOOGLE_LOGIN_REQUIRED");
+  assert.equal(r.status, 409);
+});
+
 test("resolveApiError defaults to INTERNAL_ERROR for unknown", () => {
   const r = resolveApiError(new Error("OpenAI timeout"));
   assert.equal(r.code, "INTERNAL_ERROR");

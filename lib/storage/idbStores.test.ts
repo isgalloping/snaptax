@@ -4,6 +4,7 @@ import {
   IDB_DB_NAME,
   IDB_DB_VERSION,
   IDB_LEGACY_DB_NAME,
+  IDB_STORE_RECEIPT_EVENTS,
   IDB_STORE_RECEIPT_SUMMARY,
 } from "@/lib/storage/idbStores";
 
@@ -13,8 +14,9 @@ describe("idbStores", () => {
     assert.equal(IDB_LEGACY_DB_NAME, "snap1099");
   });
 
-  it("uses v7 receipt summary store constants", () => {
-    assert.equal(IDB_DB_VERSION, 7);
+  it("uses v8 receipt events store constants", () => {
+    assert.equal(IDB_DB_VERSION, 8);
     assert.equal(IDB_STORE_RECEIPT_SUMMARY, "snaptax_receipts_summary");
+    assert.equal(IDB_STORE_RECEIPT_EVENTS, "snaptax_receipt_events");
   });
 });

@@ -20,13 +20,17 @@ function inSeason(
   return effectiveReceiptTaxYear(row, timeZone) === taxYear;
 }
 
+function isSummaryEligible(row: StoredReceipt): boolean {
+  return !row.isOnboardingDemo;
+}
+
 function totalTaxSavedContribution(row: StoredReceipt): number {
-  if (row.status !== "done") return 0;
+  if (!isSummaryEligible(row) || row.status !== "done") return 0;
   return row.taxAmount ?? 0;
 }
 
 function deductionContribution(row: StoredReceipt): number {
-  if (row.status !== "done") return 0;
+  if (!isSummaryEligible(row) || row.status !== "done") return 0;
   if (isIncomeFormType(row.category)) return 0;
   if (!row.deductible || row.amount == null) return 0;
   const ratio = resolveDeductionRatio(row.category ?? "OTHER", 1);
@@ -34,13 +38,14 @@ function deductionContribution(row: StoredReceipt): number {
 }
 
 function incomeFormContribution(row: StoredReceipt): { count: number; gross: number } {
-  if (row.status !== "done" || !isIncomeFormType(row.category)) {
+  if (!isSummaryEligible(row) || row.status !== "done" || !isIncomeFormType(row.category)) {
     return { count: 0, gross: 0 };
   }
   return { count: 1, gross: row.amount ?? 0 };
 }
 
 function contributions(row: StoredReceipt): SummaryDelta {
+  if (!isSummaryEligible(row)) return ZERO;
   const income = incomeFormContribution(row);
   return {
     totalTaxSaved: totalTaxSavedContribution(row),

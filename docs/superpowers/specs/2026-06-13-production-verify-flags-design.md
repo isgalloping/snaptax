@@ -1,13 +1,15 @@
 # 生产验证白名单 + Vercel Flags — Design
 
+> **Removed:** Verify bypass (`runModel`, `verfyUser`, `isNeedPay`, `isMockAI`) is deleted by [`2026-07-25-special-checkout-refactor-design.md`](./2026-07-25-special-checkout-refactor-design.md). Internal testing uses SPECIAL Paddle checkout only.
+
 **Date:** 2026-06-13  
-**Status:** Approved (implemented)  
+**Status:** Approved (implemented) · **Scheduled for removal**  
 **Scope:** Production verify-mode bypass for a single whitelisted Google user — mock AI receipts and optional payment skip — controlled by Vercel Flags.
 
 **Canonical product spec:** [`docs/product/PRODUCT-SPEC.md`](../../product/PRODUCT-SPEC.md)  
 **Related:**
 
-- [`2026-06-10-landing-flags-design.md`](./2026-06-10-landing-flags-design.md) — superseded landing A/B (not in scope)
+- [`topics/onboarding-aha-design.md`](../topics/onboarding-aha-design.md) §5.1 — superseded landing A/B (not in scope)
 - [`docs/tech/07-paddle-billing.md`](../../tech/07-paddle-billing.md) — entitlement / Paywall
 - [`docs/tech/06-receipt-ai-pipeline.md`](../../tech/06-receipt-ai-pipeline.md) — OpenAI Vision pipeline
 - [Vercel Flags SDK](https://vercel.com/docs/flags/vercel-flags/sdks/flags-sdk)

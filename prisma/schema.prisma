@@ -92,20 +92,49 @@ model SnaptaxReceipt {
 
 /// 报税季付费权益（每用户每季一条）
 model SnaptaxSeasonEntitlement {
-  id            String   @id @default(uuid()) @db.Uuid
-  userId        String   @map("user_id") @db.Uuid
-  taxSeason     String   @map("tax_season") @db.VarChar(255)
-  transactionId String   @unique @map("transaction_id") @db.VarChar(128)
-  paidAt        DateTime @map("paid_at") @db.Timestamptz(3)
-  amount        Decimal  @db.Decimal(10, 2)
-  channelCode   String   @map("channel_code") @db.VarChar(64)
-  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  id              String    @id @default(uuid()) @db.Uuid
+  userId          String    @map("user_id") @db.Uuid
+  taxSeason       String    @map("tax_season") @db.VarChar(255)
+  transactionId   String    @unique @map("transaction_id") @db.VarChar(128)
+  paidAt          DateTime  @map("paid_at") @db.Timestamptz(3)
+  amount          Decimal   @db.Decimal(10, 2)
+  channelCode     String    @map("channel_code") @db.VarChar(64)
+  status          String    @default("active") @map("status") @db.VarChar(32)
+  statusReason    String?   @map("status_reason") @db.VarChar(64)
+  statusUpdatedAt DateTime? @map("status_updated_at") @db.Timestamptz(3)
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   user SnaptaxUser @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, taxSeason], map: "snaptax_season_entitlements_user_season_key")
   @@map("snaptax_season_entitlements")
+}
+
+/// Payment-channel webhook audit (idempotent by channel + provider event id)
+model SnaptaxWebhookEvent {
+  id               String    @id @default(uuid()) @db.Uuid
+  channelCode      String    @map("channel_code") @db.VarChar(64)
+  eventId          String    @map("event_id") @db.VarChar(128)
+  eventType        String    @map("event_type") @db.VarChar(128)
+  occurredAt       DateTime? @map("occurred_at") @db.Timestamptz(3)
+  transactionId    String?   @map("transaction_id") @db.VarChar(128)
+  adjustmentId     String?   @map("adjustment_id") @db.VarChar(128)
+  action           String?   @db.VarChar(64)
+  adjustmentStatus String?   @map("adjustment_status") @db.VarChar(64)
+  payload          Json
+  processingResult String    @map("processing_result") @db.VarChar(32)
+  processingReason String?   @map("processing_reason") @db.VarChar(128)
+  entitlementId    String?   @map("entitlement_id") @db.Uuid
+  statusBefore     String?   @map("status_before") @db.VarChar(32)
+  statusAfter      String?   @map("status_after") @db.VarChar(32)
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([channelCode, eventId], map: "snaptax_webhook_events_channel_event_key")
+  @@index([transactionId], map: "snaptax_webhook_events_transaction_id_idx")
+  @@index([createdAt], map: "snaptax_webhook_events_created_at_idx")
+  @@map("snaptax_webhook_events")
 }
 
 /// Fixed-window rate limit counters (Postgres-backed; no Redis)
@@ -135,4 +164,50 @@ model SnaptaxCheckoutIntent {
 
   @@index([userId, taxSeason], map: "snaptax_checkout_intents_user_season_idx")
   @@map("snaptax_checkout_intents")
+}
+
+/// Append-only receipt lifecycle events (Phase 2 Event Queue spike).
+model SnaptaxReceiptEvent {
+  id              String   @id @db.Uuid
+  receiptId       String   @map("receipt_id") @db.Uuid
+  userId          String?  @map("user_id") @db.Uuid
+  ghostId         String?  @map("ghost_id") @db.VarChar(255)
+  eventType       String   @map("event_type") @db.VarChar(64)
+  payload         Json     @default("{}")
+  clientCreatedAt DateTime @map("client_created_at") @db.Timestamptz(3)
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([userId, clientCreatedAt], map: "snaptax_receipt_events_user_created_idx")
+  @@index([ghostId, clientCreatedAt], map: "snaptax_receipt_events_ghost_created_idx")
+  @@index([clientCreatedAt], map: "snaptax_receipt_events_client_created_idx")
+  @@map("snaptax_receipt_events")
+}
+
+/// Per-actor high-water mark for ingested lifecycle events.
+model SnaptaxReceiptSyncCursor {
+  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId              String?  @unique @map("user_id") @db.Uuid
+  ghostId             String?  @unique @map("ghost_id") @db.VarChar(255)
+  lastEventId         String   @map("last_event_id") @db.Uuid
+  lastClientCreatedAt DateTime @map("last_client_created_at") @db.Timestamptz(3)
+  updatedAt           DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("snaptax_receipt_sync_cursors")
+}
+
+/// Append-only receipt state snapshots derived from TAX_CALCULATED events.
+model SnaptaxReceiptLifecycleSnapshot {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  receiptId       String   @map("receipt_id") @db.Uuid
+  userId          String?  @map("user_id") @db.Uuid
+  ghostId         String?  @map("ghost_id") @db.VarChar(255)
+  sourceEventId   String   @unique @map("source_event_id") @db.Uuid
+  payload         Json     @default("{}")
+  clientCreatedAt DateTime @map("client_created_at") @db.Timestamptz(3)
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([receiptId, clientCreatedAt], map: "snaptax_receipt_lifecycle_snapshots_receipt_created_idx")
+  @@index([userId, clientCreatedAt], map: "snaptax_receipt_lifecycle_snapshots_user_created_idx")
+  @@index([ghostId, clientCreatedAt], map: "snaptax_receipt_lifecycle_snapshots_ghost_created_idx")
+  @@map("snaptax_receipt_lifecycle_snapshots")
 }

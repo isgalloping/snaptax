@@ -1,7 +1,10 @@
 "use client";
 
 import { useUserCopy } from "@/components/i18n/I18nProvider";
+import { PostDownloadGuide } from "@/components/export/PostDownloadGuide";
 import { SettingsSubPageShell } from "@/components/settings/SettingsSubPageShell";
+import { sampleTurboTaxCsvFilename } from "@/lib/export/exportFilenames";
+import type { DownloadedFileInfo } from "@/lib/export/downloadWithGuide";
 import { defaultExportTaxYear } from "@/lib/tax/season";
 
 interface SampleExportPageProps {
@@ -9,6 +12,10 @@ interface SampleExportPageProps {
   onDownload: () => void;
   onContinueGoogle: () => void;
   downloading?: boolean;
+  postDownloadGuide?: DownloadedFileInfo | null;
+  onDismissPostDownload?: () => void;
+  shareTitle?: string;
+  shareText?: string;
 }
 
 export function SampleExportPage({
@@ -16,10 +23,14 @@ export function SampleExportPage({
   onDownload,
   onContinueGoogle,
   downloading = false,
+  postDownloadGuide = null,
+  onDismissPostDownload,
+  shareTitle = "SnapTax Export",
+  shareText = "",
 }: SampleExportPageProps) {
   const copy = useUserCopy().settings.exportFlow;
   const taxYear = defaultExportTaxYear();
-  const fileName = `Snap1099-SAMPLE-TurboTax-${taxYear}.csv`;
+  const fileName = sampleTurboTaxCsvFilename(taxYear);
 
   return (
     <SettingsSubPageShell title={copy.sampleTitle} onBack={onBack}>
@@ -38,6 +49,16 @@ export function SampleExportPage({
       >
         {copy.downloadCsv}
       </button>
+
+      {postDownloadGuide && onDismissPostDownload && (
+        <PostDownloadGuide
+          fileName={postDownloadGuide.fileName}
+          file={postDownloadGuide.file}
+          shareTitle={shareTitle}
+          shareText={shareText}
+          onDismiss={onDismissPostDownload}
+        />
+      )}
 
       <button
         type="button"

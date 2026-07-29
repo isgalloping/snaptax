@@ -137,7 +137,7 @@ onSelectThumb={
 
 **Files:**
 - Modify: `docs/product/PRODUCT-SPEC.md` §3.1
-- Modify: `docs/superpowers/specs/2026-06-09-post-batch-review-flow-design.md` — note Live Done split
+- Modify: `docs/superpowers/topics/capture-pipeline-design.md` — note Live Done split
 
 - [ ] **Step 1: PRODUCT-SPEC** — Flash / Review / Preview 三路径
 

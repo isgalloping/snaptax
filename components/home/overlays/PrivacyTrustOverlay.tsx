@@ -15,6 +15,7 @@ export function PrivacyTrustOverlay({ onClose }: PrivacyTrustOverlayProps) {
   return (
     <OverlayShell
       title={copy.privacyTitle}
+      showBack={false}
       onBack={onClose}
       footer={
         <button
@@ -29,7 +30,7 @@ export function PrivacyTrustOverlay({ onClose }: PrivacyTrustOverlayProps) {
       <ul className="space-y-6">
         {copy.privacyPoints.map((point, index) => (
           <li key={point.title} className="flex gap-4">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-xl">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-zinc-800 text-xl">
               {PRIVACY_ICONS[index] ?? "•"}
             </span>
             <div>

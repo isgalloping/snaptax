@@ -4,12 +4,14 @@ import { useUserCopy } from "@/components/i18n/I18nProvider";
 
 interface ExportStatusBannerProps {
   variant: "sample-ready" | "export-blocked";
+  blockedMessage?: string;
   onDownloadAgain?: () => void;
   onDismiss?: () => void;
 }
 
 export function ExportStatusBanner({
   variant,
+  blockedMessage,
   onDownloadAgain,
   onDismiss,
 }: ExportStatusBannerProps) {
@@ -25,7 +27,7 @@ export function ExportStatusBanner({
           ⚠️
         </span>
         <p className="flex-1 text-sm font-bold leading-snug text-red-300">
-          {copy.exportBlocked}
+          {blockedMessage ?? copy.exportBlocked}
         </p>
         {onDismiss && (
           <button

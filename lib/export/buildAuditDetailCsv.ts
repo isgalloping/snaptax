@@ -27,7 +27,9 @@ function csvLine(values: (string | number)[]): string {
 export function buildAuditDetailCsv(rows: ExportExpenseRow[]): string {
   const lines = [HEADERS.join(",")];
   for (const row of rows) {
-    const path = row.auditImagePath ?? "";
+    const auditPath = row.auditImagePath ?? "";
+    // One image per row: Audit_Image_Path → ZIP file; Receipt_Image_URL → legacy alias only.
+    const receiptRef = row.receiptAlias || auditPath;
     lines.push(
       csvLine([
         row.dateIso,
@@ -36,8 +38,8 @@ export function buildAuditDetailCsv(rows: ExportExpenseRow[]): string {
         row.merchant,
         row.exportAmount.toFixed(2),
         row.notes,
-        path,
-        path,
+        auditPath,
+        receiptRef,
       ]),
     );
   }

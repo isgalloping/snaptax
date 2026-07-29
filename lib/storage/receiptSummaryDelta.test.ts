@@ -69,4 +69,16 @@ describe("computeSummaryDelta", () => {
     const d = computeSummaryDelta(null, next, YEAR, TZ);
     assert.equal(d.totalReceiptCount, 0);
   });
+
+  it("excludes onboarding demo from tax saved and receipt count", () => {
+    const demo = receipt({
+      id: "demo",
+      status: "done",
+      taxAmount: 28.5,
+      isOnboardingDemo: true,
+    });
+    const d = computeSummaryDelta(null, demo, YEAR, TZ);
+    assert.equal(d.totalTaxSaved, 0);
+    assert.equal(d.totalReceiptCount, 0);
+  });
 });

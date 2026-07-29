@@ -1,20 +1,22 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { mapErrorToResponse } from "@/lib/api/errors";
 import { getActor } from "@/lib/auth/getActor";
 import { GHOST_COOKIE_NAME } from "@/lib/auth/ghostToken";
 import { SESSION_COOKIE_NAME } from "@/lib/auth/session";
 import { deleteUserAccount } from "@/lib/receipts/accountCleanup";
+import { parseDeleteAccountOrphanGhostIds } from "@/lib/receipts/deleteAccountBody";
 import { getSessionFromCookies } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
 import { withRequestLog } from "@/lib/server/log/withRequestLog";
 import { patchUserBodySchema } from "@/lib/users/industrySchema";
 
-export const DELETE = withRequestLog("api.user", async (request, _context) => {
+export const DELETE = withRequestLog("api.user", async (request) => {
   try {
     const session = await getSessionFromCookies();
     if (!session) throw new Error("UNAUTHORIZED");
 
+    await parseDeleteAccountOrphanGhostIds(request);
     await deleteUserAccount(session.userId);
 
     const res = new NextResponse(null, { status: 204 });
@@ -34,11 +36,14 @@ export const DELETE = withRequestLog("api.user", async (request, _context) => {
     });
     return res;
   } catch (err) {
+    if (err instanceof SyntaxError || err instanceof ZodError) {
+      return mapErrorToResponse(new Error("INVALID_REQUEST"));
+    }
     return mapErrorToResponse(err);
   }
 });
 
-export const PATCH = withRequestLog("api.user", async (request, _context) => {
+export const PATCH = withRequestLog("api.user", async (request) => {
   try {
     const actor = await getActor(request, { requireWrite: false });
     if (actor.kind !== "user") throw new Error("UNAUTHORIZED");

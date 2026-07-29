@@ -5,7 +5,7 @@
 **Source:** [`docs/ocr/ocr-desn.md`](../../ocr/ocr-desn.md)  
 **Scope (Phase 1 — this implementation):** Local OCR Worker → `parseReceipt` → server router (`classifyReceiptText` | `processReceiptVision` fallback) → `computeTaxAmount` → existing IDB merge / upload. **UI unchanged.**
 
-**Deferred to Phase 2 (data consistency):** Event Queue, Background Sync batch, `POST /api/sync/events`, Postgres Event Store, WorkerSession — see [receipt-lifecycle-sync-redesign](./2026-06-19-receipt-lifecycle-sync-redesign-design.md) and [`docs/tech/11-ocr-pipeline-design.md`](../../tech/11-ocr-pipeline-design.md) §16.
+**Phase 2 data consistency (shipped 2026-07-10):** Event Queue IDB v8 · `POST /api/sync/events` · Postgres Event Store（events + sync cursors + TAX_CALCULATED snapshots · 18mo server prune）· WorkerSession Phase C — see [receipt-sync-lifecycle topic](../topics/receipt-sync-lifecycle-design.md) §5 and [`docs/tech/11-ocr-pipeline-design.md`](../../tech/11-ocr-pipeline-design.md) §16.
 
 **Related (Phase 1):** [`06-receipt-ai-pipeline.md`](../../tech/06-receipt-ai-pipeline.md)
 
@@ -426,7 +426,7 @@ Server behavior:
 | Image + ocrDraft passing gate | `classifyReceiptText`; on failure → **`processReceiptVision`** |
 | Image + ocrDraft failing gate | **`processReceiptVision`** — skip text classify |
 
-Response shape **unchanged** (`serializeReceipt` / `processing` + `processFailed`). Vision success/failure HTTP codes identical to [pipeline resilience spec](./2026-06-07-receipt-pipeline-resilience-design.md).
+Response shape **unchanged** (`serializeReceipt` / `processing` + `processFailed`). Vision success/failure HTTP codes identical to [receipt-sync-lifecycle topic](../topics/receipt-sync-lifecycle-design.md) §3.1.
 
 ### 7.2 `POST /api/receipts/:id/process`
 
@@ -469,7 +469,7 @@ Do **not** retune Vision preprocess as part of OCR redesign unless separately ap
 
 ## §10 Confidence & status mapping (unchanged externally)
 
-Continue [home-v2 three-tier](../../superpowers/specs/2026-06-17-home-v2-first-screen-design.md):
+Continue [home-dashboard three-tier](../../topics/home-dashboard-design.md) §4.5:
 
 | Tier | Condition | `status` | Bucket |
 |------|-----------|----------|--------|
@@ -536,7 +536,7 @@ Existing **upload / merge / LWW** unchanged.
 
 ### Phase 2 (data consistency — deferred)
 
-Event Queue IDB, `POST /api/sync/events`, Postgres Event Store, WorkerSession — with [sync redesign](./2026-06-19-receipt-lifecycle-sync-redesign-design.md).
+Event Queue IDB, `POST /api/sync/events`, Postgres Event Store, WorkerSession — see [receipt-sync-lifecycle topic](../topics/receipt-sync-lifecycle-design.md) §5.
 
 ---
 
@@ -570,7 +570,7 @@ Items 12–14 (events, background sync, Event Store) — **Phase 2**.
 
 ## §16–§18 Phase 2 (deferred)
 
-See [`docs/tech/11-ocr-pipeline-design.md`](../../tech/11-ocr-pipeline-design.md) §16 and [receipt-lifecycle-sync-redesign-design.md](./2026-06-19-receipt-lifecycle-sync-redesign-design.md).
+See [`docs/tech/11-ocr-pipeline-design.md`](../../tech/11-ocr-pipeline-design.md) §16 and [receipt-sync-lifecycle-design.md](../topics/receipt-sync-lifecycle-design.md) §5.
 
 ---
 

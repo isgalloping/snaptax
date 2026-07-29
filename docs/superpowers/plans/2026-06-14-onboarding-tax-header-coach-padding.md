@@ -1,15 +1,7 @@
-# Tax Header Coach Padding — Implementation Plan
+# [Archived] 2026 06 14 onboarding tax header coach padding
 
-> **For agent:** Single-file change per [`2026-06-14-onboarding-tax-header-coach-padding-design.md`](../specs/2026-06-14-onboarding-tax-header-coach-padding-design.md).
+> **Status:** Archived · superseded by consolidated topic spec  
+> **Current truth:** [onboarding-aha-design.md](../topics/onboarding-aha-design.md)  
+> **Full text:** [2026-06-14-onboarding-tax-header-coach-padding.md](../archive/plans/2026-06-14-onboarding-tax-header-coach-padding.md)
 
-**Goal:** Add coach-only inner padding so the tax-saved halo does not crush the subtitle.
-
----
-
-## Task 1: TaxHeader padding
-
-**File:** `components/home/TaxHeader.tsx`
-
-- [ ] **Step 1:** When `ahaCoachActive`, add `px-2.5 py-2` to the inner `w-fit` wrapper (same element that has `rounded-xl` and `CoachPulseOverlay`).
-
-**Verify:** Refresh app in `stage_aha` — ring has breathing room; Export unchanged; non-coach layout unchanged.
+Do not use this stub for implementation decisions.

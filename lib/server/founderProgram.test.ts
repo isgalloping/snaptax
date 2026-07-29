@@ -43,7 +43,20 @@ describe("resolveFounderCheckoutSkuTier", () => {
     assert.deepEqual(result, { ok: true, skuTier: "EARLY" });
   });
 
-  it("uses locked tier for lapsed founder renewal", () => {
+  it("ignores SPECIAL locked tier and falls back to DEFAULT", () => {
+    const result = resolveFounderCheckoutSkuTier({
+      user: {
+        founderStatus: "active",
+        founderTier: "SPECIAL",
+        founderNumber: 15,
+      },
+      claimedCount: 20,
+      programOpen: true,
+    });
+    assert.deepEqual(result, { ok: true, skuTier: "DEFAULT" });
+  });
+
+  it("uses DEFAULT for lapsed founder renewal", () => {
     const result = resolveFounderCheckoutSkuTier({
       user: {
         founderStatus: "lapsed",
@@ -53,10 +66,7 @@ describe("resolveFounderCheckoutSkuTier", () => {
       claimedCount: 50,
       programOpen: false,
     });
-    assert.deepEqual(result, {
-      ok: true,
-      skuTier: "FOUNDER_LEVEL_SUPER",
-    });
+    assert.deepEqual(result, { ok: true, skuTier: "DEFAULT" });
   });
 
   it("resolves next seat tier for first founder purchase", () => {

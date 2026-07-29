@@ -46,7 +46,7 @@ export function getAuthSecret(): string {
 }
 
 export function getOpenAiApiKey(): string {
-  return firstDefined(process.env.OPENAI_API_KEY, process.env.OPENAI_SECRET_KEY);
+  return firstDefined(process.env.OPENAI_API_KEY);
 }
 
 /** OpenAI-compatible gateway base URL (e.g. https://maxapi.pro/v1). Empty = official OpenAI. */
@@ -57,11 +57,7 @@ export function getOpenAiBaseUrl(): string | undefined {
 }
 
 export function getOpenAiModel(): string {
-  return firstDefined(
-    process.env.OPENAI_MODEL,
-    process.env.OPENAi_MODEL_NAME,
-    "gpt-4o-mini",
-  );
+  return firstDefined(process.env.OPENAI_MODEL, "gpt-4o-mini");
 }
 
 export function getOpenAiClassifyModel(): string {
@@ -109,44 +105,21 @@ export function getGoogleClientSecret(): string {
 }
 
 export function getPaddleClientToken(): string {
-  return firstDefined(
-    process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN,
-    process.env.PADDLE_SNAPTAX_CLIENT_SIDE_TOKEN,
-  );
-}
-
-export function getPaddleApiKey(): string {
-  return firstDefined(
-    process.env.PADDLE_API_KEY,
-    process.env.PADDLE_SNAPTAX_API_KEY,
-  );
+  return firstDefined(process.env.PADDLE_SNAPTAX_CLIENT_SIDE_TOKEN);
 }
 
 export function getPaddlePriceId(): string {
-  return firstDefined(
-    process.env.PADDLE_PRICE_ID,
-    process.env.FOUNDER_LEVEL_DEFAULT,
-    process.env.PADDLE_SNAPTAX_PRICE_KEY,
-  );
+  return firstDefined(process.env.FOUNDER_LEVEL_DEFAULT);
 }
 
 export function getPaddlePriceIdForFounderTier(tier: string): string {
   switch (tier) {
     case "FOUNDER_LEVEL_SUPER":
-      return firstDefined(
-        process.env.PADDLE_PRICE_ID_FOUNDER_SUPER,
-        process.env.FOUNDER_LEVEL_SUPER,
-      );
+      return firstDefined(process.env.FOUNDER_LEVEL_SUPER);
     case "EARLY":
-      return firstDefined(
-        process.env.PADDLE_PRICE_ID_FOUNDER_EARLY,
-        process.env.FOUNDER_LEVEL_EARLY,
-      );
+      return firstDefined(process.env.FOUNDER_LEVEL_EARLY);
     case "FOUNDER":
-      return firstDefined(
-        process.env.PADDLE_PRICE_ID_FOUNDER,
-        process.env.FOUNDER_LEVEL_FOUNDER,
-      );
+      return firstDefined(process.env.FOUNDER_LEVEL_FOUNDER);
     default:
       return getPaddlePriceId();
   }
@@ -154,6 +127,10 @@ export function getPaddlePriceIdForFounderTier(tier: string): string {
 
 export function getPaddleWebhookSecret(): string {
   return firstDefined(process.env.PADDLE_WEBHOOK_SECRET);
+}
+
+export function getSpecialLevelUserPriceId(): string {
+  return (process.env.SPECIAL_LEVEL_USER ?? "").trim();
 }
 
 export function applyEnvAliases(): void {
@@ -166,11 +143,5 @@ export function applyEnvAliases(): void {
   }
   if (!process.env.AUTH_SECRET && getAuthSecret()) {
     process.env.AUTH_SECRET = getAuthSecret();
-  }
-  if (!process.env.OPENAI_API_KEY && getOpenAiApiKey()) {
-    process.env.OPENAI_API_KEY = getOpenAiApiKey();
-  }
-  if (!process.env.OPENAI_MODEL && getOpenAiModel()) {
-    process.env.OPENAI_MODEL = getOpenAiModel();
   }
 }

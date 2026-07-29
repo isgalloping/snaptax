@@ -33,3 +33,31 @@ test("resolveDisplayTier uses locked tier for active founders", () => {
     "FOUNDER_LEVEL_SUPER",
   );
 });
+
+test("resolveDisplayTier uses DEFAULT for lapsed founders", () => {
+  assert.equal(
+    resolveDisplayTier({
+      claimedCount: 20,
+      user: {
+        founderNumber: 3,
+        founderStatus: "lapsed",
+        founderTier: "FOUNDER_LEVEL_SUPER",
+      },
+    }),
+    "DEFAULT",
+  );
+});
+
+test("resolveDisplayTier ignores SPECIAL tier (internal checkout only)", () => {
+  assert.equal(
+    resolveDisplayTier({
+      claimedCount: 0,
+      user: {
+        founderNumber: null,
+        founderStatus: "none",
+        founderTier: "SPECIAL",
+      },
+    }),
+    "FOUNDER_LEVEL_SUPER",
+  );
+});

@@ -6,7 +6,7 @@ export const FR_FR_COPY: UserCopy = {
       "Photographiez vos reçus, catégorisation automatique. Comptabilité 1099 simplifiée.",
   },
   pwa: {
-    title: "Ajouter Snap1099 à l'écran d'accueil",
+    title: "Ajouter SnapTax à l'écran d'accueil",
     subtitle:
       "Ouvrez comme une app native — photographiez vos reçus d'une main sur le chantier",
     install: "Installer",
@@ -14,23 +14,23 @@ export const FR_FR_COPY: UserCopy = {
     dismiss: "Pas maintenant",
     dismissInstallAria: "Fermer les instructions d'installation",
     manualHint: "Appuyez sur ⋮ dans Chrome, puis Installer l'application",
-    manualSheetTitle: "Installer Snap1099",
+    manualSheetTitle: "Installer SnapTax",
     manualSheetLead:
       "Votre navigateur ne peut pas installer automatiquement — suivez ces étapes :",
     manualGotIt: "Compris",
     installWebApkLead:
-      "Utilisez Installer l'application — pas un raccourci favori. Snap1099 s'ouvre en plein écran depuis l'écran d'accueil.",
+      "Utilisez Installer l'application — pas un raccourci favori. SnapTax s'ouvre en plein écran depuis l'écran d'accueil.",
     launchFromHomeHint:
-      "Ouvrez Snap1099 depuis l'icône de l'écran d'accueil, pas dans Chrome.",
+      "Ouvrez SnapTax depuis l'icône de l'écran d'accueil, pas dans Chrome.",
     launchFromHomeGotIt: "Compris",
     webApkGuide: {
       preInstallTitle: "Avant l'installation",
       preInstallBody:
-        "Après l'installation, ouvrez Snap1099 depuis l'écran d'accueil — pas dans Chrome. Sur certains téléphones Android, le premier lancement demande d'ouvrir Chrome. Appuyez sur Toujours autoriser. Refuser empêchera l'application de s'ouvrir.",
+        "Après l'installation, ouvrez SnapTax depuis l'écran d'accueil — pas dans Chrome. Sur certains téléphones Android, le premier lancement demande d'ouvrir Chrome. Appuyez sur Toujours autoriser. Refuser empêchera l'application de s'ouvrir.",
       continueInstall: "Continuer l'installation",
-      postInstallTitle: "Snap1099 installé",
+      postInstallTitle: "SnapTax installé",
       postInstallSteps: [
-        "Allez sur l'écran d'accueil et appuyez sur l'icône Snap1099.",
+        "Allez sur l'écran d'accueil et appuyez sur l'icône SnapTax.",
         "Si votre téléphone demande d'ouvrir Chrome, appuyez sur Toujours autoriser.",
         "L'application s'ouvre en plein écran sans barre d'adresse.",
       ],
@@ -39,23 +39,35 @@ export const FR_FR_COPY: UserCopy = {
     manualSteps: {
       chromiumAndroid: [
         "Appuyez sur ⋮ (en haut à droite de Chrome), puis sur « Installer l'application » (pas un raccourci).",
-        "Confirmez — Snap1099 s'ouvre depuis votre écran d'accueil comme une app native.",
+        "Confirmez — SnapTax s'ouvre depuis votre écran d'accueil comme une app native.",
         "Au premier lancement depuis l'écran d'accueil, si on vous demande d'ouvrir Chrome, appuyez sur Toujours autoriser. Refuser bloque l'ouverture de l'app.",
       ],
       chromiumDesktop: [
         "Appuyez sur le menu ⋮ (en haut à droite de Chrome ou Edge).",
-        'Appuyez sur « Applications » → « Installer Snap1099 » (ou « Installer ce site »).',
-        "Confirmez — Snap1099 s'ouvre dans sa propre fenêtre.",
+        'Appuyez sur « Applications » → « Installer SnapTax » (ou « Installer ce site »).',
+        "Confirmez — SnapTax s'ouvre dans sa propre fenêtre.",
       ],
       iosSafari: [
         "Appuyez sur le bouton Partager (carré avec flèche) en bas de Safari.",
         'Faites défiler et appuyez sur « Sur l\'écran d\'accueil ».',
-        'Appuyez sur « Ajouter » — ouvrez Snap1099 depuis votre écran d\'accueil.',
+        'Appuyez sur « Ajouter » — ouvrez SnapTax depuis votre écran d\'accueil.',
       ],
       macosSafari: [
         "Appuyez sur le bouton Partager dans la barre d'outils de Safari.",
         'Choisissez « Ajouter au Dock ».',
-        "Snap1099 apparaît dans votre Dock comme une app native.",
+        "SnapTax apparaît dans votre Dock comme une app native.",
+      ],
+    },
+    appEntryGate: {
+      installTitle: "Installer SnapTax",
+      openTitle: "Ouvrir SnapTax",
+      continueInBrowser: "Continuer dans le navigateur",
+      addedToHomeScreen: "Ajouté à l'écran d'accueil",
+      postInstallTitle: "SnapTax installé",
+      postInstallSteps: [
+        "Allez sur l'écran d'accueil et appuyez sur l'icône SnapTax.",
+        "Si votre téléphone demande d'ouvrir Chrome, appuyez sur Toujours autoriser.",
+        "L'app s'ouvre en plein écran sans barre d'adresse.",
       ],
     },
   },
@@ -109,14 +121,14 @@ export const FR_FR_COPY: UserCopy = {
     landing: {
       headlineLead: "Gardez plus de votre",
       headlineAccent: "argent durement gagné.",
-      tagline: "L'IA trouve des déductions fiscales que d'autres manquent.",
+      tagline: "Organisez vos reçus et préparez des exports pour la saison fiscale.",
       check1: "Fonctionne hors ligne",
       check2: "10 reçus en 10 sec",
       check3: "Pas d'inscription requise",
       cta: "C'est parti ! ⚡",
       ctaCountdown: "C'est parti ! ({seconds})",
       ctaAria: "Commencer l'introduction",
-      ariaStatus: "Chargement de Snap1099",
+      ariaStatus: "Chargement de SnapTax",
     },
     snapCoach:
       "Appuyez sur SNAP RECEIPT — photographiez tout reçu professionnel.",
@@ -154,7 +166,7 @@ export const FR_FR_COPY: UserCopy = {
       tracked: "enregistrés",
       exportTaxPack: "Exporter le dossier fiscal",
       cpaIrsReady: "CPA /IRS Ready",
-      installApp: "Ajouter Snap1099 à l'écran d'accueil",
+      installApp: "Ajouter SnapTax à l'écran d'accueil",
       installShortLabel: "ACCUEIL",
       syncReceipts: "Synchroniser les reçus",
       settings: "Paramètres",
@@ -199,11 +211,11 @@ export const FR_FR_COPY: UserCopy = {
       },
     },
     trustBar: {
-      message: "L'IRS ne voit jamais vos reçus.",
+      message: "Vos reçus restent privés sauf si vous les partagez.",
       learnMore: "En savoir plus",
     },
     exitConfirm: {
-      title: "Quitter Snap1099 ?",
+      title: "Quitter SnapTax ?",
       body: "Vos reçus restent enregistrés sur cet appareil.",
       stay: "Rester",
       exit: "Quitter",
@@ -269,8 +281,8 @@ export const FR_FR_COPY: UserCopy = {
       privacyTitle: "Your Privacy & Security",
       privacyPoints: [
         {
-          title: "100% Private",
-          body: "Only you can see your receipts. Never shared with the IRS or anyone else.",
+          title: "Privé par défaut",
+          body: "Seul vous voyez vos reçus, sauf partage de votre part ou obligation légale.",
         },
         {
           title: "Secure in the U.S.",
@@ -363,15 +375,15 @@ export const FR_FR_COPY: UserCopy = {
     maybeLater: "Maybe later",
     unlockNow: "Unlock now — {price}",
     features: [
-      "Export unlimited receipts",
-      "CPA-ready Excel tax pack",
-      "All tax categories & reports",
-      "Deduction finder insights",
-      "Secure & IRS compliant",
+      "Export illimité de reçus",
+      "Exports tableur pour votre CPA",
+      "Catégories de dépenses et rapports récapitulatifs",
+      "Dossiers organisés pour la saison fiscale",
+      "Sauvegarde cloud sécurisée",
     ],
     oneTimeSeason: "Paiement unique pour la saison fiscale {season}",
     description:
-      "Exportez un fichier Excel prêt pour l'IRS — envoyez-le à votre CPA ou importez-le dans TurboTax. Économise des heures de saisie manuelle.",
+      "Exportez des rapports de dépenses organisés — envoyez à votre CPA ou importez dans TurboTax. Économise des heures de saisie manuelle.",
     backupWarning:
       "Connectez-vous avec Google avant de changer de téléphone, sinon les données locales seront perdues.",
     openingPaddle: "Ouverture de Paddle…",
@@ -453,7 +465,7 @@ export const FR_FR_COPY: UserCopy = {
     syncInstructions: {
       title: "Voir sur tous les appareils",
       steps: [
-        "1. Ouvrez Snap1099 sur votre autre téléphone, tablette ou ordinateur.",
+        "1. Ouvrez SnapTax sur votre autre téléphone, tablette ou ordinateur.",
         "2. Appuyez sur Paramètres et choisissez Continuer avec Google.",
         "3. Connectez-vous avec le même compte Google — les reçus se synchronisent automatiquement.",
       ],
@@ -528,6 +540,7 @@ export const FR_FR_COPY: UserCopy = {
       deductions: "Deductions",
       income: "Revenus",
       incomeForms: "{count} formulaires",
+      exportedStatus: "Exporté · saison {season}",
     },
     exportCard: {
       compatLine: "Compatible TurboTax et H&R Block",
@@ -536,7 +549,7 @@ export const FR_FR_COPY: UserCopy = {
       snap1099K: "Photo 1099-K",
       trustLine: "Utilisé par des milliers de travailleurs indépendants",
       taxEstimateDisclaimer:
-        "Est. Tax Saved est une estimation, pas un conseil fiscal. Voir Conditions §6.",
+        "Est. Tax Saved est une estimation, pas un conseil fiscal. Voir Conditions §7.",
       mostPopular: "Le plus populaire",
       states: {
         final_deadline: {
@@ -582,7 +595,11 @@ export const FR_FR_COPY: UserCopy = {
       sampleReady: "Sample export ready",
       downloadAgain: "Download again",
       exportBlocked:
-        "Export blocked. Premium license required to download official IRS documents.",
+        "Export bloqué. Export payant de saison fiscale requis.",
+      entitlementDisputed:
+        "Litige de paiement en cours. L’export pour cette saison est suspendu. Vous pouvez racheter ou contacter le support.",
+      entitlementRefunded:
+        "L’accès à l’export de cette saison a pris fin après un remboursement. Vous pouvez racheter pour débloquer l’export.",
       dismiss: "Dismiss",
     },
     privacyCenter: {
@@ -590,8 +607,8 @@ export const FR_FR_COPY: UserCopy = {
       gotIt: "Got it",
       points: [
         {
-          title: "100% Private",
-          body: "Only you can see your receipts. Never shared with the IRS or anyone else.",
+          title: "Privé par défaut",
+          body: "Seul vous voyez vos reçus, sauf partage de votre part ou obligation légale.",
         },
         {
           title: "Secure in the U.S.",
@@ -617,8 +634,8 @@ export const FR_FR_COPY: UserCopy = {
       moreTitle: "Plus d'options",
       moreSubtitle: "SMS, e-mail, AirDrop et plus",
       message:
-        "Salut — j'utilise Snap1099 pour suivre mes reçus 1099 et économiser sur mes impôts. Gratuit pour les indépendants — ça pourrait t'intéresser :",
-      shareTitle: "Snap1099 — Reçus vers dossier fiscal IRS",
+        "Salut — j'utilise SnapTax pour suivre mes reçus 1099 et économiser sur mes impôts. Gratuit pour les indépendants — ça pourrait t'intéresser :",
+      shareTitle: "SnapTax — Reçus vers dossier fiscal IRS",
       linkCopied: "Lien copié",
       shareFailed: "Partage impossible. Lien copié à la place.",
     },
@@ -643,6 +660,8 @@ export const FR_FR_COPY: UserCopy = {
         "Impossible de charger ce document. Réessayez ou ouvrez la page complète.",
       deleteAccount: "Supprimer le compte",
       deleteFailed: "Échec de la suppression. Veuillez réessayer.",
+      deleteLocalClearFailed:
+        "Les données cloud ont été supprimées, mais l'effacement de cet appareil a échoué. Appuyez à nouveau sur Supprimer définitivement.",
       deleteRequiresOnline:
         "Connectez-vous à Internet pour supprimer votre compte et vos données cloud.",
       deleteSessionExpired:
@@ -665,7 +684,7 @@ export const FR_FR_COPY: UserCopy = {
       buttonLocked: "Exporter pack IRS {season} (49 $)",
       buttonPaid: "Exporter à nouveau",
       exporting: "Export en cours…",
-      shareText: "Votre export de dépenses prêt pour l'IRS",
+      shareText: "Votre export de dépenses organisé",
       offline: "Vous êtes hors ligne. Connectez-vous pour exporter.",
       noReceipts:
         "Aucun reçu terminé à exporter. Photographiez d'abord quelques reçus !",
@@ -677,7 +696,7 @@ export const FR_FR_COPY: UserCopy = {
     },
     help: {
       title: "Aide",
-      button: "Comment utiliser Snap1099",
+      button: "Comment utiliser SnapTax",
       hint: "Guides rapides pour photographier, sauvegarder et exporter.",
     },
   },
@@ -701,7 +720,7 @@ export const FR_FR_COPY: UserCopy = {
       quickStart: {
         title: "Commencer en 30 secondes",
         steps: [
-          "Ouvrez Snap1099. **Pas d'inscription.**",
+          "Ouvrez SnapTax. **Pas d'inscription.**",
           "Appuyez sur le gros bouton jaune **PHOTOGRAPHIER UN REÇU**.",
           "Pointez la caméra sur le reçu. Appuyez sur l'obturateur. **C'est fait — retour au travail.**",
           "Avec du réseau, l'app lit le reçu et affiche le montant.",
@@ -848,7 +867,7 @@ export const FR_FR_COPY: UserCopy = {
           },
           {
             q: "Nouveau téléphone. Où sont mes reçus ?",
-            a: "Snap1099 → **Continuer avec Google** avec le **même compte**. Ils se synchronisent.",
+            a: "SnapTax → **Continuer avec Google** avec le **même compte**. Ils se synchronisent.",
           },
           {
             q: "Jamais connecté, nouveau téléphone.",
@@ -911,7 +930,7 @@ export const FR_FR_COPY: UserCopy = {
       "Format matriciel optimisé pour un import instantané dans les logiciels fiscaux.",
     formatCpaTitle: "Pack de reçus d'audit 1099 (ZIP)",
     formatCpaHint:
-      "Photos originales classées par ligne IRS — votre filet de sécurité en cas d'audit.",
+      "Piste d'audit avec vos photos de reçus originales pour vos archives.",
     sharing: "Ouverture du menu de partage…",
     imagesComplete: "{included} sur {eligible} images de reçus incluses",
     imagesMissing: "{missing} images de reçus n'ont pas pu être incluses",
@@ -925,10 +944,16 @@ export const FR_FR_COPY: UserCopy = {
       "Impossible d'enregistrer la catégorie. Réessayez.",
     formatCpaPdfTitle: "PDF miroir Schedule C",
     formatCpaPdfHint:
-      "Toutes les lignes Part II du Schedule C IRS — à recopier dans FreeTaxUSA ou sur papier.",
+      "PDF récapitulatif Schedule C avec liens vers vos photos — pour examen par votre CPA.",
     formatTxfTitle: "TXF pour logiciel fiscal",
     formatTxfHint:
       "Format assistant comptable pour outils fiscaux (blocs V042).",
+    formatQifTitle: "QuickBooks QIF",
+    formatQifHint:
+      "Importez les dépenses déductibles dans QuickBooks ou Quicken (.qif).",
+    formatQboTitle: "QuickBooks Online",
+    formatQboHint:
+      "Importez comme flux bancaire dans QuickBooks Online (.qbo Web Connect).",
     snap1099Title: "Formulaires 1099 (revenus)",
     snap1099Hint:
       "Photographiez votre 1099-NEC ou 1099-K — inclus dans le pack d'audit sous 01_Income_Documents.",
@@ -938,7 +963,7 @@ export const FR_FR_COPY: UserCopy = {
     turboTaxSteps: [
       "Ouvrez TurboTax Self-Employed → Business",
       "Choisissez Import / Upload expenses from CSV",
-      "Sélectionnez ce fichier CSV Snap1099",
+      "Sélectionnez ce fichier CSV SnapTax",
       "Associez les colonnes si demandé (Date, Amount, Category)",
     ],
     previewCsv: "Aperçu CSV en local",
@@ -952,5 +977,45 @@ export const FR_FR_COPY: UserCopy = {
       "Échec de l'export PDF. Essayez CSV ou le pack CPA, ou réessayez plus tard.",
     exportTimeout:
       "Délai d'export dépassé. Vérifiez votre connexion et réessayez.",
+    filedSyncNotFound:
+      "Certains reçus ne sont pas encore synchronisés. Attendez la fin de la sync, puis réessayez Exporter.",
+    filedSyncFailed:
+      "Votre pack fiscal a été créé, mais le statut « déposé » n'a pas pu être enregistré. Réessayez Exporter.",
+    postDownloadGuide: {
+      title: "Fichier enregistré",
+      copyButton: "Copier",
+      copySuccess: "Copié — recherchez ce nom dans Téléchargements",
+      copyFailed: "Appui long sur le nom pour copier",
+      searchTip: "Collez ce nom dans la recherche de fichiers",
+      sendToApp: "Envoyer par e-mail / app",
+      sendUnsupported:
+        "Partage indisponible ici — joignez depuis Téléchargements",
+      sendFailed:
+        "Impossible d'ouvrir le partage. Joignez depuis Téléchargements.",
+      sendSuccess: "Partagé — vérifiez votre app e-mail",
+      gotIt: "Compris",
+      steps: {
+        androidChrome: [
+          "1. Ouvrez le menu Chrome ⋮ (en haut à droite)",
+          "2. Appuyez sur Téléchargements",
+          "3. Trouvez votre fichier ci-dessous",
+        ],
+        iosSafari: [
+          "1. Appuyez sur Partager sur le téléchargement",
+          "2. Choisissez Enregistrer dans Fichiers",
+          "3. Ouvrez l'app Fichiers",
+        ],
+        desktopChrome: [
+          "1. Cliquez sur l'icône de téléchargement dans Chrome",
+          "2. Ouvrez votre dossier Téléchargements",
+          "3. Trouvez votre fichier ci-dessous",
+        ],
+        other: [
+          "1. Ouvrez les Téléchargements du navigateur",
+          "2. Trouvez votre fichier ci-dessous",
+          "3. Joignez-le dans votre e-mail ou app fiscale",
+        ],
+      },
+    },
   },
 };

@@ -2,7 +2,10 @@ export type FounderTier =
   | "FOUNDER_LEVEL_SUPER"
   | "EARLY"
   | "FOUNDER"
-  | "DEFAULT";
+  | "DEFAULT"
+  | "SPECIAL";
+
+export type PublicFounderTier = Exclude<FounderTier, "SPECIAL">;
 
 export type FounderStatus = "none" | "active" | "lapsed";
 

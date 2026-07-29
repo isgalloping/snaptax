@@ -8,6 +8,7 @@ import { homeVisual } from "@/lib/ui/homeVisual";
 
 export type FounderWidgetPreview = {
   priceUsd: number;
+  priceLabel?: string;
   remaining: number;
 };
 
@@ -28,7 +29,10 @@ export function FounderProgramWidget({
 
   const priceLine =
     preview != null
-      ? copy.subtitle.replace("{price}", formatCurrency(preview.priceUsd))
+      ? copy.subtitle.replace(
+          "{price}",
+          preview.priceLabel ?? formatCurrency(preview.priceUsd),
+        )
       : copy.subtitleLoading;
 
   const scarcityLine =

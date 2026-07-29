@@ -10,10 +10,21 @@
 
 | 逻辑页 | 路由 | 组件入口 |
 |--------|------|----------|
-| 主界面 | `/` | `components/home/HomeScreen.tsx` |
-| 设置/导出 | 同 SPA 状态 `view=settings` | `components/settings/SettingsScreen.tsx` |
+| **营销站** | `/`, `/pricing`, `/help` … | `app/(marketing)/` · `components/marketing/` |
+| **产品 PWA** | **`/app`** | `app/(pwa)/app/page.tsx` → `StartupShell` / `HomeScreen` |
+| 设置/导出 | 同 `/app` SPA 状态 `view=settings` | `components/settings/SettingsScreen.tsx` |
 
-> PRD 要求 2 逻辑页；实现为单路由 + 客户端 view 切换，避免多余 SSR 导航。
+> PRD 要求 2 **逻辑页**（主界面 + 设置）；路由上营销与产品已拆分，**拍照主界面仅在 `/app`**。
+
+## 2.2.1 PWA 安装架构
+
+**Canonical：** [13-pwa-install-architecture.md](./13-pwa-install-architecture.md)
+
+- Manifest：`short_name` **SnapTax** · `scope`/`start_url` **`/app`**
+- 根 layout：`InstallCaptureScript`（全站捕获 install prompt）
+- 营销：`MarketingInstallShell`（轻量 bar + header）
+- 产品：`AppBrowserEntryGate`（Landing 后全屏门控，可跳过）
+- 营销 CTA：`MarketingAppLink` 原生 `<a href="/app">`（Android WebAPK）
 
 ## 2.3 客户端状态
 
@@ -54,10 +65,11 @@ HomeScreen
 
 ## 2.5 PWA 要求
 
-- `app/manifest.ts`：standalone, portrait, theme `#000000`
-- SW 预缓存：`/` + static chunks（见 `app/serwist/[path]/route.ts`）
-- **API 写操作：** `app/sw.ts` 在 `defaultCache` 前注册 `POST/PUT/PATCH/DELETE` → `/api/*` 的 `NetworkOnly`（`defaultCache` 仅匹配 GET；否则控制台出现 `No route found for: /api/...`）
-- 安装提示：`components/pwa/InstallPrompt.tsx`
+- `app/manifest.ts`：standalone, portrait, theme `#000000`, **`short_name`: SnapTax**, **`scope`/`start_url`: `/app`**
+- SW（Serwist）：**仅 `/app` 产品路由** 经 `PwaProvider` 注册 `/serwist/sw.js`
+- SW 预缓存：`/app` + static chunks（见 `app/serwist/[path]/route.ts`）
+- **API 写操作：** `app/sw.ts` 在 `defaultCache` 前注册 `POST/PUT/PATCH/DELETE` → `/api/*` 的 `NetworkOnly`
+- 安装 UI：见 [13-pwa-install-architecture.md](./13-pwa-install-architecture.md)（`InstallPrompt` · `AppBrowserEntryGate` · 营销 shell）
 
 ## 2.6 UI 约束（摘自 PRODUCT-SPEC）
 

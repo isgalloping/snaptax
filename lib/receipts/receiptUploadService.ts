@@ -19,9 +19,6 @@ import {
 import { shouldRunSimilarDuplicateCheck } from "@/lib/receipts/captureMode";
 import { blobCommandOptions } from "@/lib/server/blob";
 import { utcNow } from "@/lib/time/utc";
-import { resolveVerifyContext } from "@/lib/verify/context";
-import { logEvent } from "@/lib/server/log/logEvent";
-import { baseLogEntry } from "@/lib/server/log/context";
 import {
   incomeFormTypeFromReceipt,
   type IncomeFormType,
@@ -76,23 +73,6 @@ async function findSimilarDuplicate(
   return prisma.snaptaxReceipt.findUnique({ where: { id: match.id } });
 }
 
-async function logVerifyBypass(request: NextRequest, actor: Actor) {
-  const verify = await resolveVerifyContext(actor);
-  if (!verify.canBypass) return verify;
-  logEvent({
-    ...baseLogEntry("biz.verify", request, actor),
-    level: "info",
-    success: true,
-    durationMs: 0,
-    meta: {
-      verifyBypass: true,
-      mockAi: verify.canMockAi,
-      bypassPay: verify.canBypassPay,
-    },
-  });
-  return verify;
-}
-
 async function runVisionForReceipt(params: {
   request: NextRequest;
   actor: Actor;
@@ -104,7 +84,6 @@ async function runVisionForReceipt(params: {
   captureKind?: IncomeFormType | null;
   ocrDraft?: import("@/lib/ocr/types").OcrDraftPayload | null;
 }) {
-  const verify = await logVerifyBypass(params.request, params.actor);
   try {
     const result = await processReceiptTax({
       receiptId: params.receiptId,
@@ -112,7 +91,6 @@ async function runVisionForReceipt(params: {
       imageBuffer: params.bytes,
       mime: params.mime,
       industry: params.industry,
-      canMockAi: verify.canMockAi,
       captureKind: params.captureKind ?? null,
       ocrDraft: params.ocrDraft ?? null,
       logContext: { request: params.request, actor: params.actor },
@@ -284,13 +262,15 @@ export async function handleReceiptUploadPost(params: {
       return duplicateResponse(exactDup.id, "exact");
     }
 
-    const similarDup = await findSimilarDuplicate(
-      params.actor,
-      fingerprint,
-      existing.id,
-    );
-    if (similarDup) {
-      return duplicateResponse(similarDup.id, "similar");
+    if (shouldRunSimilarDuplicateCheck(params.captureMode ?? "single")) {
+      const similarDup = await findSimilarDuplicate(
+        params.actor,
+        fingerprint,
+        existing.id,
+      );
+      if (similarDup) {
+        return duplicateResponse(similarDup.id, "similar");
+      }
     }
 
     const captureKind = params.captureKind ?? incomeFormTypeFromReceipt(existing);

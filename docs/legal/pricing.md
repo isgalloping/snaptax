@@ -2,6 +2,16 @@
 
 **Last Updated:** July 2026
 
+## Operator & Contact
+
+SnapTax is operated by Gang Huang, an individual sole proprietor ("we", "us", "our").
+
+Contact: snaptax.lightxforge@gmail.com  
+Privacy requests: snaptax.lightxforge@gmail.com (subject: Privacy Request)  
+Mailing address: Hong Kong
+
+Services are offered to users in the United States. Customer data is processed and stored in the United States as described below.
+
 Receipt capture and AI categorization in SnapTax are free. You pay only when you unlock **Export Tax Pack** for a tax season.
 
 ## What you pay for

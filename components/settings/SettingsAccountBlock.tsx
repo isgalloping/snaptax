@@ -6,7 +6,7 @@ import type { GoogleUser } from "@/lib/client/authStorage";
 import { maskEmailForDisplay } from "@/lib/client/maskEmail";
 import { displayInitials } from "@/lib/user/displayInitials";
 import { tierDisplayLabel } from "@/lib/founder/tiers";
-import type { FounderTier } from "@/lib/founder/types";
+import type { PublicFounderTier } from "@/lib/founder/types";
 import { seasonCoverageEndLabel } from "@/lib/settings/seasonCoverage";
 
 interface SettingsAccountBlockProps {
@@ -67,7 +67,7 @@ export function SettingsAccountBlock({
         </p>
         {founderStatus === "active" && founderNumber != null && (
           <p className="text-sm font-bold text-yellow-400">
-            👑 {tierDisplayLabel((founderTier ?? "DEFAULT") as FounderTier)} #{founderNumber}
+            👑 {tierDisplayLabel((founderTier ?? "DEFAULT") as PublicFounderTier)} #{founderNumber}
           </p>
         )}
         {seasonPaid && (

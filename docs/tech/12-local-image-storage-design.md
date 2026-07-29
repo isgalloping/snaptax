@@ -154,7 +154,7 @@ remoteSyncedAtMs + 90 天 且 idle 任务
 
 **永不回收 full：** `pendingUpload=true` 或 `status=processing`（即使已超过 90 天）。
 
-**触发：** `requestIdleCallback` / 启动后 ≥30s，与 [`receiptRetention`](../superpowers/specs/2026-06-19-receipt-lifecycle-sync-redesign-design.md) idle 任务合并；**不阻塞**首屏与快门。
+**触发：** `requestIdleCallback` / 启动后 ≥30s，与 [`receiptRetention`](../../lib/client/receiptRetention.ts) idle 任务合并（见 [`receipt-sync-lifecycle-design.md`](../superpowers/topics/receipt-sync-lifecycle-design.md) §3.6）；**不阻塞**首屏与快门。
 
 ---
 

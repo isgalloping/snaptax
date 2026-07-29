@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { prepareExportSync } from "./exportPrepareFlow.ts";
+import { prepareExportSync, prepareExportLocal } from "./exportPrepareFlow.ts";
 import type { StoredReceipt } from "@/lib/storage/receiptDb";
 
 const ROW: StoredReceipt = {
@@ -58,5 +58,50 @@ describe("prepareExportSync", () => {
       "sync:immediate",
     ]);
     assert.equal(merged.length, 1);
+  });
+});
+
+describe("prepareExportLocal", () => {
+  it("throws EXPORT_OFFLINE when offline", async () => {
+    await assert.rejects(
+      () =>
+        prepareExportLocal({
+          isOnline: () => false,
+          flushPendingUploads: async () => {},
+          flushPendingDeletes: async () => {},
+          loadAllReceipts: async () => [],
+          syncFromServer: async () => [],
+          ensureGhostSession: async () => {},
+        }),
+      (err: Error) => err.message === "EXPORT_OFFLINE",
+    );
+  });
+
+  it("flushes then loads IDB without server sync", async () => {
+    const order: string[] = [];
+
+    const local = await prepareExportLocal({
+      isOnline: () => true,
+      ensureGhostSession: async () => {
+        order.push("ghost");
+      },
+      flushPendingUploads: async () => {
+        order.push("uploads");
+      },
+      flushPendingDeletes: async () => {
+        order.push("deletes");
+      },
+      loadAllReceipts: async () => {
+        order.push("load");
+        return [ROW];
+      },
+      syncFromServer: async () => {
+        order.push("sync");
+        return [];
+      },
+    });
+
+    assert.deepEqual(order, ["ghost", "uploads", "deletes", "load"]);
+    assert.equal(local.length, 1);
   });
 });

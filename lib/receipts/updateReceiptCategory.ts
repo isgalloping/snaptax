@@ -1,5 +1,6 @@
 import type { SnaptaxReceipt } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { assertReceiptCategoryPatchAllowed } from "@/lib/receipts/doneReceiptLock";
 import { computeUsTaxAmount } from "@/lib/tax/computeUs";
 import {
   isUsExportCategory,
@@ -24,6 +25,7 @@ export async function updateReceiptCategory(
   if (!isUsExportCategory(categoryInput)) {
     throw new Error("INVALID_CATEGORY");
   }
+  assertReceiptCategoryPatchAllowed(receipt);
   const category = categoryInput.toUpperCase().trim() as UsExportCategory;
   const amount = Number(receipt.amount ?? 0);
   const deductionRatio = extractAiDeductionRatio(receipt.aiRaw);

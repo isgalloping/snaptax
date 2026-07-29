@@ -14,6 +14,7 @@ import {
   dismissInstallBar,
   getDeferredInstallPrompt,
   hasDismissedInstallBar,
+  isBrowserInstallEligible,
   isInstallEligible,
   isLandingDone,
   isStandaloneDisplayMode,
@@ -23,6 +24,10 @@ import {
   type InstallUiMode,
 } from "@/lib/pwa/deferredInstall";
 import { isPwaInstalledOnDevice, resolveInstallUiModeWithInstalled } from "@/lib/pwa/installedDetect";
+import {
+  APP_ENTRY_GATE_DISMISSED_EVENT,
+  shouldSuppressInstallBarAfterGateSkip,
+} from "@/lib/pwa/appBrowserEntry";
 import { supportsNativeInstallPrompt, getInstallPlatform } from "@/lib/pwa/installPlatform";
 import {
   PwaInstallContext,
@@ -36,7 +41,17 @@ import {
   type WebApkGuideVariant,
 } from "./WebApkLaunchGuideSheet";
 
-function useInstallUiState() {
+function useInstallUiState(options: {
+  requireLandingDone: boolean;
+  suppressWebApkGuide: boolean;
+  suppressInstallBar: boolean;
+}) {
+  const { requireLandingDone, suppressWebApkGuide, suppressInstallBar } = options;
+
+  const isEligible = useCallback(() => {
+    return requireLandingDone ? isInstallEligible() : isBrowserInstallEligible();
+  }, [requireLandingDone]);
+
   const [mode, setMode] = useState<InstallUiMode>("none");
   const [canPrompt, setCanPrompt] = useState(false);
   const [manualSheetOpen, setManualSheetOpen] = useState(false);
@@ -58,11 +73,13 @@ function useInstallUiState() {
     setMode(
       resolveInstallUiModeWithInstalled(
         false,
-        isInstallEligible(),
-        hasDismissedInstallBar(),
+        isEligible(),
+        hasDismissedInstallBar() ||
+          shouldSuppressInstallBarAfterGateSkip() ||
+          suppressInstallBar,
       ),
     );
-  }, []);
+  }, [isEligible, suppressInstallBar]);
 
   const runNativeInstall = useCallback(async () => {
     const deferredPrompt = getDeferredInstallPrompt();
@@ -111,7 +128,7 @@ function useInstallUiState() {
     if (isLandingDone()) {
       markPwaVisited();
       document.addEventListener("pointerdown", onEngage, { once: true });
-    } else {
+    } else if (requireLandingDone) {
       const onLanding = () => {
         markPwaVisited();
         document.addEventListener("pointerdown", onEngage, { once: true });
@@ -120,6 +137,9 @@ function useInstallUiState() {
       window.addEventListener("snap1099:landing-done", onLanding, {
         once: true,
       });
+    } else {
+      markPwaVisited();
+      document.addEventListener("pointerdown", onEngage, { once: true });
     }
 
     let onController: (() => void) | undefined;
@@ -135,17 +155,24 @@ function useInstallUiState() {
     document.addEventListener("visibilitychange", onVisible);
 
     const onInstalled = () => {
+      if (suppressWebApkGuide) return;
       if (getInstallPlatform() !== "chromium-android") return;
       setWebApkGuideVariant("post-install");
       setWebApkGuideOpen(true);
     };
     window.addEventListener("appinstalled", onInstalled);
 
+    const onGateDismissed = () => {
+      void sync();
+    };
+    window.addEventListener(APP_ENTRY_GATE_DISMISSED_EVENT, onGateDismissed);
+
     return () => {
       unsubPrompt();
       unsubLanding();
       document.removeEventListener("visibilitychange", onVisible);
       window.removeEventListener("appinstalled", onInstalled);
+      window.removeEventListener(APP_ENTRY_GATE_DISMISSED_EVENT, onGateDismissed);
       if (onController) {
         navigator.serviceWorker.removeEventListener(
           "controllerchange",
@@ -154,7 +181,7 @@ function useInstallUiState() {
       }
       for (const id of recheckDelays) window.clearTimeout(id);
     };
-  }, [sync]);
+  }, [sync, requireLandingDone, suppressWebApkGuide, suppressInstallBar]);
 
   const acknowledgeManualSheet = useCallback(() => {
     setManualSheetOpen(false);
@@ -232,19 +259,35 @@ function useInstallUiState() {
   };
 }
 
-export function PwaInstallProvider({ children }: { children: ReactNode }) {
+export function PwaInstallProvider({
+  children,
+  requireLandingDone = true,
+  showLaunchFromHomeHint = true,
+  suppressWebApkGuide = false,
+  suppressInstallBar = false,
+}: {
+  children: ReactNode;
+  requireLandingDone?: boolean;
+  showLaunchFromHomeHint?: boolean;
+  suppressWebApkGuide?: boolean;
+  suppressInstallBar?: boolean;
+}) {
   const {
     contextValue,
     webApkGuideOpen,
     webApkGuideVariant,
     handleWebApkGuideContinue,
     handleWebApkGuideDismiss,
-  } = useInstallUiState();
+  } = useInstallUiState({
+    requireLandingDone,
+    suppressWebApkGuide,
+    suppressInstallBar,
+  });
 
   return (
     <PwaInstallContext.Provider value={contextValue}>
       {children}
-      <LaunchFromHomeHint />
+      {showLaunchFromHomeHint ? <LaunchFromHomeHint /> : null}
       <InstallPrompt />
       <InstallManualSheet
         open={contextValue.manualSheetOpen}

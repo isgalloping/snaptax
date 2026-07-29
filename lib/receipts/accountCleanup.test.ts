@@ -2,8 +2,30 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   deleteUserAccountDbRecords,
+  resolveUnboundGhostIdsForDelete,
+  uniqueBlobPathnames,
   userAccountReceiptFilter,
 } from "./accountCleanup.ts";
+
+describe("uniqueBlobPathnames", () => {
+  it("drops empty values and dedupes", () => {
+    assert.deepEqual(uniqueBlobPathnames(["a", "", "a", "b"]), ["a", "b"]);
+  });
+});
+
+describe("resolveUnboundGhostIdsForDelete", () => {
+  it("only includes the current ghost and ignores client-supplied orphans", async () => {
+    const ids = await resolveUnboundGhostIdsForDelete("g-current", [
+      "g-victim",
+    ]);
+    assert.deepEqual(ids, ["g-current"]);
+  });
+
+  it("ignores an empty current ghost", async () => {
+    const ids = await resolveUnboundGhostIdsForDelete("");
+    assert.deepEqual(ids, []);
+  });
+});
 
 describe("userAccountReceiptFilter", () => {
   it("scopes to userId when no ghost binding or historical ghosts", () => {
@@ -29,6 +51,18 @@ describe("userAccountReceiptFilter", () => {
     const ghostIds = ghostClauses.map((clause) => clause.ghostId).sort();
     assert.deepEqual(ghostIds, ["ghost-new", "ghost-old"]);
     assert.ok(ghostClauses.every((clause) => clause.userId === null));
+  });
+
+  it("includes server-derived historical ghost receipts in delete filter", () => {
+    const filter = userAccountReceiptFilter("user-1", "ghost-bound", [
+      "ghost-historical",
+    ]);
+    const ghostClauses = (filter.OR ?? []).slice(1) as Array<{
+      ghostId: string;
+      userId: null;
+    }>;
+    const ghostIds = ghostClauses.map((clause) => clause.ghostId).sort();
+    assert.deepEqual(ghostIds, ["ghost-bound", "ghost-historical"]);
   });
 
   it("deduplicates bound ghost id when also present in historical list", () => {

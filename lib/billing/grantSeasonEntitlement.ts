@@ -17,6 +17,7 @@ export type GrantPaddleSeasonEntitlementResult = {
 type SeasonEntitlementRow = {
   id: string;
   transactionId: string;
+  status?: string;
 };
 
 export type GrantSeasonEntitlementDeps = {
@@ -29,7 +30,14 @@ export type GrantSeasonEntitlementDeps = {
   ) => Promise<SeasonEntitlementRow | null>;
   updateEntitlement?: (
     id: string,
-    data: { paidAt: Date; amount: number },
+    data: {
+      paidAt: Date;
+      amount: number;
+      transactionId: string;
+      status: "active";
+      statusReason: string;
+      statusUpdatedAt: Date;
+    },
   ) => Promise<void>;
   createEntitlement?: (data: {
     userId: string;
@@ -38,6 +46,9 @@ export type GrantSeasonEntitlementDeps = {
     paidAt: Date;
     amount: number;
     channelCode: string;
+    status: "active";
+    statusReason: string;
+    statusUpdatedAt: Date;
   }) => Promise<void>;
   now?: () => Date;
 };
@@ -48,13 +59,14 @@ export async function grantPaddleSeasonEntitlement(
 ): Promise<GrantPaddleSeasonEntitlementResult> {
   const paidAt = deps.now?.() ?? utcNow();
   const amount = input.amountUsd;
+  const statusUpdatedAt = paidAt;
 
   const findBySeason =
     deps.findBySeason ??
     (async (userId, taxSeason) =>
       prisma.snaptaxSeasonEntitlement.findUnique({
         where: { userId_taxSeason: { userId, taxSeason } },
-        select: { id: true, transactionId: true },
+        select: { id: true, transactionId: true, status: true },
       }));
 
   const findByTransaction =
@@ -62,7 +74,7 @@ export async function grantPaddleSeasonEntitlement(
     (async (transactionId) =>
       prisma.snaptaxSeasonEntitlement.findUnique({
         where: { transactionId },
-        select: { id: true, transactionId: true },
+        select: { id: true, transactionId: true, status: true },
       }));
 
   const updateEntitlement =
@@ -70,7 +82,14 @@ export async function grantPaddleSeasonEntitlement(
     (async (id, data) => {
       await prisma.snaptaxSeasonEntitlement.update({
         where: { id },
-        data: { paidAt: data.paidAt, amount: data.amount },
+        data: {
+          paidAt: data.paidAt,
+          amount: data.amount,
+          transactionId: data.transactionId,
+          status: data.status,
+          statusReason: data.statusReason,
+          statusUpdatedAt: data.statusUpdatedAt,
+        },
       });
     });
 
@@ -80,23 +99,32 @@ export async function grantPaddleSeasonEntitlement(
       await prisma.snaptaxSeasonEntitlement.create({ data });
     });
 
+  const activePatch = {
+    paidAt,
+    amount,
+    transactionId: input.transactionId,
+    status: "active" as const,
+    statusReason: "purchase_completed",
+    statusUpdatedAt,
+  };
+
   const existingBySeason = await findBySeason(input.userId, input.taxSeason);
   if (existingBySeason) {
-    await updateEntitlement(existingBySeason.id, { paidAt, amount });
+    await updateEntitlement(existingBySeason.id, activePatch);
     return {
       created: false,
       duplicateSeason: existingBySeason.transactionId !== input.transactionId,
-      transactionId: existingBySeason.transactionId,
+      transactionId: input.transactionId,
     };
   }
 
   const existingByTxn = await findByTransaction(input.transactionId);
   if (existingByTxn) {
-    await updateEntitlement(existingByTxn.id, { paidAt, amount });
+    await updateEntitlement(existingByTxn.id, activePatch);
     return {
       created: false,
       duplicateSeason: false,
-      transactionId: existingByTxn.transactionId,
+      transactionId: input.transactionId,
     };
   }
 
@@ -107,6 +135,9 @@ export async function grantPaddleSeasonEntitlement(
     paidAt,
     amount,
     channelCode: "paddle",
+    status: "active",
+    statusReason: "purchase_completed",
+    statusUpdatedAt,
   });
 
   return {

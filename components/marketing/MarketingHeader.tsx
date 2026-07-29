@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { MarketingAppLink } from "@/components/marketing/MarketingAppLink";
+import { MarketingInstallButton } from "@/components/marketing/MarketingInstallButton";
 import { MARKETING_COPY } from "@/lib/marketing/copy";
 import { MARKETING_TOKENS } from "@/lib/marketing/tokens";
 
@@ -46,19 +48,18 @@ export function MarketingHeader() {
           >
             {menuOpen ? "×" : "☰"}
           </button>
-          <Link
-            href="/app"
+          <MarketingInstallButton />
+          <MarketingAppLink
             className="hidden min-h-11 items-center rounded-lg px-3 text-sm font-bold text-zinc-200 transition-colors hover:text-white sm:flex"
           >
             Sign In
-          </Link>
-          <Link
-            href="/app"
-            className="flex min-h-11 items-center rounded-lg px-4 text-sm font-black text-black transition-transform active:scale-95"
+          </MarketingAppLink>
+          <MarketingAppLink
+            className="hidden min-h-11 items-center rounded-lg px-4 text-sm font-black text-black transition-transform active:scale-95 md:flex"
             style={{ backgroundColor: MARKETING_TOKENS.ctaYellow }}
           >
-            Get Started
-          </Link>
+            {MARKETING_COPY.hero.primaryCta}
+          </MarketingAppLink>
         </div>
       </div>
       {menuOpen ? (
@@ -80,13 +81,21 @@ export function MarketingHeader() {
               </li>
             ))}
             <li>
-              <Link
-                href="/app"
+              <MarketingAppLink
+                className="flex min-h-12 items-center justify-center rounded-lg px-3 text-sm font-black text-black transition-transform active:scale-95"
+                style={{ backgroundColor: MARKETING_TOKENS.ctaYellow }}
+                onClick={() => setMenuOpen(false)}
+              >
+                {MARKETING_COPY.hero.primaryCta}
+              </MarketingAppLink>
+            </li>
+            <li>
+              <MarketingAppLink
                 className="flex min-h-12 items-center rounded-lg px-3 text-sm font-semibold text-zinc-200 hover:bg-white/5"
                 onClick={() => setMenuOpen(false)}
               >
                 Sign In
-              </Link>
+              </MarketingAppLink>
             </li>
           </ul>
         </nav>

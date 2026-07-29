@@ -4,7 +4,7 @@
 **Status:** Approved (design)  
 **Scope:** Replace minimal marquee `data_stream` with full five-section mockup UI (Hero, progress, checklist, system log, footer). `simple_using` unchanged.
 
-**Parent spec:** [`2026-06-10-landing-flags-design.md`](./2026-06-10-landing-flags-design.md)
+**Parent spec:** [`topics/onboarding-aha-design.md`](../topics/onboarding-aha-design.md) §5.1
 
 ## Problem
 

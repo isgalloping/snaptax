@@ -46,6 +46,14 @@ export function isIosSafariDevice(userAgent: string): boolean {
   return /iPhone|iPad|iPod/i.test(userAgent);
 }
 
+/** True for Android Chrome WebAPK — the only Android browser with OS-level link capture. */
+export function isAndroidChromeWebApkBrowser(userAgent: string): boolean {
+  if (!/Android/i.test(userAgent)) return false;
+  if (/EdgA/i.test(userAgent)) return false;
+  if (/OPR\//i.test(userAgent)) return false;
+  return /Chrome/i.test(userAgent);
+}
+
 export function supportsNativeInstallPrompt(platform: InstallPlatform): boolean {
   return (
     platform === "chromium-android" || platform === "chromium-desktop"

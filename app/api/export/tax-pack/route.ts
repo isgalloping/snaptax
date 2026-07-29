@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { apiError, mapErrorToResponse } from "@/lib/api/errors";
 import { getActor } from "@/lib/auth/getActor";
+import { isSeasonEntitlementPaid } from "@/lib/billing/isSeasonEntitlementPaid";
 import { prisma } from "@/lib/prisma";
 import { currentTaxSeason, defaultExportTaxYear } from "@/lib/tax/season";
 import type { TaxRegion } from "@/lib/tax/types";
@@ -22,14 +23,15 @@ import { buildAuditDetailCsv } from "@/lib/export/buildAuditDetailCsv";
 import { auditEligibleRows, hasAuditExportContent } from "@/lib/export/auditEligibleRows";
 import { assignAuditTrailMeta } from "@/lib/export/assignAuditTrailMeta";
 import { buildTxfExport } from "@/lib/export/buildTxf";
+import { buildQifExport } from "@/lib/export/buildQifExport";
+import { buildQboExport } from "@/lib/export/buildQboExport";
+import { exportTaxPackFilename } from "@/lib/export/exportFilenames";
 import { finalizeExportRows } from "@/lib/export/mapping/finalizeExportRows";
 import {
   buildExportIncomeRow,
   isIncomeDocument,
 } from "@/lib/export/incomeDocuments";
 import { logEvent } from "@/lib/server/log/logEvent";
-import { resolveVerifyContext } from "@/lib/verify/context";
-import { ensureBypassEntitlement } from "@/lib/verify/ensureBypassEntitlement";
 import { userAccountReceiptFilter } from "@/lib/receipts/accountCleanup";
 
 export const maxDuration = 60;
@@ -37,7 +39,7 @@ export const maxDuration = 60;
 const exportBodySchema = z.object({
   taxYear: z.string().regex(/^\d{4}$/).optional(),
   format: z
-    .enum(["csv", "cpa_pack", "cpa_pdf", "txf", "xlsx"])
+    .enum(["csv", "cpa_pack", "cpa_pdf", "txf", "qif", "qbo", "xlsx"])
     .optional()
     .default("csv"),
 });
@@ -48,16 +50,12 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
     if (actor.kind !== "user") throw new Error("UNAUTHORIZED");
 
     const season = currentTaxSeason();
-    const verify = await resolveVerifyContext(actor);
-    if (verify.canBypassPay) {
-      await ensureBypassEntitlement(actor.userId, season);
-    }
     const entitlement = await prisma.snaptaxSeasonEntitlement.findUnique({
       where: {
         userId_taxSeason: { userId: actor.userId, taxSeason: season },
       },
     });
-    if (!entitlement) {
+    if (!entitlement || !isSeasonEntitlementPaid(entitlement.status)) {
       return apiError("PAYMENT_REQUIRED", "Tax season export not paid", 402);
     }
 
@@ -149,19 +147,46 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
       const csv = buildTurboTaxCsv(enrichedExpenseRows);
       buffer = Buffer.from(csv, "utf-8");
       contentType = "text/csv; charset=utf-8";
-      filename = `Snap1099-${taxYear}-TurboTax-Expenses.csv`;
+      filename = exportTaxPackFilename("csv", taxYear);
     } else if (body.format === "txf") {
-      if (enrichedExpenseRows.length === 0) {
+      const txfRows = auditEligibleRows(enrichedExpenseRows);
+      if (txfRows.length === 0) {
         return apiError(
           "NO_RECEIPTS",
-          "No expense receipts to export for TXF",
+          "No tax-deductible receipts to export for TXF",
           422,
         );
       }
-      const txf = buildTxfExport(enrichedExpenseRows, exportedAt);
+      const txf = buildTxfExport(txfRows, exportedAt);
       buffer = Buffer.from(txf, "utf-8");
       contentType = "text/plain; charset=utf-8";
-      filename = `Snap1099-${taxYear}-Expenses.txf`;
+      filename = exportTaxPackFilename("txf", taxYear);
+    } else if (body.format === "qif") {
+      const qifRows = auditEligibleRows(enrichedExpenseRows);
+      if (qifRows.length === 0) {
+        return apiError(
+          "NO_RECEIPTS",
+          "No tax-deductible receipts to export for QuickBooks QIF",
+          422,
+        );
+      }
+      const qif = buildQifExport(qifRows);
+      buffer = Buffer.from(qif, "utf-8");
+      contentType = "application/qif; charset=utf-8";
+      filename = exportTaxPackFilename("qif", taxYear);
+    } else if (body.format === "qbo") {
+      const qboRows = auditEligibleRows(enrichedExpenseRows);
+      if (qboRows.length === 0) {
+        return apiError(
+          "NO_RECEIPTS",
+          "No tax-deductible receipts to export for QuickBooks Online",
+          422,
+        );
+      }
+      const qbo = buildQboExport(qboRows, exportedAt);
+      buffer = Buffer.from(qbo, "utf-8");
+      contentType = "application/x-ofx; charset=utf-8";
+      filename = exportTaxPackFilename("qbo", taxYear);
     } else if (body.format === "cpa_pack") {
       const detailCsv = buildAuditDetailCsv(auditRows);
       const summaryPdf = await buildScheduleCMirrorPdf({
@@ -180,7 +205,7 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
       );
       buffer = pack.buffer;
       contentType = "application/zip";
-      filename = `Snap1099-${taxYear}-Audit-Trail.zip`;
+      filename = exportTaxPackFilename("cpa_pack", taxYear);
       responseHeaders["X-Export-Images-Included"] = String(
         pack.imageStats.imagesIncluded,
       );
@@ -217,7 +242,7 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
         throw new Error("PDF_GENERATION_FAILED");
       }
       contentType = "application/pdf";
-      filename = `Snap1099-${taxYear}-Schedule-C-Mirror.pdf`;
+      filename = exportTaxPackFilename("cpa_pdf", taxYear);
     } else if (body.format === "xlsx") {
       const workbook = new ExcelJS.Workbook();
       const expenses = workbook.addWorksheet("Expenses");
@@ -269,7 +294,7 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
       buffer = await workbook.xlsx.writeBuffer();
       contentType =
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-      filename = `Snap1099-${taxYear}-Tax-Pack.xlsx`;
+      filename = exportTaxPackFilename("xlsx", taxYear);
     } else {
       throw new Error("UNSUPPORTED_EXPORT_FORMAT");
     }

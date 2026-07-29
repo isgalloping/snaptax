@@ -35,8 +35,9 @@ function sampleRow(
 describe("buildAuditDetailCsv", () => {
   it("includes IRS_Line and one row per receipt", () => {
     const path = "Line_22_Supplies/20260315_HomeDepot_$125.50_001.jpg";
+    const alias = "REC_20260315_HomeDepot_125.50.jpg";
     const csv = buildAuditDetailCsv([
-      sampleRow({ auditImagePath: path }),
+      sampleRow({ auditImagePath: path, receiptAlias: alias }),
       sampleRow({
         id: "00000000-0000-0000-0000-000000000002",
         merchant: "Pizza Hut",
@@ -45,6 +46,7 @@ describe("buildAuditDetailCsv", () => {
         scheduleCLine: "Line 24b",
         categoryDisplay: "Meals",
         exportAmount: 6.08,
+        receiptAlias: "REC_20260705_PizzaHut_6.08.jpg",
         auditImagePath:
           "Line_24b_Deductible_meals/20260705_Pizza_Hut_$6.08_004.jpg",
       }),
@@ -57,24 +59,30 @@ describe("buildAuditDetailCsv", () => {
     );
     assert.equal(
       lines[1],
-      `2026-03-15,22,Supplies,Home Depot,125.50,,${path},${path}`,
+      `2026-03-15,22,Supplies,Home Depot,125.50,,${path},${alias}`,
     );
     assert.equal(
       lines[2],
-      "2026-03-15,24b,Meals,Pizza Hut,6.08,,Line_24b_Deductible_meals/20260705_Pizza_Hut_$6.08_004.jpg,Line_24b_Deductible_meals/20260705_Pizza_Hut_$6.08_004.jpg",
+      "2026-03-15,24b,Meals,Pizza Hut,6.08,,Line_24b_Deductible_meals/20260705_Pizza_Hut_$6.08_004.jpg,REC_20260705_PizzaHut_6.08.jpg",
     );
   });
 
-  it("includes Audit_Image_Path and Receipt_Image_URL with same value", () => {
+  it("maps Audit_Image_Path to ZIP path and Receipt_Image_URL to alias", () => {
     const path = "Line_22_Supplies/20260315_HomeDepot_$125.50_001.jpg";
-    const csv = buildAuditDetailCsv([sampleRow({ auditImagePath: path })]);
+    const alias = "REC_20260315_HomeDepot_125.50.jpg";
+    const csv = buildAuditDetailCsv([
+      sampleRow({ auditImagePath: path, receiptAlias: alias }),
+    ]);
     assert.match(csv, /Audit_Image_Path/);
     assert.match(csv, /Receipt_Image_URL/);
     const lines = csv.split("\r\n");
     assert.equal(lines.length, 2);
-    assert.ok(lines[1]!.includes(path));
+    assert.equal(
+      lines[1],
+      `2026-03-15,22,Supplies,Home Depot,125.50,,${path},${alias}`,
+    );
     const pathCount = (lines[1]!.match(/Line_22_Supplies/g) ?? []).length;
-    assert.equal(pathCount, 2);
+    assert.equal(pathCount, 1);
   });
 
   it("returns header only when no rows", () => {

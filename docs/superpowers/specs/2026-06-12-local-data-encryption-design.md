@@ -4,7 +4,7 @@
 **Status:** Approved (design)  
 **Scope:** IndexedDB v3 encrypted local photos; server-primary image after upload; signed URL viewing; metadata shim; local wipe + copy alignment.
 
-**Depends on:** [`2026-06-05-api-security-design.md`](./2026-06-05-api-security-design.md) (Blob private + signed URL) · [`2026-06-10-indexeddb-receipt-query-design.md`](./2026-06-10-indexeddb-receipt-query-design.md) (IDB v2 indexes) · [`2026-06-07-receipt-sync-ghost-reconcile-design.md`](./2026-06-07-receipt-sync-ghost-reconcile-design.md) (safe reconcile)
+**Depends on:** [`2026-06-05-api-security-design.md`](./2026-06-05-api-security-design.md) (Blob private + signed URL) · [`receipt-sync-lifecycle-design.md`](../topics/receipt-sync-lifecycle-design.md) §3.3–3.4 (IDB v2 indexes + safe reconcile)
 
 **Store 命名（Canonical）：** 本文档中的 `photos` / `receipts` / `meta` 为 **legacy v4** 名；规范名见 [`DB-DESIGN-SPEC.md`](../../tech/DB-DESIGN-SPEC.md) §2.2（`snaptax_receipt_photos` · `snaptax_receipts` · `snaptax_crypto_meta`）。
 
@@ -240,7 +240,7 @@ openDb v3:
 | Delete receipt | `deletePhoto` + receipt 行 |
 | Delete Account | 全量 IDB clear + 全部 `snap1099_*` localStorage |
 
-与 [`receipt-sync-ghost-reconcile-design`](./2026-06-07-receipt-sync-ghost-reconcile-design.md) 一致：**不因 remote 空列表删本地 pending 行**。
+与 [`receipt-sync-lifecycle-design.md`](../topics/receipt-sync-lifecycle-design.md) §3.3 一致：**不因 remote 空列表删本地 pending 行**。
 
 ---
 
@@ -370,5 +370,5 @@ export async function clearLocalAppData(): Promise<void> {
 
 - [`2026-06-05-api-security-design.md`](./2026-06-05-api-security-design.md) — Blob private, signed URL TTL
 - [`2026-06-05-compliance-privacy-design.md`](./2026-06-05-compliance-privacy-design.md) — U2 披露
-- [`2026-06-10-indexeddb-receipt-query-design.md`](./2026-06-10-indexeddb-receipt-query-design.md) — v2 indexes (preserved)
+- [`receipt-sync-lifecycle-design.md`](../topics/receipt-sync-lifecycle-design.md) §3.4 — v2 indexes (preserved)
 - Implementation plan: [`../plans/2026-06-12-local-data-encryption.md`](../plans/2026-06-12-local-data-encryption.md)

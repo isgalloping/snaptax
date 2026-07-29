@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { MarketingAppLink } from "@/components/marketing/MarketingAppLink";
 import { MARKETING_COPY } from "@/lib/marketing/copy";
 import { MARKETING_TOKENS } from "@/lib/marketing/tokens";
 import { buildMarketingMetadata } from "@/lib/marketing/metadata";
@@ -51,13 +51,12 @@ export default function FeaturesPage() {
           </section>
         ))}
       </div>
-      <Link
-        href="/app"
+      <MarketingAppLink
         className="mt-12 inline-flex min-h-14 items-center rounded-xl px-8 text-lg font-black text-black transition-transform active:scale-95"
         style={{ backgroundColor: MARKETING_TOKENS.ctaYellow }}
       >
         Get Started
-      </Link>
+      </MarketingAppLink>
     </div>
   );
 }

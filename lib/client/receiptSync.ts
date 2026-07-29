@@ -1,5 +1,13 @@
 import { apiReceiptToLocal } from "@/lib/client/receiptApi";
-import { isReceiptFiled } from "@/lib/receipts/filedStatus";
+import {
+  backfillAllowedFieldsFromRemote,
+  mergeDoneLockedLocalRow,
+  isDoneLockedReceipt,
+} from "@/lib/client/receiptMergePolicy";
+import {
+  RECEIPT_SYNC_LIMIT,
+  UI_RECEIPT_LIMIT,
+} from "@/lib/client/receiptWindow";
 import {
   reconcileServerPrimaryPhotos,
   saveReceipt,
@@ -7,9 +15,9 @@ import {
 } from "@/lib/storage/receiptDb";
 import type { Receipt } from "@/lib/types";
 
+export { RECEIPT_SYNC_LIMIT, UI_RECEIPT_LIMIT } from "@/lib/client/receiptWindow";
+
 export const STARTUP_UNFILED_LIMIT = 30;
-export const UI_RECEIPT_LIMIT = 100;
-export const RECEIPT_SYNC_LIMIT = UI_RECEIPT_LIMIT;
 
 export function receiptUpdatedAt(receipt: Pick<Receipt, "updatedAt" | "timestamp">): Date {
   return receipt.updatedAt ?? receipt.timestamp;
@@ -30,42 +38,6 @@ function isRemoteNewer(
 ): boolean {
   if (!remoteUpdatedAt) return false;
   return remoteUpdatedAt.getTime() > localUpdatedAt.getTime();
-}
-
-function backfillExtractionFromRemote(
-  local: StoredReceipt,
-  remote: StoredReceipt,
-): StoredReceipt {
-  if (remote.status !== "done" && remote.status !== "blurry") {
-    return local;
-  }
-
-  const patch: Partial<StoredReceipt> = {};
-  if (!local.merchant?.trim() && remote.merchant?.trim()) {
-    patch.merchant = remote.merchant;
-  }
-  if (local.amount == null && remote.amount != null) {
-    patch.amount = remote.amount;
-  }
-  if (!local.category?.trim() && remote.category?.trim()) {
-    patch.category = remote.category;
-  }
-  if (!local.currency && remote.currency) {
-    patch.currency = remote.currency;
-  }
-  if (local.deductible === undefined && remote.deductible !== undefined) {
-    patch.deductible = remote.deductible;
-  }
-  if (local.incomeTaxYear == null && remote.incomeTaxYear != null) {
-    patch.incomeTaxYear = remote.incomeTaxYear;
-  }
-  if (!isReceiptFiled(local) && isReceiptFiled(remote)) {
-    patch.taxSeason = remote.taxSeason;
-    patch.taxSeasonDate = remote.taxSeasonDate;
-  }
-
-  if (Object.keys(patch).length === 0) return local;
-  return { ...local, ...patch };
 }
 
 export function unionMergeLWW(
@@ -102,11 +74,16 @@ export function unionMergeLWW(
     const localUpdatedAt = receiptUpdatedAt(existing);
     const remoteUpdatedAt = remoteRow.updatedAt ?? remoteRow.timestamp;
     if (isRemoteNewer(remoteUpdatedAt, localUpdatedAt)) {
-      byId.set(remoteRow.id, remoteStored);
+      byId.set(
+        remoteRow.id,
+        isDoneLockedReceipt(existing)
+          ? mergeDoneLockedLocalRow(existing, remoteStored)
+          : remoteStored,
+      );
     } else {
       byId.set(
         remoteRow.id,
-        backfillExtractionFromRemote(existing, remoteStored),
+        backfillAllowedFieldsFromRemote(existing, remoteStored),
       );
     }
   }

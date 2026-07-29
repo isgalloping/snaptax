@@ -6,6 +6,48 @@ import {
 } from "@/lib/tax/season";
 import { clientTimeZone } from "@/lib/time/timeZone";
 
+export type TaxExportGateAction =
+  | { kind: "empty"; receipts: Receipt[] }
+  | { kind: "google"; receipts: Receipt[] }
+  | { kind: "paywall"; receipts: Receipt[] }
+  | { kind: "export"; receipts: Receipt[] };
+
+interface ResolveTaxExportGateActionOptions {
+  receipts: Receipt[];
+  preparedReceipts?: Receipt[] | void;
+  googleUserPresent: boolean;
+  seasonPaid: boolean;
+  timeZone?: string;
+}
+
+export function realExportReceipts(
+  receipts: Receipt[],
+  preparedReceipts?: Receipt[] | void,
+): Receipt[] {
+  return (preparedReceipts ?? receipts).filter((r) => !r.isOnboardingDemo);
+}
+
+export function resolveTaxExportGateAction({
+  receipts,
+  preparedReceipts,
+  googleUserPresent,
+  seasonPaid,
+  timeZone,
+}: ResolveTaxExportGateActionOptions): TaxExportGateAction {
+  const exportReceipts = realExportReceipts(receipts, preparedReceipts);
+
+  if (!hasExportableReceipts(exportReceipts, timeZone)) {
+    return { kind: "empty", receipts: exportReceipts };
+  }
+  if (!googleUserPresent) {
+    return { kind: "google", receipts: exportReceipts };
+  }
+  if (!seasonPaid) {
+    return { kind: "paywall", receipts: exportReceipts };
+  }
+  return { kind: "export", receipts: exportReceipts };
+}
+
 /** True when at least one done receipt exists in any calendar tax year. */
 export function hasExportableReceipts(
   receipts: Receipt[],

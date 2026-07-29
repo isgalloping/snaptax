@@ -1,4 +1,9 @@
 import type { Locale } from "@/lib/i18n";
+import {
+  LEGAL_BRAND_NAME,
+  LEGAL_MAILING_ADDRESS,
+  LEGAL_OPERATOR_NAME,
+} from "./operator";
 
 export type LocalizedLegalDoc = "privacy" | "terms";
 
@@ -25,12 +30,20 @@ export const LEGAL_CONTACT_EMAIL = "snaptax.lightxforge@gmail.com";
 const EN: LegalBundle = {
   privacyTitle: "Privacy Policy",
   termsTitle: "Terms of Service",
-  lastUpdatedLabel: "Last Updated: June 2026 · GDPR & CPRA",
+  lastUpdatedLabel: "Last Updated: July 2026 · GDPR & CPRA",
   openFullPage: (title) => `Open full ${title} page`,
   close: "Close",
   dataStorageLabel:
     "Processed and stored in the United States. See Privacy Policy for international transfers.",
   privacy: [
+    {
+      title: "Operator & Contact",
+      body: [
+        `${LEGAL_BRAND_NAME} is operated by ${LEGAL_OPERATOR_NAME}, an individual sole proprietor.`,
+        `Contact: ${LEGAL_CONTACT_EMAIL}. Mailing address: ${LEGAL_MAILING_ADDRESS}.`,
+        "Customer data is processed and stored in the United States.",
+      ],
+    },
     {
       title: "Privacy by Design & Ownership",
       body: [
@@ -67,7 +80,7 @@ const EN: LegalBundle = {
       ],
     },
     {
-      title: "No Sale (CPRA)",
+      title: "No Sale",
       body: [
         "We do not sell your personal information. Zero ads. No sharing with data brokers.",
       ],
@@ -75,7 +88,7 @@ const EN: LegalBundle = {
     {
       title: "Your Rights",
       body: [
-        "Access, rectification, erasure (Delete Account), portability (Export), restrict processing, and object — contact snaptax.lightxforge@gmail.com.",
+        "Under GDPR and applicable US state privacy laws (including CPRA), you may have rights to access, rectification, erasure (Delete Account), portability (Export), restrict processing, and object — contact snaptax.lightxforge@gmail.com.",
         "We respond within 30 days (acknowledgment targeted within 48 hours).",
       ],
     },
@@ -84,7 +97,15 @@ const EN: LegalBundle = {
     {
       title: "Service",
       body: [
-        "Snap1099 helps you photograph receipts, categorize expenses with AI, and export for tax prep. This is a tool, not tax or legal advice.",
+        "SnapTax helps contractors, self-employed workers, and small businesses organize receipts, track expenses, and prepare export reports for tax season.",
+        "This is a recordkeeping and export tool, not tax or legal advice. We do not file taxes or provide official government forms.",
+      ],
+    },
+    {
+      title: "Export Reports",
+      body: [
+        '"Tax-ready" means organized export files for your review — not IRS or software approval.',
+        "You are responsible for verifying amounts and categories before filing.",
       ],
     },
     {
@@ -113,12 +134,20 @@ const EN: LegalBundle = {
 const FR: LegalBundle = {
   privacyTitle: "Politique de confidentialité",
   termsTitle: "Conditions d'utilisation",
-  lastUpdatedLabel: "Dernière mise à jour : juin 2026 · RGPD & CPRA",
+  lastUpdatedLabel: "Dernière mise à jour : juillet 2026 · RGPD & CPRA",
   openFullPage: (title) => `Ouvrir la page complète — ${title}`,
   close: "Fermer",
   dataStorageLabel:
     "Traitement et stockage aux États-Unis. Voir la Politique de confidentialité pour les transferts internationaux.",
   privacy: [
+    {
+      title: "Exploitant & contact",
+      body: [
+        `${LEGAL_BRAND_NAME} est exploité par ${LEGAL_OPERATOR_NAME}, entrepreneur individuel.`,
+        `Contact : ${LEGAL_CONTACT_EMAIL}. Adresse postale : ${LEGAL_MAILING_ADDRESS}.`,
+        "Les données clients sont traitées et stockées aux États-Unis.",
+      ],
+    },
     {
       title: "Confidentialité dès la conception & propriété",
       body: [
@@ -155,7 +184,7 @@ const FR: LegalBundle = {
       ],
     },
     {
-      title: "Aucune vente (CPRA)",
+      title: "Aucune vente",
       body: [
         "Nous ne vendons pas vos informations personnelles. Zéro publicité. Aucun partage avec des courtiers.",
       ],
@@ -163,7 +192,7 @@ const FR: LegalBundle = {
     {
       title: "Vos droits",
       body: [
-        "Accès, rectification, effacement (Supprimer le compte), portabilité (Export), limitation et opposition — snaptax.lightxforge@gmail.com.",
+        "En vertu du RGPD et des lois américaines sur la vie privée applicables (y compris le CPRA), vous pouvez disposer de droits d'accès, de rectification, d'effacement (Supprimer le compte), de portabilité (Export), de limitation et d'opposition — snaptax.lightxforge@gmail.com.",
         "Réponse sous 30 jours (accusé visé sous 48 heures).",
       ],
     },
@@ -172,7 +201,15 @@ const FR: LegalBundle = {
     {
       title: "Service",
       body: [
-        "Snap1099 vous aide à photographier des reçus, classer vos dépenses avec l'IA et exporter pour la préparation fiscale. Outil, pas conseil fiscal.",
+        "SnapTax aide les contractuels, indépendants et petites entreprises à organiser leurs reçus, suivre leurs dépenses et préparer des exports pour la saison fiscale.",
+        "Outil de tenue de registres et d'export, pas conseil fiscal. Nous ne déposons pas de déclarations ni ne fournissons de formulaires gouvernementaux officiels.",
+      ],
+    },
+    {
+      title: "Rapports d'export",
+      body: [
+        "« Prêt pour les impôts » = fichiers organisés pour votre examen — pas approbation IRS ou logiciel.",
+        "Vous êtes responsable de vérifier montants et catégories avant dépôt.",
       ],
     },
     {
@@ -201,12 +238,20 @@ const FR: LegalBundle = {
 const DE: LegalBundle = {
   privacyTitle: "Datenschutzerklärung",
   termsTitle: "Nutzungsbedingungen",
-  lastUpdatedLabel: "Zuletzt aktualisiert: Juni 2026 · DSGVO & CPRA",
+  lastUpdatedLabel: "Zuletzt aktualisiert: Juli 2026 · DSGVO & CPRA",
   openFullPage: (title) => `Vollständige Seite öffnen — ${title}`,
   close: "Schließen",
   dataStorageLabel:
     "Verarbeitung und Speicherung in den Vereinigten Staaten. Internationale Übermittlungen siehe Datenschutzerklärung.",
   privacy: [
+    {
+      title: "Betreiber & Kontakt",
+      body: [
+        `${LEGAL_BRAND_NAME} wird betrieben von ${LEGAL_OPERATOR_NAME}, einem Einzelunternehmer.`,
+        `Kontakt: ${LEGAL_CONTACT_EMAIL}. Postanschrift: ${LEGAL_MAILING_ADDRESS}.`,
+        "Kundendaten werden in den Vereinigten Staaten verarbeitet und gespeichert.",
+      ],
+    },
     {
       title: "Datenschutz by Design & Eigentum",
       body: [
@@ -243,7 +288,7 @@ const DE: LegalBundle = {
       ],
     },
     {
-      title: "Kein Verkauf (CPRA)",
+      title: "Kein Verkauf",
       body: [
         "Wir verkaufen Ihre personenbezogenen Daten nicht. Keine Werbung. Kein Teilen mit Brokern.",
       ],
@@ -251,7 +296,7 @@ const DE: LegalBundle = {
     {
       title: "Ihre Rechte",
       body: [
-        "Auskunft, Berichtigung, Löschung (Konto löschen), Übertragbarkeit (Export), Einschränkung und Widerspruch — snaptax.lightxforge@gmail.com.",
+        "Nach DSGVO und anwendbarem US-Datenschutzrecht (einschließlich CPRA) können Ihnen Rechte auf Auskunft, Berichtigung, Löschung (Konto löschen), Übertragbarkeit (Export), Einschränkung und Widerspruch zustehen — snaptax.lightxforge@gmail.com.",
         "Antwort innerhalb von 30 Tagen (Bestätigung innerhalb von 48 Stunden angestrebt).",
       ],
     },
@@ -260,7 +305,15 @@ const DE: LegalBundle = {
     {
       title: "Leistung",
       body: [
-        "Snap1099 hilft beim Fotografieren, KI-Kategorisieren und Exportieren für die Steuervorbereitung. Werkzeug, keine Steuerberatung.",
+        "SnapTax hilft Auftragnehmern, Selbstständigen und kleinen Unternehmen, Belege zu organisieren, Ausgaben zu verfolgen und Exporte für die Steuersaison vorzubereiten.",
+        "Werkzeug zur Aufzeichnung und zum Export, keine Steuerberatung. Wir reichen keine Steuererklärungen ein und stellen keine offiziellen Behördenformulare bereit.",
+      ],
+    },
+    {
+      title: "Exportberichte",
+      body: [
+        "„Steuerfertig“ bedeutet organisierte Exportdateien zur Prüfung — keine IRS- oder Software-Genehmigung.",
+        "Sie sind für die Prüfung von Beträgen und Kategorien vor Abgabe verantwortlich.",
       ],
     },
     {

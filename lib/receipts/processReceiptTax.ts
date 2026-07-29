@@ -1,15 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import { process1099Vision } from "@/lib/openai/process1099Vision";
 import type { OcrDraftPayload } from "@/lib/ocr/types";
-import {
-  routeStandardReceiptTax,
-} from "@/lib/receipts/processReceiptTaxRouter";
+import { normalizeMerchantName } from "@/lib/receipts/normalizeMerchantName";
+import { routeStandardReceiptTax } from "@/lib/receipts/processReceiptTaxRouter";
 import { baseLogEntry } from "@/lib/server/log/context";
 import { logEvent } from "@/lib/server/log/logEvent";
 import type { TaxRegion } from "@/lib/tax/types";
 import { utcNow } from "@/lib/time/utc";
-import { mockReceiptVision } from "@/lib/verify/mockReceiptVision";
-import { mock1099Vision } from "@/lib/verify/mock1099Vision";
 import type { Prisma } from "@prisma/client";
 import type { Actor } from "@/lib/auth/getActor";
 
@@ -20,7 +17,6 @@ export async function processReceiptTax(params: {
   mime: "image/jpeg" | "image/png";
   industry?: string | null;
   ocrDraft?: OcrDraftPayload | null;
-  canMockAi?: boolean;
   captureKind?: "1099-NEC" | "1099-K" | null;
   logContext?: {
     request: Request;
@@ -32,33 +28,16 @@ export async function processReceiptTax(params: {
   const { result, route } =
     params.captureKind && params.dataRegion === "us"
       ? {
-          result: params.canMockAi
-            ? mock1099Vision(params.captureKind)
-            : await process1099Vision(params.imageBuffer, params.mime),
+          result: await process1099Vision(params.imageBuffer, params.mime),
           route: "vision_fallback" as const,
         }
-      : params.canMockAi
-        ? {
-            result: (() => {
-              const mock = mockReceiptVision(params.dataRegion);
-              return {
-                ...mock,
-                aiRaw: {
-                  ...mock.aiRaw,
-                  extractionSource: "vision_fallback",
-                },
-              };
-            })(),
-            route: "vision_fallback" as const,
-          }
-        : await routeStandardReceiptTax({
-            dataRegion: params.dataRegion,
-            imageBuffer: params.imageBuffer,
-            mime: params.mime,
-            industry: params.industry,
-            ocrDraft: params.ocrDraft,
-            canMockAi: params.canMockAi,
-          });
+      : await routeStandardReceiptTax({
+          dataRegion: params.dataRegion,
+          imageBuffer: params.imageBuffer,
+          mime: params.mime,
+          industry: params.industry,
+          ocrDraft: params.ocrDraft,
+        });
 
   if (params.logContext) {
     logEvent({
@@ -86,7 +65,7 @@ export async function processReceiptTax(params: {
       status: result.status,
       amount: result.amount,
       currency: result.currency,
-      merchantName: result.merchantName || null,
+      merchantName: normalizeMerchantName(result.merchantName) || null,
       category: result.category || null,
       deductible: result.deductible,
       taxAmount: result.taxAmount,

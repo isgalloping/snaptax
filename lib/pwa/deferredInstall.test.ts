@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   INSTALL_DISMISS_DAYS,
   isDismissedWithinWindow,
+  isLandingDone,
   resolveInstallUiMode,
 } from "./deferredInstall";
 
@@ -44,5 +45,35 @@ describe("resolveInstallUiMode", () => {
 
   it("returns header-button after Not now", () => {
     assert.equal(resolveInstallUiMode(true, true), "header-button");
+  });
+});
+
+describe("isLandingDone", () => {
+  it("reads session mirror when html class is absent", () => {
+    const storage = new Map<string, string>();
+    (globalThis as { window?: typeof globalThis }).window = globalThis;
+    (globalThis as { document?: Document }).document = {
+      documentElement: {
+        classList: {
+          contains: () => false,
+          add: () => {},
+          remove: () => {},
+        },
+      },
+    } as Document;
+    (globalThis as { sessionStorage?: Storage }).sessionStorage = {
+      getItem: (key) => storage.get(key) ?? null,
+      setItem: (key, value) => {
+        storage.set(key, value);
+      },
+      removeItem: (key) => {
+        storage.delete(key);
+      },
+      clear: () => storage.clear(),
+      key: () => null,
+      length: 0,
+    };
+    storage.set("snap1099_landing_done", "1");
+    assert.equal(isLandingDone(), true);
   });
 });

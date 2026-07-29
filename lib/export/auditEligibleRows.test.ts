@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { ExportExpenseRow } from "@/lib/tax/exportRows";
-import { auditEligibleRows, hasAuditExportContent } from "./auditEligibleRows.ts";
+import { auditEligibleRows, exportEligibleRows, hasAuditExportContent } from "./auditEligibleRows.ts";
 
 function row(partial: Partial<ExportExpenseRow>): ExportExpenseRow {
   return {
@@ -30,10 +30,34 @@ function row(partial: Partial<ExportExpenseRow>): ExportExpenseRow {
   };
 }
 
+describe("exportEligibleRows", () => {
+  it("includes rows with taxDeductible Yes and exportAmount > 0", () => {
+    const rows = exportEligibleRows([
+      row({ taxDeductible: "Yes", exportAmount: 50, deductibleAmount: 50 }),
+    ]);
+    assert.equal(rows.length, 1);
+  });
+
+  it("excludes Personal / zero exportAmount", () => {
+    const rows = exportEligibleRows([
+      row({}),
+      row({ taxDeductible: "Yes", exportAmount: 0 }),
+    ]);
+    assert.equal(rows.length, 0);
+  });
+
+  it("excludes taxDeductible No even when deductible boolean is true", () => {
+    const rows = exportEligibleRows([
+      row({ deductible: true, taxDeductible: "No", exportAmount: 100 }),
+    ]);
+    assert.equal(rows.length, 0);
+  });
+});
+
 describe("auditEligibleRows", () => {
   it("includes deductible rows with exportAmount > 0", () => {
     const rows = auditEligibleRows([
-      row({ deductible: true, exportAmount: 50, deductibleAmount: 50 }),
+      row({ taxDeductible: "Yes", exportAmount: 50, deductibleAmount: 50 }),
     ]);
     assert.equal(rows.length, 1);
   });
@@ -41,9 +65,17 @@ describe("auditEligibleRows", () => {
   it("excludes Personal / zero exportAmount", () => {
     const rows = auditEligibleRows([
       row({}),
-      row({ exportAmount: 0, deductible: true }),
+      row({ taxDeductible: "Yes", exportAmount: 0 }),
     ]);
     assert.equal(rows.length, 0);
+  });
+
+  it("matches exportEligibleRows", () => {
+    const input = [
+      row({ taxDeductible: "Yes", exportAmount: 10 }),
+      row({ taxDeductible: "No", exportAmount: 99, deductible: true }),
+    ];
+    assert.deepEqual(auditEligibleRows(input), exportEligibleRows(input));
   });
 });
 

@@ -34,7 +34,19 @@ export function resolveApiError(err: unknown): ResolvedApiError {
       return {
         code: "GOOGLE_LOGIN_REQUIRED",
         clientMessage: "Sign in with Google to continue",
-        status: 401,
+        status: 409,
+      };
+    case "BLOB_DELETE_FAILED":
+      return {
+        code: "BLOB_DELETE_FAILED",
+        clientMessage: "Could not delete cloud images; please retry",
+        status: 503,
+      };
+    case "INVALID_REQUEST":
+      return {
+        code: "INVALID_REQUEST",
+        clientMessage: "Invalid request body",
+        status: 400,
       };
     case "NOT_FOUND":
       return {
@@ -84,6 +96,18 @@ export function resolveApiError(err: unknown): ResolvedApiError {
         clientMessage: "Invalid industry selection",
         status: 400,
       };
+    case "INVALID_CATEGORY":
+      return {
+        code: "INVALID_CATEGORY",
+        clientMessage: "Invalid receipt category",
+        status: 400,
+      };
+    case "RECEIPT_LOCKED":
+      return {
+        code: "RECEIPT_LOCKED",
+        clientMessage: "This receipt can no longer be edited",
+        status: 409,
+      };
     case "GHOST_RECEIPT_LIMIT":
       return {
         code: "GHOST_RECEIPT_LIMIT",
@@ -106,6 +130,12 @@ export function resolveApiError(err: unknown): ResolvedApiError {
       return {
         code: "NO_RECEIPTS",
         clientMessage: "No receipts to export",
+        status: 422,
+      };
+    case "INVALID_EXPORT_TAX_YEAR":
+      return {
+        code: "INVALID_EXPORT_TAX_YEAR",
+        clientMessage: "Receipt tax year does not match export year",
         status: 422,
       };
     case "PDF_GENERATION_FAILED":

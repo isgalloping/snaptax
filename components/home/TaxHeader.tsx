@@ -23,6 +23,9 @@ interface TaxHeaderProps {
   displayTaxSaved?: number | null;
   ahaCoachActive?: boolean;
   onAhaCoachDismiss?: () => void;
+  googleNudgeVisible?: boolean;
+  onGoogleNudgeClick?: () => void;
+  onGoogleNudgeDismiss?: () => void;
 }
 
 const actionBtn = homeVisual.headerActionBtn;
@@ -40,9 +43,14 @@ export function TaxHeader({
   displayTaxSaved,
   ahaCoachActive = false,
   onAhaCoachDismiss,
+  googleNudgeVisible = false,
+  onGoogleNudgeClick,
+  onGoogleNudgeDismiss,
 }: TaxHeaderProps) {
   const pwaInstall = usePwaInstallOptional();
-  const copy = useUserCopy().home.taxHeader;
+  const { home, onboarding } = useUserCopy();
+  const copy = home.taxHeader;
+  const nudgeCopy = onboarding;
   const showInstallButton = pwaInstall?.mode === "header-button";
   const headerTaxSaved = displayTaxSaved ?? taxSaved;
   const { heroCard } = homeVisual;
@@ -106,6 +114,24 @@ export function TaxHeader({
                 {receiptLabel} • {formatCurrency(totalExpenses)} {copy.tracked}
               </span>
             </p>
+            {googleNudgeVisible && (
+              <div className="mt-1 flex min-h-16 items-center gap-2">
+                <button
+                  type="button"
+                  onClick={onGoogleNudgeClick}
+                  className="min-h-16 flex-1 py-2 text-left text-[11px] font-bold leading-snug text-yellow-400 active:scale-95"
+                >
+                  {nudgeCopy.googleNudge} →
+                </button>
+                <button
+                  type="button"
+                  onClick={onGoogleNudgeDismiss}
+                  className="min-h-16 shrink-0 px-2 py-2 text-[11px] font-bold text-zinc-400 active:scale-95"
+                >
+                  {nudgeCopy.googleNudgeDismiss}
+                </button>
+              </div>
+            )}
           </div>
         </div>
 

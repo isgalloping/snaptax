@@ -121,7 +121,12 @@ export function getCurrentInstallPlatform(): InstallPlatform {
 
 export function isLandingDone(): boolean {
   if (typeof document === "undefined") return false;
-  return document.documentElement.classList.contains("landing-done");
+  if (document.documentElement.classList.contains("landing-done")) return true;
+  try {
+    return sessionStorage.getItem("snap1099_landing_done") === "1";
+  } catch {
+    return false;
+  }
 }
 
 function syncDeferredFromWindow(): void {
@@ -218,6 +223,12 @@ export function subscribeLandingDone(listener: () => void): () => void {
     window.removeEventListener(LANDING_DONE_EVENT, onLandingDone);
     observer?.disconnect();
   };
+}
+
+export function isBrowserInstallEligible(): boolean {
+  if (typeof window === "undefined") return false;
+  if (isStandaloneDisplayMode()) return false;
+  return isInstallPlatformEligible(getCurrentInstallPlatform());
 }
 
 export function isInstallEligible(): boolean {

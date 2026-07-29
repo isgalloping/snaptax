@@ -1,9 +1,19 @@
-# Snap1099 Datenschutzerklärung
+# SnapTax Datenschutzerklärung
 
 **Zuletzt aktualisiert:** Juni 2026  
 **Anwendbare Rechtsordnungen:** Vereinigte Staaten (einschließlich Kalifornien CPRA) & Europäische Union (DSGVO)
 
-Willkommen bei Snap1099. Diese Datenschutzerklärung erläutert, wie wir Ihre Daten erheben, verwenden, verarbeiten und schützen, wenn Sie die Snap1099-Anwendung („die App") nutzen.
+## Betreiber & Kontakt
+
+SnapTax wird betrieben von Gang Huang, Einzelunternehmer („wir", „uns", „unser").
+
+Kontakt: snaptax.lightxforge@gmail.com  
+Datenschutzanfragen: snaptax.lightxforge@gmail.com (Betreff: Privacy Request)  
+Postanschrift: Hong Kong
+
+Die Dienste werden Nutzern in den Vereinigten Staaten angeboten. Kundendaten werden in den Vereinigten Staaten verarbeitet und gespeichert, wie unten beschrieben.
+
+Willkommen bei SnapTax. Diese Datenschutzerklärung erläutert, wie wir Ihre Daten erheben, verwenden, verarbeiten und schützen, wenn Sie die SnapTax-Anwendung („die App") nutzen.
 
 ## 1. Datenschutz by Design & Dateneigentum
 

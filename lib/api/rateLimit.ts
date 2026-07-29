@@ -50,6 +50,48 @@ export async function checkUserReceiptLimit(
   return { ok: false, retryAfterSec: result.retryAfterSec };
 }
 
+export async function checkIpSyncEventsLimit(ip: string): Promise<LimitResult> {
+  const result = await consumeRateLimit({
+    bucketKey: `ip:sync_events:${ip}`,
+    windowMs: MS_PER_MIN,
+    limit: envInt("SYNC_EVENTS_IP_PER_MIN", 60),
+  });
+  if (result.ok) return { ok: true };
+  return { ok: false, retryAfterSec: result.retryAfterSec };
+}
+
+export async function checkGhostSyncEventsLimit(
+  ghostId: string,
+): Promise<LimitResult> {
+  const result = await consumeRateLimit({
+    bucketKey: `ghost:sync_events:${ghostId}`,
+    windowMs: MS_PER_HOUR,
+    limit: envInt("SYNC_EVENTS_GHOST_HOURLY", 30),
+  });
+  if (result.ok) return { ok: true };
+  return { ok: false, retryAfterSec: result.retryAfterSec };
+}
+
+export async function checkUserSyncEventsLimit(
+  userId: string,
+): Promise<LimitResult> {
+  const result = await consumeRateLimit({
+    bucketKey: `user:sync_events:${userId}`,
+    windowMs: MS_PER_HOUR,
+    limit: envInt("SYNC_EVENTS_USER_HOURLY", 60),
+  });
+  if (result.ok) return { ok: true };
+  return { ok: false, retryAfterSec: result.retryAfterSec };
+}
+
+export async function checkActorSyncEventsLimit(
+  actor: Actor,
+): Promise<LimitResult> {
+  return actor.kind === "user"
+    ? checkUserSyncEventsLimit(actor.userId)
+    : checkGhostSyncEventsLimit(actor.ghostId);
+}
+
 export async function checkGhostRegisterLimit(ip: string): Promise<LimitResult> {
   const result = await consumeRateLimit({
     bucketKey: `ip:ghost_register:${ip}`,

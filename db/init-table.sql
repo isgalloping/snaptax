@@ -131,6 +131,9 @@ CREATE TABLE snaptax_season_entitlements (
   paid_at        TIMESTAMPTZ(3) NOT NULL,
   amount         NUMERIC(10, 2) NOT NULL,
   channel_code   VARCHAR(64) NOT NULL,
+  status         VARCHAR(32) NOT NULL DEFAULT 'active',
+  status_reason  VARCHAR(64),
+  status_updated_at TIMESTAMPTZ(3),
   created_at     TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at     TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -141,6 +144,36 @@ CREATE TABLE snaptax_season_entitlements (
   CONSTRAINT snaptax_season_entitlements_user_id_fkey
     FOREIGN KEY (user_id) REFERENCES snaptax_users (id) ON DELETE CASCADE
 );
+
+-- ---------------------------------------------------------------------------
+-- snaptax_webhook_events (payment-channel webhook audit)
+-- ---------------------------------------------------------------------------
+
+CREATE TABLE snaptax_webhook_events (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  channel_code VARCHAR(64) NOT NULL,
+  event_id VARCHAR(128) NOT NULL,
+  event_type VARCHAR(128) NOT NULL,
+  occurred_at TIMESTAMPTZ(3),
+  transaction_id VARCHAR(128),
+  adjustment_id VARCHAR(128),
+  action VARCHAR(64),
+  adjustment_status VARCHAR(64),
+  payload JSONB NOT NULL,
+  processing_result VARCHAR(32) NOT NULL,
+  processing_reason VARCHAR(128),
+  entitlement_id UUID,
+  status_before VARCHAR(32),
+  status_after VARCHAR(32),
+  created_at TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT snaptax_webhook_events_channel_event_key UNIQUE (channel_code, event_id)
+);
+
+CREATE INDEX snaptax_webhook_events_transaction_id_idx
+  ON snaptax_webhook_events (transaction_id);
+CREATE INDEX snaptax_webhook_events_created_at_idx
+  ON snaptax_webhook_events (created_at);
 
 -- ---------------------------------------------------------------------------
 -- snaptax_checkout_intents
@@ -245,8 +278,16 @@ COMMENT ON COLUMN snaptax_season_entitlements.transaction_id IS '支付交易号
 COMMENT ON COLUMN snaptax_season_entitlements.paid_at IS '支付成功时间（TIMESTAMPTZ UTC）';
 COMMENT ON COLUMN snaptax_season_entitlements.amount IS '实付金额';
 COMMENT ON COLUMN snaptax_season_entitlements.channel_code IS '支付渠道；MVP 应用层枚举：paddle';
+COMMENT ON COLUMN snaptax_season_entitlements.status IS 'active|disputed|refunded；仅 active 可导出';
+COMMENT ON COLUMN snaptax_season_entitlements.status_reason IS '最近状态变迁机器原因';
+COMMENT ON COLUMN snaptax_season_entitlements.status_updated_at IS '状态最近更新时间（TIMESTAMPTZ UTC）';
 COMMENT ON COLUMN snaptax_season_entitlements.created_at IS '记录创建时间（TIMESTAMPTZ UTC）';
 COMMENT ON COLUMN snaptax_season_entitlements.updated_at IS '记录最后更新时间（TIMESTAMPTZ UTC）';
+COMMENT ON TABLE snaptax_webhook_events IS '支付渠道 Webhook 审计日志（幂等 channel+event_id）';
+COMMENT ON COLUMN snaptax_webhook_events.channel_code IS '渠道：paddle（小写）等';
+COMMENT ON COLUMN snaptax_webhook_events.event_id IS '渠道事件 ID；与 channel_code 唯一';
+COMMENT ON COLUMN snaptax_webhook_events.processing_result IS 'applied|ignored|error|received';
+COMMENT ON INDEX snaptax_webhook_events_channel_event_key IS 'Webhook 投递幂等';
 
 -- ---------------------------------------------------------------------------
 -- Comments: snaptax_checkout_intents columns
@@ -280,5 +321,72 @@ COMMENT ON INDEX snaptax_season_entitlements_user_season_key IS 'Export 权益�
 COMMENT ON INDEX snaptax_season_entitlements_transaction_id_key IS 'Paddle Webhook 幂等：transaction_id 唯一';
 COMMENT ON INDEX snaptax_checkout_intents_user_season_idx IS 'Checkout intent 复用查询：user_id + tax_season';
 COMMENT ON INDEX snaptax_checkout_intents_transaction_id_key IS 'Paddle Webhook 关联：transaction_id 唯一';
+
+-- ---------------------------------------------------------------------------
+-- snaptax_receipt_events (Phase 2 Event Queue spike — append-only lifecycle)
+-- ---------------------------------------------------------------------------
+
+CREATE TABLE snaptax_receipt_events (
+  id                 UUID PRIMARY KEY,
+  receipt_id         UUID NOT NULL,
+  user_id            UUID,
+  ghost_id           VARCHAR(255),
+  event_type         VARCHAR(64) NOT NULL,
+  payload            JSONB NOT NULL DEFAULT '{}'::jsonb,
+  client_created_at  TIMESTAMPTZ(3) NOT NULL,
+  created_at         TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX snaptax_receipt_events_user_created_idx
+  ON snaptax_receipt_events (user_id, client_created_at);
+
+CREATE INDEX snaptax_receipt_events_ghost_created_idx
+  ON snaptax_receipt_events (ghost_id, client_created_at);
+
+CREATE INDEX snaptax_receipt_events_client_created_idx
+  ON snaptax_receipt_events (client_created_at);
+
+COMMENT ON TABLE snaptax_receipt_events IS 'Append-only receipt lifecycle events from client Event Queue (Phase 2 spike)';
+COMMENT ON COLUMN snaptax_receipt_events.client_created_at IS 'Client event timestamp (UTC) from IndexedDB queue';
+
+-- ---------------------------------------------------------------------------
+-- snaptax_receipt_sync_cursors + lifecycle snapshots (Event Store follow-up)
+-- ---------------------------------------------------------------------------
+
+CREATE TABLE snaptax_receipt_sync_cursors (
+  id                     UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id                UUID UNIQUE,
+  ghost_id               VARCHAR(255) UNIQUE,
+  last_event_id          UUID NOT NULL,
+  last_client_created_at TIMESTAMPTZ(3) NOT NULL,
+  updated_at             TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT snaptax_receipt_sync_cursors_actor_chk CHECK (
+    (user_id IS NOT NULL AND ghost_id IS NULL)
+    OR (user_id IS NULL AND ghost_id IS NOT NULL)
+  )
+);
+
+CREATE TABLE snaptax_receipt_lifecycle_snapshots (
+  id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  receipt_id        UUID NOT NULL,
+  user_id           UUID,
+  ghost_id          VARCHAR(255),
+  source_event_id   UUID NOT NULL UNIQUE,
+  payload           JSONB NOT NULL DEFAULT '{}'::jsonb,
+  client_created_at TIMESTAMPTZ(3) NOT NULL,
+  created_at        TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX snaptax_receipt_lifecycle_snapshots_receipt_created_idx
+  ON snaptax_receipt_lifecycle_snapshots (receipt_id, client_created_at);
+
+CREATE INDEX snaptax_receipt_lifecycle_snapshots_user_created_idx
+  ON snaptax_receipt_lifecycle_snapshots (user_id, client_created_at);
+
+CREATE INDEX snaptax_receipt_lifecycle_snapshots_ghost_created_idx
+  ON snaptax_receipt_lifecycle_snapshots (ghost_id, client_created_at);
+
+COMMENT ON TABLE snaptax_receipt_sync_cursors IS 'Per-actor high-water mark for ingested receipt lifecycle events';
+COMMENT ON TABLE snaptax_receipt_lifecycle_snapshots IS 'Append-only receipt state snapshots from TAX_CALCULATED events';
 
 COMMIT;

@@ -1,12 +1,73 @@
 import assert from "node:assert/strict";
-import { afterEach, describe, it } from "node:test";
+import { afterEach, beforeEach, describe, it } from "node:test";
 import {
   ensureGhostSession,
+  getClientOrphanGhostIds,
+  getClientOrphanGhostPossession,
+  rememberKnownGhostId,
+  rememberKnownGhostPossession,
   resetGhostSessionFlightForTests,
 } from "./ghostClient.ts";
 
+describe("ghost known ids + possession", () => {
+  const storage = new Map<string, string>();
+
+  afterEach(() => {
+    storage.clear();
+    resetGhostSessionFlightForTests();
+  });
+
+  beforeEach(() => {
+    globalThis.localStorage = {
+      getItem: (key) => storage.get(key) ?? null,
+      setItem: (key, value) => {
+        storage.set(key, value);
+      },
+      removeItem: (key) => {
+        storage.delete(key);
+      },
+      clear: () => storage.clear(),
+      key: () => null,
+      length: 0,
+    } as Storage;
+  });
+
+  it("tracks rotated ghost ids for orphan merge", () => {
+    storage.set("snap1099_ghost_id", "ghost-old");
+    rememberKnownGhostId("ghost-old");
+    rememberKnownGhostId("ghost-new");
+    assert.deepEqual(getClientOrphanGhostIds("ghost-new"), ["ghost-old"]);
+  });
+
+  it("returns only orphans that have HMAC tokens", () => {
+    rememberKnownGhostPossession("ghost-old", "tok-old");
+    rememberKnownGhostId("ghost-id-only");
+    rememberKnownGhostPossession("ghost-new", "tok-new");
+    assert.deepEqual(getClientOrphanGhostPossession("ghost-new"), [
+      { ghostId: "ghost-old", token: "tok-old" },
+    ]);
+  });
+});
+
 describe("ensureGhostSession", () => {
   const originalFetch = globalThis.fetch;
+  const storage = new Map<string, string>();
+
+  beforeEach(() => {
+    storage.clear();
+    globalThis.localStorage = {
+      getItem: (key) => storage.get(key) ?? null,
+      setItem: (key, value) => {
+        storage.set(key, value);
+      },
+      removeItem: (key) => {
+        storage.delete(key);
+      },
+      clear: () => storage.clear(),
+      key: () => null,
+      length: 0,
+    } as Storage;
+  });
 
   afterEach(() => {
     globalThis.fetch = originalFetch;
@@ -22,10 +83,16 @@ describe("ensureGhostSession", () => {
       await new Promise<void>((resolve) => {
         resolveRegister = resolve;
       });
-      return new Response(JSON.stringify({ ghostId: "ghost-1" }), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({
+          ghostId: "ghost-1",
+          ghostToken: "ghost-1.1.sig",
+        }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
     }) as typeof fetch;
 
     const first = ensureGhostSession();
@@ -37,5 +104,8 @@ describe("ensureGhostSession", () => {
     assert.equal(a, "ghost-1");
     assert.equal(b, "ghost-1");
     assert.equal(postCount, 1);
+    assert.deepEqual(getClientOrphanGhostPossession("other"), [
+      { ghostId: "ghost-1", token: "ghost-1.1.sig" },
+    ]);
   });
 });

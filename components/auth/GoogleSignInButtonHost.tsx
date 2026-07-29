@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ContinueWithGoogleButton } from "@/components/auth/ContinueWithGoogleButton";
 import { useUserCopy } from "@/components/i18n/I18nProvider";
 import {
@@ -13,7 +13,7 @@ import {
   mountGoogleSignInButton,
   type GoogleSignInMount,
 } from "@/lib/client/googleAuth";
-import { triggerGisButtonClick } from "@/lib/client/triggerGisButtonClick";
+import { waitForGisButtonInHost } from "@/lib/client/waitForGisButton";
 
 interface GoogleSignInButtonHostProps {
   active: boolean;
@@ -23,8 +23,9 @@ interface GoogleSignInButtonHostProps {
 }
 
 /**
- * English branded button; GIS credential flow via hidden host + programmatic click.
- * Mobile WebViews often block touches on opacity-0 GIS iframes — visible button forwards taps.
+ * English branded shell with a near-transparent GIS overlay on top.
+ * Mobile WebViews ignore programmatic .click() on hidden GIS iframes and often
+ * block opacity-0 touch targets — use opacity ~0.02 so real taps reach GIS.
  */
 export function GoogleSignInButtonHost({
   active,
@@ -33,6 +34,7 @@ export function GoogleSignInButtonHost({
   className = "mt-6",
 }: GoogleSignInButtonHostProps) {
   const authCopy = useUserCopy().auth.googleSignIn;
+  const googleCtaLabel = useUserCopy().settings.account.googleCta;
   const [preparing, setPreparing] = useState(true);
   const [signingIn, setSigningIn] = useState(false);
   const [gisReady, setGisReady] = useState(false);
@@ -124,7 +126,13 @@ export function GoogleSignInButtonHost({
             if (!cancelled) handleAuthError(error);
           },
         });
-        if (!cancelled) setGisReady(true);
+        const gisButton = await waitForGisButtonInHost(host);
+        if (cancelled) return false;
+        if (!gisButton) {
+          handleAuthError(new Error("GIS_BUTTON_FAILED"));
+          return false;
+        }
+        setGisReady(true);
         return true;
       } catch (error) {
         if (!cancelled) handleAuthError(error);
@@ -152,27 +160,29 @@ export function GoogleSignInButtonHost({
   }, [active, errorMessages]);
 
   const busy = preparing || signingIn;
-
-  const handleGoogleClick = useCallback(() => {
-    if (busy || !gisReady) return;
-    const triggered = triggerGisButtonClick(hostRef.current);
-    if (!triggered) {
-      setInlineError(errorMessages.signInConfig);
-    }
-  }, [busy, gisReady, errorMessages.signInConfig]);
+  const touchEnabled = gisReady && !busy;
 
   return (
     <div className={className}>
       <div className="relative min-h-16 w-full">
+        <div className="relative z-[1]" aria-hidden="true">
+          <ContinueWithGoogleButton
+            onClick={() => {}}
+            disabled={busy}
+            className="pointer-events-none"
+          />
+        </div>
         <div
           ref={hostRef}
-          className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden opacity-0"
-          aria-hidden
-        />
-        <ContinueWithGoogleButton
-          onClick={handleGoogleClick}
-          disabled={busy || !gisReady}
-          className="relative z-[1]"
+          className={`absolute inset-0 z-[2] flex items-center justify-center overflow-hidden ${
+            touchEnabled
+              ? "cursor-pointer opacity-[0.02]"
+              : "pointer-events-none opacity-60"
+          }`}
+          role="button"
+          tabIndex={touchEnabled ? 0 : -1}
+          aria-busy={busy}
+          aria-label={googleCtaLabel}
         />
       </div>
       {preparing && !signingIn && (

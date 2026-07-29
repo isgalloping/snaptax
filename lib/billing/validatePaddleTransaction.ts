@@ -41,6 +41,10 @@ function envMinAmountCents(): number {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 500;
 }
 
+function minAmountCentsForSku(): number {
+  return envMinAmountCents();
+}
+
 function envCurrency(): string {
   return (process.env.PADDLE_CURRENCY ?? "USD").trim().toUpperCase();
 }
@@ -57,6 +61,7 @@ export function parsePaddleTotalCents(
 
 export function validatePaddleTransaction(
   payload: PaddleWebhookPayload,
+  options?: { minAmountCents?: number },
 ): PaddleTransactionValidation {
   if (payload.event_type !== "transaction.completed") {
     return { ok: false, reason: "unsupported_event_type" };
@@ -81,7 +86,7 @@ export function validatePaddleTransaction(
     return { ok: false, reason: "missing_total" };
   }
 
-  const minCents = envMinAmountCents();
+  const minCents = options?.minAmountCents ?? minAmountCentsForSku();
   if (totalCents < minCents) {
     return { ok: false, reason: "amount_too_low" };
   }

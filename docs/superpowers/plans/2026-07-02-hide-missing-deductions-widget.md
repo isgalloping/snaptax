@@ -8,7 +8,7 @@
 
 **Tech Stack:** TypeScript, Node test runner, existing `buildWidgetPages` pure functions.
 
-**Spec:** `docs/superpowers/specs/2026-07-02-hide-missing-deductions-widget-design.md`
+**Spec:** `docs/superpowers/topics/founder-program-widget-design.md` §3.7
 
 ---
 

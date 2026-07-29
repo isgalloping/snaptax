@@ -38,6 +38,16 @@ const OTHER_POLICY_LINKS = [
     label: "Security & Incidents",
     description: "Security contact and incident response",
   },
+  {
+    href: "/cookies",
+    label: "Cookie Policy",
+    description: "Essential cookies and local storage",
+  },
+  {
+    href: "/disclaimer",
+    label: "Disclaimer",
+    description: "Not tax advice; estimates only",
+  },
 ] as const;
 
 function PolicyCard({

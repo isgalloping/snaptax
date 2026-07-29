@@ -16,9 +16,11 @@ import {
 import { LegalSheet } from "@/components/legal/LegalSheet";
 import {
   deleteAccountAndLocalData,
+  isDeleteAccountLocalClearError,
   isDeleteAccountOfflineError,
   isDeleteAccountSessionExpiredError,
 } from "@/lib/client/deleteAccountFlow";
+import { hasPendingLocalWipe } from "@/lib/storage/clearLocalData";
 import { useDialogEscape } from "@/lib/ui/useDialogEscape";
 
 interface PrivacyDataSectionProps {
@@ -123,6 +125,8 @@ export function PrivacyDataSection({
         setError(copy.deleteRequiresOnline);
       } else if (isDeleteAccountSessionExpiredError(err)) {
         setError(copy.deleteSessionExpired);
+      } else if (isDeleteAccountLocalClearError(err)) {
+        setError(copy.deleteLocalClearFailed);
       } else {
         setError(copy.deleteFailed);
       }
@@ -132,6 +136,9 @@ export function PrivacyDataSection({
   };
 
   const offline = !isOnline;
+  const pendingLocalWipe =
+    typeof window !== "undefined" && hasPendingLocalWipe();
+  const deleteBlockedByOffline = offline && !pendingLocalWipe;
 
   return (
     <>
@@ -228,7 +235,7 @@ export function PrivacyDataSection({
                 ? copy.deleteSignedInWarning
                 : copy.deleteGhostWarning}
             </p>
-            {offline && (
+            {deleteBlockedByOffline && (
               <p className="mt-4 text-sm font-bold text-yellow-400" role="alert">
                 {copy.deleteRequiresOnline}
               </p>
@@ -240,7 +247,7 @@ export function PrivacyDataSection({
             )}
             <button
               type="button"
-              disabled={deleting || offline}
+              disabled={deleting || deleteBlockedByOffline}
               onClick={() => void handleDelete()}
               className="mt-6 w-full min-h-16 rounded-xl border-2 border-red-600 bg-red-950 py-4 text-lg font-black uppercase tracking-wider text-red-400 transition-transform active:scale-95 disabled:opacity-60"
             >

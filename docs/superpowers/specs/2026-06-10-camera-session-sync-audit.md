@@ -14,7 +14,7 @@
 | `docs/superpowers/specs/2026-06-07-fast-startup-local-first-design.md` | Phase 2 defer merge when camera open |
 | `docs/superpowers/specs/2026-06-07-background-polling-policy-design.md` | Watcher pause signals |
 | `docs/superpowers/specs/2026-06-08-batch-snap-camera-design.md` | Batch persist / Done flush / camera ↻ sync |
-| `docs/superpowers/specs/2026-06-09-post-batch-review-flow-design.md` | postReview phases while camera stays open |
+| [`docs/superpowers/topics/capture-pipeline-design.md`](../topics/capture-pipeline-design.md) | postReview phases while camera stays open |
 
 ## Executive summary
 

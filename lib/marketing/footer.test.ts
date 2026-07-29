@@ -24,6 +24,7 @@ describe("marketing footer", () => {
         "Privacy Policy",
         "Terms of Service",
         "Refund Policy",
+        "Do Not Sell or Share",
         "Cookie Policy",
         "Disclaimer",
       ],

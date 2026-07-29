@@ -78,8 +78,7 @@ Snap1099's public legal / DSR / support contact email is `legal@snap1099.com`. O
 - `docs/accessibility/WCAG-22-AA-summary.md`
 - `docs/product/PRODUCT-SPEC.md`
 - `docs/prd/0.0.1.update.md`
-- `docs/superpowers/specs/2026-06-30-compliance-p1-legal.md`
-- `docs/superpowers/specs/2026-06-30-compliance-p6-dsr-governance.md`
+- `docs/superpowers/topics/compliance-program-design.md` §6 · §11
 - `docs/superpowers/specs/2026-06-05-compliance-privacy-design.md`
 
 ---

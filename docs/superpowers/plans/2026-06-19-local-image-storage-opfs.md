@@ -8,7 +8,7 @@
 
 **Tech Stack:** Web Crypto AES-GCM (existing), OPFS (`navigator.storage.getDirectory`), Canvas/`createImageBitmap`, IndexedDB v5, Node test runner (`npm run test:unit`).
 
-**Specs:** [`docs/tech/12-local-image-storage-design.md`](../../tech/12-local-image-storage-design.md) · [`DB-DESIGN-SPEC.md`](../../tech/DB-DESIGN-SPEC.md) §2.2–2.3 · [`2026-06-19-receipt-lifecycle-sync-redesign-design.md`](../specs/2026-06-19-receipt-lifecycle-sync-redesign-design.md) §4.2
+**Specs:** [`docs/tech/12-local-image-storage-design.md`](../../tech/12-local-image-storage-design.md) · [`DB-DESIGN-SPEC.md`](../../tech/DB-DESIGN-SPEC.md) §2.2–2.3 · [`receipt-sync-lifecycle-design.md`](../topics/receipt-sync-lifecycle-design.md) §3.6
 
 **Out of scope (this plan):** OCR Worker pipeline (`11-ocr-pipeline-design.md` Phase 1) · 18-month receipt row prune · Event Store
 

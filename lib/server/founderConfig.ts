@@ -1,4 +1,4 @@
-import type { FounderTier } from "@/lib/founder/types";
+import type { FounderTier, PublicFounderTier } from "@/lib/founder/types";
 import { founderPriceUsdToCents } from "@/lib/founder/pricing";
 import {
   founderPriceDefaultFlag,
@@ -20,11 +20,11 @@ export type FounderTierConfig = {
 
 export type FounderProgramConfig = {
   enabled: boolean;
-  tiers: Record<FounderTier, FounderTierConfig>;
+  tiers: Record<PublicFounderTier, FounderTierConfig>;
 };
 
-export function buildFounderTierConfigs(priceUsd: Record<FounderTier, number>): Record<
-  FounderTier,
+export function buildFounderTierConfigs(priceUsd: Record<PublicFounderTier, number>): Record<
+  PublicFounderTier,
   FounderTierConfig
 > {
   const tier = (usd: number, paddleTier: FounderTier | "DEFAULT", seatRange: [number, number] | null) => ({
@@ -47,7 +47,7 @@ export function buildFounderTierConfigs(priceUsd: Record<FounderTier, number>): 
 
 export async function resolveFounderProgramConfig(): Promise<FounderProgramConfig> {
   const enabled = await founderProgramEnabledFlag();
-  const priceUsd: Record<FounderTier, number> = {
+  const priceUsd: Record<PublicFounderTier, number> = {
     FOUNDER_LEVEL_SUPER: await founderPriceSuperFlag(),
     EARLY: await founderPriceEarlyFlag(),
     FOUNDER: await founderPriceFounderFlag(),

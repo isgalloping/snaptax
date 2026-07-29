@@ -38,7 +38,26 @@
 - 核心 UI 离线可开；弱网 **≤ 1.5s** 可操作  
 - **离线：** 可拍照；小票 + 照片入 **IndexedDB**；保持 `Processing...`，**不调 OpenAI**  
 - **联网（含未登录 Ghost）：** 本地 OCR Worker 生成 `ocrDraft`（离线亦可）；上传后服务端 **文本 GPT 分类**（Path A）或 **OpenAI Vision 兜底**（Path B，见 §2.3.1）  
-- Service Worker 预缓存 `/` 及静态资源  
+- Service Worker 预缓存 `/app` 及静态资源（Serwist；营销页 `/` 不在 PWA scope 内）
+
+#### 2.2.1 站点与 PWA 安装（2026-07）
+
+| 层 | 路由 | 说明 |
+|----|------|------|
+| **营销站** | `/`, `/pricing`, `/help` … | SEO + 转化；轻量安装 UI（header + 底栏）；**无**全屏安装门控 |
+| **产品 PWA** | **`/app`** | Serwist SW · manifest `scope`/`start_url`=`/app` · 主界面拍照 |
+
+**桌面 / 主屏幕图标名：** **SnapTax**（`manifest.short_name` · iOS `appleWebApp.title`）。应用内品牌文案仍可写 Snap1099。
+
+**手机浏览器直接打开 `/app`（非 standalone）：**
+
+1. 播完 **Landing** 后 → 全屏 **AppBrowserEntryGate**（Android Chrome + iOS/iPad Safari）  
+2. 未安装 → Install；已安装 → **Open SnapTax**（须用户点击，无静默跳转）  
+3. **Continue in browser** 可跳过；本 session 不再弹门控，隐藏底栏 install bar，保留顶栏安装按钮  
+
+**铁律例外：** 上述全屏门控是「核心拍照零 Modal」的**唯一已批准全屏 overlay**（仅 `/app`、可跳过）。详见 `docs/tech/13-pwa-install-architecture.md`。
+
+**营销 Get Started：** 链至 `/app`；Android Chrome 用原生 `<a href>` 以触发 WebAPK Navigation Capturing。
 
 ### 2.3 隐私、合规与数据存储（EU + US · MVP 美国驻留）
 
@@ -152,11 +171,11 @@ Privacy Policy · Terms · **Data Retention** · **Security** · **Data storage�
 | **Settings Export** | **v3 Path A**：样例中间页 → Download CSV → Completed → VIEW STATUS 回主屏 + 绿色状态条 | `useTaxExportGate` → Paywall（天平 UI）；Maybe later → 红色 Export blocked 横幅 | Export Again |
 | **Home Export**（TaxHeader · CPA Ready） | **不变** — 仍走完整 export 门控（硬拦截 Google / Paywall） | 同上 | 同上 |
 
-> 设计：[2026-06-18-settings-v5-redesign-design.md](../superpowers/specs/2026-06-18-settings-v5-redesign-design.md) · v3 交互：[2026-06-17-settings-v3-redesign-design.md](../superpowers/specs/2026-06-17-settings-v3-redesign-design.md) · PRD：`docs/prd/settings.md`
+> 设计：[topics/settings-design.md](../superpowers/topics/settings-design.md) · PRD：`docs/prd/settings.md`
 
 ### 3.1 连拍相机与 Post-Review
 
-> 设计：[2026-06-08-batch-snap-camera-design.md](../superpowers/specs/2026-06-08-batch-snap-camera-design.md) · [2026-06-09-post-batch-review-flow-design.md](../superpowers/specs/2026-06-09-post-batch-review-flow-design.md) · [2026-06-10-camera-live-footer-ui-design.md](../superpowers/specs/2026-06-10-camera-live-footer-ui-design.md)
+> 设计：[topics/capture-pipeline-design.md](../superpowers/topics/capture-pipeline-design.md) · [2026-06-08-batch-snap-camera-design.md](../superpowers/specs/2026-06-08-batch-snap-camera-design.md) · [camera-live-footer-design.md](../superpowers/topics/camera-live-footer-design.md)
 
 | 模式 | 行为 |
 |------|------|
@@ -256,7 +275,7 @@ Next.js 16 · React 19 · Tailwind 4 · Serwist · **PostgreSQL（美国）** ·
 
 ---
 
-## 12. 产品里程碑 vs 代码（2026-06-13）
+## 12. 产品里程碑 vs 代码（2026-07-07）
 
 | 能力 | 产品设计 v1.2 | 代码 |
 |------|---------------|------|
@@ -280,10 +299,18 @@ Next.js 16 · React 19 · Tailwind 4 · Serwist · **PostgreSQL（美国）** ·
 | 分区域省税 US/EU + R1 | ✅ | ✅（`SUM(tax_amount)` + `X-Tax-Region`） |
 | 行业六选一 | ✅ | ✅（登录 API 回填；Ghost `localStorage`） |
 | Home WidgetPager（Snap 下固定分页） | ✅ | ✅（等宽 3 卡/页，>3 左滑 + 分页点） |
-| Missing Deductions Widget（Find More Savings） | ✅ | **隐藏**（`SHOW_MISSING_DEDUCTIONS_WIDGET=false`；overlay/计算逻辑保留，可恢复） |
+| Missing Deductions Widget（Find More Savings） | ✅ | ✅（`SHOW_MISSING_DEDUCTIONS_WIDGET=true`；有行业漏记提示时显示；overlay/计算保留） |
+| QuickBooks QIF 导出（M4b） | ✅ | ✅（Settings Export 第 5 格式 · `buildQifExport` · 本地优先 + `format=qif` API） |
+| QuickBooks Online QBO 导出（M4c） | ✅ | ✅（Settings Export 第 6 格式 · `buildQboExport` · 本地优先 + `format=qbo` API） |
 | Home v2 筛选桶 + 列表展示 | ✅ | ✅（ALL/READY/REVIEW/ACTION/PROCESSING；绿/灰 tax；category + Line pill） |
 | 本地 OCR + 双路径 AI（Phase 1） | ✅ | ✅（Worker OCR、`ocrDraft`、router、`biz.ocr` 日志；O3 ROI/EU parse） |
+| 生命周期 Event Queue + Event Store | ✅ | ✅（IDB `snaptax_receipt_events` · `POST /api/sync/events` · sync cursor · snapshots · 18mo prune） |
 | Founder Program Widget + Sheet + Badge | ✅ | ✅（Widget #1 · GET /api/founder/program · Paddle founder SKU · Flag 定价） |
+| **营销站 + 产品 `/app` 拆分** | ✅ | ✅（`(marketing)` vs `(pwa)/app`；manifest scope `/app`） |
+| **PWA 安装：SnapTax 图标名 + 全站 prompt 捕获** | ✅ | ✅（`manifest`/`appleWebApp` · 根 layout `InstallCaptureScript`） |
+| **营销页 install UI（header + bar）** | ✅ | ✅（`MarketingInstallShell` · 无全屏门控） |
+| **`/app` 手机浏览器入口门控** | ✅ | ✅（`AppBrowserEntryGate` · Landing 后 · 可跳过 · spec 2026-07-06） |
+| **Android Chrome 营销 CTA → WebAPK** | ✅ | ✅（`MarketingAppLink` 原生链 + `capture_links`） |
 
 **Dev 限制（非产品偏离）：** 无 Upstash 时速率限制放行；无 Paddle env 时 Paywall 显示错误而非假付费。
 
@@ -304,6 +331,11 @@ Next.js 16 · React 19 · Tailwind 4 · Serwist · **PostgreSQL（美国）** ·
 - [ ] OpenAI / Blob 是否 **仅服务端**、Blob 是否私有？  
 - [ ] 顶栏是否 **SUM(tax_amount)**，且 **仅 OpenAI Vision 路径** 更新 `tax_amount`？  
 - [ ] Google 登录后 **仅 region 不一致** 时是否排队 OpenAI 重算？  
+- [ ] PWA：产品入口是否为 **`/app`**（非 marketing `/`）？manifest **`short_name` = SnapTax**？  
+- [ ] `/app` 手机门控是否 **Landing 后**、**可跳过**、且 **不**在营销页弹全屏？  
+- [ ] Android Chrome 营销 CTA 是否 **原生 `<a href="/app">`**（非 client-only 路由）？  
+- [ ] 改 onboarding / home / export / delete / receipt sync / **founder / camera footer / navigation** / PWA 前是否先读 `docs/superpowers/topics/*` 或 `docs/tech/13-pwa-install-architecture.md`？  
+- [ ] 新 spec 完成后是否更新 topic 终稿或 MANIFEST（见 [`docs/superpowers/README.md`](../superpowers/README.md) 归档 checklist）？  
 
 ---
 
@@ -325,12 +357,15 @@ Next.js 16 · React 19 · Tailwind 4 · Serwist · **PostgreSQL（美国）** ·
 | [legal/terms.de.md](../legal/terms.de.md) | 服务条款（德文） |
 | [prd/privacy.updated.md](../prd/privacy.updated.md) | §4 国际传输摘要 |
 | [prd/0.0.1.md](../prd/0.0.1.md) | PRD §2.5 |
+| [superpowers/README.md](../superpowers/README.md) | 迭代 ADR 索引 + topic 终稿 + 归档 checklist |
+| [superpowers/topics/](../superpowers/topics/) | 主题合并终稿（onboarding、export、home、delete、receipt sync） |
 | [specs/2026-06-05-compliance-privacy-design.md](../superpowers/specs/2026-06-05-compliance-privacy-design.md) | 合规 ADR（v1.2 以本文为准覆盖分区域 MVP） |
 | [specs/2026-06-05-api-security-design.md](../superpowers/specs/2026-06-05-api-security-design.md) | API 安全 ADR（Ghost HMAC、OpenAI、IDOR、限流） |
 | [specs/2026-06-13-product-code-alignment-design.md](../superpowers/specs/2026-06-13-product-code-alignment-design.md) | 产品/代码全面对齐（2026-06-13） |
 | [specs/2026-06-07-tax-savings-regional-design.md](../superpowers/specs/2026-06-07-tax-savings-regional-design.md) | 分区域省税 US/EU + R1 |
-| [specs/2026-06-12-new-user-onboarding-design.md](../superpowers/specs/2026-06-12-new-user-onboarding-design.md) | 新人引导（业务分析 + T1/T2 软引导） |
+| [topics/onboarding-aha-design.md](../superpowers/topics/onboarding-aha-design.md) | 新人引导 / Aha onboarding（Hero + sandbox + coach + 样例导出） |
 | [specs/2026-06-07-mvp-master-roadmap-design.md](../superpowers/specs/2026-06-07-mvp-master-roadmap-design.md) | MVP 总路线图 |
+| [tech/13-pwa-install-architecture.md](../tech/13-pwa-install-architecture.md) | **PWA 安装架构（Agent 改 pwa/ 必读）** |
 | [plans/2026-06-07-mvp-master-implementation.md](../superpowers/plans/2026-06-07-mvp-master-implementation.md) | **MVP 总落地计划** |
 
 **变更流程：** 产品决策 → **本文件** → PRD → `docs/legal/` → UI 文案（`lib/legal/content.ts`）

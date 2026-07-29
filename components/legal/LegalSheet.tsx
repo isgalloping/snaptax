@@ -26,12 +26,14 @@ export function LegalSheet({ doc, onClose }: LegalSheetProps) {
   useDialogEscape(doc != null, onClose);
 
   const [markdownDoc, setMarkdownDoc] = useState<ParsedLegalMarkdown | null>(null);
+  const [markdownLocalized, setMarkdownLocalized] = useState(true);
   const [markdownError, setMarkdownError] = useState(false);
   const [loadingMarkdown, setLoadingMarkdown] = useState(false);
 
   useEffect(() => {
     if (!doc || !MARKDOWN_DOCS.has(doc)) {
       setMarkdownDoc(null);
+      setMarkdownLocalized(true);
       setMarkdownError(false);
       setLoadingMarkdown(false);
       return;
@@ -41,13 +43,16 @@ export function LegalSheet({ doc, onClose }: LegalSheetProps) {
     setLoadingMarkdown(true);
     setMarkdownError(false);
 
-    void fetch(`/api/legal/document?file=${doc}`)
+    void fetch(`/api/legal/document?file=${doc}&locale=${encodeURIComponent(locale)}`)
       .then(async (res) => {
         if (!res.ok) throw new Error("load failed");
-        return (await res.json()) as ParsedLegalMarkdown;
+        return (await res.json()) as ParsedLegalMarkdown & { localized?: boolean };
       })
       .then((parsed) => {
-        if (!cancelled) setMarkdownDoc(parsed);
+        if (!cancelled) {
+          setMarkdownDoc(parsed);
+          setMarkdownLocalized(parsed.localized !== false);
+        }
       })
       .catch(() => {
         if (!cancelled) {
@@ -62,7 +67,7 @@ export function LegalSheet({ doc, onClose }: LegalSheetProps) {
     return () => {
       cancelled = true;
     };
-  }, [doc]);
+  }, [doc, locale]);
 
   if (!doc) return null;
 
@@ -75,7 +80,7 @@ export function LegalSheet({ doc, onClose }: LegalSheetProps) {
         ? privacyCopy.dataRetention
         : privacyCopy.security))
     : getLegalTitle(doc, locale);
-  const showEnglishOnly = isMarkdown && locale !== "en-US";
+  const showEnglishOnly = isMarkdown && locale !== "en-US" && !markdownLocalized;
 
   return (
     <div

@@ -17,7 +17,7 @@ function localRow(id: string): StoredReceipt {
 }
 
 describe("mergeServerReceiptsIntoLocal", () => {
-  it("does not drop local rows missing from top-100 remote window", async () => {
+  it("does not drop local rows missing from top-50 remote window", async () => {
     const saved: StoredReceipt[] = [];
 
     const result = await mergeServerReceiptsIntoLocal([localRow(LOCAL_OUTSIDE_WINDOW)], {

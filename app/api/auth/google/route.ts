@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import { z, ZodError } from "zod";
 import {
   parseTaxRegionHeader,
   resolveInitialDataRegion,
@@ -13,6 +14,9 @@ import {
   SESSION_COOKIE_NAME,
   signSessionToken,
 } from "@/lib/auth/session";
+import { bindGhostAndMigrateData } from "@/lib/server/bindGhostAndMigrateData";
+import { orphanGhostsBodyField } from "@/lib/server/orphanGhostPossessionSchema";
+import { verifyClientOrphanGhostPossession } from "@/lib/server/verifyClientOrphanGhostPossession";
 import { prisma } from "@/lib/prisma";
 import {
   enqueueTaxRecalc,
@@ -24,10 +28,17 @@ import { shouldRecalcOnLogin } from "@/lib/tax/shouldRecalcOnLogin";
 import type { TaxRegion } from "@/lib/tax/types";
 import { utcNow } from "@/lib/time/utc";
 
+const googleAuthBodySchema = z.object({
+  credential: z.string().min(1),
+  orphanGhosts: orphanGhostsBodyField,
+});
+
 export const POST = withRequestLog("api.auth", async (request, _context) => {
   try {
-    const body = (await request.json()) as { credential?: string };
-    if (!body.credential) throw new Error("INVALID_GOOGLE_TOKEN");
+    const body = googleAuthBodySchema.parse(await request.json());
+    const verifiedClientOrphanGhostIds = verifyClientOrphanGhostPossession(
+      body.orphanGhosts,
+    );
 
     const cookieHeader = request.headers.get("cookie");
     const ghostToken = readGhostTokenFromCookie(cookieHeader);
@@ -100,36 +111,72 @@ export const POST = withRequestLog("api.auth", async (request, _context) => {
       where: { userId: user.id },
     });
 
-    if (userBinding) {
-      if (userBinding.ghostId !== ghostId) {
-        logEvent({
-          ts: new Date().toISOString(),
-          level: "info",
-          module: "api.auth",
-          success: true,
-          durationMs: 0,
-          userId: user.id,
-          ghostId,
-          meta: {
-            reason: "ghost_rebind",
-            previousGhostId: userBinding.ghostId,
-          },
-        });
-        await prisma.snaptaxGhostAccount.update({
-          where: { userId: user.id },
-          data: { ghostId, boundAt: utcNow() },
-        });
-      }
-    } else if (!existingBinding) {
-      await prisma.snaptaxGhostAccount.create({
-        data: { ghostId, userId: user.id },
+    const migration = await prisma.$transaction(async (tx) =>
+      bindGhostAndMigrateData(
+        user.id,
+        ghostId,
+        {
+          existingGhostBinding: existingBinding,
+          userBinding,
+          verifiedClientOrphanGhostIds,
+        },
+        tx,
+      ),
+    );
+
+    if (migration.rebindPreviousGhostId) {
+      logEvent({
+        ts: new Date().toISOString(),
+        level: "info",
+        module: "api.auth",
+        success: true,
+        durationMs: 0,
+        userId: user.id,
+        ghostId,
+        meta: {
+          reason: "ghost_rebind",
+          previousGhostId: migration.rebindPreviousGhostId,
+        },
       });
     }
 
-    await prisma.snaptaxReceipt.updateMany({
-      where: { ghostId, userId: null },
-      data: { userId: user.id },
-    });
+    if (
+      migration.events > 0 ||
+      migration.snapshots > 0 ||
+      migration.cursorMerged
+    ) {
+      logEvent({
+        ts: new Date().toISOString(),
+        level: "info",
+        module: "api.auth",
+        success: true,
+        durationMs: 0,
+        userId: user.id,
+        ghostId,
+        meta: {
+          reason: `ghost_event_store_migrated events=${migration.events} snapshots=${migration.snapshots} cursorMerged=${migration.cursorMerged}`,
+        },
+      });
+    }
+
+    if (
+      migration.orphanMerge.totalReceipts > 0 ||
+      migration.orphanMerge.mergedGhostIds.length > 0
+    ) {
+      logEvent({
+        ts: new Date().toISOString(),
+        level: "info",
+        module: "api.auth",
+        success: true,
+        durationMs: 0,
+        userId: user.id,
+        ghostId,
+        meta: {
+          reason: `orphan_ghost_merge ghosts=${migration.orphanMerge.mergedGhostIds.length} receipts=${migration.orphanMerge.totalReceipts}`,
+          mergedGhostIds: migration.orphanMerge.mergedGhostIds,
+        },
+      });
+    }
 
     let taxRecalcQueued = 0;
     if (shouldRecalcOnLogin(lockedRegion, ghostCandidate)) {
@@ -167,6 +214,9 @@ export const POST = withRequestLog("api.auth", async (request, _context) => {
 
     return res;
   } catch (err) {
+    if (err instanceof ZodError) {
+      return mapErrorToResponse(new Error("INVALID_REQUEST"));
+    }
     if (err instanceof Error && err.message === "GHOST_ALREADY_BOUND") {
       return NextResponse.json(
         { error: { code: "GHOST_ALREADY_BOUND", message: "Ghost already linked" } },

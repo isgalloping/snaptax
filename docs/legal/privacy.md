@@ -1,9 +1,19 @@
-# Snap1099 Privacy Policy
+# SnapTax Privacy Policy
 
-**Last Updated:** June 2026  
+**Last Updated:** July 2026  
 **Applicable Jurisdictions:** United States (including California CPRA) & European Union (GDPR)
 
-Welcome to Snap1099. This Privacy Policy explains how we collect, use, process, and safeguard your data when you use the Snap1099 application ("the App").
+## Operator & Contact
+
+SnapTax is operated by Gang Huang, an individual sole proprietor ("we", "us", "our").
+
+Contact: snaptax.lightxforge@gmail.com  
+Privacy requests: snaptax.lightxforge@gmail.com (subject: Privacy Request)  
+Mailing address: Hong Kong
+
+Services are offered to users in the United States. Customer data is processed and stored in the United States as described below.
+
+Welcome to SnapTax. This Privacy Policy explains how we collect, use, process, and safeguard your data when you use the SnapTax application ("the App").
 
 ## 1. Privacy by Design & Data Ownership
 
@@ -33,6 +43,8 @@ When you sign in with Google, we link your Ghost ID to your account so your rece
 | Account data | Google email, display name (if signed in) | Identity, sync, support |
 | Payment metadata | Paddle transaction references | Tax-season export entitlement |
 | Technical logs | Request IDs, error codes (no receipt images) | Security, reliability |
+
+Receipt and financial data you provide may qualify as **sensitive personal information** under applicable US state privacy laws.
 
 ### Data We Do Not Collect
 
@@ -81,7 +93,7 @@ We safeguard international data transfers using industry-standard encryption (**
 
 We retain data only as long as needed for the purposes described in this Policy. See our [Data Retention Policy](/data-retention) for retention periods by data type and your deletion options.
 
-## 8. No Sale of Personal Information (CPRA)
+## 8. No Sale
 
 **We do not sell your personal information.**
 
@@ -98,7 +110,7 @@ We retain data only as long as needed for the purposes described in this Policy.
 | Commercial information (export purchase) | Yes | Yes (Paddle) | **No** |
 | Internet / device activity (security logs) | Yes | Yes (hosting) | **No** |
 
-## 9. Your Rights (GDPR & CPRA)
+## 9. Your Rights (US State Privacy & GDPR)
 
 Depending on your location, you may have the right to:
 

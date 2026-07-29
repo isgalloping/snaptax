@@ -4,6 +4,7 @@ import type { TaxRegion } from "@/lib/tax/types";
 import { parseUtcISOString, toUtcISOString } from "@/lib/time/utc";
 import { isPersistedReceiptId } from "@/lib/receipts/receiptId";
 import { apiFetch } from "@/lib/client/ghostClient";
+import { UI_RECEIPT_LIMIT } from "@/lib/client/receiptWindow";
 import {
   clearPendingIncomeCapture,
   peekPendingIncomeCapture,
@@ -94,7 +95,7 @@ export function sumLocalTaxSaved(receipts: Receipt[]): number {
 }
 
 export async function fetchReceiptList(
-  limit = 100,
+  limit = UI_RECEIPT_LIMIT,
 ): Promise<ReceiptListResponse> {
   const res = await apiFetch(
     `/api/receipts?limit=${limit}&orderBy=updatedAt`,

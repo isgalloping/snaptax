@@ -32,6 +32,14 @@ export type UserCopy = {
       iosSafari: string[];
       macosSafari: string[];
     };
+    appEntryGate: {
+      installTitle: string;
+      openTitle: string;
+      continueInBrowser: string;
+      addedToHomeScreen: string;
+      postInstallTitle: string;
+      postInstallSteps: string[];
+    };
   };
   camera: {
     opening: string;
@@ -434,6 +442,7 @@ export type UserCopy = {
       deductions: string;
       income: string;
       incomeForms: string;
+      exportedStatus: string;
     };
     exportCard: {
       compatLine: string;
@@ -471,6 +480,8 @@ export type UserCopy = {
       sampleReady: string;
       downloadAgain: string;
       exportBlocked: string;
+      entitlementDisputed: string;
+      entitlementRefunded: string;
       dismiss: string;
     };
     privacyCenter: {
@@ -510,6 +521,7 @@ export type UserCopy = {
       legalLoadFailed: string;
       deleteAccount: string;
       deleteFailed: string;
+      deleteLocalClearFailed: string;
       deleteRequiresOnline: string;
       deleteSessionExpired: string;
       deleteTitle: string;
@@ -656,6 +668,10 @@ export type UserCopy = {
     formatCpaPdfHint: string;
     formatTxfTitle: string;
     formatTxfHint: string;
+    formatQifTitle: string;
+    formatQifHint: string;
+    formatQboTitle: string;
+    formatQboHint: string;
     snap1099Title: string;
     snap1099Hint: string;
     snap1099NecButton: string;
@@ -670,5 +686,25 @@ export type UserCopy = {
     progressFinalizing: string;
     pdfFailed: string;
     exportTimeout: string;
+    filedSyncNotFound: string;
+    filedSyncFailed: string;
+    postDownloadGuide: {
+      title: string;
+      copyButton: string;
+      copySuccess: string;
+      copyFailed: string;
+      searchTip: string;
+      sendToApp: string;
+      sendUnsupported: string;
+      sendFailed: string;
+      sendSuccess: string;
+      gotIt: string;
+      steps: {
+        androidChrome: string[];
+        iosSafari: string[];
+        desktopChrome: string[];
+        other: string[];
+      };
+    };
   };
 };

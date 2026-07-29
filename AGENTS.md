@@ -17,7 +17,7 @@ North American 1099 contractor receipt app — PWA, offline-first, Ghost → Goo
 
 ## Cursor
 
-- Rules: `.cursor/rules/snap1099-product.mdc`, `snap1099-ui.mdc`, `snap1099-backend.mdc`, `snap1099-database.mdc`, `snap1099-compliance.mdc`, `snap1099-logging.mdc`, `snap1099-tax.mdc`
+- Rules: `.cursor/rules/snap1099-product.mdc`, `snap1099-pwa.mdc`, `snap1099-ui.mdc`, `snap1099-backend.mdc`, `snap1099-database.mdc`, `snap1099-compliance.mdc`, `snap1099-logging.mdc`, `snap1099-tax.mdc`
 - Skill: `.cursor/skills/snap1099-product/SKILL.md`
 
 ## Database
@@ -53,8 +53,17 @@ Next.js 16 · React 19 · Tailwind 4 · Serwist PWA · Vercel (PostgreSQL, Blob,
 ## Key paths
 
 - UI: `components/home/`, `components/settings/`, `components/camera/`
+- Marketing: `app/(marketing)/`, `components/marketing/`
+- Product PWA: `app/(pwa)/app/`, `components/pwa/`, `lib/pwa/`
 - Storage: `lib/storage/receiptDb.ts`
-- PWA: `app/sw.ts`, `components/pwa/`
+- PWA docs: `docs/tech/13-pwa-install-architecture.md`
+- PWA: `app/manifest.ts`, `app/sw.ts` (Serwist via `PwaProvider`)
+
+### Superpowers docs
+
+- Index: `docs/superpowers/README.md` (read before scanning `specs/`)
+- Topic consolidations: `docs/superpowers/topics/`
+- Do **not** iterate all 150+ specs; use MANIFEST.csv or README topic table
 
 ## Cursor Cloud specific instructions
 

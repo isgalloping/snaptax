@@ -1,15 +1,27 @@
 import { founderPriceUsdToCents } from "@/lib/founder/pricing";
+import type { PublicFounderTier } from "@/lib/founder/types";
 import { prisma } from "@/lib/prisma";
+import { resolveFounderProgramConfig } from "@/lib/server/founderConfig";
 
 export type SpecialWebhookMinResolution =
-  | { kind: "default" }
+  | { kind: "default"; minAmountCents?: number }
   | { kind: "special"; minAmountCents: number }
   | { kind: "error"; reason: "special_price_unconfigured" };
 
 export type ResolveSpecialWebhookMinDeps = {
   findIntentSkuTier?: (intentId: string) => Promise<string | null | undefined>;
   getSpecialPriceUsd?: () => Promise<number>;
+  getTierPriceCents?: (tier: PublicFounderTier) => Promise<number | undefined>;
 };
+
+function isPublicFounderTier(tier: string | null | undefined): tier is PublicFounderTier {
+  return (
+    tier === "FOUNDER_LEVEL_SUPER" ||
+    tier === "EARLY" ||
+    tier === "FOUNDER" ||
+    tier === "DEFAULT"
+  );
+}
 
 export async function resolveSpecialWebhookMinAmountCents(
   intentId: string | undefined,
@@ -29,7 +41,19 @@ export async function resolveSpecialWebhookMinAmountCents(
     });
 
   const skuTier = await findIntentSkuTier(trimmed);
-  if (skuTier !== "SPECIAL") return { kind: "default" };
+  if (skuTier !== "SPECIAL") {
+    if (!isPublicFounderTier(skuTier)) return { kind: "default" };
+
+    const getTierPriceCents =
+      deps.getTierPriceCents ??
+      (async (tier) => {
+        const config = await resolveFounderProgramConfig();
+        return config.tiers[tier].priceCents;
+      });
+    const minAmountCents = await getTierPriceCents(skuTier);
+    if (minAmountCents == null || minAmountCents <= 0) return { kind: "default" };
+    return { kind: "default", minAmountCents };
+  }
 
   const getSpecialPriceUsd = deps.getSpecialPriceUsd ?? (async () => 0);
   const specialPriceUsd = await getSpecialPriceUsd();

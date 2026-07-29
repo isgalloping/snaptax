@@ -16,7 +16,7 @@ import {
   beginWebhookEvent,
   finishWebhookEvent,
 } from "@/lib/billing/recordWebhookEvent";
-import { isFounderSkuTier } from "@/lib/billing/founderSkuTier";
+import { resolveFounderSkuTierForSeatAssignment } from "@/lib/billing/founderSkuTier";
 import { prisma } from "@/lib/prisma";
 import { assignFounderSeatOnFirstPurchase } from "@/lib/server/assignFounderSeat";
 import { currentTaxSeason } from "@/lib/tax/season";
@@ -42,10 +42,7 @@ async function handleTransactionCompleted(
     });
     return { ok: true, ignored: true };
   }
-  const minAmountCents =
-    minResolution.kind === "special"
-      ? minResolution.minAmountCents
-      : undefined;
+  const minAmountCents = minResolution.minAmountCents;
 
   const validated = validatePaddleTransaction(payload, { minAmountCents });
   if (!validated.ok) {
@@ -165,11 +162,10 @@ async function handleTransactionCompleted(
   const skuTierFromIntent = grant.skuTier ?? undefined;
   const skuTierFromCustomData = validated.customData?.skuTier;
   const effectiveSkuTier = skuTierFromIntent ?? skuTierFromCustomData;
-  const founderSkuTier = isFounderSkuTier(skuTierFromIntent)
-    ? skuTierFromIntent
-    : isFounderSkuTier(skuTierFromCustomData)
-      ? skuTierFromCustomData
-      : undefined;
+  const founderSkuTier = resolveFounderSkuTierForSeatAssignment(
+    skuTierFromIntent,
+    skuTierFromCustomData,
+  );
 
   if (founderSkuTier) {
     const seatResult = await assignFounderSeatOnFirstPurchase(grant.userId);

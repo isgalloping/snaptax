@@ -8,16 +8,25 @@ describe("resolveSpecialWebhookMinAmountCents", () => {
     assert.deepEqual(result, { kind: "default" });
   });
 
-  it("uses default min when intent skuTier is not SPECIAL", async () => {
+  it("uses DEFAULT tier min when intent skuTier is DEFAULT", async () => {
     const result = await resolveSpecialWebhookMinAmountCents("intent-1", {
       findIntentSkuTier: async () => "DEFAULT",
+      getTierPriceCents: async () => 2900,
     });
-    assert.deepEqual(result, { kind: "default" });
+    assert.deepEqual(result, { kind: "default", minAmountCents: 2900 });
   });
 
-  it("ignores forged custom_data; only intent skuTier SPECIAL gets special min", async () => {
+  it("uses founder tier min when intent skuTier is a founder discount", async () => {
     const result = await resolveSpecialWebhookMinAmountCents("intent-1", {
-      findIntentSkuTier: async () => "FOUNDER",
+      findIntentSkuTier: async () => "FOUNDER_LEVEL_SUPER",
+      getTierPriceCents: async () => 500,
+    });
+    assert.deepEqual(result, { kind: "default", minAmountCents: 500 });
+  });
+
+  it("uses default min when intent skuTier is unknown", async () => {
+    const result = await resolveSpecialWebhookMinAmountCents("intent-1", {
+      findIntentSkuTier: async () => "LEGACY_UNKNOWN",
       getSpecialPriceUsd: async () => 1,
     });
     assert.deepEqual(result, { kind: "default" });

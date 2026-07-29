@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { USER_COPY } from "@/lib/copy/userFacing";
+import { getAppDisplayName } from "@/lib/site/appDisplayName";
 
 /** Chrome link capture — not yet in Next.js MetadataRoute.Manifest typings. */
 type AppManifest = MetadataRoute.Manifest & {
@@ -7,6 +8,7 @@ type AppManifest = MetadataRoute.Manifest & {
 };
 
 export default function manifest(): AppManifest {
+  const displayName = getAppDisplayName();
   return {
     id: "/app",
     related_applications: [
@@ -16,8 +18,8 @@ export default function manifest(): AppManifest {
         id: "/app",
       },
     ],
-    name: "SnapTax",
-    short_name: "SnapTax",
+    name: displayName,
+    short_name: displayName,
     description: USER_COPY.app.description,
     start_url: "/app",
     scope: "/app",

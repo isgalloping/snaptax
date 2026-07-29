@@ -5,6 +5,7 @@ import { InstallCaptureScript } from "@/components/pwa/InstallCaptureScript";
 import { PwaStandaloneEntryRedirect } from "@/components/pwa/PwaStandaloneEntryRedirect";
 import { PwaStandaloneEntryRedirectScript } from "@/components/pwa/PwaStandaloneEntryRedirectScript";
 import { USER_COPY } from "@/lib/copy/userFacing";
+import { getAppDisplayName } from "@/lib/site/appDisplayName";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -17,7 +18,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const APP_NAME = "SnapTax";
+const APP_NAME = getAppDisplayName();
 const APP_DESCRIPTION = USER_COPY.app.description;
 
 export const metadata: Metadata = {

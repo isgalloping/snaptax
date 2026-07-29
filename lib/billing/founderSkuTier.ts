@@ -12,8 +12,10 @@ export function isFounderSkuTier(
 
 export function resolveFounderSkuTierForSeatAssignment(
   intentSkuTier: string | null | undefined,
-  _customDataSkuTier: string | undefined,
+  customDataSkuTier: string | undefined,
 ): Exclude<FounderTier, "DEFAULT" | "SPECIAL"> | undefined {
+  // Client-controlled customData must not influence founder seat assignment.
+  void customDataSkuTier;
   return isFounderSkuTier(intentSkuTier ?? undefined)
     ? intentSkuTier
     : undefined;

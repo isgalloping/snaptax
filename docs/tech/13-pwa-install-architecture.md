@@ -21,9 +21,9 @@
 
 **文件：** `app/manifest.ts`
 
-| 字段 | 当前值 | 说明 |
-|------|--------|------|
-| `name` / `short_name` | **SnapTax** | 主屏幕图标下显示名（2026-07-06 起） |
+| 字段 | Production | Preview (`snaptax-pre.*`) | 说明 |
+|------|------------|---------------------------|------|
+| `name` / `short_name` | **SnapTax** | **SnapTax-Pre** | 主屏幕图标下显示名；由 `getAppDisplayName()` 按 `NEXT_PUBLIC_APP_URL` 域名推导（见 `docs/superpowers/specs/2026-07-29-preview-pwa-display-name-design.md`） |
 | `id` | `/app` | 与 scope 一致 |
 | `start_url` | `/app` | standalone 启动 URL |
 | `scope` | `/app` | 仅 `/app` 内页面属 PWA |

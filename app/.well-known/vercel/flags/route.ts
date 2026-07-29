@@ -1,5 +1,4 @@
-import { getProviderData } from "flags/next";
-import { NextResponse } from "next/server";
+import { createFlagsDiscoveryEndpoint, getProviderData } from "flags/next";
 import {
   founderPriceDefaultFlag,
   founderPriceEarlyFlag,
@@ -9,16 +8,15 @@ import {
 } from "@/flags/founder";
 import { specialPriceFlag, specialUsersFlag } from "@/flags/special";
 
-export async function GET() {
-  return NextResponse.json(
-    getProviderData({
-      specialUsersFlag,
-      specialPriceFlag,
-      founderProgramEnabledFlag,
-      founderPriceSuperFlag,
-      founderPriceEarlyFlag,
-      founderPriceFounderFlag,
-      founderPriceDefaultFlag,
-    }),
-  );
-}
+/** Flags Explorer discovery — requires Authorization (FLAGS_SECRET); 401 if missing/invalid. */
+export const GET = createFlagsDiscoveryEndpoint(async () =>
+  getProviderData({
+    specialUsersFlag,
+    specialPriceFlag,
+    founderProgramEnabledFlag,
+    founderPriceSuperFlag,
+    founderPriceEarlyFlag,
+    founderPriceFounderFlag,
+    founderPriceDefaultFlag,
+  }),
+);

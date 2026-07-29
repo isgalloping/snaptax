@@ -85,10 +85,13 @@ const paid = !!entitlement;
 ## 7.7 环境变量
 
 ```
-NEXT_PUBLIC_PADDLE_CLIENT_TOKEN=   # 客户端
-PADDLE_API_KEY=                    # 服务端
+PADDLE_SNAPTAX_CLIENT_SIDE_TOKEN=   # Paddle.js client token（build 注入 NEXT_PUBLIC_PADDLE_SNAPTAX_CLIENT_SIDE_TOKEN）
 PADDLE_WEBHOOK_SECRET=
-PADDLE_PRICE_ID=                   # pri_...
+FOUNDER_LEVEL_DEFAULT=             # DEFAULT / lapsed 续费 pri_...
+FOUNDER_LEVEL_SUPER=               # 席位 1–10
+FOUNDER_LEVEL_EARLY=               # 席位 11–30
+FOUNDER_LEVEL_FOUNDER=             # 席位 31–50
+SPECIAL_LEVEL_USER=                # 内测 SPECIAL checkout（可选）
 ```
 
 ## 7.8 测试

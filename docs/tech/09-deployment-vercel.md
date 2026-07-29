@@ -18,7 +18,7 @@
 
 ```
 NEXT_PUBLIC_GOOGLE_CLIENT_ID=
-NEXT_PUBLIC_PADDLE_CLIENT_TOKEN=
+PADDLE_SNAPTAX_CLIENT_SIDE_TOKEN=
 NEXT_PUBLIC_APP_URL=https://app.snap1099.com
 ```
 
@@ -32,9 +32,14 @@ GOOGLE_CLIENT_SECRET=
 GHOST_HMAC_SECRET=          # 必填 — Ghost Cookie HMAC（见 §9.3.1）
 AUTH_SECRET=                # 必填 — Session JWT（见 §9.3.1）
 OPENAI_API_KEY=
-PADDLE_API_KEY=
 PADDLE_WEBHOOK_SECRET=      # 必填 — production/preview 不可为 placeholder
-PADDLE_PRICE_ID=
+FOUNDER_LEVEL_DEFAULT=      # DEFAULT / lapsed 续费 Paddle Price ID
+FOUNDER_LEVEL_SUPER=
+FOUNDER_LEVEL_EARLY=
+FOUNDER_LEVEL_FOUNDER=
+SPECIAL_LEVEL_USER=         # 内测 SPECIAL（可选）
+FLAGS=                      # Vercel Flags SDK Key（见 §9.3.2；每环境独立）
+FLAGS_SECRET=               # Flags discovery 鉴权（见 §9.3.2；每环境独立）
 ```
 
 ### 9.3.1 身份密钥（Production / Preview 强制）
@@ -73,6 +78,24 @@ Google 登录另需（build 时打入客户端 bundle）：
 - `NEXT_PUBLIC_GOOGLE_CLIENT_ID`（可与 `GOOGLE_CLIENT_ID` 相同；`next.config.ts` 会在 build 时从 `GOOGLE_CLIENT_ID` 回填）
 
 详见 [`05-auth-ghost-google.md`](./05-auth-ghost-google.md)、[`docs/superpowers/specs/2026-06-14-google-login-production-fix-design.md`](../superpowers/specs/2026-06-14-google-login-production-fix-design.md)。
+
+### 9.3.2 Vercel Flags（`FLAGS` / `FLAGS_SECRET`）
+
+| 变量 | 用途 | 要求 |
+|------|------|------|
+| `FLAGS` | SDK Key；`vercelAdapter()` 从 Vercel 拉取 Dashboard flag 值 | Production / Preview / Development **各一把**（Sensitive） |
+| `FLAGS_SECRET` | Flags SDK 加密/签名；保护 `/.well-known/vercel/flags` discovery | **各环境独立** secret；勿用 All Environments 共用 |
+
+Discovery 路由 `app/.well-known/vercel/flags/route.ts` 使用 `createFlagsDiscoveryEndpoint`：无有效 `Authorization`（Vercel Toolbar / Flags Explorer）→ **401**。
+
+**拆分共用 `FLAGS_SECRET`（Vercel Dashboard）：**
+
+1. 删除 All Environments 的 `FLAGS_SECRET`
+2. 各环境生成独立 secret：`node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`
+3. 分别 Add → Production / Preview / Development（Prod/Preview 标 Sensitive）
+4. `vercel env pull .env.local` · **Redeploy**
+
+本地：`.env.example` 中 `FLAGS` / `FLAGS_SECRET` 由 `vercel env pull` 填充。
 
 ### 可选
 

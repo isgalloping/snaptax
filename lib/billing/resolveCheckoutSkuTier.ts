@@ -47,10 +47,6 @@ export function resolveCheckoutSkuTier(
     return { skuTier: resolution.skuTier, isSpecial: false };
   }
 
-  if (input.body.skuTier != null && input.body.skuTier !== "SPECIAL") {
-    return { skuTier: input.body.skuTier, isSpecial: false };
-  }
-
   const offer = resolveSeasonOfferFromState({
     enabled: input.enabled,
     tiers: input.tiers,

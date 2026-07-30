@@ -20,6 +20,40 @@ describe("resolveSpecialWebhookMinAmountCents", () => {
     });
   });
 
+  it("treats legacy null intent skuTier as DEFAULT", async () => {
+    const result = await resolveSpecialWebhookMinAmountCents("intent-1", {
+      findIntentSkuTier: async () => null,
+      getPublicTierPriceCents: async () => 2900,
+    });
+    assert.deepEqual(result, {
+      kind: "tier",
+      skuTier: "DEFAULT",
+      minAmountCents: 2900,
+    });
+  });
+
+  it("errors when an intent has an unknown skuTier", async () => {
+    const result = await resolveSpecialWebhookMinAmountCents("intent-1", {
+      findIntentSkuTier: async () => "BOGUS_TIER",
+      getPublicTierPriceCents: async () => 2900,
+    });
+    assert.deepEqual(result, {
+      kind: "error",
+      reason: "unknown_sku_tier",
+    });
+  });
+
+  it("errors when an intent skuTier cannot be found", async () => {
+    const result = await resolveSpecialWebhookMinAmountCents("intent-1", {
+      findIntentSkuTier: async () => undefined,
+      getPublicTierPriceCents: async () => 2900,
+    });
+    assert.deepEqual(result, {
+      kind: "error",
+      reason: "unknown_sku_tier",
+    });
+  });
+
   it("uses the intent tier rather than forged custom_data", async () => {
     const result = await resolveSpecialWebhookMinAmountCents("intent-1", {
       findIntentSkuTier: async () => "FOUNDER",

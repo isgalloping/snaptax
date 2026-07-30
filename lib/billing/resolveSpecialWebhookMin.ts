@@ -9,7 +9,10 @@ export type SpecialWebhookMinResolution =
   | { kind: "special"; minAmountCents: number }
   | {
       kind: "error";
-      reason: "special_price_unconfigured" | "tier_price_unconfigured";
+      reason:
+        | "special_price_unconfigured"
+        | "tier_price_unconfigured"
+        | "unknown_sku_tier";
     };
 
 export type ResolveSpecialWebhookMinDeps = {
@@ -46,7 +49,12 @@ export async function resolveSpecialWebhookMinAmountCents(
       return intent?.skuTier;
     });
 
-  const skuTier = await findIntentSkuTier(trimmed);
+  const intentSkuTier = await findIntentSkuTier(trimmed);
+  const skuTier = intentSkuTier === null ? "DEFAULT" : intentSkuTier;
+  if (skuTier === undefined) {
+    return { kind: "error", reason: "unknown_sku_tier" };
+  }
+
   if (isPublicFounderTier(skuTier)) {
     const getPublicTierPriceCents =
       deps.getPublicTierPriceCents ??
@@ -61,7 +69,9 @@ export async function resolveSpecialWebhookMinAmountCents(
     return { kind: "tier", skuTier, minAmountCents };
   }
 
-  if (skuTier !== "SPECIAL") return { kind: "default" };
+  if (skuTier !== "SPECIAL") {
+    return { kind: "error", reason: "unknown_sku_tier" };
+  }
 
   const getSpecialPriceUsd = deps.getSpecialPriceUsd ?? (async () => 0);
   const specialPriceUsd = await getSpecialPriceUsd();

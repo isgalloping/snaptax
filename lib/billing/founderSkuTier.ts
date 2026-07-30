@@ -12,8 +12,9 @@ export function isFounderSkuTier(
 
 export function resolveFounderSeatSkuTier(
   intentSkuTier: string | null | undefined,
-  _customDataSkuTier?: string | null | undefined,
+  customDataSkuTier?: string | null | undefined,
 ): Exclude<FounderTier, "DEFAULT" | "SPECIAL"> | undefined {
+  void customDataSkuTier;
   return isFounderSkuTier(intentSkuTier ?? undefined)
     ? intentSkuTier
     : undefined;

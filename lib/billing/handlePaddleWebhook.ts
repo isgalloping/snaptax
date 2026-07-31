@@ -43,7 +43,7 @@ async function handleTransactionCompleted(
     return { ok: true, ignored: true };
   }
   const minAmountCents =
-    minResolution.kind === "special"
+    minResolution.kind === "special" || minResolution.kind === "tier"
       ? minResolution.minAmountCents
       : undefined;
 

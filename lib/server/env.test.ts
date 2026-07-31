@@ -83,18 +83,20 @@ describe("server env secret resolution", () => {
     assert.equal(getAuthSecret(), "auth-secret");
   });
 
-  it("does not alias Ghost/Auth secrets from fallbacks on prod-like deploys", () => {
-    clearTrackedEnv();
-    process.env.VERCEL_ENV = "production";
-    process.env.POSTGRES_URL_NON_POOLING = "postgres://direct";
-    process.env.SUPABASE_JWT_SECRET = "supabase-secret";
+  for (const vercelEnv of ["production", "preview"] as const) {
+    it(`does not alias Ghost/Auth secrets from fallbacks on ${vercelEnv} deploys`, () => {
+      clearTrackedEnv();
+      process.env.VERCEL_ENV = vercelEnv;
+      process.env.POSTGRES_URL_NON_POOLING = "postgres://direct";
+      process.env.SUPABASE_JWT_SECRET = "supabase-secret";
 
-    applyEnvAliases();
+      applyEnvAliases();
 
-    assert.equal(process.env.DATABASE_URL, "postgres://direct");
-    assert.equal(process.env.GHOST_HMAC_SECRET, undefined);
-    assert.equal(process.env.AUTH_SECRET, undefined);
-  });
+      assert.equal(process.env.DATABASE_URL, "postgres://direct");
+      assert.equal(process.env.GHOST_HMAC_SECRET, undefined);
+      assert.equal(process.env.AUTH_SECRET, undefined);
+    });
+  }
 
   it("aliases Ghost/Auth secrets from fallbacks only outside prod-like deploys", () => {
     clearTrackedEnv();

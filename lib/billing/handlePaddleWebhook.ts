@@ -16,7 +16,7 @@ import {
   beginWebhookEvent,
   finishWebhookEvent,
 } from "@/lib/billing/recordWebhookEvent";
-import { isFounderSkuTier } from "@/lib/billing/founderSkuTier";
+import { resolveFounderSeatSkuTier } from "@/lib/billing/founderSkuTier";
 import { prisma } from "@/lib/prisma";
 import { assignFounderSeatOnFirstPurchase } from "@/lib/server/assignFounderSeat";
 import { currentTaxSeason } from "@/lib/tax/season";
@@ -165,11 +165,11 @@ async function handleTransactionCompleted(
   const skuTierFromIntent = grant.skuTier ?? undefined;
   const skuTierFromCustomData = validated.customData?.skuTier;
   const effectiveSkuTier = skuTierFromIntent ?? skuTierFromCustomData;
-  const founderSkuTier = isFounderSkuTier(skuTierFromIntent)
-    ? skuTierFromIntent
-    : isFounderSkuTier(skuTierFromCustomData)
-      ? skuTierFromCustomData
-      : undefined;
+  const founderSkuTier = resolveFounderSeatSkuTier({
+    intentSkuTier: skuTierFromIntent,
+    customDataSkuTier: skuTierFromCustomData,
+    legacyUserIdPath: grant.legacyUserIdPath,
+  });
 
   if (founderSkuTier) {
     const seatResult = await assignFounderSeatOnFirstPurchase(grant.userId);

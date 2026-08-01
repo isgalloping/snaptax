@@ -64,12 +64,18 @@ function singleRow(store: ReturnType<typeof memoryStore>) {
   return [...store.rows.values()][0];
 }
 
+function asPaddlePayload(
+  payload: unknown,
+): Parameters<typeof handlePaddleWebhookPayload>[0] {
+  return payload as Parameters<typeof handlePaddleWebhookPayload>[0];
+}
+
 describe("handlePaddleWebhookPayload", () => {
   it("records an approved refund adjustment as applied and refunded", async () => {
     const store = memoryStore();
 
     const result = await handlePaddleWebhookPayload(
-      {
+      asPaddlePayload({
         event_id: "ntf_refund",
         event_type: "adjustment.updated",
         data: {
@@ -78,7 +84,7 @@ describe("handlePaddleWebhookPayload", () => {
           action: "refund",
           status: "approved",
         },
-      },
+      }),
       webhookDeps(store, {
         applySeasonEntitlementAdjustment: async (input: {
           transactionId: string;

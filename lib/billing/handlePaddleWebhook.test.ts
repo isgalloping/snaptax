@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { handlePaddleWebhookPayload } from "./handlePaddleWebhook.ts";
+import {
+  handlePaddleWebhookPayload,
+  type HandlePaddleWebhookDeps,
+} from "./handlePaddleWebhook.ts";
 import {
   WEBHOOK_CHANNEL_PADDLE,
   beginWebhookEvent,
@@ -46,7 +49,10 @@ function memoryStore(): WebhookEventStore & {
   };
 }
 
-function webhookDeps(store: WebhookEventStore, overrides = {}) {
+function webhookDeps(
+  store: WebhookEventStore,
+  overrides: HandlePaddleWebhookDeps = {},
+): HandlePaddleWebhookDeps {
   return {
     beginWebhookEvent: (input: Parameters<typeof beginWebhookEvent>[0]) =>
       beginWebhookEvent(input, store),
@@ -227,6 +233,64 @@ describe("handlePaddleWebhookPayload", () => {
     assert.equal(row.processingResult, "applied");
     assert.equal(row.processingReason, "entitlement_created");
     assert.equal(row.transactionId, "txn_special");
+    assert.equal(row.statusAfter, "active");
+  });
+
+  it("does not assign a founder seat from forged custom data on a default intent", async () => {
+    const store = memoryStore();
+    const consumed: string[] = [];
+    const grants: string[] = [];
+    let founderSeatCalls = 0;
+
+    const result = await handlePaddleWebhookPayload(
+      {
+        event_id: "ntf_forged_founder",
+        event_type: "transaction.completed",
+        data: {
+          id: "txn_forged_founder",
+          status: "completed",
+          custom_data: {
+            intentId: "intent_default_founder_spoof",
+            skuTier: "FOUNDER_LEVEL_SUPER",
+          },
+          details: { totals: { total: "4900", currency_code: "USD" } },
+        },
+      },
+      webhookDeps(store, {
+        resolveSpecialWebhookMinAmountCents: async () => ({ kind: "default" }),
+        resolveWebhookGrantTarget: async () => ({
+          ok: true,
+          userId: "user_default",
+          taxSeason: "2026",
+          intentId: "intent_default_founder_spoof",
+          skuTier: "DEFAULT",
+        }),
+        grantPaddleSeasonEntitlement: async (input) => {
+          grants.push(input.userId);
+          return {
+            created: true,
+            duplicateSeason: false,
+            transactionId: "txn_forged_founder",
+          };
+        },
+        markCheckoutIntentConsumed: async (intentId) => {
+          consumed.push(intentId);
+        },
+        assignFounderSeatOnFirstPurchase: async () => {
+          founderSeatCalls += 1;
+          throw new Error("forged founder custom_data must not assign a seat");
+        },
+      }),
+    );
+
+    assert.equal(result.ok, true);
+    assert.deepEqual(grants, ["user_default"]);
+    assert.deepEqual(consumed, ["intent_default_founder_spoof"]);
+    assert.equal(founderSeatCalls, 0);
+    const row = singleRow(store);
+    assert.equal(row.processingResult, "applied");
+    assert.equal(row.processingReason, "entitlement_created");
+    assert.equal(row.transactionId, "txn_forged_founder");
     assert.equal(row.statusAfter, "active");
   });
 });

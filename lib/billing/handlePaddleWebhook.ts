@@ -204,9 +204,7 @@ async function handleTransactionCompleted(
   const effectiveSkuTier = skuTierFromIntent ?? skuTierFromCustomData;
   const founderSkuTier = isFounderSkuTier(skuTierFromIntent)
     ? skuTierFromIntent
-    : isFounderSkuTier(skuTierFromCustomData)
-      ? skuTierFromCustomData
-      : undefined;
+    : undefined;
 
   if (founderSkuTier) {
     const assignFounderSeat =

@@ -1,15 +1,41 @@
 import { founderPriceUsdToCents } from "@/lib/founder/pricing";
+import type { PublicFounderTier } from "@/lib/founder/types";
 import { prisma } from "@/lib/prisma";
+import { resolveFounderProgramConfig } from "@/lib/server/founderConfig";
 
 export type SpecialWebhookMinResolution =
   | { kind: "default" }
-  | { kind: "special"; minAmountCents: number }
-  | { kind: "error"; reason: "special_price_unconfigured" };
+  | {
+      kind: "tier";
+      skuTier: PublicFounderTier | "SPECIAL";
+      minAmountCents: number;
+    }
+  | {
+      kind: "error";
+      reason:
+        | "special_price_unconfigured"
+        | "sku_tier_unknown"
+        | "tier_price_unconfigured";
+    };
 
 export type ResolveSpecialWebhookMinDeps = {
   findIntentSkuTier?: (intentId: string) => Promise<string | null | undefined>;
   getSpecialPriceUsd?: () => Promise<number>;
+  getTierPriceCents?: (
+    skuTier: PublicFounderTier,
+  ) => Promise<number | null | undefined>;
 };
+
+function isPublicFounderTier(
+  skuTier: string | null | undefined,
+): skuTier is PublicFounderTier {
+  return (
+    skuTier === "FOUNDER_LEVEL_SUPER" ||
+    skuTier === "EARLY" ||
+    skuTier === "FOUNDER" ||
+    skuTier === "DEFAULT"
+  );
+}
 
 export async function resolveSpecialWebhookMinAmountCents(
   intentId: string | undefined,
@@ -29,16 +55,40 @@ export async function resolveSpecialWebhookMinAmountCents(
     });
 
   const skuTier = await findIntentSkuTier(trimmed);
-  if (skuTier !== "SPECIAL") return { kind: "default" };
+  const effectiveSkuTier = skuTier ?? "DEFAULT";
 
-  const getSpecialPriceUsd = deps.getSpecialPriceUsd ?? (async () => 0);
-  const specialPriceUsd = await getSpecialPriceUsd();
-  if (specialPriceUsd <= 0) {
-    return { kind: "error", reason: "special_price_unconfigured" };
+  if (effectiveSkuTier === "SPECIAL") {
+    const getSpecialPriceUsd = deps.getSpecialPriceUsd ?? (async () => 0);
+    const specialPriceUsd = await getSpecialPriceUsd();
+    if (specialPriceUsd <= 0) {
+      return { kind: "error", reason: "special_price_unconfigured" };
+    }
+
+    return {
+      kind: "tier",
+      skuTier: "SPECIAL",
+      minAmountCents: founderPriceUsdToCents(specialPriceUsd),
+    };
+  }
+
+  if (!isPublicFounderTier(effectiveSkuTier)) {
+    return { kind: "error", reason: "sku_tier_unknown" };
+  }
+
+  const getTierPriceCents =
+    deps.getTierPriceCents ??
+    (async (tier: PublicFounderTier) => {
+      const config = await resolveFounderProgramConfig();
+      return config.tiers[tier].priceCents;
+    });
+  const minAmountCents = await getTierPriceCents(effectiveSkuTier);
+  if (minAmountCents == null || minAmountCents <= 0) {
+    return { kind: "error", reason: "tier_price_unconfigured" };
   }
 
   return {
-    kind: "special",
-    minAmountCents: founderPriceUsdToCents(specialPriceUsd),
+    kind: "tier",
+    skuTier: effectiveSkuTier,
+    minAmountCents,
   };
 }

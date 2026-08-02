@@ -4,6 +4,7 @@ import {
   getOpenAiBaseUrl,
   getPaddleClientToken,
   getPaddlePriceId,
+  getPaddlePriceIdForFounderTier,
 } from "./env.ts";
 
 describe("getOpenAiBaseUrl", () => {
@@ -29,7 +30,13 @@ describe("Paddle env accessors", () => {
   const envKeys = [
     "PADDLE_SNAPTAX_CLIENT_SIDE_TOKEN",
     "NEXT_PUBLIC_PADDLE_CLIENT_TOKEN",
+    "FOUNDER_LEVEL_SUPER",
+    "FOUNDER_LEVEL_EARLY",
+    "FOUNDER_LEVEL_FOUNDER",
     "FOUNDER_LEVEL_DEFAULT",
+    "PADDLE_PRICE_ID_FOUNDER_SUPER",
+    "PADDLE_PRICE_ID_FOUNDER_EARLY",
+    "PADDLE_PRICE_ID_FOUNDER",
     "PADDLE_PRICE_ID",
     "PADDLE_SNAPTAX_PRICE_KEY",
   ] as const;
@@ -66,5 +73,19 @@ describe("Paddle env accessors", () => {
 
     process.env.FOUNDER_LEVEL_DEFAULT = "pri_default";
     assert.equal(getPaddlePriceId(), "pri_default");
+  });
+
+  it("does not fall back to legacy founder tier Paddle price env names", () => {
+    delete process.env.FOUNDER_LEVEL_SUPER;
+    delete process.env.FOUNDER_LEVEL_EARLY;
+    delete process.env.FOUNDER_LEVEL_FOUNDER;
+    delete process.env.FOUNDER_LEVEL_DEFAULT;
+    process.env.PADDLE_PRICE_ID_FOUNDER_SUPER = "pri_legacy_super";
+    process.env.PADDLE_PRICE_ID_FOUNDER_EARLY = "pri_legacy_early";
+    process.env.PADDLE_PRICE_ID_FOUNDER = "pri_legacy_founder";
+
+    assert.equal(getPaddlePriceIdForFounderTier("FOUNDER_LEVEL_SUPER"), "");
+    assert.equal(getPaddlePriceIdForFounderTier("EARLY"), "");
+    assert.equal(getPaddlePriceIdForFounderTier("FOUNDER"), "");
   });
 });

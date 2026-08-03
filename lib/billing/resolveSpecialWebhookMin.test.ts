@@ -8,19 +8,29 @@ describe("resolveSpecialWebhookMinAmountCents", () => {
     assert.deepEqual(result, { kind: "default" });
   });
 
-  it("uses default min when intent skuTier is not SPECIAL", async () => {
+  it("uses configured default price when intent skuTier is DEFAULT", async () => {
     const result = await resolveSpecialWebhookMinAmountCents("intent-1", {
       findIntentSkuTier: async () => "DEFAULT",
+      getTierPriceCents: async (tier) => (tier === "DEFAULT" ? 4900 : null),
     });
-    assert.deepEqual(result, { kind: "default" });
+    assert.deepEqual(result, { kind: "tier", minAmountCents: 4900 });
+  });
+
+  it("uses configured founder price when intent skuTier is a founder tier", async () => {
+    const result = await resolveSpecialWebhookMinAmountCents("intent-1", {
+      findIntentSkuTier: async () => "FOUNDER",
+      getTierPriceCents: async (tier) => (tier === "FOUNDER" ? 1500 : null),
+    });
+    assert.deepEqual(result, { kind: "tier", minAmountCents: 1500 });
   });
 
   it("ignores forged custom_data; only intent skuTier SPECIAL gets special min", async () => {
     const result = await resolveSpecialWebhookMinAmountCents("intent-1", {
       findIntentSkuTier: async () => "FOUNDER",
+      getTierPriceCents: async (tier) => (tier === "FOUNDER" ? 1500 : null),
       getSpecialPriceUsd: async () => 1,
     });
-    assert.deepEqual(result, { kind: "default" });
+    assert.deepEqual(result, { kind: "tier", minAmountCents: 1500 });
   });
 
   it("returns special min from specialPrice flag when intent is SPECIAL", async () => {

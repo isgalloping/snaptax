@@ -4,7 +4,7 @@ import {
   parsePaddleTotalCents,
   validatePaddleTransaction,
 } from "./validatePaddleTransaction";
-import { isFounderSkuTier } from "./founderSkuTier";
+import { isFounderSkuTier, resolveFounderSeatSkuTier } from "./founderSkuTier";
 
 describe("parsePaddleTotalCents", () => {
   it("parses Paddle totals in cents", () => {
@@ -145,5 +145,16 @@ describe("isFounderSkuTier", () => {
   it("excludes SPECIAL from founder seat assignment tiers", () => {
     assert.equal(isFounderSkuTier("SPECIAL"), false);
     assert.equal(isFounderSkuTier("FOUNDER"), true);
+  });
+
+  it("ignores forged founder custom_data when checkout intent has a non-founder tier", () => {
+    assert.equal(
+      resolveFounderSeatSkuTier({
+        intentSkuTier: "DEFAULT",
+        customDataSkuTier: "FOUNDER",
+        legacyUserIdPath: false,
+      }),
+      undefined,
+    );
   });
 });

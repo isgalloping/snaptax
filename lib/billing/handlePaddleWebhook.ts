@@ -27,16 +27,56 @@ export type PaddleNotificationPayload = PaddleWebhookPayload & {
   occurred_at?: string;
 };
 
+export type PaddleWebhookDeps = {
+  resolveSpecialWebhookMinAmountCents?: typeof resolveSpecialWebhookMinAmountCents;
+  getSpecialPriceUsd?: typeof specialPriceFlag;
+  validatePaddleTransaction?: typeof validatePaddleTransaction;
+  resolveWebhookGrantTarget?: typeof resolveWebhookGrantTarget;
+  grantPaddleSeasonEntitlement?: typeof grantPaddleSeasonEntitlement;
+  markCheckoutIntentConsumed?: typeof markCheckoutIntentConsumed;
+  assignFounderSeatOnFirstPurchase?: typeof assignFounderSeatOnFirstPurchase;
+  updateUserFounderStatus?: (userId: string) => Promise<void>;
+  beginWebhookEvent?: typeof beginWebhookEvent;
+  finishWebhookEvent?: typeof finishWebhookEvent;
+  applySeasonEntitlementAdjustment?: typeof applySeasonEntitlementAdjustment;
+  logEvent?: typeof logEvent;
+  currentTaxSeason?: typeof currentTaxSeason;
+};
+
+type PaddleWebhookRuntimeDeps = Required<PaddleWebhookDeps>;
+
+const defaultPaddleWebhookDeps: PaddleWebhookRuntimeDeps = {
+  resolveSpecialWebhookMinAmountCents,
+  getSpecialPriceUsd: specialPriceFlag,
+  validatePaddleTransaction,
+  resolveWebhookGrantTarget,
+  grantPaddleSeasonEntitlement,
+  markCheckoutIntentConsumed,
+  assignFounderSeatOnFirstPurchase,
+  updateUserFounderStatus: async (userId) => {
+    await prisma.snaptaxUser.update({
+      where: { id: userId },
+      data: { founderStatus: "active" },
+    });
+  },
+  beginWebhookEvent,
+  finishWebhookEvent,
+  applySeasonEntitlementAdjustment,
+  logEvent,
+  currentTaxSeason,
+};
+
 async function handleTransactionCompleted(
   payload: PaddleWebhookPayload,
   auditId: string,
+  deps: PaddleWebhookRuntimeDeps,
 ): Promise<{ ok: true; ignored?: boolean }> {
   const intentId = payload.data?.custom_data?.intentId;
-  const minResolution = await resolveSpecialWebhookMinAmountCents(intentId, {
-    getSpecialPriceUsd: specialPriceFlag,
+  const minResolution = await deps.resolveSpecialWebhookMinAmountCents(intentId, {
+    getSpecialPriceUsd: deps.getSpecialPriceUsd,
   });
   if (minResolution.kind === "error") {
-    await finishWebhookEvent(auditId, {
+    await deps.finishWebhookEvent(auditId, {
       processingResult: "ignored",
       processingReason: minResolution.reason,
     });
@@ -47,9 +87,9 @@ async function handleTransactionCompleted(
       ? minResolution.minAmountCents
       : undefined;
 
-  const validated = validatePaddleTransaction(payload, { minAmountCents });
+  const validated = deps.validatePaddleTransaction(payload, { minAmountCents });
   if (!validated.ok) {
-    logEvent({
+    deps.logEvent({
       ts: new Date().toISOString(),
       level: "warn",
       module: "biz.paddle",
@@ -60,20 +100,20 @@ async function handleTransactionCompleted(
         eventType: payload.event_type,
       },
     });
-    await finishWebhookEvent(auditId, {
+    await deps.finishWebhookEvent(auditId, {
       processingResult: "ignored",
       processingReason: validated.reason,
     });
     return { ok: true, ignored: true };
   }
 
-  const grant = await resolveWebhookGrantTarget(validated.customData);
+  const grant = await deps.resolveWebhookGrantTarget(validated.customData);
   if (
     grant.ok &&
     validated.customData?.skuTier === "SPECIAL" &&
     grant.skuTier !== "SPECIAL"
   ) {
-    await finishWebhookEvent(auditId, {
+    await deps.finishWebhookEvent(auditId, {
       processingResult: "ignored",
       processingReason: "sku_tier_mismatch",
       transactionId: validated.transactionId,
@@ -82,7 +122,7 @@ async function handleTransactionCompleted(
   }
 
   if (!grant.ok) {
-    logEvent({
+    deps.logEvent({
       ts: new Date().toISOString(),
       level: "warn",
       module: "biz.paddle",
@@ -93,7 +133,7 @@ async function handleTransactionCompleted(
         transactionId: validated.transactionId,
       },
     });
-    await finishWebhookEvent(auditId, {
+    await deps.finishWebhookEvent(auditId, {
       processingResult: "ignored",
       processingReason: grant.reason,
       transactionId: validated.transactionId,
@@ -102,7 +142,7 @@ async function handleTransactionCompleted(
   }
 
   if (grant.legacyUserIdPath) {
-    logEvent({
+    deps.logEvent({
       ts: new Date().toISOString(),
       level: "warn",
       module: "biz.paddle",
@@ -116,7 +156,7 @@ async function handleTransactionCompleted(
   }
 
   if (grant.intentExpiredAtGrant) {
-    logEvent({
+    deps.logEvent({
       ts: new Date().toISOString(),
       level: "warn",
       module: "biz.paddle",
@@ -133,9 +173,9 @@ async function handleTransactionCompleted(
   const taxSeason =
     grant.taxSeason && grant.taxSeason.length > 0
       ? grant.taxSeason
-      : currentTaxSeason();
+      : deps.currentTaxSeason();
 
-  const entitlement = await grantPaddleSeasonEntitlement({
+  const entitlement = await deps.grantPaddleSeasonEntitlement({
     userId: grant.userId,
     taxSeason,
     transactionId: validated.transactionId,
@@ -143,7 +183,7 @@ async function handleTransactionCompleted(
   });
 
   if (entitlement.duplicateSeason) {
-    logEvent({
+    deps.logEvent({
       ts: new Date().toISOString(),
       level: "warn",
       module: "biz.paddle",
@@ -159,7 +199,7 @@ async function handleTransactionCompleted(
   }
 
   if (grant.intentId) {
-    await markCheckoutIntentConsumed(grant.intentId, validated.transactionId);
+    await deps.markCheckoutIntentConsumed(grant.intentId, validated.transactionId);
   }
 
   const skuTierFromIntent = grant.skuTier ?? undefined;
@@ -172,17 +212,14 @@ async function handleTransactionCompleted(
       : undefined;
 
   if (founderSkuTier) {
-    const seatResult = await assignFounderSeatOnFirstPurchase(grant.userId);
+    const seatResult = await deps.assignFounderSeatOnFirstPurchase(grant.userId);
 
     if (!seatResult.assigned && seatResult.founderNumber != null) {
-      await prisma.snaptaxUser.update({
-        where: { id: grant.userId },
-        data: { founderStatus: "active" },
-      });
+      await deps.updateUserFounderStatus(grant.userId);
     }
 
     if (seatResult.seatUnavailable) {
-      logEvent({
+      deps.logEvent({
         ts: new Date().toISOString(),
         level: "warn",
         module: "biz.founder",
@@ -197,7 +234,7 @@ async function handleTransactionCompleted(
         },
       });
     } else {
-      logEvent({
+      deps.logEvent({
         ts: new Date().toISOString(),
         level: "info",
         module: "biz.founder",
@@ -218,7 +255,7 @@ async function handleTransactionCompleted(
     }
   }
 
-  logEvent({
+  deps.logEvent({
     ts: new Date().toISOString(),
     level: "info",
     module: "biz.paddle",
@@ -235,7 +272,7 @@ async function handleTransactionCompleted(
     },
   });
 
-  await finishWebhookEvent(auditId, {
+  await deps.finishWebhookEvent(auditId, {
     processingResult: "applied",
     processingReason: entitlement.created
       ? "entitlement_created"
@@ -250,23 +287,24 @@ async function handleTransactionCompleted(
 async function handleAdjustment(
   payload: unknown,
   auditId: string,
+  deps: PaddleWebhookRuntimeDeps,
 ): Promise<{ ok: true; ignored?: boolean }> {
   const parsed = parsePaddleAdjustmentPayload(payload);
   if (!parsed) {
-    await finishWebhookEvent(auditId, {
+    await deps.finishWebhookEvent(auditId, {
       processingResult: "ignored",
       processingReason: "adjustment_parse_failed",
     });
     return { ok: true, ignored: true };
   }
 
-  const result = await applySeasonEntitlementAdjustment({
+  const result = await deps.applySeasonEntitlementAdjustment({
     transactionId: parsed.transactionId,
     action: parsed.action,
     adjustmentStatus: parsed.adjustmentStatus,
   });
 
-  await finishWebhookEvent(auditId, {
+  await deps.finishWebhookEvent(auditId, {
     processingResult: result.applied ? "applied" : "ignored",
     processingReason: result.reason,
     transactionId: parsed.transactionId,
@@ -284,7 +322,9 @@ async function handleAdjustment(
 /** Business handler after signature verify + JSON parse. Always prefers ok for audit durability. */
 export async function handlePaddleWebhookPayload(
   payload: PaddleNotificationPayload,
+  deps: PaddleWebhookDeps = {},
 ): Promise<{ ok: true; duplicate?: boolean; ignored?: boolean }> {
+  const runtimeDeps = { ...defaultPaddleWebhookDeps, ...deps };
   const eventType = payload.event_type ?? "unknown";
   const eventId =
     (typeof payload.event_id === "string" && payload.event_id) ||
@@ -294,7 +334,7 @@ export async function handlePaddleWebhookPayload(
     ? new Date(payload.occurred_at)
     : null;
 
-  const begun = await beginWebhookEvent({
+  const begun = await runtimeDeps.beginWebhookEvent({
     channelCode: WEBHOOK_CHANNEL_PADDLE,
     eventId,
     eventType,
@@ -309,17 +349,17 @@ export async function handlePaddleWebhookPayload(
   }
 
   if (eventType === "transaction.completed") {
-    return handleTransactionCompleted(payload, begun.id);
+    return handleTransactionCompleted(payload, begun.id, runtimeDeps);
   }
 
   if (
     eventType === "adjustment.created" ||
     eventType === "adjustment.updated"
   ) {
-    return handleAdjustment(payload, begun.id);
+    return handleAdjustment(payload, begun.id, runtimeDeps);
   }
 
-  await finishWebhookEvent(begun.id, {
+  await runtimeDeps.finishWebhookEvent(begun.id, {
     processingResult: "ignored",
     processingReason: "unhandled_event_type",
   });

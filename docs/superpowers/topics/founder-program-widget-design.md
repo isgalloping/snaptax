@@ -2,7 +2,7 @@
 
 **Topic ID:** `founder-program-widget`  
 **Status:** Consolidated · implemented  
-**Last verified:** 2026-07-08 (#115 lapsed → DEFAULT)
+**Last verified:** 2026-07-25 (#181 SPECIAL checkout stays outside Founder seats)
 
 ---
 
@@ -46,9 +46,10 @@ Snap1099 **Founder Program** 以 Home WidgetPager **第一页全宽** 营销卡 
 | **计费** | 按 **报税季** 一次性 SKU；本季 Export 无限次 |
 | **SKU tiers** | `FOUNDER_LEVEL_SUPER` · `EARLY` · `FOUNDER` · `DEFAULT` |
 | **占席** | 仅 webhook 成功且 skuTier ∈ {SUPER, EARLY, FOUNDER} → `assignFounderSeat` |
+| **SPECIAL** | 内测 checkout tier；不占 Founder 席位，详见 [`07-paddle-billing.md`](../../tech/07-paddle-billing.md) §7.4.1 |
 | **Google** | Paddle 前硬门控；登录 **不占席** |
 | **Renewal** | Active founder 续费 **locked tier**；**lapsed 续费 DEFAULT**（`founder_tier` 仅历史） |
-| **Flags** | `founderProgramEnabled` · `founderPrice*Cents` · env `PADDLE_PRICE_ID_FOUNDER_*` |
+| **Flags** | `founderProgramEnabled` · `founderPriceSuper/Early/Founder/Default`（USD）· env `FOUNDER_LEVEL_*` |
 
 ### 3.2 Widget visibility (`isFounderWidgetVisible`)
 

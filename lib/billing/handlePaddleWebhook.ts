@@ -1,39 +1,84 @@
-import { specialPriceFlag } from "@/flags/special";
-import { resolveSpecialWebhookMinAmountCents } from "@/lib/billing/resolveSpecialWebhookMin";
+import { specialPriceFlag as defaultSpecialPriceFlag } from "@/flags/special";
+import { resolveSpecialWebhookMinAmountCents as defaultResolveSpecialWebhookMinAmountCents } from "@/lib/billing/resolveSpecialWebhookMin";
 import {
-  validatePaddleTransaction,
+  validatePaddleTransaction as defaultValidatePaddleTransaction,
   type PaddleWebhookPayload,
 } from "@/lib/billing/validatePaddleTransaction";
 import {
-  markCheckoutIntentConsumed,
-  resolveWebhookGrantTarget,
+  markCheckoutIntentConsumed as defaultMarkCheckoutIntentConsumed,
+  resolveWebhookGrantTarget as defaultResolveWebhookGrantTarget,
 } from "@/lib/billing/checkoutIntent";
-import { grantPaddleSeasonEntitlement } from "@/lib/billing/grantSeasonEntitlement";
-import { parsePaddleAdjustmentPayload } from "@/lib/billing/parsePaddleAdjustment";
-import { applySeasonEntitlementAdjustment } from "@/lib/billing/applySeasonEntitlementAdjustment";
+import { grantPaddleSeasonEntitlement as defaultGrantPaddleSeasonEntitlement } from "@/lib/billing/grantSeasonEntitlement";
+import { parsePaddleAdjustmentPayload as defaultParsePaddleAdjustmentPayload } from "@/lib/billing/parsePaddleAdjustment";
+import { applySeasonEntitlementAdjustment as defaultApplySeasonEntitlementAdjustment } from "@/lib/billing/applySeasonEntitlementAdjustment";
 import {
   WEBHOOK_CHANNEL_PADDLE,
-  beginWebhookEvent,
-  finishWebhookEvent,
+  beginWebhookEvent as defaultBeginWebhookEvent,
+  finishWebhookEvent as defaultFinishWebhookEvent,
 } from "@/lib/billing/recordWebhookEvent";
 import { resolveFounderSeatSkuTier } from "@/lib/billing/founderSkuTier";
 import { prisma } from "@/lib/prisma";
-import { assignFounderSeatOnFirstPurchase } from "@/lib/server/assignFounderSeat";
-import { currentTaxSeason } from "@/lib/tax/season";
-import { logEvent } from "@/lib/server/log/logEvent";
+import { assignFounderSeatOnFirstPurchase as defaultAssignFounderSeatOnFirstPurchase } from "@/lib/server/assignFounderSeat";
+import { currentTaxSeason as defaultCurrentTaxSeason } from "@/lib/tax/season";
+import { logEvent as defaultLogEvent } from "@/lib/server/log/logEvent";
 
 export type PaddleNotificationPayload = PaddleWebhookPayload & {
   event_id?: string;
   occurred_at?: string;
 };
 
+export type HandlePaddleWebhookDeps = {
+  specialPriceFlag?: typeof defaultSpecialPriceFlag;
+  resolveSpecialWebhookMinAmountCents?: typeof defaultResolveSpecialWebhookMinAmountCents;
+  validatePaddleTransaction?: typeof defaultValidatePaddleTransaction;
+  resolveWebhookGrantTarget?: typeof defaultResolveWebhookGrantTarget;
+  grantPaddleSeasonEntitlement?: typeof defaultGrantPaddleSeasonEntitlement;
+  markCheckoutIntentConsumed?: typeof defaultMarkCheckoutIntentConsumed;
+  parsePaddleAdjustmentPayload?: typeof defaultParsePaddleAdjustmentPayload;
+  applySeasonEntitlementAdjustment?: typeof defaultApplySeasonEntitlementAdjustment;
+  beginWebhookEvent?: typeof defaultBeginWebhookEvent;
+  finishWebhookEvent?: typeof defaultFinishWebhookEvent;
+  assignFounderSeatOnFirstPurchase?: typeof defaultAssignFounderSeatOnFirstPurchase;
+  updateFounderStatusActive?: (userId: string) => Promise<void>;
+  currentTaxSeason?: typeof defaultCurrentTaxSeason;
+  logEvent?: typeof defaultLogEvent;
+};
+
 async function handleTransactionCompleted(
   payload: PaddleWebhookPayload,
   auditId: string,
+  deps: HandlePaddleWebhookDeps,
 ): Promise<{ ok: true; ignored?: boolean }> {
+  const finishWebhookEvent =
+    deps.finishWebhookEvent ?? defaultFinishWebhookEvent;
+  const logEvent = deps.logEvent ?? defaultLogEvent;
+  const resolveSpecialWebhookMinAmountCents =
+    deps.resolveSpecialWebhookMinAmountCents ??
+    defaultResolveSpecialWebhookMinAmountCents;
+  const validatePaddleTransaction =
+    deps.validatePaddleTransaction ?? defaultValidatePaddleTransaction;
+  const resolveWebhookGrantTarget =
+    deps.resolveWebhookGrantTarget ?? defaultResolveWebhookGrantTarget;
+  const grantPaddleSeasonEntitlement =
+    deps.grantPaddleSeasonEntitlement ?? defaultGrantPaddleSeasonEntitlement;
+  const markCheckoutIntentConsumed =
+    deps.markCheckoutIntentConsumed ?? defaultMarkCheckoutIntentConsumed;
+  const currentTaxSeason = deps.currentTaxSeason ?? defaultCurrentTaxSeason;
+  const assignFounderSeatOnFirstPurchase =
+    deps.assignFounderSeatOnFirstPurchase ??
+    defaultAssignFounderSeatOnFirstPurchase;
+  const updateFounderStatusActive =
+    deps.updateFounderStatusActive ??
+    (async (userId: string) => {
+      await prisma.snaptaxUser.update({
+        where: { id: userId },
+        data: { founderStatus: "active" },
+      });
+    });
+
   const intentId = payload.data?.custom_data?.intentId;
   const minResolution = await resolveSpecialWebhookMinAmountCents(intentId, {
-    getSpecialPriceUsd: specialPriceFlag,
+    getSpecialPriceUsd: deps.specialPriceFlag ?? defaultSpecialPriceFlag,
   });
   if (minResolution.kind === "error") {
     await finishWebhookEvent(auditId, {
@@ -175,10 +220,7 @@ async function handleTransactionCompleted(
     const seatResult = await assignFounderSeatOnFirstPurchase(grant.userId);
 
     if (!seatResult.assigned && seatResult.founderNumber != null) {
-      await prisma.snaptaxUser.update({
-        where: { id: grant.userId },
-        data: { founderStatus: "active" },
-      });
+      await updateFounderStatusActive(grant.userId);
     }
 
     if (seatResult.seatUnavailable) {
@@ -250,7 +292,16 @@ async function handleTransactionCompleted(
 async function handleAdjustment(
   payload: unknown,
   auditId: string,
+  deps: HandlePaddleWebhookDeps,
 ): Promise<{ ok: true; ignored?: boolean }> {
+  const finishWebhookEvent =
+    deps.finishWebhookEvent ?? defaultFinishWebhookEvent;
+  const parsePaddleAdjustmentPayload =
+    deps.parsePaddleAdjustmentPayload ?? defaultParsePaddleAdjustmentPayload;
+  const applySeasonEntitlementAdjustment =
+    deps.applySeasonEntitlementAdjustment ??
+    defaultApplySeasonEntitlementAdjustment;
+
   const parsed = parsePaddleAdjustmentPayload(payload);
   if (!parsed) {
     await finishWebhookEvent(auditId, {
@@ -284,7 +335,11 @@ async function handleAdjustment(
 /** Business handler after signature verify + JSON parse. Always prefers ok for audit durability. */
 export async function handlePaddleWebhookPayload(
   payload: PaddleNotificationPayload,
+  deps: HandlePaddleWebhookDeps = {},
 ): Promise<{ ok: true; duplicate?: boolean; ignored?: boolean }> {
+  const beginWebhookEvent = deps.beginWebhookEvent ?? defaultBeginWebhookEvent;
+  const finishWebhookEvent =
+    deps.finishWebhookEvent ?? defaultFinishWebhookEvent;
   const eventType = payload.event_type ?? "unknown";
   const eventId =
     (typeof payload.event_id === "string" && payload.event_id) ||
@@ -309,14 +364,14 @@ export async function handlePaddleWebhookPayload(
   }
 
   if (eventType === "transaction.completed") {
-    return handleTransactionCompleted(payload, begun.id);
+    return handleTransactionCompleted(payload, begun.id, deps);
   }
 
   if (
     eventType === "adjustment.created" ||
     eventType === "adjustment.updated"
   ) {
-    return handleAdjustment(payload, begun.id);
+    return handleAdjustment(payload, begun.id, deps);
   }
 
   await finishWebhookEvent(begun.id, {

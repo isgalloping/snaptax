@@ -156,29 +156,15 @@ export function MarketingHero() {
               style={{ backgroundColor: MARKETING_TOKENS.accentGreen }}
               aria-hidden
             />
-            <div className="relative ml-auto w-full max-w-[24rem] sm:max-w-[26rem] xl:max-w-[27rem]">
-              <div className="relative flex items-end justify-center gap-2 sm:gap-3">
-                <div className="relative w-[48%] shrink-0">
-                  <Image
-                    src={MARKETING_HERO_SCREENS[0].src}
-                    alt={MARKETING_HERO_SCREENS[0].alt}
-                    width={MARKETING_HERO_SCREENS[0].width}
-                    height={MARKETING_HERO_SCREENS[0].height}
-                    priority
-                    className="h-auto w-full rounded-[1.35rem] border border-white/10 shadow-2xl"
-                  />
-                </div>
-                <div className="relative w-[48%] shrink-0 translate-y-8 sm:translate-y-10">
-                  <Image
-                    src={MARKETING_HERO_SCREENS[1].src}
-                    alt={MARKETING_HERO_SCREENS[1].alt}
-                    width={MARKETING_HERO_SCREENS[1].width}
-                    height={MARKETING_HERO_SCREENS[1].height}
-                    priority
-                    className="h-auto w-full rounded-[1.35rem] border border-white/10 shadow-2xl ring-1 ring-yellow-500/20"
-                  />
-                </div>
-              </div>
+            <div className="relative mx-auto w-full max-w-[24rem] sm:max-w-[26rem] xl:max-w-[27rem]">
+              <Image
+                src={MARKETING_HERO_SCREENS[0].src}
+                alt={MARKETING_HERO_SCREENS[0].alt}
+                width={MARKETING_HERO_SCREENS[0].width}
+                height={MARKETING_HERO_SCREENS[0].height}
+                priority
+                className="h-auto w-full rounded-[1.35rem] border border-white/10 shadow-2xl"
+              />
             </div>
           </div>
 

@@ -15,8 +15,9 @@ export function resolveFounderSeatSkuTier(input: {
   customDataSkuTier: string | undefined;
   legacyUserIdPath: boolean;
 }): Exclude<FounderTier, "DEFAULT" | "SPECIAL"> | undefined {
-  if (isFounderSkuTier(input.intentSkuTier ?? undefined)) {
-    return input.intentSkuTier;
+  const intentTier = input.intentSkuTier ?? undefined;
+  if (isFounderSkuTier(intentTier)) {
+    return intentTier;
   }
   if (
     input.legacyUserIdPath &&

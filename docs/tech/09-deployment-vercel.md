@@ -97,6 +97,37 @@ Discovery 路由 `app/.well-known/vercel/flags/route.ts` 使用 `createFlagsDisc
 
 本地：`.env.example` 中 `FLAGS` / `FLAGS_SECRET` 由 `vercel env pull` 填充。
 
+### 9.3.3 业务 Flags（Founder / SPECIAL checkout）
+
+这些 flag 由 `@flags-sdk/vercel` 读取，需在 Vercel Dashboard 按环境配置；`FLAGS` / `FLAGS_SECRET` 只负责发现与读取，不提供业务默认值。
+
+| Flag key | 类型 | 默认值（源码） | 用途 |
+|----------|------|----------------|------|
+| `founderProgramEnabled` | boolean | `false` | 是否开启 Founder Program tier |
+| `founderPriceSuper` | number | `5` | Founder seat 1–10 展示价（USD） |
+| `founderPriceEarly` | number | `10` | Founder seat 11–30 展示价（USD） |
+| `founderPriceFounder` | number | `15` | Founder seat 31–50 展示价（USD） |
+| `founderPriceDefault` | number | `29` | DEFAULT / lapsed 续费展示价（USD） |
+| `specialUsers` | string | `""` | 内测 SPECIAL email 白名单，逗号分隔 |
+| `specialPrice` | number | `1` | SPECIAL 展示价与 webhook 最低金额（USD） |
+
+SPECIAL checkout 必须同时配置：
+
+1. Vercel Env `SPECIAL_LEVEL_USER=pri_...`（对应当前 Paddle Sandbox/Production Price）。
+2. Vercel Flag `specialUsers=qa@example.invalid,founder@example.invalid`（大小写不敏感；源码会 trim + lowercase）。
+3. Vercel Flag `specialPrice` 为 `> 0` 的 USD 数值。
+4. 测试账号以 Google 登录；Ghost / Guest 不会进入 SPECIAL。
+
+Smoke check：
+
+```bash
+# 需要带测试账号的 snap1099_session cookie
+curl -s https://{preview-domain}/api/billing/season-offer \
+  -H 'Cookie: snap1099_session=...'
+```
+
+期望白名单账号返回 `skuTier: "SPECIAL"`、`priceDisplay: "internal_test"`；非白名单或未登录返回 Founder / DEFAULT tier。若 `POST /api/billing/checkout-intent` 返回普通 `paddlePriceId`，优先检查 session email、`specialUsers`、`specialPrice` 与 `SPECIAL_LEVEL_USER` 是否在同一 Vercel environment 生效。
+
 ### 可选
 
 ```

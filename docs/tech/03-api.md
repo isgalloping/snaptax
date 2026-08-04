@@ -288,9 +288,68 @@ Query: `season=2026`（默认当前报税季）
 {
   "season": "2026",
   "paid": true,
-  "paidAt": "2026-02-01T..."
+  "paidAt": "2026-02-01T...",
+  "status": "active"
 }
 ```
+
+`paid` 仅当 `snaptax_season_entitlements.status === "active"` 为 `true`；`refunded` / `disputed` 会保留记录但暂停导出。
+
+### `GET /api/billing/season-offer`
+
+返回当前报税季 Paywall / Founder Sheet 应展示的价格与 checkout tier。该接口可被 Guest / Ghost 读取公开价格；若请求带有效 Google session，会把 user 状态（active founder / lapsed / current-season entitlement）和内测名单一起纳入决策。
+
+**Response 200**
+```json
+{
+  "priceUsd": 1,
+  "priceCents": 100,
+  "skuTier": "SPECIAL",
+  "taxSeason": "2026",
+  "priceDisplay": "internal_test",
+  "priceLabel": "$1.00"
+}
+```
+
+| 字段 | 说明 |
+|------|------|
+| `skuTier` | `FOUNDER_LEVEL_SUPER` · `EARLY` · `FOUNDER` · `DEFAULT` · `SPECIAL` |
+| `priceDisplay` | 仅 `SPECIAL` 返回 `internal_test`；普通 tier 省略 |
+| `priceLabel` | route 层格式化后的展示文案；客户端不自行拼货币符号 |
+
+SPECIAL 约束：必须同时满足 Google session email 命中 Vercel Flag `specialUsers`、Flag `specialPrice > 0`、且 `SPECIAL_LEVEL_USER` Paddle Price ID 已配置；否则回落到 Founder / DEFAULT 价格。
+
+### `POST /api/billing/checkout-intent`
+
+创建或复用 15 分钟 TTL 的 Paddle checkout intent。Auth：必须为 Google session；客户端传入的 tier 只是请求意图，服务端会按 `resolveCheckoutSkuTier` 重新决策，不能用 request body 强行进入 `SPECIAL`。
+
+**Request**
+```json
+{
+  "taxSeason": "2026",
+  "skuTier": "DEFAULT",
+  "founderPurchase": false
+}
+```
+
+| 字段 | 约束 |
+|------|------|
+| `taxSeason` | 可省略；默认 `currentTaxSeason()` |
+| `skuTier` | 可省略；`SPECIAL` 仅白名单 session + Flag + env 全部满足时才会生效 |
+| `founderPurchase` | `true` 时按 Founder Program 当前席位重新解析 tier；满员返回 **409** `FOUNDER_PROGRAM_FULL` |
+
+**Response 200**
+```json
+{
+  "intentId": "uuid",
+  "taxSeason": "2026",
+  "expiresAt": "2026-07-25T12:15:00.000Z",
+  "skuTier": "DEFAULT",
+  "paddlePriceId": "pri_..."
+}
+```
+
+Paddle Overlay 必须把 `intentId` 放入 `customData`；webhook 通过 intent 解析 `userId` / `taxSeason` / `skuTier`，production 不接受仅靠客户端 `custom_data.userId` 授权。
 
 ---
 

@@ -23,14 +23,19 @@ describe("marketing hero copy", () => {
 });
 
 describe("MARKETING_HERO_SCREENS", () => {
-  it("uses real app screenshots for receipt tracking and export", async () => {
+  it("uses a single home app screenshot", async () => {
     const { MARKETING_HERO_SCREENS } = await import("@/lib/marketing/heroScreens");
     assert.deepEqual(
       MARKETING_HERO_SCREENS.map((screen) => screen.id),
-      ["home", "export"],
+      ["home"],
     );
     assert.match(MARKETING_HERO_SCREENS[0]?.src ?? "", /hero-app-home\.png$/);
-    assert.match(MARKETING_HERO_SCREENS[1]?.src ?? "", /hero-app-export\.png$/);
+    assert.equal(MARKETING_HERO_SCREENS[0]?.width, 457);
+    assert.equal(MARKETING_HERO_SCREENS[0]?.height, 944);
+    assert.match(
+      MARKETING_HERO_SCREENS[0]?.alt ?? "",
+      /estimated tax saved/i,
+    );
   });
 
   it("uses website hero background asset", async () => {

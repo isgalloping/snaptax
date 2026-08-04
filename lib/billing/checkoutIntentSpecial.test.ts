@@ -69,7 +69,7 @@ describe("resolveCheckoutSkuTier", () => {
     assert.deepEqual(result, { skuTier: "FOUNDER_LEVEL_SUPER", isSpecial: false });
   });
 
-  it("uses explicit body skuTier when not founder purchase", () => {
+  it("ignores client skuTier when resolving the public season offer", () => {
     process.env.SPECIAL_LEVEL_USER = "pri_special";
     const result = resolveCheckoutSkuTier({
       actor: { kind: "user", userId: "u1", email: "other@example.com" },
@@ -77,8 +77,24 @@ describe("resolveCheckoutSkuTier", () => {
       specialPriceUsd: 1,
       body: { skuTier: "DEFAULT", taxSeason: "2025" },
       founderUser: null,
-      claimedCount: 0,
-      programOpen: true,
+      claimedCount: 50,
+      programOpen: false,
+      enabled: true,
+      tiers: mockTiers,
+    });
+    assert.deepEqual(result, { skuTier: "DEFAULT", isSpecial: false });
+  });
+
+  it("does not let clients downgrade a default checkout to a founder tier", () => {
+    process.env.SPECIAL_LEVEL_USER = "pri_special";
+    const result = resolveCheckoutSkuTier({
+      actor: { kind: "user", userId: "u1", email: "other@example.com" },
+      specialUsers: "test@example.com",
+      specialPriceUsd: 1,
+      body: { skuTier: "FOUNDER_LEVEL_SUPER", taxSeason: "2025" },
+      founderUser: null,
+      claimedCount: 50,
+      programOpen: false,
       enabled: true,
       tiers: mockTiers,
     });

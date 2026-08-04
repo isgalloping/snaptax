@@ -21,7 +21,6 @@ const founderTierSchema = z.enum([
 ]);
 
 const bodySchema = z.object({
-  taxSeason: z.string().min(1).optional(),
   skuTier: founderTierSchema.optional(),
   founderPurchase: z.boolean().optional(),
 });
@@ -35,7 +34,7 @@ export const POST = withRequestLog(
 
       const raw = await request.json().catch(() => ({}));
       const body = bodySchema.parse(raw);
-      const taxSeason = body.taxSeason ?? currentTaxSeason();
+      const taxSeason = currentTaxSeason();
 
       const [specialUsers, specialPriceUsd] = await Promise.all([
         specialUsersFlag(),

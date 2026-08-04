@@ -12,6 +12,8 @@ export type GrantPaddleSeasonEntitlementResult = {
   created: boolean;
   duplicateSeason: boolean;
   transactionId: string;
+  /** Refunded/disputed entitlement replayed with the same Paddle transaction id. */
+  skippedReplay?: boolean;
 };
 
 type SeasonEntitlementRow = {
@@ -19,6 +21,20 @@ type SeasonEntitlementRow = {
   transactionId: string;
   status?: string;
 };
+
+const REVOKED_ENTITLEMENT_STATUSES = new Set(["refunded", "disputed"]);
+
+function shouldSkipRevokedReplay(
+  existing: SeasonEntitlementRow,
+  transactionId: string,
+): boolean {
+  const status = existing.status?.trim();
+  return (
+    status != null &&
+    REVOKED_ENTITLEMENT_STATUSES.has(status) &&
+    existing.transactionId === transactionId
+  );
+}
 
 export type GrantSeasonEntitlementDeps = {
   findBySeason?: (
@@ -110,6 +126,14 @@ export async function grantPaddleSeasonEntitlement(
 
   const existingBySeason = await findBySeason(input.userId, input.taxSeason);
   if (existingBySeason) {
+    if (shouldSkipRevokedReplay(existingBySeason, input.transactionId)) {
+      return {
+        created: false,
+        duplicateSeason: false,
+        transactionId: input.transactionId,
+        skippedReplay: true,
+      };
+    }
     await updateEntitlement(existingBySeason.id, activePatch);
     return {
       created: false,
@@ -120,6 +144,14 @@ export async function grantPaddleSeasonEntitlement(
 
   const existingByTxn = await findByTransaction(input.transactionId);
   if (existingByTxn) {
+    if (shouldSkipRevokedReplay(existingByTxn, input.transactionId)) {
+      return {
+        created: false,
+        duplicateSeason: false,
+        transactionId: input.transactionId,
+        skippedReplay: true,
+      };
+    }
     await updateEntitlement(existingByTxn.id, activePatch);
     return {
       created: false,

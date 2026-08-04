@@ -156,7 +156,7 @@ export function MarketingHero() {
               style={{ backgroundColor: MARKETING_TOKENS.accentGreen }}
               aria-hidden
             />
-            <div className="relative mx-auto w-full max-w-[24rem] sm:max-w-[26rem] xl:max-w-[27rem]">
+            <div className="relative ml-auto w-full max-w-[28rem] sm:max-w-[30rem] xl:max-w-[32rem]">
               <Image
                 src={MARKETING_HERO_SCREENS[0].src}
                 alt={MARKETING_HERO_SCREENS[0].alt}

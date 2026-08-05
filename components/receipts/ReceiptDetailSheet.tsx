@@ -7,6 +7,7 @@ import {
   formatLocalDate,
   formatReceiptDetailLongDateTime,
 } from "@/lib/format";
+import { isClientReceiptDeleteAllowed } from "@/lib/client/receiptDeletePolicy";
 import { fetchReceiptById, apiReceiptToLocal } from "@/lib/client/receiptApi";
 import { isPersistedReceiptId } from "@/lib/receipts/receiptId";
 import {
@@ -409,7 +410,7 @@ export function ReceiptDetailSheet({
                     imageSrc ? (
                       <ReceiptCaptureActions
                         showResnap={showResnap}
-                        showDelete={!receipt.isOnboardingDemo}
+                        showDelete={isClientReceiptDeleteAllowed(receipt)}
                         busy={deleteBusy}
                         onDelete={handleDeleteClick}
                         onResnap={showResnap ? handleResnap : undefined}

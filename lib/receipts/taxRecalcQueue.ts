@@ -84,19 +84,35 @@ async function recalcReceiptsInBackground(
 ) {
   for (const receipt of receipts) {
     try {
+      const blobResult = await get(receipt.imageUrl, {
+        access: "private",
+        ...blobCommandOptions(),
+      });
+      if (!blobResult || blobResult.statusCode !== 200 || !blobResult.stream) {
+        logEvent({
+          ts: new Date().toISOString(),
+          level: "warn",
+          module: "biz.openai",
+          success: false,
+          durationMs: 0,
+          meta: {
+            receiptId: receipt.id,
+            reason: "recalc_blob_unreadable",
+            errorMessage:
+              blobResult?.statusCode != null
+                ? `blob_status_${blobResult.statusCode}`
+                : "blob_missing",
+          },
+        });
+        continue;
+      }
+
       const reset = await prisma.snaptaxReceipt.updateMany({
         where: { id: receipt.id, ...unfiledReceiptWhere() },
         data: { status: "processing", taxAmount: 0 },
       });
       if (reset.count === 0) continue;
 
-      const blobResult = await get(receipt.imageUrl, {
-        access: "private",
-        ...blobCommandOptions(),
-      });
-      if (!blobResult || blobResult.statusCode !== 200 || !blobResult.stream) {
-        continue;
-      }
       const bytes = Buffer.from(
         await new Response(blobResult.stream).arrayBuffer(),
       );

@@ -31,6 +31,7 @@ import {
 } from "@/lib/client/duplicateReceiptNotice";
 import { shouldSubmitLateOcrDraft } from "@/lib/client/lateOcrDraftSync";
 import { prepareReceiptCapture } from "@/lib/client/prepareReceiptCapture";
+import { isClientReceiptDeleteAllowed } from "@/lib/client/receiptDeletePolicy";
 import {
   flushSessionPendingUploads,
 } from "@/lib/client/batchCaptureFlush";
@@ -1612,7 +1613,7 @@ export function HomeScreen() {
   const handleDeleteReceipt = useCallback(
     async (id: string) => {
       const existing = receiptsRef.current.find((r) => r.id === id);
-      if (existing?.isOnboardingDemo) return;
+      if (!isClientReceiptDeleteAllowed(existing)) return;
 
       setReceipts((prev) => prev.filter((r) => r.id !== id));
       setSelectedReceipt((prev) => (prev?.id === id ? null : prev));

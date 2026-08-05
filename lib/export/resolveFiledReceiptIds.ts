@@ -1,6 +1,9 @@
-import { filterReceiptsByTaxYear } from "@/lib/tax/exportRows";
+import {
+  filterReceiptsByTaxYear,
+  type TaxYearFilterableReceipt,
+} from "@/lib/tax/exportRows";
 
-type ReceiptRow = { id: string };
+type ReceiptRow = TaxYearFilterableReceipt;
 
 export type ResolveFiledReceiptIdsResult =
   | { ok: true; receiptIds: string[] }

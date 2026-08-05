@@ -22,6 +22,19 @@ describe("exportReview", () => {
     assert.equal(receiptNeedsExportReview(receipt({ category: "TOOLS" })), false);
   });
 
+  it("skips filed receipts even when category is OTHER", () => {
+    assert.equal(
+      receiptNeedsExportReview(
+        receipt({
+          category: "OTHER",
+          taxSeason: "2026",
+          taxSeasonDate: new Date("2026-04-01T00:00:00.000Z"),
+        }),
+      ),
+      false,
+    );
+  });
+
   it("filters review list", () => {
     const list = receiptsNeedingExportReview([
       receipt({ id: "a", category: "OTHER" }),

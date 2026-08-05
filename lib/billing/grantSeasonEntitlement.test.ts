@@ -96,4 +96,57 @@ describe("grantPaddleSeasonEntitlement", () => {
     });
     assert.deepEqual(calls, ["update"]);
   });
+
+  it("skips reactivating refunded entitlement on same transaction replay", async () => {
+    const calls: string[] = [];
+
+    const result = await grantPaddleSeasonEntitlement(
+      {
+        userId: "user-1",
+        taxSeason: "2026",
+        transactionId: "txn-1",
+        amountUsd: 49,
+      },
+      {
+        findBySeason: async () => ({
+          id: "ent-1",
+          transactionId: "txn-1",
+          status: "refunded",
+        }),
+        updateEntitlement: async () => {
+          calls.push("update");
+        },
+      },
+    );
+
+    assert.equal(result.skippedReplay, true);
+    assert.deepEqual(calls, []);
+  });
+
+  it("skips reactivating disputed entitlement on same transaction replay by txn lookup", async () => {
+    const calls: string[] = [];
+
+    const result = await grantPaddleSeasonEntitlement(
+      {
+        userId: "user-1",
+        taxSeason: "2026",
+        transactionId: "txn-1",
+        amountUsd: 49,
+      },
+      {
+        findBySeason: async () => null,
+        findByTransaction: async () => ({
+          id: "ent-1",
+          transactionId: "txn-1",
+          status: "disputed",
+        }),
+        updateEntitlement: async () => {
+          calls.push("update");
+        },
+      },
+    );
+
+    assert.equal(result.skippedReplay, true);
+    assert.deepEqual(calls, []);
+  });
 });

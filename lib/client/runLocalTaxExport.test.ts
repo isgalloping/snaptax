@@ -131,4 +131,27 @@ describe("runLocalTaxExport", () => {
       (err: Error) => err.message === "NO_RECEIPTS",
     );
   });
+
+  it("delivers the file when filed sync fails after the pack is built", async () => {
+    const result = await runLocalTaxExport(
+      {
+        receipts: [expenseReceipt()],
+        taxYear: 2026,
+        timeZone: "UTC",
+        format: "csv",
+      },
+      {
+        syncFiled: async () => {
+          throw new Error("EXPORT_FILED_SYNC_FAILED");
+        },
+        markFiledLocal: async () => {
+          throw new Error("should not mark local");
+        },
+      },
+    );
+
+    assert.equal(result.meta.filedSyncFailed, true);
+    assert.equal(result.meta.receiptCount, 1);
+    assert.match(result.file.name, /\.csv$/);
+  });
 });

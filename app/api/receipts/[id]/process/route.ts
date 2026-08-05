@@ -7,6 +7,7 @@ import {
 } from "@/lib/api/rateLimit";
 import { getActor } from "@/lib/auth/getActor";
 import { prisma } from "@/lib/prisma";
+import { isReceiptFiled } from "@/lib/receipts/filedStatus";
 import { assertReceiptAccess } from "@/lib/receipts/ownership";
 import { assertPersistedReceiptId } from "@/lib/receipts/receiptId";
 import { processReceiptTax } from "@/lib/receipts/processReceiptTax";
@@ -34,7 +35,11 @@ export const POST = withRequestLog(
       if (!receipt) throw new Error("NOT_FOUND");
       assertReceiptAccess(receipt, actor);
 
-      if (receipt.status === "done" || receipt.status === "blurry") {
+      if (
+        isReceiptFiled(receipt) ||
+        receipt.status === "done" ||
+        receipt.status === "blurry"
+      ) {
         return NextResponse.json({
           id: receipt.id,
           status: receipt.status,

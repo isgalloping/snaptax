@@ -3,6 +3,7 @@ import type {
   ExportFiledSyncParams,
   ExportFiledSyncResult,
 } from "@/lib/client/exportFiledSync";
+import { applyExportFiledSync } from "@/lib/client/exportFiledOutcome";
 import { markReceiptsFiledLocal } from "@/lib/client/markReceiptsFiledLocal";
 import {
   buildLocalTaxPack,
@@ -34,6 +35,23 @@ export type RunLocalTaxExportDeps = {
   markFiledLocal?: typeof markReceiptsFiledLocal;
 };
 
+function buildExportMeta(params: {
+  packReceiptCount: number;
+  filed: ExportFiledSyncResult | null;
+  filedSyncFailed: boolean;
+}): ExportTaxPackMeta {
+  const meta: ExportTaxPackMeta = {
+    receiptCount: params.filed?.filedCount ?? params.packReceiptCount,
+  };
+  if (params.filed?.skippedReceiptIds && params.filed.skippedReceiptIds > 0) {
+    meta.skippedReceiptIds = params.filed.skippedReceiptIds;
+  }
+  if (params.filedSyncFailed) {
+    meta.filedSyncFailed = true;
+  }
+  return meta;
+}
+
 /** Local-first text export: build from IDB rows, then persist filed metadata server + local. */
 export async function runLocalTaxExport(
   params: RunLocalTaxExportParams,
@@ -50,21 +68,16 @@ export async function runLocalTaxExport(
   );
 
   const syncFiled = deps.syncFiled ?? syncExportFiledToServer;
-  const filed = await syncFiled({
+  const markFiledLocal = deps.markFiledLocal ?? markReceiptsFiledLocal;
+  const { filed, filedSyncFailed } = await applyExportFiledSync({
+    syncFiled,
+    markFiledLocal,
     taxYear: taxYearStr,
     receiptIds: pack.receiptIds,
   });
 
-  const markFiledLocal = deps.markFiledLocal ?? markReceiptsFiledLocal;
-  await markFiledLocal({
-    receiptIds: filed.receiptIds,
-    taxSeason: filed.taxSeason,
-    taxSeasonDate: filed.taxSeasonDate,
-  });
-
-  // Refresh TXF/QBO timestamps only — reuse the same eligible rows (no second filter path).
   let content = pack.content;
-  const asOf = new Date(filed.taxSeasonDate);
+  const asOf = filed?.taxSeasonDate ?? new Date();
   if (params.format === "txf" && pack.eligibleRows) {
     content = buildTxfExport(pack.eligibleRows, asOf);
   } else if (params.format === "qbo" && pack.eligibleRows) {
@@ -74,6 +87,10 @@ export async function runLocalTaxExport(
   const filename = exportTaxPackFilename(params.format, params.taxYear);
   return {
     file: new File([content], filename, { type: pack.mimeType }),
-    meta: { receiptCount: filed.filedCount },
+    meta: buildExportMeta({
+      packReceiptCount: pack.receiptIds.length,
+      filed,
+      filedSyncFailed,
+    }),
   };
 }

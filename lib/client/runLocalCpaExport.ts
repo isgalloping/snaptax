@@ -3,6 +3,7 @@ import type {
   ExportFiledSyncParams,
   ExportFiledSyncResult,
 } from "@/lib/client/exportFiledSync";
+import { applyExportFiledSync } from "@/lib/client/exportFiledOutcome";
 import { markReceiptsFiledLocal } from "@/lib/client/markReceiptsFiledLocal";
 import { resolveExportReceiptImageBlob } from "@/lib/client/resolveExportReceiptImage";
 import { buildAuditDetailCsv } from "@/lib/export/buildAuditDetailCsv";
@@ -123,20 +124,24 @@ export async function runLocalCpaExport(
   }
 
   const syncFiled = deps.syncFiled ?? syncExportFiledToServer;
-  const filed = await syncFiled({
+  const markFiledLocal = deps.markFiledLocal ?? markReceiptsFiledLocal;
+  const { filed, filedSyncFailed } = await applyExportFiledSync({
+    syncFiled,
+    markFiledLocal,
     taxYear: taxYearStr,
     receiptIds: ctx.yearReceiptIds,
   });
 
-  const markFiledLocal = deps.markFiledLocal ?? markReceiptsFiledLocal;
-  await markFiledLocal({
-    receiptIds: filed.receiptIds,
-    taxSeason: filed.taxSeason,
-    taxSeasonDate: filed.taxSeasonDate,
-  });
-
   const filename = exportTaxPackFilename(params.format, params.taxYear);
-  const meta: ExportTaxPackMeta = { receiptCount: filed.filedCount };
+  const meta: ExportTaxPackMeta = {
+    receiptCount: filed?.filedCount ?? ctx.yearReceiptIds.length,
+  };
+  if (filed?.skippedReceiptIds && filed.skippedReceiptIds > 0) {
+    meta.skippedReceiptIds = filed.skippedReceiptIds;
+  }
+  if (filedSyncFailed) {
+    meta.filedSyncFailed = true;
+  }
   if (imageStats) {
     meta.imagesIncluded = imageStats.imagesIncluded;
     meta.imagesEligible = imageStats.imagesEligible;

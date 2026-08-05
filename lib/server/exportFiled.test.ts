@@ -174,6 +174,7 @@ describe("markExportFiledForUser", () => {
       taxSeasonDate: new Date("2026-07-08T12:00:00.000Z"),
       filedCount: 1,
       receiptIds: ["eligible"],
+      skippedReceiptIds: 2,
     });
     assert.deepEqual(calls.logs, [
       {

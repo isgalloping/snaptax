@@ -688,6 +688,8 @@ export type UserCopy = {
     exportTimeout: string;
     filedSyncNotFound: string;
     filedSyncFailed: string;
+    filedSyncFailedDelivered: string;
+    filedSyncPartialSkipped: string;
     postDownloadGuide: {
       title: string;
       copyButton: string;

@@ -1735,6 +1735,7 @@ export function HomeScreen() {
         onSoftGoogleSheetConsumed={() => setRequestSoftGoogleSheet(false)}
         onSoftGuideDismiss={handleSoftGuideDismiss}
         onRestored={() => void refreshListFromLocal()}
+        onRequestCloudSyncPaywall={taxExport.requestCloudSyncPaywall}
       />
       {taxExport.overlays}
       {paymentSuccessOverlay}

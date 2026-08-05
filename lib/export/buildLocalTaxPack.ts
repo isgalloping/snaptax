@@ -5,6 +5,7 @@ import { exportEligibleRows } from "@/lib/export/auditEligibleRows";
 import { buildLocalExpenseExportRows } from "@/lib/export/buildLocalExpenseRows";
 import { buildTurboTaxCsv } from "@/lib/tax/exportCsv";
 import type { ExportExpenseRow } from "@/lib/tax/exportRows";
+import type { TaxRegion } from "@/lib/tax/types";
 import type { Receipt } from "@/lib/types";
 
 export type LocalTaxPackFormat = "csv" | "txf" | "qif" | "qbo";
@@ -20,6 +21,7 @@ export type LocalTaxPackResult = {
 export type BuildLocalTaxPackOptions = {
   /** TXF header / QBO DTSERVER as-of (defaults to now). */
   exportedAt?: Date;
+  dataRegion?: TaxRegion;
 };
 
 /** Build text export packs from local IDB receipt rows (no server PG read). */
@@ -30,7 +32,12 @@ export function buildLocalTaxPack(
   format: LocalTaxPackFormat,
   options: BuildLocalTaxPackOptions = {},
 ): LocalTaxPackResult {
-  const rows = buildLocalExpenseExportRows(receipts, taxYear, timeZone);
+  const rows = buildLocalExpenseExportRows(
+    receipts,
+    taxYear,
+    timeZone,
+    options.dataRegion ?? "us",
+  );
   const receiptIds = rows.map((row) => row.id);
   const exportedAt = options.exportedAt ?? new Date();
 

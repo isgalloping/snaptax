@@ -13,6 +13,7 @@ const FILED_SYNC_TIMEOUT_MS = 90_000;
 
 export async function syncExportFiledToServer(params: {
   taxYear: string;
+  receiptIds: string[];
 }): Promise<ExportFiledSyncResult> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), FILED_SYNC_TIMEOUT_MS);
@@ -24,7 +25,10 @@ export async function syncExportFiledToServer(params: {
         "Content-Type": "application/json",
         "X-Time-Zone": clientTimeZone(),
       },
-      body: JSON.stringify({ taxYear: params.taxYear }),
+      body: JSON.stringify({
+        taxYear: params.taxYear,
+        receiptIds: params.receiptIds,
+      }),
       signal: controller.signal,
     });
     if (res.status === 402) throw new Error("PAYMENT_REQUIRED");
@@ -34,6 +38,9 @@ export async function syncExportFiledToServer(params: {
       } | null;
       if (errBody?.error?.code === "NO_RECEIPTS") {
         throw new Error("NO_RECEIPTS");
+      }
+      if (errBody?.error?.code === "INVALID_RECEIPT_IDS") {
+        throw new Error("INVALID_RECEIPT_IDS");
       }
       throw new Error("INVALID_EXPORT_TAX_YEAR");
     }

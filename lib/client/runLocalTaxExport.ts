@@ -9,13 +9,16 @@ import { buildTxfExport } from "@/lib/export/buildTxf";
 import { buildQboExport } from "@/lib/export/buildQboExport";
 import { exportTaxPackFilename } from "@/lib/export/exportFilenames";
 import type { ExportTaxPackMeta } from "@/lib/client/authApi";
+import type { TaxRegion } from "@/lib/tax/types";
 import type { Receipt } from "@/lib/types";
+import { resolveExportDataRegion } from "@/lib/tax/resolveExportDataRegion";
 
 export type RunLocalTaxExportParams = {
   receipts: Receipt[];
   taxYear: number;
   timeZone: string;
   format: LocalTaxPackFormat;
+  dataRegion?: TaxRegion;
 };
 
 export type RunLocalTaxExportResult = {
@@ -34,15 +37,20 @@ export async function runLocalTaxExport(
   deps: RunLocalTaxExportDeps = {},
 ): Promise<RunLocalTaxExportResult> {
   const taxYearStr = String(params.taxYear);
+  const dataRegion = resolveExportDataRegion(params.receipts, params.dataRegion);
   const pack = buildLocalTaxPack(
     params.receipts,
     params.taxYear,
     params.timeZone,
     params.format,
+    { dataRegion },
   );
 
   const syncFiled = deps.syncFiled ?? syncExportFiledToServer;
-  const filed = await syncFiled({ taxYear: taxYearStr });
+  const filed = await syncFiled({
+    taxYear: taxYearStr,
+    receiptIds: pack.receiptIds,
+  });
 
   const markFiledLocal = deps.markFiledLocal ?? markReceiptsFiledLocal;
   await markFiledLocal({

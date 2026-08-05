@@ -44,12 +44,15 @@ describe("runLocalTaxExport", () => {
       {
         syncFiled: async (params) => {
           order.push("syncFiled");
-          assert.deepEqual(params, { taxYear: "2026" });
+          assert.deepEqual(params, {
+            taxYear: "2026",
+            receiptIds: [BUSINESS_RECEIPT_ID],
+          });
           return {
             taxSeason: "2026",
             taxSeasonDate: new Date("2026-07-08T12:00:00.000Z"),
-            filedCount: 2,
-            receiptIds: [BUSINESS_RECEIPT_ID, PERSONAL_RECEIPT_ID],
+            filedCount: 1,
+            receiptIds: [BUSINESS_RECEIPT_ID],
           };
         },
         markFiledLocal: async (params) => {
@@ -64,14 +67,14 @@ describe("runLocalTaxExport", () => {
     assert.deepEqual(order, ["syncFiled", "markFiledLocal"]);
     assert.deepEqual(marked, [
       {
-        receiptIds: [BUSINESS_RECEIPT_ID, PERSONAL_RECEIPT_ID],
+        receiptIds: [BUSINESS_RECEIPT_ID],
         taxSeason: "2026",
         taxSeasonDate: new Date("2026-07-08T12:00:00.000Z"),
       },
     ]);
     assert.equal(result.file.type, "application/x-ofx;charset=utf-8");
     assert.match(result.file.name, /QuickBooks-Online\.qbo$/);
-    assert.equal(result.meta.receiptCount, 2);
+    assert.equal(result.meta.receiptCount, 1);
     assert.match(content, /<DTSERVER>20260708120000<\/DTSERVER>/);
     assert.match(content, /<NAME>Home Depot<\/NAME>/);
     assert.doesNotMatch(content, /Personal Store/);

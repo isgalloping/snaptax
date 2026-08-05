@@ -7,12 +7,13 @@ import { prisma } from "@/lib/prisma";
 import { userAccountReceiptFilter } from "@/lib/receipts/accountCleanup";
 import { withRequestLog } from "@/lib/server/log/withRequestLog";
 import { logEvent } from "@/lib/server/log/logEvent";
-import { filterReceiptsByTaxYear } from "@/lib/tax/exportRows";
+import { resolveFiledReceiptIds } from "@/lib/export/resolveFiledReceiptIds";
 import { currentTaxSeason } from "@/lib/tax/season";
 import { parseRequestTimeZone } from "@/lib/time/timeZone";
 import { utcNow } from "@/lib/time/utc";
 const filedBodySchema = z.object({
   taxYear: z.string().regex(/^\d{4}$/),
+  receiptIds: z.array(z.string().uuid()).min(1).optional(),
 });
 
 export const POST = withRequestLog("api.entitlement", async (request, _context) => {
@@ -46,12 +47,24 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
     });
 
     const timeZone = parseRequestTimeZone(request.headers.get("X-Time-Zone"));
-    const yearReceipts = filterReceiptsByTaxYear(allDone, taxYearNum, timeZone);
-    if (yearReceipts.length === 0) {
-      return apiError("NO_RECEIPTS", "No completed receipts to file for tax year", 422);
+    const filedSelection = resolveFiledReceiptIds(
+      allDone,
+      taxYearNum,
+      timeZone,
+      body.receiptIds,
+    );
+    if (!filedSelection.ok) {
+      if (filedSelection.reason === "NO_RECEIPTS") {
+        return apiError("NO_RECEIPTS", "No completed receipts to file for tax year", 422);
+      }
+      return apiError(
+        "INVALID_RECEIPT_IDS",
+        "One or more receipts are not eligible to file for this tax year",
+        422,
+      );
     }
 
-    const receiptIds = yearReceipts.map((r) => r.id);
+    const receiptIds = filedSelection.receiptIds;
     const exportedAt = utcNow();
     const result = await prisma.snaptaxReceipt.updateMany({
       where: { id: { in: receiptIds } },

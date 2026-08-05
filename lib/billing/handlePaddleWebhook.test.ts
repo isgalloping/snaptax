@@ -12,6 +12,7 @@ const completedPayload = {
     id: "txn-123",
     status: "completed",
     custom_data: { intentId: "intent-123" },
+    items: [{ price_id: "pri_default" }],
     details: {
       totals: { total: "4900", currency_code: "USD" },
     },
@@ -62,6 +63,7 @@ describe("handlePaddleWebhookPayload", () => {
           finishes.push(patch);
         },
         resolveSpecialWebhookMinAmountCents: async () => ({ kind: "default" }),
+        validatePaddleTransactionPriceIds: async () => ({ ok: true }),
         resolveWebhookGrantTarget: async () => ({
           ok: true,
           userId: "user-1",
@@ -87,6 +89,44 @@ describe("handlePaddleWebhookPayload", () => {
       {
         processingResult: "ignored",
         processingReason: "sku_tier_mismatch",
+        transactionId: "txn-123",
+      },
+    ]);
+  });
+
+  it("ignores completed transactions with unexpected Paddle price ids", async () => {
+    const finishes: unknown[] = [];
+    let grantCalls = 0;
+    const result = await handlePaddleWebhookPayload(completedPayload, {
+      beginWebhookEvent: async () => ({
+        id: "audit-price",
+        duplicate: false,
+        shouldProcess: true,
+      }),
+      finishWebhookEvent: async (_id, patch) => {
+        finishes.push(patch);
+      },
+      resolveSpecialWebhookMinAmountCents: async () => ({ kind: "default" }),
+      validatePaddleTransactionPriceIds: async () => ({
+        ok: false,
+        reason: "unexpected_price_id",
+      }),
+      grantPaddleSeasonEntitlement: async () => {
+        grantCalls += 1;
+        return {
+          created: true,
+          duplicateSeason: false,
+          transactionId: "txn-123",
+        };
+      },
+    } satisfies TestDeps);
+
+    assert.deepEqual(result, { ok: true, ignored: true });
+    assert.equal(grantCalls, 0);
+    assert.deepEqual(finishes, [
+      {
+        processingResult: "ignored",
+        processingReason: "unexpected_price_id",
         transactionId: "txn-123",
       },
     ]);

@@ -118,7 +118,10 @@ export async function runLocalCpaExport(
   }
 
   const syncFiled = deps.syncFiled ?? syncExportFiledToServer;
-  const filed = await syncFiled({ taxYear: taxYearStr });
+  const filed = await syncFiled({
+    taxYear: taxYearStr,
+    receiptIds: ctx.yearReceiptIds,
+  });
 
   const markFiledLocal = deps.markFiledLocal ?? markReceiptsFiledLocal;
   await markFiledLocal({

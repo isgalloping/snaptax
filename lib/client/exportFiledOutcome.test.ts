@@ -63,7 +63,7 @@ describe("applyExportFiledSync", () => {
     assert.equal(result.filed?.filedCount, 1);
   });
 
-  it("rethrows payment and empty receipt failures", async () => {
+  it("rethrows payment failures", async () => {
     await assert.rejects(
       () =>
         applyExportFiledSync({
@@ -76,5 +76,22 @@ describe("applyExportFiledSync", () => {
         }),
       /PAYMENT_REQUIRED/,
     );
+  });
+
+  it("returns filedSyncFailed for NO_RECEIPTS without throwing", async () => {
+    const result = await applyExportFiledSync({
+      taxYear: "2026",
+      receiptIds: ["receipt-1"],
+      syncFiled: async () => {
+        throw new Error("NO_RECEIPTS");
+      },
+      markFiledLocal: async () => {
+        throw new Error("should not mark local");
+      },
+    });
+
+    assert.equal(result.filedSyncFailed, true);
+    assert.equal(result.localFiledFailed, false);
+    assert.equal(result.filed, null);
   });
 });

@@ -146,16 +146,36 @@ describe("evaluateIntentGrant", () => {
     assert.deepEqual(result, { ok: true, intentExpiredAtGrant: true });
   });
 
-  it("rejects consumed intents", () => {
+  it("rejects consumed intent replays for the same transaction", () => {
     const result = evaluateIntentGrant(
       {
         ...baseIntent,
         status: "consumed",
+        transactionId: "txn-1",
         expiresAt: new Date("2026-06-13T12:00:01.000Z"),
       },
       now,
+      "txn-1",
     );
     assert.deepEqual(result, { ok: false, reason: "intent_not_pending" });
+  });
+
+  it("grants consumed intents when a different transaction completes", () => {
+    const result = evaluateIntentGrant(
+      {
+        ...baseIntent,
+        status: "consumed",
+        transactionId: "txn-1",
+        expiresAt: new Date("2026-06-13T12:00:01.000Z"),
+      },
+      now,
+      "txn-2",
+    );
+    assert.deepEqual(result, {
+      ok: true,
+      intentExpiredAtGrant: false,
+      intentAlreadyConsumed: true,
+    });
   });
 });
 

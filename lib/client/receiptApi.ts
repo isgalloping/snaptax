@@ -113,7 +113,10 @@ export async function fetchReceiptSyncPage(
   if (cursor) params.set("cursor", cursor);
   const suffix = params.size > 0 ? `?${params.toString()}` : "";
   const res = await apiFetch(`/api/receipts/sync${suffix}`);
-  if (!res.ok) throw new Error("FETCH_RECEIPT_SYNC_FAILED");
+  if (!res.ok) {
+    if (res.status === 402) throw new Error("PAYMENT_REQUIRED");
+    throw new Error("FETCH_RECEIPT_SYNC_FAILED");
+  }
   return (await res.json()) as ReceiptSyncPageResponse;
 }
 

@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import type { Receipt } from "@/lib/types";
 import type { GoogleUser } from "@/lib/client/authStorage";
-import { isSeasonPaid, setSeasonPaid } from "@/lib/client/authStorage";
+import { setSeasonPaid } from "@/lib/client/authStorage";
 import {
   fetchSeasonPaid,
   type GoogleAuthResponse,
@@ -110,12 +110,10 @@ export function useTaxExportGate({
   };
 
   const resolveSeasonPaid = async (): Promise<boolean> => {
-    if (navigator.onLine) {
-      const paid = await fetchSeasonPaid(currentSeason).catch(() => false);
-      setSeasonPaid(currentSeason, paid);
-      return paid;
-    }
-    return isSeasonPaid(currentSeason);
+    if (!navigator.onLine) return false;
+    const paid = await fetchSeasonPaid(currentSeason).catch(() => false);
+    setSeasonPaid(currentSeason, paid);
+    return paid;
   };
 
   const prepareExportReceipts = async (): Promise<Receipt[] | undefined> => {

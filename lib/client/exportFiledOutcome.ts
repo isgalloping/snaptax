@@ -6,7 +6,7 @@ export type ApplyExportFiledSyncResult = {
   localFiledFailed: boolean;
 };
 
-/** Hard failures (payment, no receipts) propagate; other sync errors are non-fatal. */
+/** Hard failures (payment) propagate; NO_RECEIPTS and other sync errors are non-fatal. */
 export async function applyExportFiledSync(params: {
   syncFiled: (input: {
     taxYear: string;
@@ -36,10 +36,7 @@ export async function applyExportFiledSync(params: {
     }
     return { filed, filedSyncFailed: false, localFiledFailed: false };
   } catch (err) {
-    if (
-      err instanceof Error &&
-      (err.message === "PAYMENT_REQUIRED" || err.message === "NO_RECEIPTS")
-    ) {
+    if (err instanceof Error && err.message === "PAYMENT_REQUIRED") {
       throw err;
     }
     return { filed: null, filedSyncFailed: true, localFiledFailed: false };

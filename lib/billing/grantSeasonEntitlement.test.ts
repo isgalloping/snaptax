@@ -184,4 +184,41 @@ describe("grantPaddleSeasonEntitlement", () => {
       transactionId: "txn-2",
     });
   });
+
+  it("recovers P2002 races via transaction lookup when season lookup misses", async () => {
+    const { Prisma } = await import("@prisma/client");
+    let txnLookups = 0;
+
+    const result = await grantPaddleSeasonEntitlement(
+      {
+        userId: "user-1",
+        taxSeason: "2026",
+        transactionId: "txn-2",
+        amountUsd: 49,
+      },
+      {
+        findBySeason: async () => null,
+        findByTransaction: async () => {
+          txnLookups += 1;
+          return txnLookups === 1
+            ? null
+            : { id: "ent-1", transactionId: "txn-2", status: "active" };
+        },
+        createEntitlement: async () => {
+          throw new Prisma.PrismaClientKnownRequestError(
+            "Unique constraint failed",
+            { code: "P2002", clientVersion: "test" },
+          );
+        },
+        updateEntitlement: async () => {},
+      },
+    );
+
+    assert.deepEqual(result, {
+      created: false,
+      duplicateSeason: false,
+      transactionId: "txn-2",
+    });
+    assert.equal(txnLookups, 2);
+  });
 });

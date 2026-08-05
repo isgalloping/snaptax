@@ -65,7 +65,7 @@ export function useAuthSession() {
             if (!cancelled) {
               setSeasonPaidState(ent.paid);
               setEntitlementStatus(ent.status);
-              if (!ent.paid) setSeasonPaid(seasonKey(), false);
+              setSeasonPaid(seasonKey(), ent.paid);
             }
           } else {
             setGoogleUser(null);

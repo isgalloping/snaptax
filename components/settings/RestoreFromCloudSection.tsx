@@ -95,10 +95,15 @@ export function RestoreFromCloudSection({
       setRestoredCount(count);
       setState("success");
       await onRestored?.();
-    } catch {
+    } catch (err) {
+      if (err instanceof Error && err.message === "PAYMENT_REQUIRED") {
+        onPaymentRequired?.();
+        setState("idle");
+        return;
+      }
       setState("error");
     }
-  }, [isOnline, onRestored, state]);
+  }, [isOnline, onPaymentRequired, onRestored, state]);
 
   const handleRestoreTap = useCallback(() => {
     if (!isOnline || state === "restoring") return;

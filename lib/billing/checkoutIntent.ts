@@ -88,17 +88,27 @@ export type CheckoutIntentRecord = {
   taxSeason: string;
   status: string;
   expiresAt: Date;
+  transactionId?: string | null;
 };
 
 export type IntentGrantEvaluation =
-  | { ok: true; intentExpiredAtGrant: boolean }
+  | { ok: true; intentExpiredAtGrant: boolean; intentAlreadyConsumed?: boolean }
   | { ok: false; reason: string };
 
 export function evaluateIntentGrant(
   intent: CheckoutIntentRecord,
   now: Date,
+  incomingTransactionId?: string,
 ): IntentGrantEvaluation {
   if (intent.status === "consumed") {
+    const consumedTxn = intent.transactionId?.trim();
+    const incomingTxn = incomingTransactionId?.trim();
+    if (consumedTxn && incomingTxn && consumedTxn === incomingTxn) {
+      return { ok: false, reason: "intent_not_pending" };
+    }
+    if (incomingTxn) {
+      return { ok: true, intentExpiredAtGrant: false, intentAlreadyConsumed: true };
+    }
     return { ok: false, reason: "intent_not_pending" };
   }
 
@@ -126,14 +136,18 @@ export type WebhookGrantResolution =
       skuTier?: string | null;
       legacyUserIdPath?: boolean;
       intentExpiredAtGrant?: boolean;
+      intentAlreadyConsumed?: boolean;
     }
   | { ok: false; reason: string };
 
-export async function resolveWebhookGrantTarget(customData: {
-  intentId?: string;
-  userId?: string;
-  taxSeason?: string;
-} | undefined): Promise<WebhookGrantResolution> {
+export async function resolveWebhookGrantTarget(
+  customData: {
+    intentId?: string;
+    userId?: string;
+    taxSeason?: string;
+  } | undefined,
+  options?: { transactionId?: string },
+): Promise<WebhookGrantResolution> {
   const intentId = customData?.intentId?.trim();
   if (intentId) {
     const intent = await prisma.snaptaxCheckoutIntent.findUnique({
@@ -145,7 +159,11 @@ export async function resolveWebhookGrantTarget(customData: {
     }
 
     const now = utcNow();
-    const evaluation = evaluateIntentGrant(intent, now);
+    const evaluation = evaluateIntentGrant(
+      intent,
+      now,
+      options?.transactionId,
+    );
     if (!evaluation.ok) {
       return { ok: false, reason: evaluation.reason };
     }
@@ -164,6 +182,7 @@ export async function resolveWebhookGrantTarget(customData: {
       intentId: intent.id,
       skuTier: intent.skuTier,
       intentExpiredAtGrant: evaluation.intentExpiredAtGrant,
+      intentAlreadyConsumed: evaluation.intentAlreadyConsumed,
     };
   }
 

@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { assertReceiptAccess, receiptWhereForActor } from "@/lib/receipts/ownership";
 import { processReceiptTax } from "@/lib/receipts/processReceiptTax";
 import { serializeReceipt } from "@/lib/receipts/serialize";
+import { assertReceiptUploadReplaceAllowed } from "@/lib/receipts/doneReceiptLock";
 import { unfiledReceiptWhere } from "@/lib/receipts/filedStatus";
 import { mimeForKind } from "@/lib/receipts/uploadValidation";
 import {
@@ -137,6 +138,8 @@ async function replaceReceiptImage(params: {
   captureKind?: IncomeFormType | null;
   ocrDraft?: import("@/lib/ocr/types").OcrDraftPayload | null;
 }) {
+  assertReceiptUploadReplaceAllowed(params.receipt);
+
   const pathname = receiptImagePathname(params.receipt.id, params.kind);
   await put(pathname, params.bytes, {
     access: "private",

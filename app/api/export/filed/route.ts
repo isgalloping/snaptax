@@ -44,6 +44,9 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
       taxSeasonDate: result.taxSeasonDate.toISOString(),
       filedCount: result.filedCount,
       receiptIds: result.receiptIds,
+      ...(result.skippedReceiptIds != null && result.skippedReceiptIds > 0
+        ? { skippedReceiptIds: result.skippedReceiptIds }
+        : {}),
     });
   } catch (err) {
     return mapErrorToResponse(err);

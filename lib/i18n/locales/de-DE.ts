@@ -980,6 +980,10 @@ export const DE_DE_COPY: UserCopy = {
       "Einige Belege sind noch nicht in der Cloud. Warten Sie auf die Synchronisation und tippen Sie erneut auf Export.",
     filedSyncFailed:
       "Ihr Steuerpaket wurde erstellt, aber der Hinterlegungsstatus konnte nicht gespeichert werden. Export erneut versuchen.",
+    filedSyncFailedDelivered:
+      "Ihr Steuerpaket ist bereit, aber der Hinterlegungsstatus konnte online nicht gespeichert werden. Datei jetzt speichern und Export später erneut versuchen.",
+    filedSyncPartialSkipped:
+      "{count} Belege sind noch nicht in der Cloud und wurden nicht als hinterlegt markiert.",
     postDownloadGuide: {
       title: "Datei gespeichert",
       copyButton: "Kopieren",

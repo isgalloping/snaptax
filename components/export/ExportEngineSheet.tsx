@@ -325,7 +325,9 @@ export function ExportEngineSheet({
       finishProgress();
       setReadyFile(result.file);
       setExportMeta(result.meta);
-      await onExported?.();
+      if (!result.meta.filedSyncFailed) {
+        await onExported?.();
+      }
     } catch (err) {
       clearProgressTimer();
       setProgress(0);
@@ -386,6 +388,18 @@ export function ExportEngineSheet({
           .replace("{included}", String(exportMeta.imagesIncluded))
           .replace("{eligible}", String(exportMeta.imagesEligible))
       : null;
+
+  const skippedFiledWarning =
+    exportMeta?.skippedReceiptIds != null && exportMeta.skippedReceiptIds > 0
+      ? t.filedSyncPartialSkipped.replace(
+          "{count}",
+          String(exportMeta.skippedReceiptIds),
+        )
+      : null;
+
+  const filedSyncWarning = exportMeta?.filedSyncFailed
+    ? t.filedSyncFailedDelivered
+    : null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end bg-black/70">
@@ -751,6 +765,16 @@ export function ExportEngineSheet({
                 {imageWarning && (
                   <p className="mt-1 text-xs font-bold text-amber-400" role="status">
                     {imageWarning}
+                  </p>
+                )}
+                {skippedFiledWarning && (
+                  <p className="mt-2 text-xs font-bold text-amber-400" role="status">
+                    {skippedFiledWarning}
+                  </p>
+                )}
+                {filedSyncWarning && (
+                  <p className="mt-2 text-xs font-bold text-amber-400" role="status">
+                    {filedSyncWarning}
                   </p>
                 )}
                 <p className="mt-2 text-xs text-zinc-500" role="status">

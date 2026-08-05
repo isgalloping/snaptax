@@ -151,6 +151,8 @@ export type ExportTaxPackMeta = {
   imagesIncluded?: number;
   imagesEligible?: number;
   imagesMissing?: number;
+  skippedReceiptIds?: number;
+  filedSyncFailed?: boolean;
 };
 
 export type ExportTaxPackResult = {

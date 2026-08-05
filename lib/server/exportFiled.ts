@@ -21,6 +21,7 @@ export type ExportFiledServerResult =
       taxSeasonDate: Date;
       filedCount: number;
       receiptIds: string[];
+      skippedReceiptIds?: number;
     }
   | {
       ok: false;
@@ -201,5 +202,6 @@ export async function markExportFiledForUser<
     taxSeasonDate: exportedAt,
     filedCount,
     receiptIds,
+    ...(skippedCount > 0 ? { skippedReceiptIds: skippedCount } : {}),
   };
 }

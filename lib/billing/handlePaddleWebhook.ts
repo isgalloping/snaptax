@@ -20,6 +20,7 @@ import {
   extractPaddleTransactionPriceIds,
   validatePaddleTransactionPriceIds as defaultValidatePaddleTransactionPriceIds,
 } from "@/lib/billing/paddleTransactionPriceId";
+import { resolveFounderSeatSkuTier } from "@/lib/billing/founderSkuTier";
 import { prisma } from "@/lib/prisma";
 import { assignFounderSeatOnFirstPurchase as defaultAssignFounderSeatOnFirstPurchase } from "@/lib/server/assignFounderSeat";
 import { currentTaxSeason as defaultCurrentTaxSeason } from "@/lib/tax/season";

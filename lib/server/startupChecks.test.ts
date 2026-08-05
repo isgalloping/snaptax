@@ -4,6 +4,7 @@ import {
   isProdLikeDeployEnv,
   runStartupChecks,
   validateAuthSecretsForDeploy,
+  validateProductionBillingFlags,
 } from "./startupChecks";
 
 test("isProdLikeDeployEnv detects production and preview", () => {
@@ -46,4 +47,19 @@ test("runStartupChecks rejects placeholder webhook secret on preview", () => {
   process.env.PADDLE_WEBHOOK_SECRET = prevSecret;
   process.env.GHOST_HMAC_SECRET = prevGhost;
   process.env.AUTH_SECRET = prevAuth;
+});
+
+test("validateProductionBillingFlags rejects legacy Paddle grant bypass in production", () => {
+  const prevEnv = process.env.VERCEL_ENV;
+  const prevLegacy = process.env.ALLOW_PADDLE_LEGACY_USER_ID;
+  process.env.VERCEL_ENV = "production";
+  process.env.ALLOW_PADDLE_LEGACY_USER_ID = "1";
+  assert.throws(
+    () => validateProductionBillingFlags(),
+    /ALLOW_PADDLE_LEGACY_USER_ID/,
+  );
+  process.env.ALLOW_PADDLE_LEGACY_USER_ID = "0";
+  assert.doesNotThrow(() => validateProductionBillingFlags());
+  process.env.VERCEL_ENV = prevEnv;
+  process.env.ALLOW_PADDLE_LEGACY_USER_ID = prevLegacy;
 });

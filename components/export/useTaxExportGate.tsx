@@ -174,11 +174,12 @@ export function useTaxExportGate({
   };
 
   const openExportAfterPrepare = async () => {
+    setPaywallExporting(true);
     await runPrepareWithLoading(async () => {
       const prepared = await prepareExportReceipts();
       if (blockIfNoExportableReceipts(prepared)) return;
       openExportEngine(realExportReceipts(exportableReceipts, prepared));
-    });
+    }).finally(() => setPaywallExporting(false));
   };
 
   const runExportGate = async () => {

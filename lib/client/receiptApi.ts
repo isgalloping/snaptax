@@ -335,6 +335,23 @@ export async function triggerReceiptProcess(
   return { ok: false, reason: "failed", status: res.status };
 }
 
+export async function triggerReceiptProcessWithOcrDraft(
+  id: string,
+  ocrDraft: import("@/lib/ocr/types").OcrDraftPayload,
+): Promise<ProcessTriggerResult> {
+  if (!isPersistedReceiptId(id)) {
+    return { ok: false, reason: "not_found", status: 404 };
+  }
+  const res = await apiFetch(`/api/receipts/${id}/process`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ocrDraft }),
+  });
+  if (res.ok) return { ok: true };
+  if (res.status === 404) return { ok: false, reason: "not_found", status: 404 };
+  return { ok: false, reason: "failed", status: res.status };
+}
+
 export async function patchReceiptCategory(
   id: string,
   category: string,

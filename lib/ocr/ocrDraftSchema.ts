@@ -35,6 +35,15 @@ export function parseOcrDraftJson(raw: string): OcrDraftPayload | null {
   }
 }
 
+/** Parse optional ocrDraft field from POST /process JSON body. */
+export function parseProcessRequestOcrDraft(body: unknown): OcrDraftPayload | null {
+  if (!body || typeof body !== "object") return null;
+  const value = (body as { ocrDraft?: unknown }).ocrDraft;
+  if (typeof value === "string") return parseOcrDraftJson(value);
+  const result = OcrDraftPayloadSchema.safeParse(value);
+  return result.success ? result.data : null;
+}
+
 export function summarizeOcrDraftForAiRaw(
   draft: OcrDraftPayload,
 ): Record<string, unknown> {

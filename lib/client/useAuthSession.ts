@@ -17,6 +17,13 @@ import {
 import { signOutAndResetSession } from "@/lib/client/signOutFlow";
 import { clearSeasonExportDone } from "@/lib/settings/seasonExportState";
 import { currentTaxSeason } from "@/lib/tax/season";
+import type { TaxRegion } from "@/lib/tax/types";
+
+function parseUserDataRegion(value?: string | null): TaxRegion | null {
+  const region = value?.trim().toLowerCase();
+  if (region === "eu" || region === "us") return region;
+  return null;
+}
 
 function seasonKey(): string {
   return currentTaxSeason();
@@ -29,6 +36,7 @@ export function useAuthSession() {
   const [entitlementStatus, setEntitlementStatus] = useState<string | null>(
     null,
   );
+  const [userDataRegion, setUserDataRegion] = useState<TaxRegion | null>(null);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
@@ -52,6 +60,7 @@ export function useAuthSession() {
             if (me.user.industry) {
               setIndustry(me.user.industry as Industry);
             }
+            setUserDataRegion(parseUserDataRegion(me.user.dataRegion));
             const ent = await fetchSeasonEntitlement(seasonKey());
             if (!cancelled) {
               setSeasonPaidState(ent.paid);
@@ -62,6 +71,7 @@ export function useAuthSession() {
             setGoogleUser(null);
             saveGoogleUser(null);
             setIndustry(null);
+            setUserDataRegion(null);
           }
         } catch {
           // offline or API unavailable — keep local cache
@@ -88,6 +98,7 @@ export function useAuthSession() {
     if (result.user.industry) {
       setIndustry(result.user.industry as Industry);
     }
+    setUserDataRegion(parseUserDataRegion(result.user.dataRegion));
     return user;
   }, []);
 
@@ -102,6 +113,7 @@ export function useAuthSession() {
     setGoogleUser(null);
     setSeasonPaidState(false);
     setEntitlementStatus(null);
+    setUserDataRegion(null);
     const season = seasonKey();
     setSeasonPaid(season, false);
     clearSeasonExportDone(season);
@@ -129,6 +141,7 @@ export function useAuthSession() {
     setIndustry(null);
     setSeasonPaidState(false);
     setEntitlementStatus(null);
+    setUserDataRegion(null);
     clearSeasonExportDone(seasonKey());
   }, []);
 
@@ -139,6 +152,7 @@ export function useAuthSession() {
     isSignedIn: googleUser !== null,
     seasonPaid,
     entitlementStatus,
+    userDataRegion,
     currentSeason: seasonKey(),
     signInWithGoogle,
     applyGoogleSignIn,

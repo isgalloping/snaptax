@@ -16,6 +16,7 @@ import type { ExportTaxPackMeta } from "@/lib/client/authApi";
 import type { TaxRegion } from "@/lib/tax/types";
 import type { Receipt } from "@/lib/types";
 import { resolveExportDataRegion } from "@/lib/tax/resolveExportDataRegion";
+import { exportFiledReceiptIdsForTaxYear } from "@/lib/export/exportFiledReceiptIdsForTaxYear";
 
 export type RunLocalTaxExportParams = {
   receipts: Receipt[];
@@ -23,6 +24,7 @@ export type RunLocalTaxExportParams = {
   timeZone: string;
   format: LocalTaxPackFormat;
   dataRegion?: TaxRegion;
+  userLockedRegion?: TaxRegion;
 };
 
 export type RunLocalTaxExportResult = {
@@ -39,6 +41,7 @@ function buildExportMeta(params: {
   packReceiptCount: number;
   filed: ExportFiledSyncResult | null;
   filedSyncFailed: boolean;
+  localFiledFailed: boolean;
 }): ExportTaxPackMeta {
   const meta: ExportTaxPackMeta = {
     receiptCount: params.filed?.filedCount ?? params.packReceiptCount,
@@ -49,6 +52,9 @@ function buildExportMeta(params: {
   if (params.filedSyncFailed) {
     meta.filedSyncFailed = true;
   }
+  if (params.localFiledFailed) {
+    meta.localFiledFailed = true;
+  }
   return meta;
 }
 
@@ -58,7 +64,11 @@ export async function runLocalTaxExport(
   deps: RunLocalTaxExportDeps = {},
 ): Promise<RunLocalTaxExportResult> {
   const taxYearStr = String(params.taxYear);
-  const dataRegion = resolveExportDataRegion(params.receipts, params.dataRegion);
+  const dataRegion = resolveExportDataRegion(
+    params.receipts,
+    params.dataRegion,
+    params.userLockedRegion,
+  );
   const pack = buildLocalTaxPack(
     params.receipts,
     params.taxYear,
@@ -66,14 +76,19 @@ export async function runLocalTaxExport(
     params.format,
     { dataRegion },
   );
+  const filedReceiptIds = exportFiledReceiptIdsForTaxYear(
+    params.receipts,
+    params.taxYear,
+    params.timeZone,
+  );
 
   const syncFiled = deps.syncFiled ?? syncExportFiledToServer;
   const markFiledLocal = deps.markFiledLocal ?? markReceiptsFiledLocal;
-  const { filed, filedSyncFailed } = await applyExportFiledSync({
+  const { filed, filedSyncFailed, localFiledFailed } = await applyExportFiledSync({
     syncFiled,
     markFiledLocal,
     taxYear: taxYearStr,
-    receiptIds: pack.receiptIds,
+    receiptIds: filedReceiptIds,
   });
 
   let content = pack.content;
@@ -88,9 +103,10 @@ export async function runLocalTaxExport(
   return {
     file: new File([content], filename, { type: pack.mimeType }),
     meta: buildExportMeta({
-      packReceiptCount: pack.receiptIds.length,
+      packReceiptCount: filedReceiptIds.length,
       filed,
       filedSyncFailed,
+      localFiledFailed,
     }),
   };
 }

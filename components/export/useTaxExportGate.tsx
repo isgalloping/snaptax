@@ -23,12 +23,14 @@ import { markExportBlockedBanner } from "@/lib/settings/exportSampleState";
 import { markSeasonExportDone } from "@/lib/settings/seasonExportState";
 import type { IncomeCaptureKind } from "@/lib/export/incomeCapture";
 import type { ExportFormat } from "@/lib/export/exportFilenames";
+import type { TaxRegion } from "@/lib/tax/types";
 
 interface UseTaxExportGateOptions {
   receipts: Receipt[];
   googleUser: GoogleUser | null;
   seasonPaid: boolean;
   currentSeason: string;
+  userLockedRegion?: TaxRegion | null;
   onUserSignedIn?: (result: GoogleAuthResponse) => void;
   onPostLoginSync?: (taxRecalcQueued: number) => Promise<void>;
   refreshSeasonPaid?: () => Promise<void>;
@@ -47,6 +49,7 @@ export function useTaxExportGate({
   googleUser,
   seasonPaid: _seasonPaid,
   currentSeason,
+  userLockedRegion = null,
   onUserSignedIn,
   onPostLoginSync,
   refreshSeasonPaid,
@@ -247,6 +250,7 @@ export function useTaxExportGate({
           receipts={exportEngineReceipts ?? exportableReceipts}
           currentSeason={currentSeason}
           taxpayerName={googleUser?.name}
+          userLockedRegion={userLockedRegion ?? undefined}
           onClose={() => {
             setShowExportSheet(false);
             setExportEngineReceipts(null);

@@ -39,6 +39,9 @@ export function isOcrJobPending(receiptId: string): boolean {
   return ocrScheduled.has(receiptId) && !ocrFinished.has(receiptId);
 }
 
+/** Max time single-shot capture waits for local OCR before first upload (Path A). */
+export const SINGLE_CAPTURE_OCR_WAIT_MS = 3_000;
+
 /** @deprecated Do not gate upload flush; OCR runs in parallel with upload. */
 export function shouldBlockUploadForOcr(
   receipt: Pick<StoredReceipt, "id" | "ocrDraft">,

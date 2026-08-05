@@ -149,4 +149,39 @@ describe("grantPaddleSeasonEntitlement", () => {
     assert.equal(result.skippedReplay, true);
     assert.deepEqual(calls, []);
   });
+
+  it("updates raced create when concurrent webhook hits unique season constraint", async () => {
+    const { Prisma } = await import("@prisma/client");
+    let seasonLookups = 0;
+
+    const result = await grantPaddleSeasonEntitlement(
+      {
+        userId: "user-1",
+        taxSeason: "2026",
+        transactionId: "txn-2",
+        amountUsd: 49,
+      },
+      {
+        findBySeason: async () => {
+          seasonLookups += 1;
+          if (seasonLookups === 1) return null;
+          return { id: "ent-1", transactionId: "txn-1", status: "active" };
+        },
+        findByTransaction: async () => null,
+        createEntitlement: async () => {
+          throw new Prisma.PrismaClientKnownRequestError(
+            "Unique constraint failed",
+            { code: "P2002", clientVersion: "test" },
+          );
+        },
+        updateEntitlement: async () => {},
+      },
+    );
+
+    assert.deepEqual(result, {
+      created: false,
+      duplicateSeason: true,
+      transactionId: "txn-2",
+    });
+  });
 });

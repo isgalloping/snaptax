@@ -984,6 +984,8 @@ export const DE_DE_COPY: UserCopy = {
       "Ihr Steuerpaket ist bereit, aber der Hinterlegungsstatus konnte online nicht gespeichert werden. Datei jetzt speichern und Export später erneut versuchen.",
     filedSyncPartialSkipped:
       "{count} Belege sind noch nicht in der Cloud und wurden nicht als hinterlegt markiert.",
+    localFiledFailed:
+      "Online hinterlegt, aber der lokale Status konnte auf diesem Gerät nicht aktualisiert werden. Aus der Cloud wiederherstellen oder erneut exportieren.",
     postDownloadGuide: {
       title: "Datei gespeichert",
       copyButton: "Kopieren",

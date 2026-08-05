@@ -3,6 +3,7 @@ import type { ExportFiledSyncResult } from "@/lib/client/exportFiledSync";
 export type ApplyExportFiledSyncResult = {
   filed: ExportFiledSyncResult | null;
   filedSyncFailed: boolean;
+  localFiledFailed: boolean;
 };
 
 /** Hard failures (payment, no receipts) propagate; other sync errors are non-fatal. */
@@ -24,12 +25,16 @@ export async function applyExportFiledSync(params: {
       taxYear: params.taxYear,
       receiptIds: params.receiptIds,
     });
-    await params.markFiledLocal({
-      receiptIds: filed.receiptIds,
-      taxSeason: filed.taxSeason,
-      taxSeasonDate: filed.taxSeasonDate,
-    });
-    return { filed, filedSyncFailed: false };
+    try {
+      await params.markFiledLocal({
+        receiptIds: filed.receiptIds,
+        taxSeason: filed.taxSeason,
+        taxSeasonDate: filed.taxSeasonDate,
+      });
+    } catch {
+      return { filed, filedSyncFailed: false, localFiledFailed: true };
+    }
+    return { filed, filedSyncFailed: false, localFiledFailed: false };
   } catch (err) {
     if (
       err instanceof Error &&
@@ -37,6 +42,6 @@ export async function applyExportFiledSync(params: {
     ) {
       throw err;
     }
-    return { filed: null, filedSyncFailed: true };
+    return { filed: null, filedSyncFailed: true, localFiledFailed: false };
   }
 }

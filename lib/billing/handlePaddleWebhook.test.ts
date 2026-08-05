@@ -132,6 +132,51 @@ describe("handlePaddleWebhookPayload", () => {
     ]);
   });
 
+  it("grants duplicate payments on an already consumed checkout intent", async () => {
+    let consumeCalls = 0;
+    const result = await handlePaddleWebhookPayload(
+      {
+        ...completedPayload,
+        event_id: "evt-completed-2",
+        data: {
+          ...completedPayload.data,
+          id: "txn-456",
+        },
+      },
+      {
+        beginWebhookEvent: async () => ({
+          id: "audit-dup-pay",
+          duplicate: false,
+          shouldProcess: true,
+        }),
+        finishWebhookEvent: async () => {},
+        resolveSpecialWebhookMinAmountCents: async () => ({ kind: "default" }),
+        validatePaddleTransactionPriceIds: async () => ({ ok: true }),
+        resolveWebhookGrantTarget: async (_customData, options) => {
+          assert.equal(options?.transactionId, "txn-456");
+          return {
+            ok: true,
+            userId: "user-1",
+            taxSeason: "2026",
+            intentId: "intent-123",
+            intentAlreadyConsumed: true,
+          };
+        },
+        grantPaddleSeasonEntitlement: async () => ({
+          created: false,
+          duplicateSeason: true,
+          transactionId: "txn-456",
+        }),
+        markCheckoutIntentConsumed: async () => {
+          consumeCalls += 1;
+        },
+      } satisfies TestDeps,
+    );
+
+    assert.deepEqual(result, { ok: true });
+    assert.equal(consumeCalls, 0);
+  });
+
   it("audits applied chargeback adjustments with status transition metadata", async () => {
     const finishes: unknown[] = [];
     const result = await handlePaddleWebhookPayload(

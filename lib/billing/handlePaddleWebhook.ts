@@ -145,7 +145,9 @@ async function handleTransactionCompleted(
     return { ok: true, ignored: true };
   }
 
-  const grant = await resolveWebhookGrantTarget(validated.customData);
+  const grant = await resolveWebhookGrantTarget(validated.customData, {
+    transactionId: validated.transactionId,
+  });
   if (
     grant.ok &&
     validated.customData?.skuTier === "SPECIAL" &&
@@ -236,7 +238,7 @@ async function handleTransactionCompleted(
     });
   }
 
-  if (grant.intentId) {
+  if (grant.intentId && !grant.intentAlreadyConsumed) {
     await markCheckoutIntentConsumed(grant.intentId, validated.transactionId);
   }
 

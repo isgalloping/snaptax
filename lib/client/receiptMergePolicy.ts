@@ -48,6 +48,15 @@ export function mergeDoneLockedLocalRow(
 
   applyFiledMetadataMerge(merged, local, remote);
 
+  if (!isReceiptFiled(local)) {
+    if (remote.taxAmount != null) {
+      merged.taxAmount = remote.taxAmount;
+    }
+    if (remote.dataRegion) {
+      merged.dataRegion = remote.dataRegion;
+    }
+  }
+
   if (!local.pendingUpload && isReceiptFiled(remote)) {
     const remoteUpdated = rowUpdatedAt(remote);
     const localUpdated = rowUpdatedAt(local);

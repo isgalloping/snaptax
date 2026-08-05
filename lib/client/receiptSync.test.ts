@@ -170,6 +170,30 @@ test("unionMergeLWW applies filed fields when remote is newer after export", () 
   assert.equal(row?.taxSeasonDate?.toISOString(), filedAt.toISOString());
 });
 
+test("unionMergeLWW adopts server tax fields for unfiled done rows when remote is newer", () => {
+  const local = [
+    stored("a", "2026-06-07T10:00:00.000Z", {
+      taxAmount: 10,
+      dataRegion: "us",
+    }),
+  ];
+  const remote = [
+    {
+      id: "a",
+      status: "done" as const,
+      timestamp: new Date("2026-06-07T08:00:00.000Z"),
+      updatedAt: new Date("2026-06-07T12:00:00.000Z"),
+      taxAmount: 18,
+      dataRegion: "eu" as const,
+    },
+  ];
+  const merged = unionMergeLWW(local, remote);
+  const row = merged.find((r) => r.id === "a");
+  assert.equal(row?.taxAmount, 18);
+  assert.equal(row?.dataRegion, "eu");
+  assert.equal(row?.merchant, undefined);
+});
+
 test("unionMergeLWW backfills filed when local updatedAt ties remote", () => {
   const tiedAt = "2026-06-07T12:00:00.000Z";
   const filedAt = new Date("2026-06-07T14:00:00.000Z");

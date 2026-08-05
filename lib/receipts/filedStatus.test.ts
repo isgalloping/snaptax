@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { filedFlag, isReceiptFiled } from "./filedStatus.ts";
+import { filedFlag, isReceiptFiled, unfiledReceiptWhere } from "./filedStatus.ts";
 
 test("isReceiptFiled requires both season and date", () => {
   assert.equal(
@@ -18,4 +18,14 @@ test("isReceiptFiled requires both season and date", () => {
 test("filedFlag maps to 0 or 1", () => {
   assert.equal(filedFlag({ taxSeason: "2026", taxSeasonDate: new Date() }), 1);
   assert.equal(filedFlag({ taxSeason: "2026", taxSeasonDate: null }), 0);
+});
+
+test("unfiledReceiptWhere excludes partial filed metadata", () => {
+  const where = unfiledReceiptWhere();
+  assert.deepEqual(where, {
+    AND: [
+      { OR: [{ taxSeason: null }, { taxSeason: "" }] },
+      { taxSeasonDate: null },
+    ],
+  });
 });

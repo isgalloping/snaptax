@@ -178,7 +178,9 @@ export async function grantPaddleSeasonEntitlement(
       err instanceof Prisma.PrismaClientKnownRequestError &&
       err.code === "P2002"
     ) {
-      const raced = await findBySeason(input.userId, input.taxSeason);
+      const raced =
+        (await findBySeason(input.userId, input.taxSeason)) ??
+        (await findByTransaction(input.transactionId));
       if (!raced) throw err;
       if (shouldSkipRevokedReplay(raced, input.transactionId)) {
         return {

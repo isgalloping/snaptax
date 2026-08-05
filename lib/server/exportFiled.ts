@@ -29,12 +29,25 @@ export type ExportFiledServerResult =
       status: 402 | 422;
     };
 
+export type ExportFiledPaymentGateResult =
+  | { ok: true }
+  | {
+      ok: false;
+      code: "PAYMENT_REQUIRED";
+      message: string;
+      status: 402;
+    };
+
 export type ExportFiledLogEntry = {
   ts: string;
   userId: string;
   taxSeason: string;
   receiptCount: number;
   skippedReceiptIds?: number;
+};
+
+export type ExportFiledServerOptions = {
+  paidEntitlementChecked?: boolean;
 };
 
 export type ExportFiledServerDeps<
@@ -104,15 +117,18 @@ function defaultExportFiledDeps(): ExportFiledServerDeps {
   };
 }
 
-export async function markExportFiledForUser<
+export async function resolveExportFiledPaymentGate<
   R extends TaxYearFilterableReceipt = TaxYearFilterableReceipt,
 >(
-  params: ExportFiledServerParams,
-  deps: ExportFiledServerDeps<R> = defaultExportFiledDeps() as ExportFiledServerDeps<R>,
-): Promise<ExportFiledServerResult> {
+  userId: string,
+  deps: Pick<
+    ExportFiledServerDeps<R>,
+    "currentSeason" | "findSeasonEntitlement"
+  > = defaultExportFiledDeps(),
+): Promise<ExportFiledPaymentGateResult> {
   const season = deps.currentSeason();
   const entitlement = await deps.findSeasonEntitlement({
-    userId: params.userId,
+    userId,
     taxSeason: season,
   });
   if (!entitlement || !isSeasonEntitlementPaid(entitlement.status)) {
@@ -122,6 +138,22 @@ export async function markExportFiledForUser<
       message: "Tax season export not paid",
       status: 402,
     };
+  }
+  return { ok: true };
+}
+
+export async function markExportFiledForUser<
+  R extends TaxYearFilterableReceipt = TaxYearFilterableReceipt,
+>(
+  params: ExportFiledServerParams,
+  deps: ExportFiledServerDeps<R> = defaultExportFiledDeps() as ExportFiledServerDeps<R>,
+  options: ExportFiledServerOptions = {},
+): Promise<ExportFiledServerResult> {
+  if (!options.paidEntitlementChecked) {
+    const gate = await resolveExportFiledPaymentGate(params.userId, deps);
+    if (!gate.ok) {
+      return gate;
+    }
   }
 
   const binding = await deps.findGhostBinding(params.userId);

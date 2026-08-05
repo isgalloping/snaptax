@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   markExportFiledForUser,
+  resolveExportFiledPaymentGate,
   type ExportFiledServerDeps,
 } from "./exportFiled.ts";
 
@@ -74,6 +75,24 @@ function createDeps(options: {
 }
 
 describe("markExportFiledForUser", () => {
+  it("resolves an unpaid preflight gate without export body inputs", async () => {
+    const result = await resolveExportFiledPaymentGate("user-1", {
+      currentSeason: () => "2026",
+      findSeasonEntitlement: async ({ userId, taxSeason }) => {
+        assert.equal(userId, "user-1");
+        assert.equal(taxSeason, "2026");
+        return null;
+      },
+    });
+
+    assert.deepEqual(result, {
+      ok: false,
+      code: "PAYMENT_REQUIRED",
+      message: "Tax season export not paid",
+      status: 402,
+    });
+  });
+
   it("requires a paid current-season entitlement before reading receipts", async () => {
     let readReceipts = false;
     const { deps } = createDeps({ entitlementStatus: "past_due" });
@@ -98,6 +117,28 @@ describe("markExportFiledForUser", () => {
       status: 402,
     });
     assert.equal(readReceipts, false);
+  });
+
+  it("reuses a paid preflight check without querying entitlement twice", async () => {
+    const { deps, calls } = createDeps({
+      receipts: [receipt("eligible", "2026-03-01T12:00:00.000Z")],
+    });
+    deps.findSeasonEntitlement = async () => {
+      throw new Error("entitlement should already be checked by the route");
+    };
+
+    const result = await markExportFiledForUser(
+      {
+        userId: "user-1",
+        taxYear: "2026",
+        timeZone: "UTC",
+      },
+      deps,
+      { paidEntitlementChecked: true },
+    );
+
+    assert.equal(result.ok, true);
+    assert.deepEqual(calls.update?.receiptIds, ["eligible"]);
   });
 
   it("marks only requested ids that belong to the actor and tax year", async () => {

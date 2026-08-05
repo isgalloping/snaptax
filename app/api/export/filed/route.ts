@@ -54,17 +54,14 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
       body.receiptIds,
     );
     if (!filedSelection.ok) {
-      if (filedSelection.reason === "NO_RECEIPTS") {
-        return apiError("NO_RECEIPTS", "No completed receipts to file for tax year", 422);
-      }
-      return apiError(
-        "INVALID_RECEIPT_IDS",
-        "One or more receipts are not eligible to file for this tax year",
-        422,
-      );
+      return apiError("NO_RECEIPTS", "No completed receipts to file for tax year", 422);
     }
 
     const receiptIds = filedSelection.receiptIds;
+    const skippedCount =
+      body.receiptIds != null
+        ? body.receiptIds.length - receiptIds.length
+        : 0;
     const exportedAt = utcNow();
     const result = await prisma.snaptaxReceipt.updateMany({
       where: { id: { in: receiptIds } },
@@ -82,6 +79,7 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
         taxSeason: body.taxYear,
         receiptCount: result.count,
         reason: "local_export_filed",
+        ...(skippedCount > 0 ? { skippedReceiptIds: skippedCount } : {}),
       },
     });
 

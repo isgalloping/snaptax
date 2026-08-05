@@ -2,6 +2,11 @@ import { apiFetch } from "@/lib/client/ghostClient";
 import { clientTimeZone } from "@/lib/time/timeZone";
 import { parseUtcISOString } from "@/lib/time/utc";
 
+export type ExportFiledSyncParams = {
+  taxYear: string;
+  receiptIds: string[];
+};
+
 export type ExportFiledSyncResult = {
   taxSeason: string;
   taxSeasonDate: Date;
@@ -11,10 +16,9 @@ export type ExportFiledSyncResult = {
 
 const FILED_SYNC_TIMEOUT_MS = 90_000;
 
-export async function syncExportFiledToServer(params: {
-  taxYear: string;
-  receiptIds: string[];
-}): Promise<ExportFiledSyncResult> {
+export async function syncExportFiledToServer(
+  params: ExportFiledSyncParams,
+): Promise<ExportFiledSyncResult> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), FILED_SYNC_TIMEOUT_MS);
 
@@ -38,9 +42,6 @@ export async function syncExportFiledToServer(params: {
       } | null;
       if (errBody?.error?.code === "NO_RECEIPTS") {
         throw new Error("NO_RECEIPTS");
-      }
-      if (errBody?.error?.code === "INVALID_RECEIPT_IDS") {
-        throw new Error("INVALID_RECEIPT_IDS");
       }
       throw new Error("INVALID_EXPORT_TAX_YEAR");
     }

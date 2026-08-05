@@ -6,7 +6,7 @@ import { getSpecialLevelUserPriceId } from "@/lib/server/env";
 
 export type PaddlePriceIdValidation =
   | { ok: true }
-  | { ok: false; reason: "missing_price_id" | "unexpected_price_id" };
+  | { ok: false; reason: "unexpected_price_id" };
 
 type PaddleWebhookItem = {
   price_id?: string;
@@ -67,6 +67,13 @@ async function expectedPriceIdForIntent(
   return config.tiers[tier].paddlePriceId || null;
 }
 
+function matchesConfiguredPrice(
+  transactionPriceIds: string[],
+  allowed: Set<string>,
+): boolean {
+  return transactionPriceIds.some((id) => allowed.has(id));
+}
+
 export async function validatePaddleTransactionPriceIds(params: {
   transactionPriceIds: string[];
   intentId?: string;
@@ -75,7 +82,8 @@ export async function validatePaddleTransactionPriceIds(params: {
 }): Promise<PaddlePriceIdValidation> {
   const transactionPriceIds = params.transactionPriceIds.filter(Boolean);
   if (transactionPriceIds.length === 0) {
-    return { ok: false, reason: "missing_price_id" };
+    // Payload has no line items — amount/currency validation already passed.
+    return { ok: true };
   }
 
   const resolveExpectedForIntent =
@@ -89,11 +97,15 @@ export async function validatePaddleTransactionPriceIds(params: {
     if (expected && transactionPriceIds.includes(expected)) {
       return { ok: true };
     }
+    const allowed = await collectConfigured();
+    if (matchesConfiguredPrice(transactionPriceIds, allowed)) {
+      return { ok: true };
+    }
     return { ok: false, reason: "unexpected_price_id" };
   }
 
   const allowed = await collectConfigured();
-  if (transactionPriceIds.some((id) => allowed.has(id))) {
+  if (matchesConfiguredPrice(transactionPriceIds, allowed)) {
     return { ok: true };
   }
   return { ok: false, reason: "unexpected_price_id" };

@@ -64,7 +64,7 @@ async function findSimilarDuplicate(
     where: {
       ...receiptWhereForActor(actor),
       ...unfiledReceiptWhere(),
-      imageFingerprint: { not: null },
+      imageFingerprint: { not: "" },
       NOT: { id: excludeId },
     },
     select: { id: true, imageFingerprint: true },

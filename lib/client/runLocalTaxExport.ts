@@ -1,5 +1,8 @@
 import { syncExportFiledToServer } from "@/lib/client/exportFiledSync";
-import type { ExportFiledSyncResult } from "@/lib/client/exportFiledSync";
+import type {
+  ExportFiledSyncParams,
+  ExportFiledSyncResult,
+} from "@/lib/client/exportFiledSync";
 import { markReceiptsFiledLocal } from "@/lib/client/markReceiptsFiledLocal";
 import {
   buildLocalTaxPack,
@@ -27,7 +30,7 @@ export type RunLocalTaxExportResult = {
 };
 
 export type RunLocalTaxExportDeps = {
-  syncFiled?: (params: { taxYear: string }) => Promise<ExportFiledSyncResult>;
+  syncFiled?: (params: ExportFiledSyncParams) => Promise<ExportFiledSyncResult>;
   markFiledLocal?: typeof markReceiptsFiledLocal;
 };
 

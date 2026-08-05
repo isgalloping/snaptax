@@ -30,6 +30,17 @@ describe("resolveFiledReceiptIds", () => {
     }
   });
 
+  it("files the intersection when some requested ids are not on the server yet", () => {
+    const result = resolveFiledReceiptIds(allDone, 2026, "UTC", [
+      "expense-1",
+      "pending-local-only",
+    ]);
+    assert.equal(result.ok, true);
+    if (result.ok) {
+      assert.deepEqual(result.receiptIds, ["expense-1"]);
+    }
+  });
+
   it("files only requested ids that belong to the tax year", () => {
     const result = resolveFiledReceiptIds(allDone, 2026, "UTC", ["expense-1"]);
     assert.equal(result.ok, true);
@@ -38,8 +49,8 @@ describe("resolveFiledReceiptIds", () => {
     }
   });
 
-  it("rejects ids outside the tax year", () => {
+  it("returns NO_RECEIPTS when none of the requested ids are eligible", () => {
     const result = resolveFiledReceiptIds(allDone, 2026, "UTC", ["other-year"]);
-    assert.deepEqual(result, { ok: false, reason: "INVALID_RECEIPT_IDS" });
+    assert.deepEqual(result, { ok: false, reason: "NO_RECEIPTS" });
   });
 });

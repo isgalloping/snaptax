@@ -26,6 +26,7 @@ export type RunLocalCpaExportParams = {
   format: LocalCpaExportFormat;
   taxpayerName?: string;
   dataRegion?: TaxRegion;
+  userLockedRegion?: TaxRegion;
   onPackProgress?: (progress: LocalCpaPackProgress) => void;
 };
 
@@ -68,7 +69,11 @@ export async function runLocalCpaExport(
   deps: RunLocalCpaExportDeps = {},
 ): Promise<RunLocalCpaExportResult> {
   const taxYearStr = String(params.taxYear);
-  const dataRegion = resolveExportDataRegion(params.receipts, params.dataRegion);
+  const dataRegion = resolveExportDataRegion(
+    params.receipts,
+    params.dataRegion,
+    params.userLockedRegion,
+  );
   const ctx = buildLocalCpaExportContext(
     params.receipts,
     params.taxYear,
@@ -125,7 +130,7 @@ export async function runLocalCpaExport(
 
   const syncFiled = deps.syncFiled ?? syncExportFiledToServer;
   const markFiledLocal = deps.markFiledLocal ?? markReceiptsFiledLocal;
-  const { filed, filedSyncFailed } = await applyExportFiledSync({
+  const { filed, filedSyncFailed, localFiledFailed } = await applyExportFiledSync({
     syncFiled,
     markFiledLocal,
     taxYear: taxYearStr,
@@ -141,6 +146,9 @@ export async function runLocalCpaExport(
   }
   if (filedSyncFailed) {
     meta.filedSyncFailed = true;
+  }
+  if (localFiledFailed) {
+    meta.localFiledFailed = true;
   }
   if (imageStats) {
     meta.imagesIncluded = imageStats.imagesIncluded;

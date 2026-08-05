@@ -967,6 +967,8 @@ export const EN_US_COPY: UserCopy = {
         "Your tax pack is ready, but filing status couldn't be saved online. Save the file now, then try Export Again when you're back online.",
       filedSyncPartialSkipped:
         "{count} receipts aren't synced to the cloud yet and weren't marked as filed.",
+      localFiledFailed:
+        "Filed online, but this device couldn't update local receipt status. Pull from cloud or export again to refresh.",
       postDownloadGuide: {
         title: "File saved",
         copyButton: "Copy",

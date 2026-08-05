@@ -21,6 +21,7 @@ describe("applyExportFiledSync", () => {
     });
 
     assert.equal(result.filedSyncFailed, false);
+    assert.equal(result.localFiledFailed, false);
     assert.equal(result.filed?.filedCount, 1);
     assert.equal(marked.length, 1);
   });
@@ -38,7 +39,28 @@ describe("applyExportFiledSync", () => {
     });
 
     assert.equal(result.filedSyncFailed, true);
+    assert.equal(result.localFiledFailed, false);
     assert.equal(result.filed, null);
+  });
+
+  it("returns localFiledFailed when server filed but IDB write fails", async () => {
+    const result = await applyExportFiledSync({
+      taxYear: "2026",
+      receiptIds: ["receipt-1"],
+      syncFiled: async () => ({
+        taxSeason: "2026",
+        taxSeasonDate: new Date("2026-07-08T12:00:00.000Z"),
+        filedCount: 1,
+        receiptIds: ["receipt-1"],
+      }),
+      markFiledLocal: async () => {
+        throw new Error("IDB_WRITE_FAILED");
+      },
+    });
+
+    assert.equal(result.filedSyncFailed, false);
+    assert.equal(result.localFiledFailed, true);
+    assert.equal(result.filed?.filedCount, 1);
   });
 
   it("rethrows payment and empty receipt failures", async () => {

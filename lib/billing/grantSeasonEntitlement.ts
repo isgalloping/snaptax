@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { utcNow } from "@/lib/time/utc";
 
 export type GrantPaddleSeasonEntitlementInput = {
@@ -160,17 +161,42 @@ export async function grantPaddleSeasonEntitlement(
     };
   }
 
-  await createEntitlement({
-    userId: input.userId,
-    taxSeason: input.taxSeason,
-    transactionId: input.transactionId,
-    paidAt,
-    amount,
-    channelCode: "paddle",
-    status: "active",
-    statusReason: "purchase_completed",
-    statusUpdatedAt,
-  });
+  try {
+    await createEntitlement({
+      userId: input.userId,
+      taxSeason: input.taxSeason,
+      transactionId: input.transactionId,
+      paidAt,
+      amount,
+      channelCode: "paddle",
+      status: "active",
+      statusReason: "purchase_completed",
+      statusUpdatedAt,
+    });
+  } catch (err) {
+    if (
+      err instanceof Prisma.PrismaClientKnownRequestError &&
+      err.code === "P2002"
+    ) {
+      const raced = await findBySeason(input.userId, input.taxSeason);
+      if (!raced) throw err;
+      if (shouldSkipRevokedReplay(raced, input.transactionId)) {
+        return {
+          created: false,
+          duplicateSeason: false,
+          transactionId: input.transactionId,
+          skippedReplay: true,
+        };
+      }
+      await updateEntitlement(raced.id, activePatch);
+      return {
+        created: false,
+        duplicateSeason: raced.transactionId !== input.transactionId,
+        transactionId: input.transactionId,
+      };
+    }
+    throw err;
+  }
 
   return {
     created: true,

@@ -46,7 +46,7 @@ describe("runLocalTaxExport", () => {
           order.push("syncFiled");
           assert.deepEqual(params, {
             taxYear: "2026",
-            receiptIds: [BUSINESS_RECEIPT_ID],
+            receiptIds: [BUSINESS_RECEIPT_ID, PERSONAL_RECEIPT_ID],
           });
           return {
             taxSeason: "2026",

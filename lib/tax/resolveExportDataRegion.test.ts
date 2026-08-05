@@ -18,4 +18,15 @@ describe("resolveExportDataRegion", () => {
     assert.equal(resolveExportDataRegion(receipts), "eu");
     assert.equal(resolveExportDataRegion([]), "us");
   });
+
+  it("prefers signed-in user locked region over receipt snapshot", () => {
+    assert.equal(
+      resolveExportDataRegion(
+        [{ id: "1", status: "done", timestamp: new Date(), dataRegion: "us" }],
+        undefined,
+        "eu",
+      ),
+      "eu",
+    );
+  });
 });

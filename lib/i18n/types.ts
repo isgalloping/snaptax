@@ -690,6 +690,7 @@ export type UserCopy = {
     filedSyncFailed: string;
     filedSyncFailedDelivered: string;
     filedSyncPartialSkipped: string;
+    localFiledFailed: string;
     postDownloadGuide: {
       title: string;
       copyButton: string;

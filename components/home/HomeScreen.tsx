@@ -38,6 +38,8 @@ import {
   resumePendingOcrJobsFromStorage,
   scheduleOcrJob,
   setOcrCompleteHandler,
+  SINGLE_CAPTURE_OCR_WAIT_MS,
+  waitForOcrJobs,
 } from "@/lib/client/scheduleOcrJob";
 import {
   deleteReceiptLocalAndRemote,
@@ -568,7 +570,9 @@ export function HomeScreen() {
         return visible;
       }
       try {
-        const { visible } = await mergeServerReceiptsIntoLocal(local);
+        const { visible } = await mergeServerReceiptsIntoLocal(local, {
+          useSyncPages: auth.isSignedIn && auth.seasonPaid,
+        });
         if (applyMode === "immediate") {
           pendingMergeRef.current = null;
           applyMergeNow(visible);
@@ -584,7 +588,7 @@ export function HomeScreen() {
         return visible;
       }
     },
-    [applyMergeNow, applyMergeOrDefer, queueWorkerCatchUp],
+    [applyMergeNow, applyMergeOrDefer, queueWorkerCatchUp, auth.isSignedIn, auth.seasonPaid],
   );
 
   const applyReceiptUpdate = useCallback(
@@ -1166,6 +1170,7 @@ export function HomeScreen() {
     googleUser: auth.googleUser,
     seasonPaid: auth.seasonPaid,
     currentSeason: auth.currentSeason,
+    userLockedRegion: auth.userDataRegion,
     onUserSignedIn: auth.applyGoogleSignIn,
     onPostLoginSync: handlePostLoginSync,
     refreshSeasonPaid: auth.refreshSeasonPaid,
@@ -1627,7 +1632,13 @@ export function HomeScreen() {
             return;
           }
           try {
-            await uploadPendingInnerRef.current(processingReceipt);
+            await waitForOcrJobs(
+              [processingReceipt.id],
+              SINGLE_CAPTURE_OCR_WAIT_MS,
+            );
+            const latest = await loadReceipt(processingReceipt.id);
+            if (!latest || shouldSkipUploadAttempt(latest)) return;
+            await uploadPendingInnerRef.current(latest);
           } catch {
             // budget updated in uploadPendingInner
           }

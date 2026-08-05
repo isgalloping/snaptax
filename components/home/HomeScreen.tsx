@@ -12,6 +12,7 @@ import {
   apiReceiptToLocal,
   isDuplicateReceiptError,
   triggerReceiptProcess,
+  triggerReceiptProcessWithOcrDraft,
   uploadReceipt,
   type ApiReceipt,
 } from "@/lib/client/receiptApi";
@@ -28,6 +29,7 @@ import {
   duplicateNoticeCopy,
   scrollReceiptIntoView,
 } from "@/lib/client/duplicateReceiptNotice";
+import { shouldSubmitLateOcrDraft } from "@/lib/client/lateOcrDraftSync";
 import { prepareReceiptCapture } from "@/lib/client/prepareReceiptCapture";
 import {
   flushSessionPendingUploads,
@@ -903,15 +905,31 @@ export function HomeScreen() {
           return;
         }
         const receipt = await loadReceipt(receiptId);
-        if (!receipt?.pendingUpload || shouldSkipUploadAttempt(receipt)) return;
+        if (!receipt?.ocrDraft) return;
+        if (receipt.pendingUpload && !shouldSkipUploadAttempt(receipt)) {
+          if (uploadInFlightRef.current.has(receiptId)) return;
+          if (batchFlushActiveRef.current) return;
+          if (isWorkerSessionActive({ cameraOpen: cameraOpenRef.current })) return;
+          if (isBatchOcrUploadDeferred(receiptId)) return;
+          try {
+            await uploadPendingInnerRef.current(receipt);
+          } catch {
+            // write budget updated in uploadPendingInner
+          }
+          return;
+        }
+        if (!shouldSubmitLateOcrDraft(receipt)) return;
         if (uploadInFlightRef.current.has(receiptId)) return;
-        if (batchFlushActiveRef.current) return;
-        if (isWorkerSessionActive({ cameraOpen: cameraOpenRef.current })) return;
-        if (isBatchOcrUploadDeferred(receiptId)) return;
         try {
-          await uploadPendingInnerRef.current(receipt);
+          const result = await triggerReceiptProcessWithOcrDraft(
+            receiptId,
+            receipt.ocrDraft,
+          );
+          if (result.ok) {
+            queueRef.current?.enqueue(receiptId);
+          }
         } catch {
-          // write budget updated in uploadPendingInner
+          // watcher / next sync will retry
         }
       })();
     });

@@ -23,9 +23,19 @@ export function validateAuthSecretsForDeploy(): void {
   }
 }
 
+export function validateProductionBillingFlags(): void {
+  if (process.env.VERCEL_ENV !== "production") return;
+  if (process.env.ALLOW_PADDLE_LEGACY_USER_ID === "1") {
+    throw new Error(
+      "ALLOW_PADDLE_LEGACY_USER_ID must not be enabled in production",
+    );
+  }
+}
+
 export function runStartupChecks(): void {
   if (isProdLikeDeployEnv()) {
     validateAuthSecretsForDeploy();
+    validateProductionBillingFlags();
 
     const secret = getPaddleWebhookSecret();
     if (!secret || isPaddleWebhookSecretPlaceholder(secret)) {

@@ -42,6 +42,7 @@ import { buildLocalTurboTaxCsv } from "@/lib/export/buildLocalTurboTaxCsv";
 import { setPendingIncomeCapture } from "@/lib/export/incomeCapture";
 import type { IncomeCaptureKind } from "@/lib/export/incomeCapture";
 import { ExportCategoryReview } from "@/components/export/ExportCategoryReview";
+import { resolveExportDataRegion } from "@/lib/tax/resolveExportDataRegion";
 import type { TaxRegion } from "@/lib/tax/types";
 
 type Step = 1 | 2 | 3 | 4;
@@ -229,7 +230,17 @@ export function ExportEngineSheet({
     setErrorMessage(null);
     setPreviewing(true);
     try {
-      const csv = buildLocalTurboTaxCsv(activeReceipts, taxYear, timeZone);
+      const previewRegion = resolveExportDataRegion(
+        activeReceipts,
+        undefined,
+        userLockedRegion,
+      );
+      const csv = buildLocalTurboTaxCsv(
+        activeReceipts,
+        taxYear,
+        timeZone,
+        previewRegion,
+      );
       const file = new File(
         [csv],
         exportPreviewCsvFilename(taxYear),

@@ -19,7 +19,7 @@ import { withRequestLog } from "@/lib/server/log/withRequestLog";
 import { logEvent } from "@/lib/server/log/logEvent";
 import { baseLogEntry } from "@/lib/server/log/context";
 import { blobCommandOptions } from "@/lib/server/blob";
-import { ocrDraftFromAiRaw } from "@/lib/ocr/ocrDraftSchema";
+import { ocrDraftFromAiRaw, parseProcessRequestOcrDraft } from "@/lib/ocr/ocrDraftSchema";
 import { incomeFormTypeFromReceipt } from "@/lib/export/incomeDocuments";
 
 export const maxDuration = 60;
@@ -57,6 +57,13 @@ export const POST = withRequestLog(
         return rateLimitError(actorLimit.retryAfterSec);
       }
 
+      let requestOcrDraft = null;
+      const contentType = request.headers.get("content-type") ?? "";
+      if (contentType.includes("application/json")) {
+        const body = await request.json().catch(() => null);
+        requestOcrDraft = parseProcessRequestOcrDraft(body);
+      }
+
       const blobResult = await get(receipt.imageUrl, {
         access: "private",
         ...blobCommandOptions(),
@@ -81,7 +88,8 @@ export const POST = withRequestLog(
 
       const visionStart = Date.now();
       try {
-        const ocrDraft = ocrDraftFromAiRaw(receipt.aiRaw);
+        const ocrDraft =
+          requestOcrDraft ?? ocrDraftFromAiRaw(receipt.aiRaw);
         const result = await processReceiptTax({
           receiptId: id,
           dataRegion: receipt.dataRegion as "us" | "eu",

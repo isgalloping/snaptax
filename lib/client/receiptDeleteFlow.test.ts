@@ -63,6 +63,63 @@ describe("deleteReceiptLocalAndRemote", () => {
     assert.equal(localDeleted, false);
   });
 
+  it("rejects server-filed receipts before local delete", async () => {
+    let localDeleted = false;
+
+    await assert.rejects(
+      () =>
+        deleteReceiptLocalAndRemote(LOCAL_UUID, {
+          isOnline: () => true,
+          ensureGhostSession: async () => {},
+          findReceipt: findUnfiledReceipt,
+          fetchRemoteReceipt: async () => ({
+            ...localRow(LOCAL_UUID),
+            taxSeason: "2026",
+            taxSeasonDate: new Date("2026-04-01T00:00:00.000Z"),
+          }),
+          deleteLocal: async () => {
+            localDeleted = true;
+          },
+        }),
+      /RECEIPT_LOCKED/,
+    );
+
+    assert.equal(localDeleted, false);
+  });
+
+  it("clears tombstone when remote delete returns RECEIPT_LOCKED", async () => {
+    let tombstoned = false;
+    let removed = false;
+    let localDeleted = false;
+
+    await assert.rejects(
+      () =>
+        deleteReceiptLocalAndRemote(LOCAL_UUID, {
+          isOnline: () => true,
+          ensureGhostSession: async () => {},
+          findReceipt: findUnfiledReceipt,
+          fetchRemoteReceipt: async () => localRow(LOCAL_UUID),
+          addTombstone: async () => {
+            tombstoned = true;
+          },
+          removeTombstone: async () => {
+            removed = true;
+          },
+          deleteLocal: async () => {
+            localDeleted = true;
+          },
+          deleteRemote: async () => {
+            throw new Error("RECEIPT_LOCKED");
+          },
+        }),
+      /RECEIPT_LOCKED/,
+    );
+
+    assert.equal(tombstoned, true);
+    assert.equal(localDeleted, true);
+    assert.equal(removed, true);
+  });
+
   it("clears tombstone after successful remote delete", async () => {
     let tombstoned = true;
     let removed = false;
@@ -104,6 +161,24 @@ describe("flushPendingDeletes", () => {
     });
 
     assert.deepEqual(deleted, [LOCAL_UUID]);
+    assert.deepEqual(removed, [LOCAL_UUID]);
+  });
+
+  it("drops tombstone when remote delete is RECEIPT_LOCKED", async () => {
+    const removed: string[] = [];
+
+    await flushPendingDeletes({
+      isOnline: () => true,
+      ensureGhostSession: async () => {},
+      readTombstones: async () => new Set([LOCAL_UUID]),
+      deleteRemote: async () => {
+        throw new Error("RECEIPT_LOCKED");
+      },
+      removeTombstone: async (id) => {
+        removed.push(id);
+      },
+    });
+
     assert.deepEqual(removed, [LOCAL_UUID]);
   });
 });

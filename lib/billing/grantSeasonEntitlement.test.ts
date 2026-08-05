@@ -150,9 +150,41 @@ describe("grantPaddleSeasonEntitlement", () => {
     assert.deepEqual(calls, []);
   });
 
+  it("skips grant when active season already paid with a different transaction", async () => {
+    const calls: string[] = [];
+
+    const result = await grantPaddleSeasonEntitlement(
+      {
+        userId: "user-1",
+        taxSeason: "2026",
+        transactionId: "txn-2",
+        amountUsd: 49,
+      },
+      {
+        findBySeason: async () => ({
+          id: "ent-1",
+          transactionId: "txn-1",
+          status: "active",
+        }),
+        updateEntitlement: async () => {
+          calls.push("update");
+        },
+      },
+    );
+
+    assert.deepEqual(result, {
+      created: false,
+      duplicateSeason: true,
+      transactionId: "txn-1",
+      skippedDuplicatePurchase: true,
+    });
+    assert.deepEqual(calls, []);
+  });
+
   it("updates raced create when concurrent webhook hits unique season constraint", async () => {
     const { Prisma } = await import("@prisma/client");
     let seasonLookups = 0;
+    const calls: string[] = [];
 
     const result = await grantPaddleSeasonEntitlement(
       {
@@ -174,15 +206,19 @@ describe("grantPaddleSeasonEntitlement", () => {
             { code: "P2002", clientVersion: "test" },
           );
         },
-        updateEntitlement: async () => {},
+        updateEntitlement: async () => {
+          calls.push("update");
+        },
       },
     );
 
     assert.deepEqual(result, {
       created: false,
       duplicateSeason: true,
-      transactionId: "txn-2",
+      transactionId: "txn-1",
+      skippedDuplicatePurchase: true,
     });
+    assert.deepEqual(calls, []);
   });
 
   it("recovers P2002 races via transaction lookup when season lookup misses", async () => {

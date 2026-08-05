@@ -15,6 +15,8 @@ export type GrantPaddleSeasonEntitlementResult = {
   transactionId: string;
   /** Refunded/disputed entitlement replayed with the same Paddle transaction id. */
   skippedReplay?: boolean;
+  /** Active season already paid; a different transaction id was ignored to preserve refund linkage. */
+  skippedDuplicatePurchase?: boolean;
 };
 
 type SeasonEntitlementRow = {
@@ -35,6 +37,13 @@ function shouldSkipRevokedReplay(
     REVOKED_ENTITLEMENT_STATUSES.has(status) &&
     existing.transactionId === transactionId
   );
+}
+
+function shouldSkipActiveDuplicatePurchase(
+  existing: SeasonEntitlementRow,
+  transactionId: string,
+): boolean {
+  return existing.status?.trim() === "active" && existing.transactionId !== transactionId;
 }
 
 export type GrantSeasonEntitlementDeps = {
@@ -135,6 +144,14 @@ export async function grantPaddleSeasonEntitlement(
         skippedReplay: true,
       };
     }
+    if (shouldSkipActiveDuplicatePurchase(existingBySeason, input.transactionId)) {
+      return {
+        created: false,
+        duplicateSeason: true,
+        transactionId: existingBySeason.transactionId,
+        skippedDuplicatePurchase: true,
+      };
+    }
     await updateEntitlement(existingBySeason.id, activePatch);
     return {
       created: false,
@@ -188,6 +205,14 @@ export async function grantPaddleSeasonEntitlement(
           duplicateSeason: false,
           transactionId: input.transactionId,
           skippedReplay: true,
+        };
+      }
+      if (shouldSkipActiveDuplicatePurchase(raced, input.transactionId)) {
+        return {
+          created: false,
+          duplicateSeason: true,
+          transactionId: raced.transactionId,
+          skippedDuplicatePurchase: true,
         };
       }
       await updateEntitlement(raced.id, activePatch);

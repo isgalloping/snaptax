@@ -369,5 +369,16 @@ export async function patchReceiptCategory(
 export async function deleteReceiptRemote(id: string): Promise<void> {
   if (!isPersistedReceiptId(id)) return;
   const res = await apiFetch(`/api/receipts/${id}`, { method: "DELETE" });
-  if (!res.ok && res.status !== 404) throw new Error("DELETE_RECEIPT_FAILED");
+  if (res.ok || res.status === 404) return;
+  if (res.status === 409) {
+    try {
+      const body = (await res.json()) as { error?: { code?: string } };
+      if (body.error?.code === "RECEIPT_LOCKED") {
+        throw new Error("RECEIPT_LOCKED");
+      }
+    } catch (err) {
+      if (err instanceof Error && err.message === "RECEIPT_LOCKED") throw err;
+    }
+  }
+  throw new Error("DELETE_RECEIPT_FAILED");
 }

@@ -19,11 +19,14 @@ function localRow(id: string, pendingUpload = false): StoredReceipt {
   };
 }
 
+const findUnfiledReceipt = async (id: string) => localRow(id);
+
 describe("deleteReceiptLocalAndRemote", () => {
   it("tombstones persisted ids before local delete", async () => {
     const order: string[] = [];
 
     await deleteReceiptLocalAndRemote(LOCAL_UUID, {
+      findReceipt: findUnfiledReceipt,
       isOnline: () => false,
       addTombstone: async () => {
         order.push("tombstone");
@@ -39,11 +42,33 @@ describe("deleteReceiptLocalAndRemote", () => {
     assert.deepEqual(order, ["tombstone", "local"]);
   });
 
+  it("rejects filed receipts before local delete", async () => {
+    let localDeleted = false;
+
+    await assert.rejects(
+      () =>
+        deleteReceiptLocalAndRemote(LOCAL_UUID, {
+          findReceipt: async () => ({
+            ...localRow(LOCAL_UUID),
+            taxSeason: "2026",
+            taxSeasonDate: new Date("2026-04-01T00:00:00.000Z"),
+          }),
+          deleteLocal: async () => {
+            localDeleted = true;
+          },
+        }),
+      /RECEIPT_LOCKED/,
+    );
+
+    assert.equal(localDeleted, false);
+  });
+
   it("clears tombstone after successful remote delete", async () => {
     let tombstoned = true;
     let removed = false;
 
     await deleteReceiptLocalAndRemote(LOCAL_UUID, {
+      findReceipt: findUnfiledReceipt,
       isOnline: () => true,
       ensureGhostSession: async () => {},
       addTombstone: async () => {

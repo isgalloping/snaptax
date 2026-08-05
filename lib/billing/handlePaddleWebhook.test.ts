@@ -28,7 +28,7 @@ describe("handlePaddleWebhookPayload", () => {
         duplicate: true,
         shouldProcess: false,
       }),
-      grantPaddleSeasonEntitlement: async () => {
+      grantSeasonPurchaseWithIntentConsume: async () => {
         grantCalls += 1;
         return {
           created: true,
@@ -72,7 +72,7 @@ describe("handlePaddleWebhookPayload", () => {
           intentId: "intent-123",
           intentExpiredAtGrant: false,
         }),
-        grantPaddleSeasonEntitlement: async () => {
+        grantSeasonPurchaseWithIntentConsume: async () => {
           grantCalls += 1;
           return {
             created: true,
@@ -111,7 +111,7 @@ describe("handlePaddleWebhookPayload", () => {
         ok: false,
         reason: "unexpected_price_id",
       }),
-      grantPaddleSeasonEntitlement: async () => {
+      grantSeasonPurchaseWithIntentConsume: async () => {
         grantCalls += 1;
         return {
           created: true,
@@ -133,7 +133,6 @@ describe("handlePaddleWebhookPayload", () => {
   });
 
   it("grants duplicate payments on an already consumed checkout intent", async () => {
-    let consumeCalls = 0;
     const result = await handlePaddleWebhookPayload(
       {
         ...completedPayload,
@@ -162,19 +161,15 @@ describe("handlePaddleWebhookPayload", () => {
             intentAlreadyConsumed: true,
           };
         },
-        grantPaddleSeasonEntitlement: async () => ({
+        grantSeasonPurchaseWithIntentConsume: async () => ({
           created: false,
           duplicateSeason: true,
           transactionId: "txn-456",
         }),
-        markCheckoutIntentConsumed: async () => {
-          consumeCalls += 1;
-        },
       } satisfies TestDeps,
     );
 
     assert.deepEqual(result, { ok: true });
-    assert.equal(consumeCalls, 0);
   });
 
   it("audits applied chargeback adjustments with status transition metadata", async () => {

@@ -1,4 +1,5 @@
 import { isIncomeFormType } from "@/lib/export/incomeDocuments";
+import { isReceiptFiled } from "@/lib/receipts/filedStatus";
 import type { StoredReceipt } from "@/lib/storage/receiptDb";
 import { effectiveReceiptTaxYear } from "@/lib/tax/taxYearStats";
 import { resolveDeductionRatio } from "@/lib/tax/usCategories";
@@ -26,6 +27,7 @@ function isSummaryEligible(row: StoredReceipt): boolean {
 
 function totalTaxSavedContribution(row: StoredReceipt): number {
   if (!isSummaryEligible(row) || row.status !== "done") return 0;
+  if (isReceiptFiled(row)) return 0;
   return row.taxAmount ?? 0;
 }
 

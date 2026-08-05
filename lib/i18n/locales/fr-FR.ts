@@ -981,6 +981,12 @@ export const FR_FR_COPY: UserCopy = {
       "Certains reçus ne sont pas encore synchronisés. Attendez la fin de la sync, puis réessayez Exporter.",
     filedSyncFailed:
       "Votre pack fiscal a été créé, mais le statut « déposé » n'a pas pu être enregistré. Réessayez Exporter.",
+    filedSyncFailedDelivered:
+      "Votre pack est prêt, mais le statut « déposé » n'a pas pu être enregistré en ligne. Enregistrez le fichier, puis réessayez Exporter une fois en ligne.",
+    filedSyncPartialSkipped:
+      "{count} reçus ne sont pas encore synchronisés dans le cloud et n'ont pas été marqués comme déposés.",
+    localFiledFailed:
+      "Déposé en ligne, mais l'état local n'a pas pu être mis à jour sur cet appareil. Restaurez depuis le cloud ou réexportez.",
     postDownloadGuide: {
       title: "Fichier enregistré",
       copyButton: "Copier",

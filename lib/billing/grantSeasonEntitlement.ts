@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { utcNow } from "@/lib/time/utc";
 
 export type GrantPaddleSeasonEntitlementInput = {
@@ -12,6 +13,8 @@ export type GrantPaddleSeasonEntitlementResult = {
   created: boolean;
   duplicateSeason: boolean;
   transactionId: string;
+  /** Refunded/disputed entitlement replayed with the same Paddle transaction id. */
+  skippedReplay?: boolean;
 };
 
 type SeasonEntitlementRow = {
@@ -19,6 +22,20 @@ type SeasonEntitlementRow = {
   transactionId: string;
   status?: string;
 };
+
+const REVOKED_ENTITLEMENT_STATUSES = new Set(["refunded", "disputed"]);
+
+function shouldSkipRevokedReplay(
+  existing: SeasonEntitlementRow,
+  transactionId: string,
+): boolean {
+  const status = existing.status?.trim();
+  return (
+    status != null &&
+    REVOKED_ENTITLEMENT_STATUSES.has(status) &&
+    existing.transactionId === transactionId
+  );
+}
 
 export type GrantSeasonEntitlementDeps = {
   findBySeason?: (
@@ -110,6 +127,14 @@ export async function grantPaddleSeasonEntitlement(
 
   const existingBySeason = await findBySeason(input.userId, input.taxSeason);
   if (existingBySeason) {
+    if (shouldSkipRevokedReplay(existingBySeason, input.transactionId)) {
+      return {
+        created: false,
+        duplicateSeason: false,
+        transactionId: input.transactionId,
+        skippedReplay: true,
+      };
+    }
     await updateEntitlement(existingBySeason.id, activePatch);
     return {
       created: false,
@@ -120,6 +145,14 @@ export async function grantPaddleSeasonEntitlement(
 
   const existingByTxn = await findByTransaction(input.transactionId);
   if (existingByTxn) {
+    if (shouldSkipRevokedReplay(existingByTxn, input.transactionId)) {
+      return {
+        created: false,
+        duplicateSeason: false,
+        transactionId: input.transactionId,
+        skippedReplay: true,
+      };
+    }
     await updateEntitlement(existingByTxn.id, activePatch);
     return {
       created: false,
@@ -128,21 +161,97 @@ export async function grantPaddleSeasonEntitlement(
     };
   }
 
-  await createEntitlement({
-    userId: input.userId,
-    taxSeason: input.taxSeason,
-    transactionId: input.transactionId,
-    paidAt,
-    amount,
-    channelCode: "paddle",
-    status: "active",
-    statusReason: "purchase_completed",
-    statusUpdatedAt,
-  });
+  try {
+    await createEntitlement({
+      userId: input.userId,
+      taxSeason: input.taxSeason,
+      transactionId: input.transactionId,
+      paidAt,
+      amount,
+      channelCode: "paddle",
+      status: "active",
+      statusReason: "purchase_completed",
+      statusUpdatedAt,
+    });
+  } catch (err) {
+    if (
+      err instanceof Prisma.PrismaClientKnownRequestError &&
+      err.code === "P2002"
+    ) {
+      const raced =
+        (await findBySeason(input.userId, input.taxSeason)) ??
+        (await findByTransaction(input.transactionId));
+      if (!raced) throw err;
+      if (shouldSkipRevokedReplay(raced, input.transactionId)) {
+        return {
+          created: false,
+          duplicateSeason: false,
+          transactionId: input.transactionId,
+          skippedReplay: true,
+        };
+      }
+      await updateEntitlement(raced.id, activePatch);
+      return {
+        created: false,
+        duplicateSeason: raced.transactionId !== input.transactionId,
+        transactionId: input.transactionId,
+      };
+    }
+    throw err;
+  }
 
   return {
     created: true,
     duplicateSeason: false,
     transactionId: input.transactionId,
   };
+}
+
+export async function grantSeasonPurchaseWithIntentConsume(params: {
+  grant: GrantPaddleSeasonEntitlementInput;
+  intentId?: string;
+  skipIntentConsume?: boolean;
+}): Promise<GrantPaddleSeasonEntitlementResult> {
+  return prisma.$transaction(async (tx) => {
+    const entitlement = await grantPaddleSeasonEntitlement(params.grant, {
+      findBySeason: (userId, taxSeason) =>
+        tx.snaptaxSeasonEntitlement.findUnique({
+          where: { userId_taxSeason: { userId, taxSeason } },
+          select: { id: true, transactionId: true, status: true },
+        }),
+      findByTransaction: (transactionId) =>
+        tx.snaptaxSeasonEntitlement.findUnique({
+          where: { transactionId },
+          select: { id: true, transactionId: true, status: true },
+        }),
+      updateEntitlement: async (id, data) => {
+        await tx.snaptaxSeasonEntitlement.update({
+          where: { id },
+          data: {
+            paidAt: data.paidAt,
+            amount: data.amount,
+            transactionId: data.transactionId,
+            status: data.status,
+            statusReason: data.statusReason,
+            statusUpdatedAt: data.statusUpdatedAt,
+          },
+        });
+      },
+      createEntitlement: async (data) => {
+        await tx.snaptaxSeasonEntitlement.create({ data });
+      },
+    });
+
+    if (params.intentId && !params.skipIntentConsume) {
+      await tx.snaptaxCheckoutIntent.update({
+        where: { id: params.intentId },
+        data: {
+          status: "consumed",
+          transactionId: params.grant.transactionId,
+        },
+      });
+    }
+
+    return entitlement;
+  });
 }

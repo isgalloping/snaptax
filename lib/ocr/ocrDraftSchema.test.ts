@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   parseOcrDraftJson,
+  parseProcessRequestOcrDraft,
   summarizeOcrDraftForAiRaw,
 } from "@/lib/ocr/ocrDraftSchema";
 
@@ -58,6 +59,20 @@ describe("parseOcrDraftJson", () => {
       ),
       null,
     );
+  });
+});
+
+describe("parseProcessRequestOcrDraft", () => {
+  it("reads ocrDraft objects and JSON strings from process bodies", () => {
+    const parsed = parseProcessRequestOcrDraft({ ocrDraft: validDraft });
+    assert.ok(parsed);
+    assert.equal(parsed?.parsed.total, 42.1);
+
+    const fromString = parseProcessRequestOcrDraft({
+      ocrDraft: JSON.stringify(validDraft),
+    });
+    assert.ok(fromString);
+    assert.equal(fromString?.engine, "tesseract");
   });
 });
 

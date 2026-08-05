@@ -69,7 +69,21 @@ export function unionMergeLWW(
       continue;
     }
 
-    if (existing.pendingUpload) continue;
+    if (existing.pendingUpload) {
+      const localUpdatedAt = receiptUpdatedAt(existing);
+      const remoteUpdatedAt = remoteRow.updatedAt ?? remoteRow.timestamp;
+      if (
+        isRemoteNewer(remoteUpdatedAt, localUpdatedAt) &&
+        (remoteStored.hasRemoteImage === true || remoteStored.status === "done")
+      ) {
+        byId.set(remoteRow.id, {
+          ...remoteStored,
+          pendingUpload: false,
+          writeBudgetRemaining: existing.writeBudgetRemaining,
+        });
+      }
+      continue;
+    }
 
     const localUpdatedAt = receiptUpdatedAt(existing);
     const remoteUpdatedAt = remoteRow.updatedAt ?? remoteRow.timestamp;

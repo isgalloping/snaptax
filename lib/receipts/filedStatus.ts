@@ -15,9 +15,12 @@ export function filedFlag(row: {
   return isReceiptFiled(row) ? 1 : 0;
 }
 
-/** Prisma WHERE fragment: receipt not yet filed for tax. */
+/** Prisma WHERE fragment: receipt has no filed metadata (aligned with `isReceiptFiled`). */
 export function unfiledReceiptWhere(): Prisma.SnaptaxReceiptWhereInput {
   return {
-    OR: [{ taxSeason: null }, { taxSeason: "" }, { taxSeasonDate: null }],
+    AND: [
+      { OR: [{ taxSeason: null }, { taxSeason: "" }] },
+      { taxSeasonDate: null },
+    ],
   };
 }

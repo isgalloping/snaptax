@@ -31,7 +31,27 @@ test("top100ByUpdatedAt keeps newest rows within sync window", () => {
   assert.equal(top[0]?.id, "r54");
 });
 
-test("unionMergeLWW keeps pendingUpload local over remote", () => {
+test("unionMergeLWW keeps pendingUpload local over stale remote", () => {
+  const local = [
+    stored("a", "2026-06-07T10:00:00.000Z", {
+      pendingUpload: true,
+      merchant: "Local",
+    }),
+  ];
+  const remote = [
+    {
+      id: "a",
+      status: "processing" as const,
+      timestamp: new Date("2026-06-07T12:00:00.000Z"),
+      updatedAt: new Date("2026-06-07T12:00:00.000Z"),
+      merchant: "Remote",
+    },
+  ];
+  const merged = unionMergeLWW(local, remote);
+  assert.equal(merged.find((r) => r.id === "a")?.merchant, "Local");
+});
+
+test("unionMergeLWW heals pendingUpload when remote upload is newer and done", () => {
   const local = [
     stored("a", "2026-06-07T10:00:00.000Z", {
       pendingUpload: true,
@@ -45,10 +65,13 @@ test("unionMergeLWW keeps pendingUpload local over remote", () => {
       timestamp: new Date("2026-06-07T12:00:00.000Z"),
       updatedAt: new Date("2026-06-07T12:00:00.000Z"),
       merchant: "Remote",
+      hasRemoteImage: true,
     },
   ];
   const merged = unionMergeLWW(local, remote);
-  assert.equal(merged.find((r) => r.id === "a")?.merchant, "Local");
+  const row = merged.find((r) => r.id === "a");
+  assert.equal(row?.merchant, "Remote");
+  assert.equal(row?.pendingUpload, false);
 });
 
 test("unionMergeLWW applies remote when newer for non-done rows", () => {
@@ -168,6 +191,30 @@ test("unionMergeLWW applies filed fields when remote is newer after export", () 
   const row = merged.find((r) => r.id === "a");
   assert.equal(row?.taxSeason, "2026");
   assert.equal(row?.taxSeasonDate?.toISOString(), filedAt.toISOString());
+});
+
+test("unionMergeLWW adopts server tax fields for unfiled done rows when remote is newer", () => {
+  const local = [
+    stored("a", "2026-06-07T10:00:00.000Z", {
+      taxAmount: 10,
+      dataRegion: "us",
+    }),
+  ];
+  const remote = [
+    {
+      id: "a",
+      status: "done" as const,
+      timestamp: new Date("2026-06-07T08:00:00.000Z"),
+      updatedAt: new Date("2026-06-07T12:00:00.000Z"),
+      taxAmount: 18,
+      dataRegion: "eu" as const,
+    },
+  ];
+  const merged = unionMergeLWW(local, remote);
+  const row = merged.find((r) => r.id === "a");
+  assert.equal(row?.taxAmount, 18);
+  assert.equal(row?.dataRegion, "eu");
+  assert.equal(row?.merchant, undefined);
 });
 
 test("unionMergeLWW backfills filed when local updatedAt ties remote", () => {

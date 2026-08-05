@@ -1,5 +1,9 @@
 import { syncExportFiledToServer } from "@/lib/client/exportFiledSync";
-import type { ExportFiledSyncResult } from "@/lib/client/exportFiledSync";
+import type {
+  ExportFiledSyncParams,
+  ExportFiledSyncResult,
+} from "@/lib/client/exportFiledSync";
+import { applyExportFiledSync } from "@/lib/client/exportFiledOutcome";
 import { markReceiptsFiledLocal } from "@/lib/client/markReceiptsFiledLocal";
 import { resolveExportReceiptImageBlob } from "@/lib/client/resolveExportReceiptImage";
 import { buildAuditDetailCsv } from "@/lib/export/buildAuditDetailCsv";
@@ -11,6 +15,7 @@ import type { ScheduleCMirrorPdfInput } from "@/lib/export/buildScheduleCMirrorP
 import type { LocalCpaPackProgress } from "@/lib/export/buildLocalCpaPackZip";
 import type { TaxRegion } from "@/lib/tax/types";
 import type { Receipt } from "@/lib/types";
+import { resolveExportDataRegion } from "@/lib/tax/resolveExportDataRegion";
 
 export type LocalCpaExportFormat = "cpa_pdf" | "cpa_pack";
 
@@ -21,6 +26,7 @@ export type RunLocalCpaExportParams = {
   format: LocalCpaExportFormat;
   taxpayerName?: string;
   dataRegion?: TaxRegion;
+  userLockedRegion?: TaxRegion;
   onPackProgress?: (progress: LocalCpaPackProgress) => void;
 };
 
@@ -33,7 +39,7 @@ export type RunLocalCpaExportDeps = {
   buildPdf?: (input: ScheduleCMirrorPdfInput) => Promise<Uint8Array>;
   buildPack?: typeof import("@/lib/export/buildLocalCpaPackZip").buildLocalCpaPackZip;
   resolveImage?: typeof resolveExportReceiptImageBlob;
-  syncFiled?: (params: { taxYear: string }) => Promise<ExportFiledSyncResult>;
+  syncFiled?: (params: ExportFiledSyncParams) => Promise<ExportFiledSyncResult>;
   markFiledLocal?: typeof markReceiptsFiledLocal;
 };
 
@@ -63,11 +69,16 @@ export async function runLocalCpaExport(
   deps: RunLocalCpaExportDeps = {},
 ): Promise<RunLocalCpaExportResult> {
   const taxYearStr = String(params.taxYear);
+  const dataRegion = resolveExportDataRegion(
+    params.receipts,
+    params.dataRegion,
+    params.userLockedRegion,
+  );
   const ctx = buildLocalCpaExportContext(
     params.receipts,
     params.taxYear,
     params.timeZone,
-    params.dataRegion ?? "us",
+    dataRegion,
   );
 
   if (!hasAuditExportContent(ctx.auditRows, ctx.incomeRows)) {
@@ -118,17 +129,27 @@ export async function runLocalCpaExport(
   }
 
   const syncFiled = deps.syncFiled ?? syncExportFiledToServer;
-  const filed = await syncFiled({ taxYear: taxYearStr });
-
   const markFiledLocal = deps.markFiledLocal ?? markReceiptsFiledLocal;
-  await markFiledLocal({
-    receiptIds: filed.receiptIds,
-    taxSeason: filed.taxSeason,
-    taxSeasonDate: filed.taxSeasonDate,
+  const { filed, filedSyncFailed, localFiledFailed } = await applyExportFiledSync({
+    syncFiled,
+    markFiledLocal,
+    taxYear: taxYearStr,
+    receiptIds: ctx.yearReceiptIds,
   });
 
   const filename = exportTaxPackFilename(params.format, params.taxYear);
-  const meta: ExportTaxPackMeta = { receiptCount: filed.filedCount };
+  const meta: ExportTaxPackMeta = {
+    receiptCount: filed?.filedCount ?? ctx.yearReceiptIds.length,
+  };
+  if (filed?.skippedReceiptIds && filed.skippedReceiptIds > 0) {
+    meta.skippedReceiptIds = filed.skippedReceiptIds;
+  }
+  if (filedSyncFailed) {
+    meta.filedSyncFailed = true;
+  }
+  if (localFiledFailed) {
+    meta.localFiledFailed = true;
+  }
   if (imageStats) {
     meta.imagesIncluded = imageStats.imagesIncluded;
     meta.imagesEligible = imageStats.imagesEligible;

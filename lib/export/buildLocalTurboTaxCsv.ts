@@ -10,7 +10,8 @@ export function buildLocalTurboTaxCsv(
   receipts: Receipt[],
   taxYear: number,
   timeZone: string,
+  dataRegion: import("@/lib/tax/types").TaxRegion = "us",
 ): string {
-  const rows = buildLocalExpenseExportRows(receipts, taxYear, timeZone);
+  const rows = buildLocalExpenseExportRows(receipts, taxYear, timeZone, dataRegion);
   return buildTurboTaxCsv(rows);
 }

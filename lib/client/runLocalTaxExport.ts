@@ -1,5 +1,9 @@
 import { syncExportFiledToServer } from "@/lib/client/exportFiledSync";
-import type { ExportFiledSyncResult } from "@/lib/client/exportFiledSync";
+import type {
+  ExportFiledSyncParams,
+  ExportFiledSyncResult,
+} from "@/lib/client/exportFiledSync";
+import { applyExportFiledSync } from "@/lib/client/exportFiledOutcome";
 import { markReceiptsFiledLocal } from "@/lib/client/markReceiptsFiledLocal";
 import {
   buildLocalTaxPack,
@@ -9,13 +13,18 @@ import { buildTxfExport } from "@/lib/export/buildTxf";
 import { buildQboExport } from "@/lib/export/buildQboExport";
 import { exportTaxPackFilename } from "@/lib/export/exportFilenames";
 import type { ExportTaxPackMeta } from "@/lib/client/authApi";
+import type { TaxRegion } from "@/lib/tax/types";
 import type { Receipt } from "@/lib/types";
+import { resolveExportDataRegion } from "@/lib/tax/resolveExportDataRegion";
+import { exportFiledReceiptIdsForTaxYear } from "@/lib/export/exportFiledReceiptIdsForTaxYear";
 
 export type RunLocalTaxExportParams = {
   receipts: Receipt[];
   taxYear: number;
   timeZone: string;
   format: LocalTaxPackFormat;
+  dataRegion?: TaxRegion;
+  userLockedRegion?: TaxRegion;
 };
 
 export type RunLocalTaxExportResult = {
@@ -24,9 +33,30 @@ export type RunLocalTaxExportResult = {
 };
 
 export type RunLocalTaxExportDeps = {
-  syncFiled?: (params: { taxYear: string }) => Promise<ExportFiledSyncResult>;
+  syncFiled?: (params: ExportFiledSyncParams) => Promise<ExportFiledSyncResult>;
   markFiledLocal?: typeof markReceiptsFiledLocal;
 };
+
+function buildExportMeta(params: {
+  packReceiptCount: number;
+  filed: ExportFiledSyncResult | null;
+  filedSyncFailed: boolean;
+  localFiledFailed: boolean;
+}): ExportTaxPackMeta {
+  const meta: ExportTaxPackMeta = {
+    receiptCount: params.filed?.filedCount ?? params.packReceiptCount,
+  };
+  if (params.filed?.skippedReceiptIds && params.filed.skippedReceiptIds > 0) {
+    meta.skippedReceiptIds = params.filed.skippedReceiptIds;
+  }
+  if (params.filedSyncFailed) {
+    meta.filedSyncFailed = true;
+  }
+  if (params.localFiledFailed) {
+    meta.localFiledFailed = true;
+  }
+  return meta;
+}
 
 /** Local-first text export: build from IDB rows, then persist filed metadata server + local. */
 export async function runLocalTaxExport(
@@ -34,26 +64,35 @@ export async function runLocalTaxExport(
   deps: RunLocalTaxExportDeps = {},
 ): Promise<RunLocalTaxExportResult> {
   const taxYearStr = String(params.taxYear);
+  const dataRegion = resolveExportDataRegion(
+    params.receipts,
+    params.dataRegion,
+    params.userLockedRegion,
+  );
   const pack = buildLocalTaxPack(
     params.receipts,
     params.taxYear,
     params.timeZone,
     params.format,
+    { dataRegion },
+  );
+  const filedReceiptIds = exportFiledReceiptIdsForTaxYear(
+    params.receipts,
+    params.taxYear,
+    params.timeZone,
   );
 
   const syncFiled = deps.syncFiled ?? syncExportFiledToServer;
-  const filed = await syncFiled({ taxYear: taxYearStr });
-
   const markFiledLocal = deps.markFiledLocal ?? markReceiptsFiledLocal;
-  await markFiledLocal({
-    receiptIds: filed.receiptIds,
-    taxSeason: filed.taxSeason,
-    taxSeasonDate: filed.taxSeasonDate,
+  const { filed, filedSyncFailed, localFiledFailed } = await applyExportFiledSync({
+    syncFiled,
+    markFiledLocal,
+    taxYear: taxYearStr,
+    receiptIds: filedReceiptIds,
   });
 
-  // Refresh TXF/QBO timestamps only — reuse the same eligible rows (no second filter path).
   let content = pack.content;
-  const asOf = new Date(filed.taxSeasonDate);
+  const asOf = filed?.taxSeasonDate ?? new Date();
   if (params.format === "txf" && pack.eligibleRows) {
     content = buildTxfExport(pack.eligibleRows, asOf);
   } else if (params.format === "qbo" && pack.eligibleRows) {
@@ -63,6 +102,11 @@ export async function runLocalTaxExport(
   const filename = exportTaxPackFilename(params.format, params.taxYear);
   return {
     file: new File([content], filename, { type: pack.mimeType }),
-    meta: { receiptCount: filed.filedCount },
+    meta: buildExportMeta({
+      packReceiptCount: filedReceiptIds.length,
+      filed,
+      filedSyncFailed,
+      localFiledFailed,
+    }),
   };
 }

@@ -1,3 +1,4 @@
+import { isClientReceiptDeleteAllowed } from "@/lib/client/receiptDeletePolicy";
 import { deleteReceiptRemote } from "@/lib/client/receiptApi";
 import {
   addDeletedReceiptId,
@@ -8,6 +9,7 @@ import { ensureGhostSession } from "@/lib/client/ghostClient";
 import { isPersistedReceiptId } from "@/lib/receipts/receiptId";
 import {
   deleteReceipt as deleteStoredReceipt,
+  loadReceipt,
   type StoredReceipt,
 } from "@/lib/storage/receiptDb";
 
@@ -19,6 +21,7 @@ export type DeleteReceiptFlowDeps = {
   deleteLocal?: (id: string) => Promise<void>;
   deleteRemote?: (id: string) => Promise<void>;
   readTombstones?: () => Promise<Set<string>>;
+  findReceipt?: (id: string) => Promise<StoredReceipt | null>;
 };
 
 export async function tombstonePersistedReceipt(id: string): Promise<void> {
@@ -44,6 +47,12 @@ export async function deleteReceiptLocalAndRemote(
   const removeTombstone = deps.removeTombstone ?? removeDeletedReceiptId;
   const deleteLocal = deps.deleteLocal ?? deleteStoredReceipt;
   const deleteRemote = deps.deleteRemote ?? deleteReceiptRemote;
+  const findReceipt = deps.findReceipt ?? loadReceipt;
+
+  const existing = await findReceipt(id);
+  if (existing && !isClientReceiptDeleteAllowed(existing)) {
+    throw new Error("RECEIPT_LOCKED");
+  }
 
   if (isPersistedReceiptId(id)) {
     await addTombstone(id);

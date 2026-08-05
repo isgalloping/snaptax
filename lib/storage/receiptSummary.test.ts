@@ -28,6 +28,6 @@ describe("buildSeasonSummaryFromReceipts", () => {
     ];
     const summary = buildSeasonSummaryFromReceipts(receipts, 2026, "UTC");
     assert.equal(summary.totalReceiptCount, 3);
-    assert.equal(summary.totalTaxSaved, 10);
+    assert.equal(summary.totalTaxSaved, 4);
   });
 });

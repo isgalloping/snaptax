@@ -12,6 +12,7 @@ const completedPayload = {
     id: "txn-123",
     status: "completed",
     custom_data: { intentId: "intent-123" },
+    items: [{ price_id: "pri_default" }],
     details: {
       totals: { total: "4900", currency_code: "USD" },
     },
@@ -27,7 +28,7 @@ describe("handlePaddleWebhookPayload", () => {
         duplicate: true,
         shouldProcess: false,
       }),
-      grantPaddleSeasonEntitlement: async () => {
+      grantSeasonPurchaseWithIntentConsume: async () => {
         grantCalls += 1;
         return {
           created: true,
@@ -62,6 +63,7 @@ describe("handlePaddleWebhookPayload", () => {
           finishes.push(patch);
         },
         resolveSpecialWebhookMinAmountCents: async () => ({ kind: "default" }),
+        validatePaddleTransactionPriceIds: async () => ({ ok: true }),
         resolveWebhookGrantTarget: async () => ({
           ok: true,
           userId: "user-1",
@@ -70,7 +72,7 @@ describe("handlePaddleWebhookPayload", () => {
           intentId: "intent-123",
           intentExpiredAtGrant: false,
         }),
-        grantPaddleSeasonEntitlement: async () => {
+        grantSeasonPurchaseWithIntentConsume: async () => {
           grantCalls += 1;
           return {
             created: true,
@@ -90,6 +92,84 @@ describe("handlePaddleWebhookPayload", () => {
         transactionId: "txn-123",
       },
     ]);
+  });
+
+  it("ignores completed transactions with unexpected Paddle price ids", async () => {
+    const finishes: unknown[] = [];
+    let grantCalls = 0;
+    const result = await handlePaddleWebhookPayload(completedPayload, {
+      beginWebhookEvent: async () => ({
+        id: "audit-price",
+        duplicate: false,
+        shouldProcess: true,
+      }),
+      finishWebhookEvent: async (_id, patch) => {
+        finishes.push(patch);
+      },
+      resolveSpecialWebhookMinAmountCents: async () => ({ kind: "default" }),
+      validatePaddleTransactionPriceIds: async () => ({
+        ok: false,
+        reason: "unexpected_price_id",
+      }),
+      grantSeasonPurchaseWithIntentConsume: async () => {
+        grantCalls += 1;
+        return {
+          created: true,
+          duplicateSeason: false,
+          transactionId: "txn-123",
+        };
+      },
+    } satisfies TestDeps);
+
+    assert.deepEqual(result, { ok: true, ignored: true });
+    assert.equal(grantCalls, 0);
+    assert.deepEqual(finishes, [
+      {
+        processingResult: "ignored",
+        processingReason: "unexpected_price_id",
+        transactionId: "txn-123",
+      },
+    ]);
+  });
+
+  it("grants duplicate payments on an already consumed checkout intent", async () => {
+    const result = await handlePaddleWebhookPayload(
+      {
+        ...completedPayload,
+        event_id: "evt-completed-2",
+        data: {
+          ...completedPayload.data,
+          id: "txn-456",
+        },
+      },
+      {
+        beginWebhookEvent: async () => ({
+          id: "audit-dup-pay",
+          duplicate: false,
+          shouldProcess: true,
+        }),
+        finishWebhookEvent: async () => {},
+        resolveSpecialWebhookMinAmountCents: async () => ({ kind: "default" }),
+        validatePaddleTransactionPriceIds: async () => ({ ok: true }),
+        resolveWebhookGrantTarget: async (_customData, options) => {
+          assert.equal(options?.transactionId, "txn-456");
+          return {
+            ok: true,
+            userId: "user-1",
+            taxSeason: "2026",
+            intentId: "intent-123",
+            intentAlreadyConsumed: true,
+          };
+        },
+        grantSeasonPurchaseWithIntentConsume: async () => ({
+          created: false,
+          duplicateSeason: true,
+          transactionId: "txn-456",
+        }),
+      } satisfies TestDeps,
+    );
+
+    assert.deepEqual(result, { ok: true });
   });
 
   it("audits applied chargeback adjustments with status transition metadata", async () => {

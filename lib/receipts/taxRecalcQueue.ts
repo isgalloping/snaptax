@@ -1,5 +1,7 @@
+import type { Prisma } from "@prisma/client";
 import { get } from "@vercel/blob";
 import { prisma } from "@/lib/prisma";
+import { unfiledReceiptWhere } from "@/lib/receipts/filedStatus";
 import { processReceiptTax } from "@/lib/receipts/processReceiptTax";
 import {
   assertValidReceiptImage,
@@ -48,16 +50,24 @@ export async function resolveGhostCandidate(
   return mode;
 }
 
+/** Receipts eligible for post-login region recalc (excludes filed). */
+export function taxRecalcReceiptWhere(
+  userId: string,
+): Prisma.SnaptaxReceiptWhereInput {
+  return {
+    userId,
+    status: { in: ["done", "processing"] },
+    ...unfiledReceiptWhere(),
+  };
+}
+
 export async function enqueueTaxRecalc(params: {
   userId: string;
   lockedRegion: TaxRegion;
   industry?: string | null;
 }): Promise<number> {
   const receipts = await prisma.snaptaxReceipt.findMany({
-    where: {
-      userId: params.userId,
-      status: { in: ["done", "processing"] },
-    },
+    where: taxRecalcReceiptWhere(params.userId),
     select: { id: true, imageUrl: true, status: true },
   });
 
@@ -74,18 +84,35 @@ async function recalcReceiptsInBackground(
 ) {
   for (const receipt of receipts) {
     try {
-      await prisma.snaptaxReceipt.update({
-        where: { id: receipt.id },
-        data: { status: "processing", taxAmount: 0 },
-      });
-
       const blobResult = await get(receipt.imageUrl, {
         access: "private",
         ...blobCommandOptions(),
       });
       if (!blobResult || blobResult.statusCode !== 200 || !blobResult.stream) {
+        logEvent({
+          ts: new Date().toISOString(),
+          level: "warn",
+          module: "biz.openai",
+          success: false,
+          durationMs: 0,
+          meta: {
+            receiptId: receipt.id,
+            reason: "recalc_blob_unreadable",
+            errorMessage:
+              blobResult?.statusCode != null
+                ? `blob_status_${blobResult.statusCode}`
+                : "blob_missing",
+          },
+        });
         continue;
       }
+
+      const reset = await prisma.snaptaxReceipt.updateMany({
+        where: { id: receipt.id, ...unfiledReceiptWhere() },
+        data: { status: "processing", taxAmount: 0 },
+      });
+      if (reset.count === 0) continue;
+
       const bytes = Buffer.from(
         await new Response(blobResult.stream).arrayBuffer(),
       );

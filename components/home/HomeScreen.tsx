@@ -12,6 +12,7 @@ import {
   apiReceiptToLocal,
   isDuplicateReceiptError,
   triggerReceiptProcess,
+  triggerReceiptProcessWithOcrDraft,
   uploadReceipt,
   type ApiReceipt,
 } from "@/lib/client/receiptApi";
@@ -28,7 +29,9 @@ import {
   duplicateNoticeCopy,
   scrollReceiptIntoView,
 } from "@/lib/client/duplicateReceiptNotice";
+import { shouldSubmitLateOcrDraft } from "@/lib/client/lateOcrDraftSync";
 import { prepareReceiptCapture } from "@/lib/client/prepareReceiptCapture";
+import { isClientReceiptDeleteAllowed } from "@/lib/client/receiptDeletePolicy";
 import {
   flushSessionPendingUploads,
 } from "@/lib/client/batchCaptureFlush";
@@ -38,6 +41,8 @@ import {
   resumePendingOcrJobsFromStorage,
   scheduleOcrJob,
   setOcrCompleteHandler,
+  SINGLE_CAPTURE_OCR_WAIT_MS,
+  waitForOcrJobs,
 } from "@/lib/client/scheduleOcrJob";
 import {
   deleteReceiptLocalAndRemote,
@@ -568,7 +573,9 @@ export function HomeScreen() {
         return visible;
       }
       try {
-        const { visible } = await mergeServerReceiptsIntoLocal(local);
+        const { visible } = await mergeServerReceiptsIntoLocal(local, {
+          useSyncPages: auth.isSignedIn && auth.seasonPaid,
+        });
         if (applyMode === "immediate") {
           pendingMergeRef.current = null;
           applyMergeNow(visible);
@@ -584,7 +591,7 @@ export function HomeScreen() {
         return visible;
       }
     },
-    [applyMergeNow, applyMergeOrDefer, queueWorkerCatchUp],
+    [applyMergeNow, applyMergeOrDefer, queueWorkerCatchUp, auth.isSignedIn, auth.seasonPaid],
   );
 
   const applyReceiptUpdate = useCallback(
@@ -789,6 +796,16 @@ export function HomeScreen() {
         setUploadReauthSheet(true);
         return;
       }
+      if (err instanceof Error && err.message === "RECEIPT_LOCKED") {
+        const cleared: StoredReceipt = { ...latest, pendingUpload: false };
+        await saveReceipt(cleared);
+        setReceipts((prev) =>
+          prev.map((r) => (r.id === cleared.id ? cleared : r)),
+        );
+        const stored = await loadAllReceipts();
+        void syncFromServer(stored, "immediate", { force: true });
+        return;
+      }
       const failed = recordWriteFailure(latest);
       await saveReceipt(failed);
       setReceipts((prev) => prev.map((r) => (r.id === failed.id ? failed : r)));
@@ -889,15 +906,31 @@ export function HomeScreen() {
           return;
         }
         const receipt = await loadReceipt(receiptId);
-        if (!receipt?.pendingUpload || shouldSkipUploadAttempt(receipt)) return;
+        if (!receipt?.ocrDraft) return;
+        if (receipt.pendingUpload && !shouldSkipUploadAttempt(receipt)) {
+          if (uploadInFlightRef.current.has(receiptId)) return;
+          if (batchFlushActiveRef.current) return;
+          if (isWorkerSessionActive({ cameraOpen: cameraOpenRef.current })) return;
+          if (isBatchOcrUploadDeferred(receiptId)) return;
+          try {
+            await uploadPendingInnerRef.current(receipt);
+          } catch {
+            // write budget updated in uploadPendingInner
+          }
+          return;
+        }
+        if (!shouldSubmitLateOcrDraft(receipt)) return;
         if (uploadInFlightRef.current.has(receiptId)) return;
-        if (batchFlushActiveRef.current) return;
-        if (isWorkerSessionActive({ cameraOpen: cameraOpenRef.current })) return;
-        if (isBatchOcrUploadDeferred(receiptId)) return;
         try {
-          await uploadPendingInnerRef.current(receipt);
+          const result = await triggerReceiptProcessWithOcrDraft(
+            receiptId,
+            receipt.ocrDraft,
+          );
+          if (result.ok) {
+            queueRef.current?.enqueue(receiptId);
+          }
         } catch {
-          // write budget updated in uploadPendingInner
+          // watcher / next sync will retry
         }
       })();
     });
@@ -1166,6 +1199,7 @@ export function HomeScreen() {
     googleUser: auth.googleUser,
     seasonPaid: auth.seasonPaid,
     currentSeason: auth.currentSeason,
+    userLockedRegion: auth.userDataRegion,
     onUserSignedIn: auth.applyGoogleSignIn,
     onPostLoginSync: handlePostLoginSync,
     refreshSeasonPaid: auth.refreshSeasonPaid,
@@ -1579,7 +1613,7 @@ export function HomeScreen() {
   const handleDeleteReceipt = useCallback(
     async (id: string) => {
       const existing = receiptsRef.current.find((r) => r.id === id);
-      if (existing?.isOnboardingDemo) return;
+      if (!isClientReceiptDeleteAllowed(existing)) return;
 
       setReceipts((prev) => prev.filter((r) => r.id !== id));
       setSelectedReceipt((prev) => (prev?.id === id ? null : prev));
@@ -1627,7 +1661,13 @@ export function HomeScreen() {
             return;
           }
           try {
-            await uploadPendingInnerRef.current(processingReceipt);
+            await waitForOcrJobs(
+              [processingReceipt.id],
+              SINGLE_CAPTURE_OCR_WAIT_MS,
+            );
+            const latest = await loadReceipt(processingReceipt.id);
+            if (!latest || shouldSkipUploadAttempt(latest)) return;
+            await uploadPendingInnerRef.current(latest);
           } catch {
             // budget updated in uploadPendingInner
           }
@@ -1735,6 +1775,7 @@ export function HomeScreen() {
         onSoftGoogleSheetConsumed={() => setRequestSoftGoogleSheet(false)}
         onSoftGuideDismiss={handleSoftGuideDismiss}
         onRestored={() => void refreshListFromLocal()}
+        onRequestCloudSyncPaywall={taxExport.requestCloudSyncPaywall}
       />
       {taxExport.overlays}
       {paymentSuccessOverlay}

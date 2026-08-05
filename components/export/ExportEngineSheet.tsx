@@ -42,6 +42,8 @@ import { buildLocalTurboTaxCsv } from "@/lib/export/buildLocalTurboTaxCsv";
 import { setPendingIncomeCapture } from "@/lib/export/incomeCapture";
 import type { IncomeCaptureKind } from "@/lib/export/incomeCapture";
 import { ExportCategoryReview } from "@/components/export/ExportCategoryReview";
+import { resolveExportDataRegion } from "@/lib/tax/resolveExportDataRegion";
+import type { TaxRegion } from "@/lib/tax/types";
 
 type Step = 1 | 2 | 3 | 4;
 
@@ -49,6 +51,7 @@ interface ExportEngineSheetProps {
   receipts: Receipt[];
   currentSeason: string;
   taxpayerName?: string;
+  userLockedRegion?: TaxRegion;
   onClose: () => void;
   onPreExportPrepare?: (format: ExportFormat) => Promise<void | Receipt[]>;
   onExported?: () => void | Promise<void>;
@@ -64,6 +67,7 @@ export function ExportEngineSheet({
   receipts,
   currentSeason,
   taxpayerName,
+  userLockedRegion,
   onClose,
   onPreExportPrepare,
   onExported,
@@ -226,7 +230,17 @@ export function ExportEngineSheet({
     setErrorMessage(null);
     setPreviewing(true);
     try {
-      const csv = buildLocalTurboTaxCsv(activeReceipts, taxYear, timeZone);
+      const previewRegion = resolveExportDataRegion(
+        activeReceipts,
+        undefined,
+        userLockedRegion,
+      );
+      const csv = buildLocalTurboTaxCsv(
+        activeReceipts,
+        taxYear,
+        timeZone,
+        previewRegion,
+      );
       const file = new File(
         [csv],
         exportPreviewCsvFilename(taxYear),
@@ -304,6 +318,7 @@ export function ExportEngineSheet({
               taxYear,
               timeZone,
               format,
+              userLockedRegion,
             })
           : format === "cpa_pdf" || format === "cpa_pack"
             ? await runLocalCpaExport({
@@ -312,6 +327,7 @@ export function ExportEngineSheet({
                 timeZone,
                 format,
                 taxpayerName,
+                userLockedRegion,
                 onPackProgress:
                   format === "cpa_pack" ? applyPackProgress : undefined,
               })
@@ -325,7 +341,9 @@ export function ExportEngineSheet({
       finishProgress();
       setReadyFile(result.file);
       setExportMeta(result.meta);
-      await onExported?.();
+      if (!result.meta.filedSyncFailed && !result.meta.localFiledFailed) {
+        await onExported?.();
+      }
     } catch (err) {
       clearProgressTimer();
       setProgress(0);
@@ -386,6 +404,22 @@ export function ExportEngineSheet({
           .replace("{included}", String(exportMeta.imagesIncluded))
           .replace("{eligible}", String(exportMeta.imagesEligible))
       : null;
+
+  const skippedFiledWarning =
+    exportMeta?.skippedReceiptIds != null && exportMeta.skippedReceiptIds > 0
+      ? t.filedSyncPartialSkipped.replace(
+          "{count}",
+          String(exportMeta.skippedReceiptIds),
+        )
+      : null;
+
+  const filedSyncWarning = exportMeta?.filedSyncFailed
+    ? t.filedSyncFailedDelivered
+    : null;
+
+  const localFiledWarning = exportMeta?.localFiledFailed
+    ? t.localFiledFailed
+    : null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end bg-black/70">
@@ -751,6 +785,21 @@ export function ExportEngineSheet({
                 {imageWarning && (
                   <p className="mt-1 text-xs font-bold text-amber-400" role="status">
                     {imageWarning}
+                  </p>
+                )}
+                {skippedFiledWarning && (
+                  <p className="mt-2 text-xs font-bold text-amber-400" role="status">
+                    {skippedFiledWarning}
+                  </p>
+                )}
+                {filedSyncWarning && (
+                  <p className="mt-2 text-xs font-bold text-amber-400" role="status">
+                    {filedSyncWarning}
+                  </p>
+                )}
+                {localFiledWarning && (
+                  <p className="mt-2 text-xs font-bold text-amber-400" role="status">
+                    {localFiledWarning}
                   </p>
                 )}
                 <p className="mt-2 text-xs text-zinc-500" role="status">

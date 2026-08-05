@@ -113,7 +113,10 @@ export async function fetchReceiptSyncPage(
   if (cursor) params.set("cursor", cursor);
   const suffix = params.size > 0 ? `?${params.toString()}` : "";
   const res = await apiFetch(`/api/receipts/sync${suffix}`);
-  if (!res.ok) throw new Error("FETCH_RECEIPT_SYNC_FAILED");
+  if (!res.ok) {
+    if (res.status === 402) throw new Error("PAYMENT_REQUIRED");
+    throw new Error("FETCH_RECEIPT_SYNC_FAILED");
+  }
   return (await res.json()) as ReceiptSyncPageResponse;
 }
 
@@ -327,6 +330,23 @@ export async function triggerReceiptProcess(
     return { ok: false, reason: "not_found", status: 404 };
   }
   const res = await apiFetch(`/api/receipts/${id}/process`, { method: "POST" });
+  if (res.ok) return { ok: true };
+  if (res.status === 404) return { ok: false, reason: "not_found", status: 404 };
+  return { ok: false, reason: "failed", status: res.status };
+}
+
+export async function triggerReceiptProcessWithOcrDraft(
+  id: string,
+  ocrDraft: import("@/lib/ocr/types").OcrDraftPayload,
+): Promise<ProcessTriggerResult> {
+  if (!isPersistedReceiptId(id)) {
+    return { ok: false, reason: "not_found", status: 404 };
+  }
+  const res = await apiFetch(`/api/receipts/${id}/process`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ocrDraft }),
+  });
   if (res.ok) return { ok: true };
   if (res.status === 404) return { ok: false, reason: "not_found", status: 404 };
   return { ok: false, reason: "failed", status: res.status };

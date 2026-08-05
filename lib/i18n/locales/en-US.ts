@@ -963,6 +963,12 @@ export const EN_US_COPY: UserCopy = {
         "Some receipts aren't synced to the cloud yet. Wait for sync to finish, then tap Export Again.",
       filedSyncFailed:
         "Your tax pack was built but filing status couldn't be saved. Try Export Again.",
+      filedSyncFailedDelivered:
+        "Your tax pack is ready, but filing status couldn't be saved online. Save the file now, then try Export Again when you're back online.",
+      filedSyncPartialSkipped:
+        "{count} receipts aren't synced to the cloud yet and weren't marked as filed.",
+      localFiledFailed:
+        "Filed online, but this device couldn't update local receipt status. Pull from cloud or export again to refresh.",
       postDownloadGuide: {
         title: "File saved",
         copyButton: "Copy",

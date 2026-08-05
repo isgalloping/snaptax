@@ -7,6 +7,7 @@ import {
 } from "@/lib/api/rateLimit";
 import { getActor } from "@/lib/auth/getActor";
 import { prisma } from "@/lib/prisma";
+import { isReceiptFiled } from "@/lib/receipts/filedStatus";
 import { assertReceiptAccess } from "@/lib/receipts/ownership";
 import { assertPersistedReceiptId } from "@/lib/receipts/receiptId";
 import { processReceiptTax } from "@/lib/receipts/processReceiptTax";
@@ -18,7 +19,7 @@ import { withRequestLog } from "@/lib/server/log/withRequestLog";
 import { logEvent } from "@/lib/server/log/logEvent";
 import { baseLogEntry } from "@/lib/server/log/context";
 import { blobCommandOptions } from "@/lib/server/blob";
-import { ocrDraftFromAiRaw } from "@/lib/ocr/ocrDraftSchema";
+import { ocrDraftFromAiRaw, parseProcessRequestOcrDraft } from "@/lib/ocr/ocrDraftSchema";
 import { incomeFormTypeFromReceipt } from "@/lib/export/incomeDocuments";
 
 export const maxDuration = 60;
@@ -34,7 +35,11 @@ export const POST = withRequestLog(
       if (!receipt) throw new Error("NOT_FOUND");
       assertReceiptAccess(receipt, actor);
 
-      if (receipt.status === "done" || receipt.status === "blurry") {
+      if (
+        isReceiptFiled(receipt) ||
+        receipt.status === "done" ||
+        receipt.status === "blurry"
+      ) {
         return NextResponse.json({
           id: receipt.id,
           status: receipt.status,
@@ -50,6 +55,13 @@ export const POST = withRequestLog(
       const actorLimit = await checkActorProcessLimit(actor);
       if (!actorLimit.ok) {
         return rateLimitError(actorLimit.retryAfterSec);
+      }
+
+      let requestOcrDraft = null;
+      const contentType = request.headers.get("content-type") ?? "";
+      if (contentType.includes("application/json")) {
+        const body = await request.json().catch(() => null);
+        requestOcrDraft = parseProcessRequestOcrDraft(body);
       }
 
       const blobResult = await get(receipt.imageUrl, {
@@ -76,7 +88,8 @@ export const POST = withRequestLog(
 
       const visionStart = Date.now();
       try {
-        const ocrDraft = ocrDraftFromAiRaw(receipt.aiRaw);
+        const ocrDraft =
+          requestOcrDraft ?? ocrDraftFromAiRaw(receipt.aiRaw);
         const result = await processReceiptTax({
           receiptId: id,
           dataRegion: receipt.dataRegion as "us" | "eu",

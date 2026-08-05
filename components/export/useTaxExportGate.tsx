@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import type { Receipt } from "@/lib/types";
 import type { GoogleUser } from "@/lib/client/authStorage";
-import { isSeasonPaid, setSeasonPaid } from "@/lib/client/authStorage";
+import { setSeasonPaid } from "@/lib/client/authStorage";
 import {
   fetchSeasonPaid,
   type GoogleAuthResponse,
@@ -23,12 +23,14 @@ import { markExportBlockedBanner } from "@/lib/settings/exportSampleState";
 import { markSeasonExportDone } from "@/lib/settings/seasonExportState";
 import type { IncomeCaptureKind } from "@/lib/export/incomeCapture";
 import type { ExportFormat } from "@/lib/export/exportFilenames";
+import type { TaxRegion } from "@/lib/tax/types";
 
 interface UseTaxExportGateOptions {
   receipts: Receipt[];
   googleUser: GoogleUser | null;
   seasonPaid: boolean;
   currentSeason: string;
+  userLockedRegion?: TaxRegion | null;
   onUserSignedIn?: (result: GoogleAuthResponse) => void;
   onPostLoginSync?: (taxRecalcQueued: number) => Promise<void>;
   refreshSeasonPaid?: () => Promise<void>;
@@ -47,6 +49,7 @@ export function useTaxExportGate({
   googleUser,
   seasonPaid: _seasonPaid,
   currentSeason,
+  userLockedRegion = null,
   onUserSignedIn,
   onPostLoginSync,
   refreshSeasonPaid,
@@ -107,12 +110,10 @@ export function useTaxExportGate({
   };
 
   const resolveSeasonPaid = async (): Promise<boolean> => {
-    if (navigator.onLine) {
-      const paid = await fetchSeasonPaid(currentSeason).catch(() => false);
-      setSeasonPaid(currentSeason, paid);
-      return paid;
-    }
-    return isSeasonPaid(currentSeason);
+    if (!navigator.onLine) return false;
+    const paid = await fetchSeasonPaid(currentSeason).catch(() => false);
+    setSeasonPaid(currentSeason, paid);
+    return paid;
   };
 
   const prepareExportReceipts = async (): Promise<Receipt[] | undefined> => {
@@ -173,11 +174,12 @@ export function useTaxExportGate({
   };
 
   const openExportAfterPrepare = async () => {
+    setPaywallExporting(true);
     await runPrepareWithLoading(async () => {
       const prepared = await prepareExportReceipts();
       if (blockIfNoExportableReceipts(prepared)) return;
       openExportEngine(realExportReceipts(exportableReceipts, prepared));
-    });
+    }).finally(() => setPaywallExporting(false));
   };
 
   const runExportGate = async () => {
@@ -210,6 +212,8 @@ export function useTaxExportGate({
     );
     onReceiptUpdated?.(updated);
   };
+
+  const openPaywall = () => setShowPaywall(true);
 
   const overlays = (
     <>
@@ -245,6 +249,7 @@ export function useTaxExportGate({
           receipts={exportEngineReceipts ?? exportableReceipts}
           currentSeason={currentSeason}
           taxpayerName={googleUser?.name}
+          userLockedRegion={userLockedRegion ?? undefined}
           onClose={() => {
             setShowExportSheet(false);
             setExportEngineReceipts(null);
@@ -270,6 +275,7 @@ export function useTaxExportGate({
 
   return {
     requestExport: () => void runExportGate(),
+    requestCloudSyncPaywall: openPaywall,
     continueExportAfterGoogleSignIn: handleGoogleSuccess,
     triggerExportAfterPayment: () => void openExportAfterPrepare(),
     exportError: errorMessage,

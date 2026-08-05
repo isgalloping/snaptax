@@ -2,18 +2,24 @@ import { apiFetch } from "@/lib/client/ghostClient";
 import { clientTimeZone } from "@/lib/time/timeZone";
 import { parseUtcISOString } from "@/lib/time/utc";
 
+export type ExportFiledSyncParams = {
+  taxYear: string;
+  receiptIds: string[];
+};
+
 export type ExportFiledSyncResult = {
   taxSeason: string;
   taxSeasonDate: Date;
   filedCount: number;
   receiptIds: string[];
+  skippedReceiptIds?: number;
 };
 
 const FILED_SYNC_TIMEOUT_MS = 90_000;
 
-export async function syncExportFiledToServer(params: {
-  taxYear: string;
-}): Promise<ExportFiledSyncResult> {
+export async function syncExportFiledToServer(
+  params: ExportFiledSyncParams,
+): Promise<ExportFiledSyncResult> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), FILED_SYNC_TIMEOUT_MS);
 
@@ -24,7 +30,10 @@ export async function syncExportFiledToServer(params: {
         "Content-Type": "application/json",
         "X-Time-Zone": clientTimeZone(),
       },
-      body: JSON.stringify({ taxYear: params.taxYear }),
+      body: JSON.stringify({
+        taxYear: params.taxYear,
+        receiptIds: params.receiptIds,
+      }),
       signal: controller.signal,
     });
     if (res.status === 402) throw new Error("PAYMENT_REQUIRED");
@@ -44,12 +53,16 @@ export async function syncExportFiledToServer(params: {
       taxSeasonDate: string;
       filedCount: number;
       receiptIds: string[];
+      skippedReceiptIds?: number;
     };
     return {
       taxSeason: data.taxSeason,
       taxSeasonDate: parseUtcISOString(data.taxSeasonDate),
       filedCount: data.filedCount,
       receiptIds: data.receiptIds,
+      ...(data.skippedReceiptIds != null && data.skippedReceiptIds > 0
+        ? { skippedReceiptIds: data.skippedReceiptIds }
+        : {}),
     };
   } catch (err) {
     if (err instanceof Error && err.name === "AbortError") {

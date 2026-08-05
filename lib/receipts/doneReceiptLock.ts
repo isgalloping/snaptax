@@ -8,3 +8,17 @@ export function assertReceiptCategoryPatchAllowed(receipt: SnaptaxReceipt): void
     throw new Error("RECEIPT_LOCKED");
   }
 }
+
+/** Block image re-upload / tax reprocessing for filed receipts. */
+export function assertReceiptUploadReplaceAllowed(receipt: SnaptaxReceipt): void {
+  if (isReceiptFiled(receipt)) {
+    throw new Error("RECEIPT_LOCKED");
+  }
+}
+
+/** Block delete for filed receipts. */
+export function assertReceiptDeleteAllowed(receipt: SnaptaxReceipt): void {
+  if (isReceiptFiled(receipt)) {
+    throw new Error("RECEIPT_LOCKED");
+  }
+}

@@ -17,6 +17,7 @@ import type { Receipt } from "@/lib/types";
 
 export type LocalCpaExportContext = {
   yearReceiptCount: number;
+  yearReceiptIds: string[];
   incomeRows: ExportIncomeRow[];
   enrichedExpenseRows: ExportExpenseRow[];
   auditRows: ExportExpenseRow[];
@@ -57,6 +58,7 @@ export function buildLocalCpaExportContext(
 
   return {
     yearReceiptCount: yearStubs.length,
+    yearReceiptIds: yearStubs.map((r) => r.id),
     incomeRows,
     enrichedExpenseRows,
     auditRows,

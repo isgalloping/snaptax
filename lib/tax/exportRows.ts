@@ -43,6 +43,15 @@ export type ExportExpenseRow = {
   auditImagePath?: string;
 };
 
+/** Minimum receipt fields used by filterReceiptsByTaxYear. */
+export type TaxYearFilterableReceipt = {
+  id: string;
+  capturedAt: Date;
+  snapAt?: Date | null;
+  category?: string | null;
+  aiRaw?: SnaptaxReceipt["aiRaw"];
+};
+
 export function extractAiDeductionRatio(
   aiRaw: SnaptaxReceipt["aiRaw"],
 ): number {
@@ -92,11 +101,11 @@ export function buildExportExpenseRow(
   };
 }
 
-export function filterReceiptsByTaxYear(
-  receipts: SnaptaxReceipt[],
+export function filterReceiptsByTaxYear<T extends TaxYearFilterableReceipt>(
+  receipts: T[],
   taxYear: number,
   timeZone: string,
-): SnaptaxReceipt[] {
+): T[] {
   return receipts.filter((r) => {
     const instant = r.snapAt ?? r.capturedAt;
     let year = receiptTaxYear(instant, timeZone);

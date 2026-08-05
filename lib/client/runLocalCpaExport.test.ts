@@ -38,8 +38,12 @@ describe("runLocalCpaExport", () => {
           assert.equal(input.auditRows.length, 1);
           return new TextEncoder().encode("%PDF-test");
         },
-        syncFiled: async () => {
+        syncFiled: async (params) => {
           order.push("syncFiled");
+          assert.deepEqual(params, {
+            taxYear: "2026",
+            receiptIds: [RECEIPT_ID],
+          });
           return {
             taxSeason: "2026",
             taxSeasonDate: new Date("2026-07-08T12:00:00.000Z"),
@@ -76,12 +80,18 @@ describe("runLocalCpaExport", () => {
           chunks: [new TextEncoder().encode("PK\x03\x04")],
           imageStats: { imagesIncluded: 1, imagesEligible: 2 },
         }),
-        syncFiled: async () => ({
-          taxSeason: "2026",
-          taxSeasonDate: new Date("2026-07-08T12:00:00.000Z"),
-          filedCount: 1,
-          receiptIds: [RECEIPT_ID],
-        }),
+        syncFiled: async (params) => {
+          assert.deepEqual(params, {
+            taxYear: "2026",
+            receiptIds: [RECEIPT_ID],
+          });
+          return {
+            taxSeason: "2026",
+            taxSeasonDate: new Date("2026-07-08T12:00:00.000Z"),
+            filedCount: 1,
+            receiptIds: [RECEIPT_ID],
+          };
+        },
         markFiledLocal: async () => {},
       },
     );

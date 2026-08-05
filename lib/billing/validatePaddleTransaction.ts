@@ -3,6 +3,10 @@ export type PaddleWebhookPayload = {
   data?: {
     id?: string;
     status?: string;
+    items?: Array<{
+      price_id?: string;
+      price?: { id?: string };
+    }>;
     custom_data?: {
       intentId?: string;
       userId?: string;

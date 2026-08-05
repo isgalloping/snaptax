@@ -16,6 +16,10 @@ import {
   beginWebhookEvent as defaultBeginWebhookEvent,
   finishWebhookEvent as defaultFinishWebhookEvent,
 } from "@/lib/billing/recordWebhookEvent";
+import {
+  extractPaddleTransactionPriceIds,
+  validatePaddleTransactionPriceIds as defaultValidatePaddleTransactionPriceIds,
+} from "@/lib/billing/paddleTransactionPriceId";
 import { resolveFounderSeatSkuTier } from "@/lib/billing/founderSkuTier";
 import { prisma } from "@/lib/prisma";
 import { assignFounderSeatOnFirstPurchase as defaultAssignFounderSeatOnFirstPurchase } from "@/lib/server/assignFounderSeat";
@@ -39,6 +43,7 @@ export type HandlePaddleWebhookDeps = {
   beginWebhookEvent?: typeof defaultBeginWebhookEvent;
   finishWebhookEvent?: typeof defaultFinishWebhookEvent;
   assignFounderSeatOnFirstPurchase?: typeof defaultAssignFounderSeatOnFirstPurchase;
+  validatePaddleTransactionPriceIds?: typeof defaultValidatePaddleTransactionPriceIds;
   updateFounderStatusActive?: (userId: string) => Promise<void>;
   currentTaxSeason?: typeof defaultCurrentTaxSeason;
   logEvent?: typeof defaultLogEvent;
@@ -67,6 +72,9 @@ async function handleTransactionCompleted(
   const assignFounderSeatOnFirstPurchase =
     deps.assignFounderSeatOnFirstPurchase ??
     defaultAssignFounderSeatOnFirstPurchase;
+  const validatePaddleTransactionPriceIds =
+    deps.validatePaddleTransactionPriceIds ??
+    defaultValidatePaddleTransactionPriceIds;
   const updateFounderStatusActive =
     deps.updateFounderStatusActive ??
     (async (userId: string) => {
@@ -108,6 +116,31 @@ async function handleTransactionCompleted(
     await finishWebhookEvent(auditId, {
       processingResult: "ignored",
       processingReason: validated.reason,
+    });
+    return { ok: true, ignored: true };
+  }
+
+  const priceCheck = await validatePaddleTransactionPriceIds({
+    transactionPriceIds: extractPaddleTransactionPriceIds(payload),
+    intentId: validated.customData?.intentId,
+  });
+  if (!priceCheck.ok) {
+    logEvent({
+      ts: new Date().toISOString(),
+      level: "warn",
+      module: "biz.paddle",
+      success: false,
+      durationMs: 0,
+      meta: {
+        reason: priceCheck.reason,
+        transactionId: validated.transactionId,
+        intentId: validated.customData?.intentId ?? null,
+      },
+    });
+    await finishWebhookEvent(auditId, {
+      processingResult: "ignored",
+      processingReason: priceCheck.reason,
+      transactionId: validated.transactionId,
     });
     return { ok: true, ignored: true };
   }

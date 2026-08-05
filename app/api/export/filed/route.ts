@@ -7,12 +7,13 @@ import { prisma } from "@/lib/prisma";
 import { userAccountReceiptFilter } from "@/lib/receipts/accountCleanup";
 import { withRequestLog } from "@/lib/server/log/withRequestLog";
 import { logEvent } from "@/lib/server/log/logEvent";
-import { filterReceiptsByTaxYear } from "@/lib/tax/exportRows";
+import { resolveFiledReceiptIds } from "@/lib/export/resolveFiledReceiptIds";
 import { currentTaxSeason } from "@/lib/tax/season";
 import { parseRequestTimeZone } from "@/lib/time/timeZone";
 import { utcNow } from "@/lib/time/utc";
 const filedBodySchema = z.object({
   taxYear: z.string().regex(/^\d{4}$/),
+  receiptIds: z.array(z.string().uuid()).min(1).optional(),
 });
 
 export const POST = withRequestLog("api.entitlement", async (request, _context) => {
@@ -46,12 +47,21 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
     });
 
     const timeZone = parseRequestTimeZone(request.headers.get("X-Time-Zone"));
-    const yearReceipts = filterReceiptsByTaxYear(allDone, taxYearNum, timeZone);
-    if (yearReceipts.length === 0) {
+    const filedSelection = resolveFiledReceiptIds(
+      allDone,
+      taxYearNum,
+      timeZone,
+      body.receiptIds,
+    );
+    if (!filedSelection.ok) {
       return apiError("NO_RECEIPTS", "No completed receipts to file for tax year", 422);
     }
 
-    const receiptIds = yearReceipts.map((r) => r.id);
+    const receiptIds = filedSelection.receiptIds;
+    const skippedCount =
+      body.receiptIds != null
+        ? body.receiptIds.length - receiptIds.length
+        : 0;
     const exportedAt = utcNow();
     const result = await prisma.snaptaxReceipt.updateMany({
       where: { id: { in: receiptIds } },
@@ -69,6 +79,7 @@ export const POST = withRequestLog("api.entitlement", async (request, _context) 
         taxSeason: body.taxYear,
         receiptCount: result.count,
         reason: "local_export_filed",
+        ...(skippedCount > 0 ? { skippedReceiptIds: skippedCount } : {}),
       },
     });
 

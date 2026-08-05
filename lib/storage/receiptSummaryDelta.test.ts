@@ -27,7 +27,7 @@ describe("computeSummaryDelta", () => {
     assert.equal(d.totalTaxSaved, 12.5);
   });
 
-  it("filed done receipt still adds to totalTaxSaved", () => {
+  it("filed done receipt does not add to totalTaxSaved", () => {
     const next = receipt({
       id: "1",
       status: "done",
@@ -36,11 +36,11 @@ describe("computeSummaryDelta", () => {
       taxSeasonDate: new Date("2026-04-01T00:00:00.000Z"),
     });
     const d = computeSummaryDelta(null, next, YEAR, TZ);
-    assert.equal(d.totalTaxSaved, 12.5);
+    assert.equal(d.totalTaxSaved, 0);
     assert.equal(d.totalReceiptCount, 1);
   });
 
-  it("export filed transition does not change totalTaxSaved", () => {
+  it("export filed transition removes taxAmount from totalTaxSaved", () => {
     const prev = receipt({ id: "1", status: "done", taxAmount: 10 });
     const next = receipt({
       id: "1",
@@ -50,7 +50,7 @@ describe("computeSummaryDelta", () => {
       taxSeasonDate: new Date("2026-04-15T00:00:00.000Z"),
     });
     const d = computeSummaryDelta(prev, next, YEAR, TZ);
-    assert.equal(d.totalTaxSaved, 0);
+    assert.equal(d.totalTaxSaved, -10);
     assert.equal(d.totalReceiptCount, 0);
   });
 

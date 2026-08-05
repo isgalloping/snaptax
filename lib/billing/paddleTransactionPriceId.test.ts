@@ -22,13 +22,13 @@ describe("extractPaddleTransactionPriceIds", () => {
 });
 
 describe("validatePaddleTransactionPriceIds", () => {
-  it("skips validation when the payload has no line items", async () => {
+  it("rejects payloads without line item price ids", async () => {
     const result = await validatePaddleTransactionPriceIds({
       transactionPriceIds: [],
       intentId: "intent-1",
       resolveExpectedForIntent: async () => "pri_expected",
     });
-    assert.deepEqual(result, { ok: true });
+    assert.deepEqual(result, { ok: false, reason: "missing_price_id" });
   });
 
   it("accepts the intent expected price id", async () => {
@@ -40,14 +40,14 @@ describe("validatePaddleTransactionPriceIds", () => {
     assert.deepEqual(result, { ok: true });
   });
 
-  it("falls back to configured price ids when intent lookup misses", async () => {
+  it("rejects intent checkout when expected price lookup misses", async () => {
     const result = await validatePaddleTransactionPriceIds({
       transactionPriceIds: ["pri_default"],
       intentId: "intent-1",
       resolveExpectedForIntent: async () => null,
       collectConfigured: async () => new Set(["pri_default", "pri_founder"]),
     });
-    assert.deepEqual(result, { ok: true });
+    assert.deepEqual(result, { ok: false, reason: "unexpected_price_id" });
   });
 
   it("rejects unexpected price ids for an intent", async () => {

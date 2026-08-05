@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import type { SnaptaxReceipt } from "@prisma/client";
-import { assertReceiptCategoryPatchAllowed, assertReceiptUploadReplaceAllowed } from "./doneReceiptLock.ts";
+import { assertReceiptCategoryPatchAllowed, assertReceiptDeleteAllowed, assertReceiptUploadReplaceAllowed } from "./doneReceiptLock.ts";
 
 function receipt(
   overrides: Partial<SnaptaxReceipt> = {},
@@ -44,6 +44,19 @@ test("assertReceiptUploadReplaceAllowed rejects filed receipts", () => {
   assert.throws(
     () =>
       assertReceiptUploadReplaceAllowed(
+        receipt({
+          taxSeason: "2026",
+          taxSeasonDate: new Date("2026-04-01T00:00:00.000Z"),
+        }),
+      ),
+    /RECEIPT_LOCKED/,
+  );
+});
+
+test("assertReceiptDeleteAllowed rejects filed receipts", () => {
+  assert.throws(
+    () =>
+      assertReceiptDeleteAllowed(
         receipt({
           taxSeason: "2026",
           taxSeasonDate: new Date("2026-04-01T00:00:00.000Z"),

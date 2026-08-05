@@ -793,6 +793,16 @@ export function HomeScreen() {
         setUploadReauthSheet(true);
         return;
       }
+      if (err instanceof Error && err.message === "RECEIPT_LOCKED") {
+        const cleared: StoredReceipt = { ...latest, pendingUpload: false };
+        await saveReceipt(cleared);
+        setReceipts((prev) =>
+          prev.map((r) => (r.id === cleared.id ? cleared : r)),
+        );
+        const stored = await loadAllReceipts();
+        void syncFromServer(stored, "immediate", { force: true });
+        return;
+      }
       const failed = recordWriteFailure(latest);
       await saveReceipt(failed);
       setReceipts((prev) => prev.map((r) => (r.id === failed.id ? failed : r)));

@@ -206,3 +206,52 @@ export async function grantPaddleSeasonEntitlement(
     transactionId: input.transactionId,
   };
 }
+
+export async function grantSeasonPurchaseWithIntentConsume(params: {
+  grant: GrantPaddleSeasonEntitlementInput;
+  intentId?: string;
+  skipIntentConsume?: boolean;
+}): Promise<GrantPaddleSeasonEntitlementResult> {
+  return prisma.$transaction(async (tx) => {
+    const entitlement = await grantPaddleSeasonEntitlement(params.grant, {
+      findBySeason: (userId, taxSeason) =>
+        tx.snaptaxSeasonEntitlement.findUnique({
+          where: { userId_taxSeason: { userId, taxSeason } },
+          select: { id: true, transactionId: true, status: true },
+        }),
+      findByTransaction: (transactionId) =>
+        tx.snaptaxSeasonEntitlement.findUnique({
+          where: { transactionId },
+          select: { id: true, transactionId: true, status: true },
+        }),
+      updateEntitlement: async (id, data) => {
+        await tx.snaptaxSeasonEntitlement.update({
+          where: { id },
+          data: {
+            paidAt: data.paidAt,
+            amount: data.amount,
+            transactionId: data.transactionId,
+            status: data.status,
+            statusReason: data.statusReason,
+            statusUpdatedAt: data.statusUpdatedAt,
+          },
+        });
+      },
+      createEntitlement: async (data) => {
+        await tx.snaptaxSeasonEntitlement.create({ data });
+      },
+    });
+
+    if (params.intentId && !params.skipIntentConsume) {
+      await tx.snaptaxCheckoutIntent.update({
+        where: { id: params.intentId },
+        data: {
+          status: "consumed",
+          transactionId: params.grant.transactionId,
+        },
+      });
+    }
+
+    return entitlement;
+  });
+}

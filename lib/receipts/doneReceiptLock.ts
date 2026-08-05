@@ -15,3 +15,10 @@ export function assertReceiptUploadReplaceAllowed(receipt: SnaptaxReceipt): void
     throw new Error("RECEIPT_LOCKED");
   }
 }
+
+/** Block delete for filed receipts. */
+export function assertReceiptDeleteAllowed(receipt: SnaptaxReceipt): void {
+  if (isReceiptFiled(receipt)) {
+    throw new Error("RECEIPT_LOCKED");
+  }
+}

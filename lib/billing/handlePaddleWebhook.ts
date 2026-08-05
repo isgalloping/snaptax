@@ -8,7 +8,7 @@ import {
   markCheckoutIntentConsumed as defaultMarkCheckoutIntentConsumed,
   resolveWebhookGrantTarget as defaultResolveWebhookGrantTarget,
 } from "@/lib/billing/checkoutIntent";
-import { grantPaddleSeasonEntitlement as defaultGrantPaddleSeasonEntitlement } from "@/lib/billing/grantSeasonEntitlement";
+import { grantSeasonPurchaseWithIntentConsume as defaultGrantSeasonPurchaseWithIntentConsume } from "@/lib/billing/grantSeasonEntitlement";
 import { parsePaddleAdjustmentPayload as defaultParsePaddleAdjustmentPayload } from "@/lib/billing/parsePaddleAdjustment";
 import { applySeasonEntitlementAdjustment as defaultApplySeasonEntitlementAdjustment } from "@/lib/billing/applySeasonEntitlementAdjustment";
 import {
@@ -36,7 +36,7 @@ export type HandlePaddleWebhookDeps = {
   resolveSpecialWebhookMinAmountCents?: typeof defaultResolveSpecialWebhookMinAmountCents;
   validatePaddleTransaction?: typeof defaultValidatePaddleTransaction;
   resolveWebhookGrantTarget?: typeof defaultResolveWebhookGrantTarget;
-  grantPaddleSeasonEntitlement?: typeof defaultGrantPaddleSeasonEntitlement;
+  grantSeasonPurchaseWithIntentConsume?: typeof defaultGrantSeasonPurchaseWithIntentConsume;
   markCheckoutIntentConsumed?: typeof defaultMarkCheckoutIntentConsumed;
   parsePaddleAdjustmentPayload?: typeof defaultParsePaddleAdjustmentPayload;
   applySeasonEntitlementAdjustment?: typeof defaultApplySeasonEntitlementAdjustment;
@@ -64,10 +64,9 @@ async function handleTransactionCompleted(
     deps.validatePaddleTransaction ?? defaultValidatePaddleTransaction;
   const resolveWebhookGrantTarget =
     deps.resolveWebhookGrantTarget ?? defaultResolveWebhookGrantTarget;
-  const grantPaddleSeasonEntitlement =
-    deps.grantPaddleSeasonEntitlement ?? defaultGrantPaddleSeasonEntitlement;
-  const markCheckoutIntentConsumed =
-    deps.markCheckoutIntentConsumed ?? defaultMarkCheckoutIntentConsumed;
+  const grantSeasonPurchaseWithIntentConsume =
+    deps.grantSeasonPurchaseWithIntentConsume ??
+    defaultGrantSeasonPurchaseWithIntentConsume;
   const currentTaxSeason = deps.currentTaxSeason ?? defaultCurrentTaxSeason;
   const assignFounderSeatOnFirstPurchase =
     deps.assignFounderSeatOnFirstPurchase ??
@@ -215,11 +214,15 @@ async function handleTransactionCompleted(
       ? grant.taxSeason
       : currentTaxSeason();
 
-  const entitlement = await grantPaddleSeasonEntitlement({
-    userId: grant.userId,
-    taxSeason,
-    transactionId: validated.transactionId,
-    amountUsd: validated.amountUsd,
+  const entitlement = await grantSeasonPurchaseWithIntentConsume({
+    grant: {
+      userId: grant.userId,
+      taxSeason,
+      transactionId: validated.transactionId,
+      amountUsd: validated.amountUsd,
+    },
+    intentId: grant.intentId,
+    skipIntentConsume: grant.intentAlreadyConsumed,
   });
 
   if (entitlement.duplicateSeason) {
@@ -236,10 +239,6 @@ async function handleTransactionCompleted(
         taxSeason,
       },
     });
-  }
-
-  if (grant.intentId && !grant.intentAlreadyConsumed) {
-    await markCheckoutIntentConsumed(grant.intentId, validated.transactionId);
   }
 
   const skuTierFromIntent = grant.skuTier ?? undefined;

@@ -35,11 +35,15 @@ describe("syncExportFiledToServer", () => {
       ],
     });
 
-    assert.ok(request);
-    assert.equal(request.input, "/api/export/filed");
-    assert.equal(request.init?.method, "POST");
-    assert.equal(request.init?.credentials, "include");
-    assert.deepEqual(JSON.parse(String(request.init?.body)), {
+    const capturedRequest = request as {
+      input: string | URL | Request;
+      init?: RequestInit;
+    } | null;
+    assert.ok(capturedRequest);
+    assert.equal(capturedRequest.input, "/api/export/filed");
+    assert.equal(capturedRequest.init?.method, "POST");
+    assert.equal(capturedRequest.init?.credentials, "include");
+    assert.deepEqual(JSON.parse(String(capturedRequest.init?.body)), {
       taxYear: "2026",
       receiptIds: [
         "00000000-0000-0000-0000-000000000001",
@@ -47,15 +51,15 @@ describe("syncExportFiledToServer", () => {
       ],
     });
     assert.equal(
-      (request.init?.headers as Record<string, string>)["Content-Type"],
+      (capturedRequest.init?.headers as Record<string, string>)["Content-Type"],
       "application/json",
     );
     assert.equal(
-      (request.init?.headers as Record<string, string>)["X-Tax-Region"],
+      (capturedRequest.init?.headers as Record<string, string>)["X-Tax-Region"],
       "us",
     );
     assert.match(
-      (request.init?.headers as Record<string, string>)["X-Time-Zone"],
+      (capturedRequest.init?.headers as Record<string, string>)["X-Time-Zone"],
       /^[A-Za-z0-9_+/-]{1,64}$/,
     );
 

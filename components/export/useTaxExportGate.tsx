@@ -275,7 +275,6 @@ export function useTaxExportGate({
 
   return {
     requestExport: () => void runExportGate(),
-    requestCloudSyncPaywall: openPaywall,
     continueExportAfterGoogleSignIn: handleGoogleSuccess,
     triggerExportAfterPayment: () => void openExportAfterPrepare(),
     exportError: errorMessage,

@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { GoogleUser } from "@/lib/client/authStorage";
 import type { GoogleAuthResponse } from "@/lib/client/authApi";
-import { fetchSeasonPaid } from "@/lib/client/authApi";
 import { restoreReceiptsFromCloud } from "@/lib/client/cloudRestoreFlow";
 import { GoogleSignInSheet } from "@/components/auth/GoogleSignInSheet";
 import { SyncInstructionsSheet } from "@/components/auth/SyncInstructionsSheet";
@@ -13,12 +12,9 @@ type RestoreState = "idle" | "restoring" | "success" | "error";
 
 interface RestoreFromCloudSectionProps {
   googleUser: GoogleUser | null;
-  seasonPaid: boolean;
-  currentSeason: string;
   onUserSignedIn?: (result: GoogleAuthResponse) => void;
   onPostLoginSync?: (taxRecalcQueued: number) => Promise<void>;
   onRestored?: () => void | Promise<void>;
-  onPaymentRequired?: () => void;
 }
 
 function CloudRestoreIcon() {
@@ -42,12 +38,9 @@ function CloudRestoreIcon() {
 
 export function RestoreFromCloudSection({
   googleUser,
-  seasonPaid,
-  currentSeason,
   onUserSignedIn,
   onPostLoginSync,
   onRestored,
-  onPaymentRequired,
 }: RestoreFromCloudSectionProps) {
   const [state, setState] = useState<RestoreState>("idle");
   const [restoredCount, setRestoredCount] = useState(0);
@@ -71,16 +64,6 @@ export function RestoreFromCloudSection({
     };
   }, []);
 
-  const ensureSeasonPaid = useCallback(async (): Promise<boolean> => {
-    if (seasonPaid) return true;
-    if (navigator.onLine) {
-      const paid = await fetchSeasonPaid(currentSeason).catch(() => false);
-      if (paid) return true;
-    }
-    onPaymentRequired?.();
-    return false;
-  }, [currentSeason, onPaymentRequired, seasonPaid]);
-
   const runRestore = useCallback(async () => {
     if (!isOnline || state === "restoring") return;
 
@@ -95,15 +78,10 @@ export function RestoreFromCloudSection({
       setRestoredCount(count);
       setState("success");
       await onRestored?.();
-    } catch (err) {
-      if (err instanceof Error && err.message === "PAYMENT_REQUIRED") {
-        onPaymentRequired?.();
-        setState("idle");
-        return;
-      }
+    } catch {
       setState("error");
     }
-  }, [isOnline, onPaymentRequired, onRestored, state]);
+  }, [isOnline, onRestored, state]);
 
   const handleRestoreTap = useCallback(() => {
     if (!isOnline || state === "restoring") return;
@@ -111,30 +89,23 @@ export function RestoreFromCloudSection({
       setShowGoogleSheet(true);
       return;
     }
-    void (async () => {
-      if (!(await ensureSeasonPaid())) return;
-      await runRestore();
-    })();
-  }, [ensureSeasonPaid, googleUser, isOnline, runRestore, state]);
+    void runRestore();
+  }, [googleUser, isOnline, runRestore, state]);
 
   const handleGoogleSuccess = async (result: { taxRecalcQueued: number }) => {
     await onPostLoginSync?.(result.taxRecalcQueued);
     setShowGoogleSheet(false);
-    if (!(await ensureSeasonPaid())) return;
+    await runRestore();
     const email = signedInEmailRef.current;
     signedInEmailRef.current = null;
     if (email) {
-      showSyncInstructions(email);
+      setSyncInstructionsEmail(email);
     }
   };
 
   const handleUserSignedIn = (result: GoogleAuthResponse) => {
     onUserSignedIn?.(result);
     signedInEmailRef.current = result.user.email;
-  };
-
-  const showSyncInstructions = (email: string) => {
-    setSyncInstructionsEmail(email);
   };
 
   const statusMessage =

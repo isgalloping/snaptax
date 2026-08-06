@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { apiError, mapErrorToResponse } from "@/lib/api/errors";
+import { mapErrorToResponse } from "@/lib/api/errors";
 import { getActor } from "@/lib/auth/getActor";
 import { prisma } from "@/lib/prisma";
 import { serializeReceipt } from "@/lib/receipts/serialize";
-import { resolveExportFiledPaymentGate } from "@/lib/server/exportFiled";
 import {
   buildSyncWhere,
   decodeSyncCursor,
@@ -23,16 +22,6 @@ export const GET = withRequestLog(
   async (request, _context) => {
     try {
       const actor = await getActor(request);
-      if (actor.kind === "user") {
-        const paymentGate = await resolveExportFiledPaymentGate(actor.userId);
-        if (!paymentGate.ok) {
-          return apiError(
-            paymentGate.code,
-            paymentGate.message,
-            paymentGate.status,
-          );
-        }
-      }
 
       const params = new URL(request.url).searchParams;
 

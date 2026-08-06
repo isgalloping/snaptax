@@ -574,7 +574,7 @@ export function HomeScreen() {
       }
       try {
         const { visible } = await mergeServerReceiptsIntoLocal(local, {
-          useSyncPages: auth.isSignedIn && auth.seasonPaid,
+          useSyncPages: auth.isSignedIn,
         });
         if (applyMode === "immediate") {
           pendingMergeRef.current = null;
@@ -591,7 +591,7 @@ export function HomeScreen() {
         return visible;
       }
     },
-    [applyMergeNow, applyMergeOrDefer, queueWorkerCatchUp, auth.isSignedIn, auth.seasonPaid],
+    [applyMergeNow, applyMergeOrDefer, queueWorkerCatchUp, auth.isSignedIn],
   );
 
   const applyReceiptUpdate = useCallback(
@@ -1787,7 +1787,6 @@ export function HomeScreen() {
         onSoftGoogleSheetConsumed={() => setRequestSoftGoogleSheet(false)}
         onSoftGuideDismiss={handleSoftGuideDismiss}
         onRestored={() => void refreshListFromLocal()}
-        onRequestCloudSyncPaywall={taxExport.requestCloudSyncPaywall}
       />
       {taxExport.overlays}
       {paymentSuccessOverlay}

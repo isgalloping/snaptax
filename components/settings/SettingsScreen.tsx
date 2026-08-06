@@ -91,7 +91,6 @@ interface SettingsScreenProps {
   onboardingAha?: boolean;
   onSampleExportAhaComplete?: () => Promise<void>;
   onRestored?: () => void | Promise<void>;
-  onRequestCloudSyncPaywall?: () => void;
 }
 
 export function SettingsScreen({
@@ -131,7 +130,6 @@ export function SettingsScreen({
   onboardingAha = false,
   onSampleExportAhaComplete,
   onRestored,
-  onRequestCloudSyncPaywall,
 }: SettingsScreenProps) {
   const { copy } = useI18n();
   const prevViewStateRef = useRef(viewState);
@@ -572,12 +570,9 @@ export function SettingsScreen({
 
         <RestoreFromCloudSection
           googleUser={googleUser}
-          seasonPaid={seasonPaid}
-          currentSeason={currentSeason}
           onUserSignedIn={onUserSignedIn}
           onPostLoginSync={onPostLoginSync}
           onRestored={onRestored}
-          onPaymentRequired={onRequestCloudSyncPaywall}
         />
 
         {isSignedIn && onSignOut && (

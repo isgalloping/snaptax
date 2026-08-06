@@ -52,6 +52,48 @@ describe("mergeServerReceiptsIntoLocal", () => {
     assert.equal(result.taxSavedEstimate, 2);
   });
 
+  it("uses paginated sync when useSyncPages is true", async () => {
+    const saved: StoredReceipt[] = [];
+    let syncCalls = 0;
+
+    await mergeServerReceiptsIntoLocal([], {
+      useSyncPages: true,
+      fetchSyncPages: async () => {
+        syncCalls += 1;
+        return {
+          receipts: [
+            {
+              id: REMOTE_IN_WINDOW,
+              status: "done",
+              amount: 10,
+              merchant: "A",
+              category: null,
+              taxAmount: 2,
+              dataRegion: "us",
+              capturedAt: "2026-06-14T12:00:00.000Z",
+              updatedAt: "2026-06-14T12:00:00.000Z",
+              taxSeason: null,
+              taxSeasonDate: null,
+              hasImage: true,
+            },
+          ],
+          taxSavedEstimate: 2,
+        };
+      },
+      fetchList: async () => {
+        throw new Error("list should not run");
+      },
+      readTombstones: async () => new Set(),
+      loadVisible: async () => saved,
+      persistMerged: async (merged) => {
+        saved.push(...merged);
+      },
+    });
+
+    assert.equal(syncCalls, 1);
+    assert.ok(saved.some((r) => r.id === REMOTE_IN_WINDOW));
+  });
+
   it("filters tombstoned remote rows before merge", async () => {
     const saved: StoredReceipt[] = [];
 

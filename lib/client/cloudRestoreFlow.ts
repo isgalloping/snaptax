@@ -27,8 +27,11 @@ const IMAGE_DOWNLOAD_CONCURRENCY = 3;
 export function filterTombstonedReceipts<T extends { id: string }>(
   receipts: T[],
   tombstones: ReadonlySet<string>,
+  opts?: { includeIds?: ReadonlySet<string> },
 ): T[] {
-  return receipts.filter((r) => !tombstones.has(r.id));
+  return receipts.filter(
+    (r) => !tombstones.has(r.id) && (opts?.includeIds?.has(r.id) ?? true),
+  );
 }
 
 async function mapWithConcurrency<T>(
@@ -86,11 +89,15 @@ export async function restoreReceiptsFromCloud(opts?: {
   let cursor: string | undefined;
   let hasMore = true;
   let restoredCount = 0;
+  const restoredRemoteIds = new Set<string>();
 
   while (hasMore) {
     const page = await fetchReceiptSyncPage(cursor);
     const filtered = filterTombstonedReceipts(page.receipts, tombstones);
     restoredCount += filtered.length;
+    for (const receipt of filtered) {
+      restoredRemoteIds.add(receipt.id);
+    }
 
     const merged = unionMergeLWW(local, remoteReceiptsToLocal(filtered));
     await persistMergedReceipts(merged, local);
@@ -103,8 +110,10 @@ export async function restoreReceiptsFromCloud(opts?: {
   }
 
   if (downloadImages) {
-    const imageCandidates = local.filter(
-      (r) => r.hasRemoteImage && !tombstones.has(r.id),
+    const imageCandidates = filterTombstonedReceipts(
+      local.filter((r) => r.hasRemoteImage),
+      tombstones,
+      { includeIds: restoredRemoteIds },
     );
     let imagesDone = 0;
 

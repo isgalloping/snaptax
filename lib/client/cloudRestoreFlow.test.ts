@@ -44,4 +44,17 @@ describe("filterTombstonedReceipts", () => {
 
     assert.deepEqual(filtered, []);
   });
+
+  it("can limit image restore candidates to receipts returned by the current sync", () => {
+    const staleLocal = "6ba7b810-9dad-11d1-80b4-00c04fd430c8";
+    const receipts = [apiReceipt(staleLocal), apiReceipt(KEPT)];
+    const filtered = filterTombstonedReceipts(receipts, new Set(), {
+      includeIds: new Set([KEPT]),
+    });
+
+    assert.deepEqual(
+      filtered.map((r) => r.id),
+      [KEPT],
+    );
+  });
 });

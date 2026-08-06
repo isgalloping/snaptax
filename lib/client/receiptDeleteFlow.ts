@@ -1,5 +1,9 @@
 import { isClientReceiptDeleteAllowed } from "@/lib/client/receiptDeletePolicy";
-import { deleteReceiptRemote } from "@/lib/client/receiptApi";
+import {
+  apiReceiptToLocal,
+  deleteReceiptRemote,
+  fetchReceiptByIdIfExists,
+} from "@/lib/client/receiptApi";
 import {
   addDeletedReceiptId,
   readDeletedReceiptIds,
@@ -22,6 +26,7 @@ export type DeleteReceiptFlowDeps = {
   deleteRemote?: (id: string) => Promise<void>;
   readTombstones?: () => Promise<Set<string>>;
   findReceipt?: (id: string) => Promise<StoredReceipt | null>;
+  fetchRemoteReceipt?: (id: string) => Promise<StoredReceipt | null>;
 };
 
 export async function tombstonePersistedReceipt(id: string): Promise<void> {
@@ -48,10 +53,28 @@ export async function deleteReceiptLocalAndRemote(
   const deleteLocal = deps.deleteLocal ?? deleteStoredReceipt;
   const deleteRemote = deps.deleteRemote ?? deleteReceiptRemote;
   const findReceipt = deps.findReceipt ?? loadReceipt;
+  const fetchRemoteReceipt =
+    deps.fetchRemoteReceipt ??
+    (async (receiptId) => {
+      const remote = await fetchReceiptByIdIfExists(receiptId);
+      return remote ? (apiReceiptToLocal(remote) as StoredReceipt) : null;
+    });
 
   const existing = await findReceipt(id);
   if (existing && !isClientReceiptDeleteAllowed(existing)) {
     throw new Error("RECEIPT_LOCKED");
+  }
+
+  if (isOnline() && isPersistedReceiptId(id)) {
+    try {
+      await ensureGhost();
+      const remote = await fetchRemoteReceipt(id);
+      if (remote && !isClientReceiptDeleteAllowed(remote)) {
+        throw new Error("RECEIPT_LOCKED");
+      }
+    } catch (err) {
+      if (err instanceof Error && err.message === "RECEIPT_LOCKED") throw err;
+    }
   }
 
   if (isPersistedReceiptId(id)) {
@@ -66,7 +89,11 @@ export async function deleteReceiptLocalAndRemote(
     await ensureGhost();
     await deleteRemote(id);
     await removeTombstone(id);
-  } catch {
+  } catch (err) {
+    if (err instanceof Error && err.message === "RECEIPT_LOCKED") {
+      await removeTombstone(id);
+      throw err;
+    }
     // Tombstone remains for flushPendingDeletes
   }
 }
@@ -98,7 +125,11 @@ export async function flushPendingDeletes(
     try {
       await deleteRemote(id);
       await removeTombstone(id);
-    } catch {
+    } catch (err) {
+      if (err instanceof Error && err.message === "RECEIPT_LOCKED") {
+        await removeTombstone(id);
+        continue;
+      }
       // Retry on next flush
     }
   }

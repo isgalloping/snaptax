@@ -36,6 +36,12 @@ export function resolveApiError(err: unknown): ResolvedApiError {
         clientMessage: "Sign in with Google to continue",
         status: 409,
       };
+    case "SEASON_ALREADY_PAID":
+      return {
+        code: "SEASON_ALREADY_PAID",
+        clientMessage: "Tax season export already paid",
+        status: 409,
+      };
     case "BLOB_DELETE_FAILED":
       return {
         code: "BLOB_DELETE_FAILED",

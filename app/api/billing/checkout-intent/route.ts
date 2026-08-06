@@ -3,12 +3,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { mapErrorToResponse } from "@/lib/api/errors";
 import { getActor } from "@/lib/auth/getActor";
 import { createOrReuseCheckoutIntent } from "@/lib/billing/checkoutIntent";
+import { isSeasonEntitlementPaid } from "@/lib/billing/isSeasonEntitlementPaid";
 import { resolveCheckoutSkuTier } from "@/lib/billing/resolveCheckoutSkuTier";
 import { specialPriceFlag, specialUsersFlag } from "@/flags/special";
 import type { PublicFounderTier } from "@/lib/founder/types";
 import { resolveFounderProgramConfig } from "@/lib/server/founderConfig";
 import { getFounderProgramState } from "@/lib/server/founderProgram";
 import { getSpecialLevelUserPriceId } from "@/lib/server/env";
+import { prisma } from "@/lib/prisma";
 import { currentTaxSeason } from "@/lib/tax/season";
 import { withRequestLog } from "@/lib/server/log/withRequestLog";
 
@@ -35,6 +37,16 @@ export const POST = withRequestLog(
       const raw = await request.json().catch(() => ({}));
       const body = bodySchema.parse(raw);
       const taxSeason = currentTaxSeason();
+
+      const paidEntitlement = await prisma.snaptaxSeasonEntitlement.findUnique({
+        where: {
+          userId_taxSeason: { userId: actor.userId, taxSeason },
+        },
+        select: { status: true },
+      });
+      if (paidEntitlement && isSeasonEntitlementPaid(paidEntitlement.status)) {
+        throw new Error("SEASON_ALREADY_PAID");
+      }
 
       const [specialUsers, specialPriceUsd] = await Promise.all([
         specialUsersFlag(),

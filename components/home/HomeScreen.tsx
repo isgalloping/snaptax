@@ -1626,13 +1626,25 @@ export function HomeScreen() {
         return next;
       });
 
-      await deleteReceiptLocalAndRemote(id);
+      try {
+        await deleteReceiptLocalAndRemote(id);
+      } catch (err) {
+        if (err instanceof Error && err.message === "RECEIPT_LOCKED") {
+          const stored = await loadAllReceipts();
+          await syncFromServer(stored, "immediate", { force: true });
+          const visible = await loadTopByUpdatedAt(UI_RECEIPT_LIMIT);
+          setReceipts(visible);
+          refreshTaxSaved(visible);
+          return;
+        }
+        throw err;
+      }
 
       const visible = await loadTopByUpdatedAt(UI_RECEIPT_LIMIT);
       setReceipts(visible);
       refreshTaxSaved(visible);
     },
-    [refreshTaxSaved],
+    [refreshTaxSaved, syncFromServer],
   );
 
   const handleCapture = useCallback(

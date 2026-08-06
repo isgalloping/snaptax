@@ -24,6 +24,17 @@ export type RestoreProgress = { done: number; total: number | null };
 
 const IMAGE_DOWNLOAD_CONCURRENCY = 3;
 
+type RestoreReceiptsFromCloudDeps = {
+  fetchReceiptSyncPage: typeof fetchReceiptSyncPage;
+  readDeletedReceiptIds: typeof readDeletedReceiptIds;
+  loadAllReceipts: typeof loadAllReceipts;
+  persistMergedReceipts: typeof persistMergedReceipts;
+  hasLocalPhoto: typeof hasLocalPhoto;
+  downloadReceiptImage: typeof downloadReceiptImage;
+  warmReceiptDb: typeof warmReceiptDb;
+  rebuildCurrentSeasonSummary: typeof rebuildCurrentSeasonSummary;
+};
+
 export function filterTombstonedReceipts<T extends { id: string }>(
   receipts: T[],
   tombstones: ReadonlySet<string>,
@@ -77,14 +88,23 @@ async function downloadReceiptImage(id: string): Promise<void> {
 export async function restoreReceiptsFromCloud(opts?: {
   onProgress?: (p: RestoreProgress) => void;
   downloadImages?: boolean;
+}, deps: RestoreReceiptsFromCloudDeps = {
+  fetchReceiptSyncPage,
+  readDeletedReceiptIds,
+  loadAllReceipts,
+  persistMergedReceipts,
+  hasLocalPhoto,
+  downloadReceiptImage,
+  warmReceiptDb,
+  rebuildCurrentSeasonSummary,
 }): Promise<{ restoredCount: number }> {
   const onProgress = opts?.onProgress;
   const downloadImages = opts?.downloadImages !== false;
 
   onProgress?.({ done: 0, total: null });
 
-  const tombstones = await readDeletedReceiptIds();
-  let local = await loadAllReceipts();
+  const tombstones = await deps.readDeletedReceiptIds();
+  let local = await deps.loadAllReceipts();
 
   let cursor: string | undefined;
   let hasMore = true;
@@ -92,7 +112,7 @@ export async function restoreReceiptsFromCloud(opts?: {
   const restoredRemoteIds = new Set<string>();
 
   while (hasMore) {
-    const page = await fetchReceiptSyncPage(cursor);
+    const page = await deps.fetchReceiptSyncPage(cursor);
     const filtered = filterTombstonedReceipts(page.receipts, tombstones);
     restoredCount += filtered.length;
     for (const receipt of filtered) {
@@ -100,7 +120,7 @@ export async function restoreReceiptsFromCloud(opts?: {
     }
 
     const merged = unionMergeLWW(local, remoteReceiptsToLocal(filtered));
-    await persistMergedReceipts(merged, local);
+    await deps.persistMergedReceipts(merged, local);
     local = merged;
 
     onProgress?.({ done: restoredCount, total: null });
@@ -121,8 +141,8 @@ export async function restoreReceiptsFromCloud(opts?: {
       imageCandidates,
       IMAGE_DOWNLOAD_CONCURRENCY,
       async (receipt) => {
-        if (!(await hasLocalPhoto(receipt.id))) {
-          await downloadReceiptImage(receipt.id);
+        if (!(await deps.hasLocalPhoto(receipt.id))) {
+          await deps.downloadReceiptImage(receipt.id);
         }
         imagesDone += 1;
         onProgress?.({ done: imagesDone, total: imageCandidates.length });
@@ -130,8 +150,8 @@ export async function restoreReceiptsFromCloud(opts?: {
     );
   }
 
-  const db = await warmReceiptDb();
-  await rebuildCurrentSeasonSummary(db);
+  const db = await deps.warmReceiptDb();
+  await deps.rebuildCurrentSeasonSummary(db);
 
   return { restoredCount };
 }

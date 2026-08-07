@@ -5,6 +5,8 @@ import { initializePaddle, Paddle } from "@paddle/paddle-js";
 import { useUserCopy } from "@/components/i18n/I18nProvider";
 import { useSeasonOffer } from "@/lib/client/useSeasonOffer";
 import { apiFetch } from "@/lib/client/ghostClient";
+import { isSeasonAlreadyPaidCheckoutResponse } from "@/lib/client/isSeasonAlreadyPaidCheckoutResponse";
+import { readApiErrorCode } from "@/lib/client/readApiErrorCode";
 import {
   isPaddleCheckoutClosed,
   isPaddleCheckoutCompleted,
@@ -17,6 +19,8 @@ interface PaywallSheetProps {
   onClose: () => void;
   onDismissWithoutPay?: () => void;
   onPaid: () => void | Promise<void>;
+  /** Server says season already paid — refresh entitlement and continue export. */
+  onSeasonAlreadyPaid?: () => void | Promise<void>;
 }
 
 function BalanceScaleIllustration() {
@@ -51,6 +55,7 @@ export function PaywallSheet({
   onClose,
   onDismissWithoutPay,
   onPaid,
+  onSeasonAlreadyPaid,
 }: PaywallSheetProps) {
   const copy = useUserCopy().paywall;
   const { priceLabel } = useSeasonOffer();
@@ -119,6 +124,12 @@ export function PaywallSheet({
       });
 
       if (!intentRes.ok) {
+        const errorCode = await readApiErrorCode(intentRes);
+        if (isSeasonAlreadyPaidCheckoutResponse(intentRes.status, errorCode)) {
+          await onSeasonAlreadyPaid?.();
+          onClose();
+          return;
+        }
         setError(copy.paymentUnavailable);
         return;
       }

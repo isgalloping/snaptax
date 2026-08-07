@@ -241,6 +241,12 @@ export function useTaxExportGate({
           onPaid={() => {
             onExportPaymentComplete?.();
           }}
+          onSeasonAlreadyPaid={async () => {
+            setSeasonPaid(currentSeason, true);
+            await refreshSeasonPaid?.();
+            setShowPaywall(false);
+            await openExportAfterPrepare();
+          }}
         />
       )}
 

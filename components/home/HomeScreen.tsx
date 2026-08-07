@@ -61,7 +61,6 @@ import {
   prepareExportLocal,
   type ExportPrepareDeps,
 } from "@/lib/client/exportPrepareFlow";
-import type { ExportFormat } from "@/lib/export/exportFilenames";
 import { restoreReceiptsFromCloud } from "@/lib/client/cloudRestoreFlow";
 import {
   markCloudRestoreAttempted,
@@ -1178,28 +1177,18 @@ export function HomeScreen() {
   );
 
   const handleExportGatePrepare = useCallback(async () => {
-    const local = await prepareExportLocal(exportPrepareDeps());
-    setReceipts(top100ByUpdatedAt(local));
-    return local;
-  }, [exportPrepareDeps]);
+    const prepared = auth.isSignedIn
+      ? await prepareExportSync(exportPrepareDeps())
+      : await prepareExportLocal(exportPrepareDeps());
+    setReceipts(top100ByUpdatedAt(prepared));
+    return prepared;
+  }, [auth.isSignedIn, exportPrepareDeps]);
 
   const handlePreExportPrepare = useCallback(
-    async (format: ExportFormat) => {
-      const isLocalFirst =
-        format === "csv" ||
-        format === "txf" ||
-        format === "qif" ||
-        format === "qbo" ||
-        format === "cpa_pdf" ||
-        format === "cpa_pack";
-      if (isLocalFirst) {
-        const local = await prepareExportLocal(exportPrepareDeps());
-        setReceipts(top100ByUpdatedAt(local));
-        return local;
-      }
-      const merged = await prepareExportSync(exportPrepareDeps());
-      setReceipts(merged);
-      return merged;
+    async () => {
+      const prepared = await prepareExportSync(exportPrepareDeps());
+      setReceipts(top100ByUpdatedAt(prepared));
+      return prepared;
     },
     [exportPrepareDeps],
   );

@@ -39,16 +39,16 @@ export function TaxOverviewPanel({
 
   return (
     <section className={`${settingsVisual.taxOverview.container} mb-4`}>
-      <div className="grid grid-cols-3 divide-x divide-zinc-700 py-4">
-        <div className="flex flex-col items-center px-2 text-center">
+      <div className={settingsVisual.taxOverview.gridCols}>
+        <div className={settingsVisual.taxOverview.column}>
           <p className={settingsVisual.taxOverview.label}>{copy.taxSaved}</p>
           <p
-            className={`${settingsVisual.taxOverview.value} ${valueColorClass(taxSaved !== null && taxSaved > 0)}`}
+            className={`${settingsVisual.taxOverview.valueMoney} ${valueColorClass(taxSaved !== null && taxSaved > 0)}`}
           >
             {taxSaved === null ? EMPTY_AMOUNT : formatCurrency(taxSaved)}
           </p>
         </div>
-        <div className="flex flex-col items-center px-2 text-center">
+        <div className={settingsVisual.taxOverview.column}>
           <p className={settingsVisual.taxOverview.label}>{copy.receipts}</p>
           <p
             className={`${settingsVisual.taxOverview.value} ${valueColorClass(receiptCount > 0)}`}
@@ -56,10 +56,10 @@ export function TaxOverviewPanel({
             {receiptCount}
           </p>
         </div>
-        <div className="flex flex-col items-center px-2 text-center">
+        <div className={settingsVisual.taxOverview.column}>
           <p className={settingsVisual.taxOverview.label}>{copy.deductions}</p>
           <p
-            className={`${settingsVisual.taxOverview.value} ${valueColorClass(totalDeductions > 0)}`}
+            className={`${settingsVisual.taxOverview.valueMoney} ${valueColorClass(totalDeductions > 0)}`}
           >
             {formatCurrency(totalDeductions)}
           </p>

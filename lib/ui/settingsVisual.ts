@@ -8,10 +8,16 @@ export const settingsVisual = {
   taxOverview: {
     container:
       "rounded-2xl border border-yellow-500/30 bg-zinc-900 shadow-[0_0_24px_rgba(234,179,8,0.08)]",
+    gridCols:
+      "grid grid-cols-[1.35fr_0.55fr_1.35fr] divide-x divide-zinc-700 py-4",
+    column: "flex min-w-0 flex-col items-center px-2 text-center",
     valuePositive: "text-green-500",
     valueNeutral: "text-zinc-200",
-    label: "text-[10px] font-bold uppercase text-zinc-400",
+    label:
+      "text-[10px] font-bold uppercase leading-tight text-balance text-zinc-400",
     value: "mt-1 text-2xl font-black sm:text-3xl",
+    valueMoney:
+      "mt-1 max-w-full text-[clamp(1.125rem,5.2vw,1.875rem)] font-black tabular-nums whitespace-nowrap",
     exportedStatus:
       "text-[11px] font-bold uppercase tracking-wider text-zinc-500",
   },

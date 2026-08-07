@@ -3,6 +3,7 @@ import { afterEach, describe, it } from "node:test";
 import { setPendingIncomeCapture } from "@/lib/export/incomeCapture";
 import {
   apiReceiptFromUploadResponse,
+  deleteReceiptRemote,
   resolveUploadCaptureKind,
   uploadReceipt,
 } from "./receiptApi.ts";
@@ -88,6 +89,22 @@ function installUploadFetchRecorder(
       );
     },
   });
+}
+
+function installDeleteFetchResponse(
+  status: number,
+  body?: { error?: { code?: string } },
+) {
+  const seen: { input?: string | URL | Request; init?: RequestInit } = {};
+  Object.defineProperty(globalThis, "fetch", {
+    configurable: true,
+    value: async (input: string | URL | Request, init?: RequestInit) => {
+      seen.input = input;
+      seen.init = init;
+      return new Response(body ? JSON.stringify(body) : null, { status });
+    },
+  });
+  return seen;
 }
 
 describe("resolveUploadCaptureKind", () => {
@@ -213,6 +230,33 @@ describe("uploadReceipt", () => {
         "snap1099_capture_kind",
       ),
       "1099-NEC",
+    );
+  });
+});
+
+describe("deleteReceiptRemote", () => {
+  it("surfaces server RECEIPT_LOCKED errors so local tombstones can be recovered", async () => {
+    const seen = installDeleteFetchResponse(409, {
+      error: { code: "RECEIPT_LOCKED" },
+    });
+
+    await assert.rejects(
+      () => deleteReceiptRemote(receiptId),
+      /RECEIPT_LOCKED/,
+    );
+
+    assert.equal(seen.input, `/api/receipts/${receiptId}`);
+    assert.equal(seen.init?.method, "DELETE");
+  });
+
+  it("keeps non-locked delete conflicts on the generic delete failure path", async () => {
+    installDeleteFetchResponse(409, {
+      error: { code: "CONFLICT" },
+    });
+
+    await assert.rejects(
+      () => deleteReceiptRemote(receiptId),
+      /DELETE_RECEIPT_FAILED/,
     );
   });
 });

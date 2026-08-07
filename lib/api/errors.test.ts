@@ -18,6 +18,13 @@ test("resolveApiError maps GOOGLE_LOGIN_REQUIRED to 409", () => {
   assert.equal(r.status, 409);
 });
 
+test("resolveApiError maps SEASON_ALREADY_PAID to 409", () => {
+  const r = resolveApiError(new Error("SEASON_ALREADY_PAID"));
+  assert.equal(r.code, "SEASON_ALREADY_PAID");
+  assert.equal(r.clientMessage, "Tax season export already paid");
+  assert.equal(r.status, 409);
+});
+
 test("resolveApiError defaults to INTERNAL_ERROR for unknown", () => {
   const r = resolveApiError(new Error("OpenAI timeout"));
   assert.equal(r.code, "INTERNAL_ERROR");

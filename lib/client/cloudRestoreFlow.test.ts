@@ -1,9 +1,20 @@
+import "fake-indexeddb/auto";
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   filterTombstonedReceipts,
+  hasLocalPhoto,
   restoreReceiptsFromCloud,
 } from "./cloudRestoreFlow.ts";
+import { putPhotoMeta } from "@/lib/storage/photoMetadata";
+import {
+  clearAllLocalData,
+  warmReceiptDb,
+} from "@/lib/storage/receiptDb";
+import {
+  PHOTO_META_VERSION,
+  type ReceiptPhotoMeta,
+} from "@/lib/storage/photoTypes";
 import type { ApiReceipt } from "./receiptApi.ts";
 import type { StoredReceipt } from "@/lib/storage/receiptDb";
 
@@ -41,6 +52,29 @@ function storedReceipt(id: string): StoredReceipt {
     updatedAt: timestamp,
     hasRemoteImage: true,
     pendingUpload: false,
+  };
+}
+
+function photoMeta(
+  id: string,
+  overrides: Partial<ReceiptPhotoMeta> = {},
+): ReceiptPhotoMeta {
+  return {
+    id,
+    v: PHOTO_META_VERSION,
+    mime: "image/jpeg",
+    width: 1280,
+    height: 960,
+    byteLength: 250_000,
+    thumbWidth: 480,
+    thumbHeight: 360,
+    thumbByteLength: 32_000,
+    opfsFullPath: `snaptax/photos/${id}/full.v1.enc`,
+    opfsThumbPath: `snaptax/photos/${id}/thumb.v1.enc`,
+    fullIvB64: "full-iv",
+    thumbIvB64: "thumb-iv",
+    cipher: { alg: "AES-GCM", v: 1 },
+    ...overrides,
   };
 }
 
@@ -110,5 +144,30 @@ describe("restoreReceiptsFromCloud", () => {
     );
 
     assert.deepEqual(downloadedIds, [KEPT]);
+  });
+});
+
+describe("hasLocalPhoto", () => {
+  it("treats purged full-photo meta as missing so restore redownloads it", async () => {
+    await clearAllLocalData();
+    const db = await warmReceiptDb();
+    await putPhotoMeta(
+      db,
+      photoMeta(KEPT, {
+        fullPurged: true,
+        fullPurgedAtMs: Date.UTC(2026, 5, 30),
+      }),
+    );
+    assert.equal(await hasLocalPhoto(KEPT), false);
+    await clearAllLocalData();
+  });
+
+  it("treats orphan full-photo meta without OPFS bytes as missing", async () => {
+    await clearAllLocalData();
+    const db = await warmReceiptDb();
+    await putPhotoMeta(db, photoMeta(KEPT));
+
+    assert.equal(await hasLocalPhoto(KEPT), false);
+    await clearAllLocalData();
   });
 });

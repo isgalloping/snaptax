@@ -43,9 +43,10 @@ describe("prepareExportSync", () => {
         order.push("load");
         return [ROW];
       },
-      syncFromServer: async (local, mode) => {
+      syncFromServer: async (local, mode, opts?: { requireComplete?: boolean }) => {
         order.push(`sync:${mode}`);
         assert.equal(local.length, 1);
+        assert.equal(opts?.requireComplete, true);
         return local;
       },
     });

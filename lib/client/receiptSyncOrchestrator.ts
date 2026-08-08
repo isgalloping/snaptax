@@ -24,7 +24,7 @@ export type MergeServerReceiptsDeps = {
   visibleLimit?: number;
   /** When true, prefer paginated /api/receipts/sync over top-N list. */
   useSyncPages?: boolean;
-};
+} & CompleteSyncOptions;
 
 export type MergeServerReceiptsResult = {
   visible: StoredReceipt[];
@@ -70,7 +70,7 @@ export async function mergeServerReceiptsIntoLocal(
 
   const tombstones = await readTombstones();
   let remoteResponse: ReceiptListResponse;
-  if (deps.useSyncPages) {
+  if (deps.useSyncPages || deps.requireComplete) {
     remoteResponse = await fetchSyncPages();
   } else {
     remoteResponse = await fetchList(visibleLimit);

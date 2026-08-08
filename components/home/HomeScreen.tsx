@@ -565,6 +565,7 @@ export function HomeScreen() {
         return local;
       }
       if (
+        !opts?.requireComplete &&
         !opts?.force &&
         applyMode === "defer" &&
         isWorkerSessionActive({ cameraOpen: cameraOpenRef.current })
@@ -578,6 +579,7 @@ export function HomeScreen() {
       try {
         const { visible } = await mergeServerReceiptsIntoLocal(local, {
           useSyncPages: auth.isSignedIn,
+          requireComplete: opts?.requireComplete,
         });
         if (applyMode === "immediate") {
           pendingMergeRef.current = null;
@@ -1123,11 +1125,11 @@ export function HomeScreen() {
 
   const handlePostLoginSync = useCallback(
     async (taxRecalcQueued: number) => {
-      if (!navigator.onLine) return;
+      assertCompleteSyncAvailable(navigator.onLine, { requireComplete: true });
       try {
         await ensureGhostSession();
       } catch {
-        return;
+        throw new Error("FETCH_RECEIPT_SYNC_FAILED");
       }
       await mergeOrphanGhostsOnLogin();
       await flushPendingUploadsRef.current();
@@ -1149,7 +1151,7 @@ export function HomeScreen() {
       if (taxRecalcQueued > 0) {
         await pollTaxRecalc(taxRecalcQueued, async () => {
           const latest = await loadAllReceipts();
-          await syncFromServer(latest, "immediate");
+          await syncFromServer(latest, "immediate", { requireComplete: true });
         });
       }
     },
@@ -1176,13 +1178,17 @@ export function HomeScreen() {
     [syncFromServer],
   );
 
-  const handleExportGatePrepare = useCallback(async () => {
-    const prepared = auth.isSignedIn
-      ? await prepareExportSync(exportPrepareDeps())
-      : await prepareExportLocal(exportPrepareDeps());
-    setReceipts(top100ByUpdatedAt(prepared));
-    return prepared;
-  }, [auth.isSignedIn, exportPrepareDeps]);
+  const handleExportGatePrepare = useCallback(
+    async (opts?: { forceSignedIn?: boolean }) => {
+      const prepared =
+        auth.isSignedIn || opts?.forceSignedIn
+          ? await prepareExportSync(exportPrepareDeps())
+          : await prepareExportLocal(exportPrepareDeps());
+      setReceipts(top100ByUpdatedAt(prepared));
+      return prepared;
+    },
+    [auth.isSignedIn, exportPrepareDeps],
+  );
 
   const handlePreExportPrepare = useCallback(
     async () => {

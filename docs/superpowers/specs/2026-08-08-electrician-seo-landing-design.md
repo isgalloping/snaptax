@@ -128,10 +128,10 @@ No multi-trade placeholders, no long hub essay.
 | 5 | Expense examples table | Educational category labels; footnote mapping to real US categories |
 | 6 | Built for independents | Short block from context §6 (scanner / tracking / reports); keep to one compact band |
 | 7 | FAQ | Four questions from context; hedged language |
-| 8 | Final CTA | Start Tracking Free → `/app`; optional “No credit card required” |
+| 8 | Final CTA | Start Tracking Free → `/app`; include “No credit card required” |
 | 9 | Disclaimer | Educational only + `/disclaimer` |
 
-Outbound internal links (existing only): `/features`, `/faq`, relevant `/blog/...` (e.g. organize receipts, 1099 guide). No links to unbuilt guide URLs from the PRD.
+Outbound internal links (existing only): `/features`, `/faq`, `/blog/how-to-organize-receipts`, `/blog/1099-contractor-tax-guide`. No links to unbuilt guide URLs from the PRD.
 
 ---
 
@@ -196,7 +196,7 @@ type IndustrySeoPage = {
 - JSON-LD `@graph`:
   - `FAQPage` from page FAQ
   - `BreadcrumbList`: Home → Tax Deductions → Electrician (all URLs exist)
-- Sitemap priorities: electrician page slightly above typical marketing children (e.g. `0.7`); index `0.6`
+- Sitemap priorities: electrician `0.7`; index `0.6`
 - No fabricated schema parents or HowTo markup in v1
 
 ---

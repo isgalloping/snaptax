@@ -2,8 +2,10 @@ import Link from "next/link";
 
 export function IndustryBreadcrumb({
   industryLabel,
+  industryHref,
 }: {
   industryLabel: string;
+  industryHref: string;
 }) {
   return (
     <nav aria-label="Breadcrumb" className="text-sm text-zinc-400">
@@ -20,7 +22,15 @@ export function IndustryBreadcrumb({
           </Link>
         </li>
         <li aria-hidden>/</li>
-        <li className="text-white">{industryLabel}</li>
+        <li>
+          <Link
+            href={industryHref}
+            className="text-white hover:text-white"
+            aria-current="page"
+          >
+            {industryLabel}
+          </Link>
+        </li>
       </ol>
     </nav>
   );

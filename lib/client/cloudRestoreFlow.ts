@@ -17,8 +17,6 @@ import {
   savePhotoCompressed,
   warmReceiptDb,
 } from "@/lib/storage/receiptDb";
-import { getPhotoMeta } from "@/lib/storage/photoMetadata";
-import { hasMigratedPhotoPayload } from "@/lib/storage/photoTypes";
 
 export type RestoreProgress = { done: number; total: number | null };
 
@@ -68,9 +66,7 @@ async function mapWithConcurrency<T>(
   );
 }
 
-async function hasLocalPhoto(id: string): Promise<boolean> {
-  const db = await warmReceiptDb();
-  if (hasMigratedPhotoPayload(await getPhotoMeta(db, id))) return true;
+export async function hasLocalPhoto(id: string): Promise<boolean> {
   const blob = await loadPhoto(id);
   return blob != null;
 }

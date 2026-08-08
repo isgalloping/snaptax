@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { mergeServerReceiptsIntoLocal } from "./receiptSyncOrchestrator.ts";
+import {
+  assertCompleteSyncAvailable,
+  mergeServerReceiptsIntoLocal,
+} from "./receiptSyncOrchestrator.ts";
 import type { StoredReceipt } from "@/lib/storage/receiptDb";
 
 const LOCAL_OUTSIDE_WINDOW = "6ba7b810-9dad-11d1-80b4-00c04fd430c8";
@@ -94,6 +97,30 @@ describe("mergeServerReceiptsIntoLocal", () => {
     assert.ok(saved.some((r) => r.id === REMOTE_IN_WINDOW));
   });
 
+  it("does not silently fall back to top-50 when signed-in paginated sync fails", async () => {
+    let fallbackCalled = false;
+
+    await assert.rejects(
+      () =>
+        mergeServerReceiptsIntoLocal([], {
+          useSyncPages: true,
+          fetchSyncPages: async () => {
+            throw new Error("FETCH_RECEIPT_SYNC_FAILED");
+          },
+          fetchList: async () => {
+            fallbackCalled = true;
+            return { receipts: [], taxSavedEstimate: 0 };
+          },
+          readTombstones: async () => new Set(),
+          loadVisible: async () => [],
+          persistMerged: async () => {},
+        }),
+      /FETCH_RECEIPT_SYNC_FAILED/,
+    );
+
+    assert.equal(fallbackCalled, false);
+  });
+
   it("filters tombstoned remote rows before merge", async () => {
     const saved: StoredReceipt[] = [];
 
@@ -125,5 +152,17 @@ describe("mergeServerReceiptsIntoLocal", () => {
     });
 
     assert.equal(saved.some((r) => r.id === TOMBSTONED), false);
+  });
+});
+
+describe("assertCompleteSyncAvailable", () => {
+  it("throws when a complete sync is required but the browser is offline", async () => {
+    assert.throws(
+      () => assertCompleteSyncAvailable(false, { requireComplete: true }),
+      /FETCH_RECEIPT_SYNC_FAILED/,
+    );
+    assert.doesNotThrow(() =>
+      assertCompleteSyncAvailable(false, { requireComplete: false }),
+    );
   });
 });

@@ -8,6 +8,7 @@ export type ExportPrepareDeps = {
   syncFromServer: (
     local: StoredReceipt[],
     mode: "immediate",
+    opts?: { requireComplete?: boolean },
   ) => Promise<Receipt[]>;
   ensureGhostSession: () => Promise<void>;
   isOnline?: () => boolean;
@@ -26,7 +27,8 @@ export async function prepareExportSync(
   await deps.flushPendingUploads();
   await deps.flushPendingDeletes();
   const local = await deps.loadAllReceipts();
-  return deps.syncFromServer(local, "immediate");
+  await deps.syncFromServer(local, "immediate", { requireComplete: true });
+  return deps.loadAllReceipts();
 }
 
 /** Flush pending writes and read IDB only — local-first csv/txf gate prep (no server list merge). */

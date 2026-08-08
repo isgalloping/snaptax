@@ -61,7 +61,6 @@ import {
   prepareExportLocal,
   type ExportPrepareDeps,
 } from "@/lib/client/exportPrepareFlow";
-import type { ExportFormat } from "@/lib/export/exportFilenames";
 import { restoreReceiptsFromCloud } from "@/lib/client/cloudRestoreFlow";
 import {
   markCloudRestoreAttempted,
@@ -69,7 +68,10 @@ import {
 } from "@/lib/client/localDataLoss";
 import { prefetchReceiptImageUrl } from "@/lib/client/receiptImageCache";
 import { isPersistedReceiptId } from "@/lib/receipts/receiptId";
-import { mergeServerReceiptsIntoLocal } from "@/lib/client/receiptSyncOrchestrator";
+import {
+  assertCompleteSyncAvailable,
+  mergeServerReceiptsIntoLocal,
+} from "@/lib/client/receiptSyncOrchestrator";
 import {
   STARTUP_UNFILED_LIMIT,
   top100ByUpdatedAt,
@@ -555,9 +557,10 @@ export function HomeScreen() {
     async (
       local: StoredReceipt[],
       applyMode: "immediate" | "defer" = "defer",
-      opts?: { force?: boolean },
+      opts?: { force?: boolean; requireComplete?: boolean },
     ): Promise<Receipt[]> => {
       if (!navigator.onLine) {
+        assertCompleteSyncAvailable(false, opts);
         applyMergeNow(local);
         return local;
       }
@@ -583,7 +586,10 @@ export function HomeScreen() {
           applyMergeOrDefer(visible);
         }
         return visible;
-      } catch {
+      } catch (err) {
+        if (opts?.requireComplete) {
+          throw err;
+        }
         const visible = await loadTopByUpdatedAt(UI_RECEIPT_LIMIT).catch(() =>
           top100ByUpdatedAt(local),
         );
@@ -1132,7 +1138,9 @@ export function HomeScreen() {
         // Event sync is best-effort; receipt merge must still run after login.
       }
       const stored = await loadAllReceipts();
-      const merged = await syncFromServer(stored, "immediate");
+      const merged = await syncFromServer(stored, "immediate", {
+        requireComplete: true,
+      });
       const stuck = stuckIdsFromReceipts(merged as StoredReceipt[]);
       setSyncStuckIds((prev) => new Set([...prev, ...stuck]));
       queueRef.current?.bootstrapFromList(
@@ -1159,7 +1167,8 @@ export function HomeScreen() {
       flushPendingUploads: () => flushPendingUploadsRef.current(),
       flushPendingDeletes: () => flushPendingDeletesRef.current(),
       loadAllReceipts,
-      syncFromServer: (local) => syncFromServer(local, "immediate"),
+      syncFromServer: (local, _mode, opts) =>
+        syncFromServer(local, "immediate", opts),
       ensureGhostSession: async () => {
         await ensureGhostSession();
       },
@@ -1168,28 +1177,18 @@ export function HomeScreen() {
   );
 
   const handleExportGatePrepare = useCallback(async () => {
-    const local = await prepareExportLocal(exportPrepareDeps());
-    setReceipts(top100ByUpdatedAt(local));
-    return local;
-  }, [exportPrepareDeps]);
+    const prepared = auth.isSignedIn
+      ? await prepareExportSync(exportPrepareDeps())
+      : await prepareExportLocal(exportPrepareDeps());
+    setReceipts(top100ByUpdatedAt(prepared));
+    return prepared;
+  }, [auth.isSignedIn, exportPrepareDeps]);
 
   const handlePreExportPrepare = useCallback(
-    async (format: ExportFormat) => {
-      const isLocalFirst =
-        format === "csv" ||
-        format === "txf" ||
-        format === "qif" ||
-        format === "qbo" ||
-        format === "cpa_pdf" ||
-        format === "cpa_pack";
-      if (isLocalFirst) {
-        const local = await prepareExportLocal(exportPrepareDeps());
-        setReceipts(top100ByUpdatedAt(local));
-        return local;
-      }
-      const merged = await prepareExportSync(exportPrepareDeps());
-      setReceipts(merged);
-      return merged;
+    async () => {
+      const prepared = await prepareExportSync(exportPrepareDeps());
+      setReceipts(top100ByUpdatedAt(prepared));
+      return prepared;
     },
     [exportPrepareDeps],
   );

@@ -43,9 +43,10 @@ describe("prepareExportSync", () => {
         order.push("load");
         return [ROW];
       },
-      syncFromServer: async (local, mode) => {
+      syncFromServer: async (local, mode, opts?: { requireComplete?: boolean }) => {
         order.push(`sync:${mode}`);
         assert.equal(local.length, 1);
+        assert.equal(opts?.requireComplete, true);
         return local;
       },
     });
@@ -56,8 +57,35 @@ describe("prepareExportSync", () => {
       "deletes",
       "load",
       "sync:immediate",
+      "load",
     ]);
     assert.equal(merged.length, 1);
+  });
+
+  it("returns all local receipts reloaded after complete server sync", async () => {
+    const CLOUD_ROW: StoredReceipt = {
+      ...ROW,
+      id: "550e8400-e29b-41d4-a716-446655440001",
+    };
+    let loadCalls = 0;
+
+    const merged = await prepareExportSync({
+      isOnline: () => true,
+      ensureGhostSession: async () => {},
+      flushPendingUploads: async () => {},
+      flushPendingDeletes: async () => {},
+      loadAllReceipts: async () => {
+        loadCalls += 1;
+        return loadCalls === 1 ? [ROW] : [ROW, CLOUD_ROW];
+      },
+      syncFromServer: async () => [ROW],
+    });
+
+    assert.deepEqual(
+      merged.map((r) => r.id),
+      [ROW.id, CLOUD_ROW.id],
+    );
+    assert.equal(loadCalls, 2);
   });
 });
 

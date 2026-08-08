@@ -31,6 +31,17 @@ export type MergeServerReceiptsResult = {
   taxSavedEstimate: number;
 };
 
+export type CompleteSyncOptions = { requireComplete?: boolean };
+
+export function assertCompleteSyncAvailable(
+  isOnline: boolean,
+  opts?: CompleteSyncOptions,
+): void {
+  if (!isOnline && opts?.requireComplete) {
+    throw new Error("FETCH_RECEIPT_SYNC_FAILED");
+  }
+}
+
 export async function fetchAllRemoteReceiptsViaSync(): Promise<ReceiptListResponse> {
   const receipts = [];
   let cursor: string | undefined;
@@ -60,11 +71,7 @@ export async function mergeServerReceiptsIntoLocal(
   const tombstones = await readTombstones();
   let remoteResponse: ReceiptListResponse;
   if (deps.useSyncPages) {
-    try {
-      remoteResponse = await fetchSyncPages();
-    } catch {
-      remoteResponse = await fetchList(visibleLimit);
-    }
+    remoteResponse = await fetchSyncPages();
   } else {
     remoteResponse = await fetchList(visibleLimit);
   }

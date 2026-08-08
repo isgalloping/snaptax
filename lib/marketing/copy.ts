@@ -285,6 +285,10 @@ export const MARKETING_COPY = {
           { href: "/features", label: "Features" },
           { href: "/pricing", label: "Pricing" },
           { href: "/faq", label: "FAQ" },
+          {
+            href: "/tax-deductions/electrician",
+            label: "Electrician Tax Deductions",
+          },
         ],
       },
       {

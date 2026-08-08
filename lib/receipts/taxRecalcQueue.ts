@@ -9,7 +9,25 @@ import {
 } from "@/lib/receipts/uploadValidation";
 import { blobCommandOptions } from "@/lib/server/blob";
 import { logEvent } from "@/lib/server/log/logEvent";
+import type { LogEntry } from "@/lib/server/log/types";
 import type { TaxRegion } from "@/lib/tax/types";
+
+type RecalcBlobResult = {
+  statusCode?: number | null;
+  stream?: ReadableStream<Uint8Array> | null;
+};
+
+type ResetReceiptForRecalc = (receiptId: string) => Promise<{ count: number }>;
+type ProcessReceiptForRecalc = (
+  params: Parameters<typeof processReceiptTax>[0],
+) => Promise<unknown>;
+
+export type RecalcReceiptsInBackgroundDeps = {
+  getBlob?: (pathname: string) => Promise<RecalcBlobResult | null>;
+  resetReceiptForRecalc?: ResetReceiptForRecalc;
+  processReceipt?: ProcessReceiptForRecalc;
+  log?: (entry: LogEntry) => void;
+};
 
 export async function resolveGhostCandidate(
   ghostId: string,
@@ -77,19 +95,36 @@ export async function enqueueTaxRecalc(params: {
   return receipts.length;
 }
 
-async function recalcReceiptsInBackground(
+function getReceiptBlob(pathname: string) {
+  return get(pathname, {
+    access: "private",
+    ...blobCommandOptions(),
+  });
+}
+
+function resetReceiptForRecalc(receiptId: string) {
+  return prisma.snaptaxReceipt.updateMany({
+    where: { id: receiptId, ...unfiledReceiptWhere() },
+    data: { status: "processing", taxAmount: 0 },
+  });
+}
+
+export async function recalcReceiptsInBackground(
   receipts: Array<{ id: string; imageUrl: string; status: string }>,
   lockedRegion: TaxRegion,
   industry?: string | null,
+  deps: RecalcReceiptsInBackgroundDeps = {},
 ) {
+  const getBlob = deps.getBlob ?? getReceiptBlob;
+  const resetReceipt = deps.resetReceiptForRecalc ?? resetReceiptForRecalc;
+  const processReceipt = deps.processReceipt ?? processReceiptTax;
+  const log = deps.log ?? logEvent;
+
   for (const receipt of receipts) {
     try {
-      const blobResult = await get(receipt.imageUrl, {
-        access: "private",
-        ...blobCommandOptions(),
-      });
+      const blobResult = await getBlob(receipt.imageUrl);
       if (!blobResult || blobResult.statusCode !== 200 || !blobResult.stream) {
-        logEvent({
+        log({
           ts: new Date().toISOString(),
           level: "warn",
           module: "biz.openai",
@@ -107,19 +142,16 @@ async function recalcReceiptsInBackground(
         continue;
       }
 
-      const reset = await prisma.snaptaxReceipt.updateMany({
-        where: { id: receipt.id, ...unfiledReceiptWhere() },
-        data: { status: "processing", taxAmount: 0 },
-      });
-      if (reset.count === 0) continue;
-
       const bytes = Buffer.from(
         await new Response(blobResult.stream).arrayBuffer(),
       );
       const kind = assertValidReceiptImage(bytes);
       const mime = mimeForKind(kind);
 
-      await processReceiptTax({
+      const reset = await resetReceipt(receipt.id);
+      if (reset.count === 0) continue;
+
+      await processReceipt({
         receiptId: receipt.id,
         dataRegion: lockedRegion,
         imageBuffer: bytes,
@@ -127,7 +159,7 @@ async function recalcReceiptsInBackground(
         industry,
       });
     } catch (err) {
-      logEvent({
+      log({
         ts: new Date().toISOString(),
         level: "error",
         module: "biz.openai",

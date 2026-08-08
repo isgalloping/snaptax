@@ -23,6 +23,16 @@ export type GoogleSignInResult = {
   taxRecalcQueued: number;
 };
 
+export function postLoginSyncFailurePresentation(
+  mode: GoogleSignInMode,
+  message: string,
+): { kind: "error" | "warning"; message: string } {
+  if (mode === "hard-export" || mode === "hard-sync") {
+    return { kind: "error", message };
+  }
+  return { kind: "warning", message };
+}
+
 interface GoogleSignInSheetProps {
   mode: GoogleSignInMode;
   onClose: () => void;
@@ -51,9 +61,12 @@ export function GoogleSignInSheet({
   const onSuccessRef = useRef(onSuccess);
   const onFailureRef = useRef(onFailure);
   const onUserSignedInRef = useRef(onUserSignedIn);
-  onSuccessRef.current = onSuccess;
-  onFailureRef.current = onFailure;
-  onUserSignedInRef.current = onUserSignedIn;
+
+  useEffect(() => {
+    onSuccessRef.current = onSuccess;
+    onFailureRef.current = onFailure;
+    onUserSignedInRef.current = onUserSignedIn;
+  });
 
   const errorMessages = useMemo(
     () => ({
@@ -115,7 +128,16 @@ export function GoogleSignInSheet({
           try {
             await onSuccessRef.current({ taxRecalcQueued: result.taxRecalcQueued });
           } catch {
-            // Post-login sync is best-effort; Account shows signed-in state without extra prompts.
+            const presentation = postLoginSyncFailurePresentation(
+              mode,
+              authCopy.syncAfterSignInFailed,
+            );
+            if (presentation.kind === "error") {
+              setInlineError(presentation.message);
+              onFailureRef.current?.(presentation.message);
+            } else {
+              setInlineWarning(presentation.message);
+            }
           }
         } catch (error) {
           if (!cancelled) handleAuthError(error);
@@ -152,7 +174,7 @@ export function GoogleSignInSheet({
       mountRef.current?.cleanup();
       mountRef.current = null;
     };
-  }, [authCopy.syncAfterSignInFailed, errorMessages]);
+  }, [authCopy.syncAfterSignInFailed, errorMessages, mode]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-end bg-black/70">

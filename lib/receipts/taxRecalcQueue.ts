@@ -18,11 +18,14 @@ type RecalcBlobResult = {
 };
 
 type ResetReceiptForRecalc = (receiptId: string) => Promise<{ count: number }>;
+type ProcessReceiptForRecalc = (
+  params: Parameters<typeof processReceiptTax>[0],
+) => Promise<unknown>;
 
 export type RecalcReceiptsInBackgroundDeps = {
   getBlob?: (pathname: string) => Promise<RecalcBlobResult | null>;
   resetReceiptForRecalc?: ResetReceiptForRecalc;
-  processReceipt?: typeof processReceiptTax;
+  processReceipt?: ProcessReceiptForRecalc;
   log?: (entry: LogEntry) => void;
 };
 
@@ -139,14 +142,14 @@ export async function recalcReceiptsInBackground(
         continue;
       }
 
-      const reset = await resetReceipt(receipt.id);
-      if (reset.count === 0) continue;
-
       const bytes = Buffer.from(
         await new Response(blobResult.stream).arrayBuffer(),
       );
       const kind = assertValidReceiptImage(bytes);
       const mime = mimeForKind(kind);
+
+      const reset = await resetReceipt(receipt.id);
+      if (reset.count === 0) continue;
 
       await processReceipt({
         receiptId: receipt.id,

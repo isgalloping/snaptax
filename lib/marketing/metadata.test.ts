@@ -8,12 +8,16 @@ describe("buildMarketingMetadata", () => {
       title: "T",
       description: "D",
       path: "/tax-deductions/electrician",
-      imagePath: "/marketing/seo/electrician-worker.png",
-      imageAlt: "Electrician working on an electrical panel",
+      imagePath: "/marketing/seo/electrician-tax-deductions-snaptax.png",
+      imageAlt:
+        "Electrician tax deductions — SnapTax expense tracking for contractors",
     });
     const og = meta.openGraph?.images;
     assert.ok(Array.isArray(og));
-    assert.match(String((og[0] as { url: string }).url), /electrician-worker/);
+    assert.match(
+      String((og[0] as { url: string }).url),
+      /electrician-tax-deductions-snaptax/,
+    );
   });
 
   it("defaults to hero-phone when imagePath omitted", () => {

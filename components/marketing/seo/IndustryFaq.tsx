@@ -30,11 +30,15 @@ export function IndustryFaq({
                   {open ? "−" : "+"}
                 </span>
               </button>
-              {open ? (
-                <p className="pb-5 text-sm leading-relaxed text-zinc-400">
-                  {item.answer}
-                </p>
-              ) : null}
+              <p
+                className={
+                  open
+                    ? "pb-5 text-sm leading-relaxed text-zinc-400"
+                    : "hidden pb-5 text-sm leading-relaxed text-zinc-400"
+                }
+              >
+                {item.answer}
+              </p>
             </div>
           );
         })}

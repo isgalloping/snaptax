@@ -36,7 +36,7 @@ export function IndustryHero({ page }: { page: IndustrySeoPage }) {
                 {page.hero.primaryCta}
               </MarketingAppLink>
               <a
-                href="#how-it-works"
+                href={`#${page.howItWorks.id}`}
                 className="inline-flex min-h-12 shrink-0 items-center justify-center whitespace-nowrap rounded-xl border border-white/25 px-5 text-sm font-bold text-white transition-colors hover:border-white/50 active:scale-95 sm:min-h-14 sm:px-6 sm:text-base"
               >
                 {page.hero.secondaryCta}

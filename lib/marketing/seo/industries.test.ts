@@ -70,8 +70,14 @@ describe("seo industries registry", () => {
         `unexpected category label: ${row.category}`,
       );
     }
-    assert.doesNotMatch(page.hero.workerImage.src, /\.png$/i);
-    assert.match(page.hero.ogImage.src, /electrician-og\.jpg$/);
+    assert.match(
+      page.hero.workerImage.src,
+      /electrician-tax-deductions-snaptax\.png$/,
+    );
+    assert.match(
+      page.hero.ogImage.src,
+      /electrician-tax-deductions-snaptax-og\.jpg$/,
+    );
   });
 
   it("returns undefined for unknown slug", () => {

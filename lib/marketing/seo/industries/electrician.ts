@@ -25,12 +25,12 @@ export const ELECTRICIAN_SEO_PAGE: IndustrySeoPage = {
       "Secure & Private",
     ],
     workerImage: {
-      src: "/marketing/seo/electrician-worker.webp",
-      alt: "Electrician working on an electrical panel",
+      src: "/marketing/seo/electrician-tax-deductions-snaptax.png",
+      alt: "Electrician tax deductions — SnapTax expense tracking for contractors",
     },
     ogImage: {
-      src: "/marketing/seo/electrician-og.jpg",
-      alt: "Electrician working on an electrical panel",
+      src: "/marketing/seo/electrician-tax-deductions-snaptax-og.jpg",
+      alt: "Electrician tax deductions — SnapTax expense tracking for contractors",
     },
   },
   deductionsTitle: "Common Tax Deductions for Electricians",

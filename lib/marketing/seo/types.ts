@@ -14,6 +14,8 @@ export type IndustrySeoPage = {
     secondaryCta: string;
     trustItems: string[];
     workerImage: { src: string; alt: string };
+    /** Social / Open Graph image (optimized, typically 1200×630). */
+    ogImage: { src: string; alt: string };
   };
   deductionsTitle: string;
   deductionsIntro: string;
@@ -26,6 +28,8 @@ export type IndustrySeoPage = {
     steps: { title: string; body: string }[];
   };
   examplesTitle: string;
+  /** Column header for examples table — must not imply fake App labels. */
+  examplesCategoryHeader: string;
   examples: { expense: string; category: string }[];
   productCategoryNote: string;
   builtFor: {

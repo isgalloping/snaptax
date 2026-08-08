@@ -50,6 +50,30 @@ describe("seo industries registry", () => {
     }
   });
 
+  it("expense examples use real US category display labels only", () => {
+    const page = getIndustryBySlug("electrician");
+    assert.ok(page);
+    assert.equal(page.examplesCategoryHeader, "SnapTax category");
+    const allowed = new Set([
+      "Truck Gas",
+      "Tools",
+      "Supplies",
+      "Equipment",
+      "Materials",
+      "Meals",
+      "Personal",
+      "Other",
+    ]);
+    for (const row of page.examples) {
+      assert.ok(
+        allowed.has(row.category),
+        `unexpected category label: ${row.category}`,
+      );
+    }
+    assert.doesNotMatch(page.hero.workerImage.src, /\.png$/i);
+    assert.match(page.hero.ogImage.src, /electrician-og\.jpg$/);
+  });
+
   it("returns undefined for unknown slug", () => {
     assert.equal(getIndustryBySlug("plumber"), undefined);
   });

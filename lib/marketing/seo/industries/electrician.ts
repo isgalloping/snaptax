@@ -25,7 +25,11 @@ export const ELECTRICIAN_SEO_PAGE: IndustrySeoPage = {
       "Secure & Private",
     ],
     workerImage: {
-      src: "/marketing/seo/electrician-worker.png",
+      src: "/marketing/seo/electrician-worker.webp",
+      alt: "Electrician working on an electrical panel",
+    },
+    ogImage: {
+      src: "/marketing/seo/electrician-og.jpg",
       alt: "Electrician working on an electrical panel",
     },
   },
@@ -112,17 +116,18 @@ export const ELECTRICIAN_SEO_PAGE: IndustrySeoPage = {
     ],
   },
   examplesTitle: "Examples of Electrician Expenses",
+  examplesCategoryHeader: "SnapTax category",
   examples: [
     { expense: "Cordless Drill", category: "Tools" },
     { expense: "Voltage Tester", category: "Equipment" },
     { expense: "Electrical Wire", category: "Supplies" },
-    { expense: "Work Van Fuel", category: "Vehicle" },
+    { expense: "Work Van Fuel", category: "Truck Gas" },
     { expense: "Safety Gear", category: "Equipment" },
-    { expense: "Business Insurance", category: "Operations" },
-    { expense: "License Renewal", category: "Professional Fees" },
+    { expense: "Business Insurance", category: "Other" },
+    { expense: "License Renewal", category: "Other" },
   ],
   productCategoryNote:
-    "In SnapTax, expenses often map to Tools, Truck Gas, Supplies, Equipment, Materials, or Other.",
+    "Labels match SnapTax US expense categories: Tools, Truck Gas, Supplies, Equipment, Materials, Meals, Personal, or Other.",
   builtFor: {
     title: "Built for Independent Electricians",
     body: "SnapTax is designed for contractors who work in the field. No complicated accounting setup. No unnecessary features. Just capture receipts, organize expenses, and stay prepared.",

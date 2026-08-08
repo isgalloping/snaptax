@@ -12,8 +12,8 @@ export const metadata = page
       title: page.seo.title,
       description: page.seo.description,
       path: page.path,
-      imagePath: page.hero.workerImage.src,
-      imageAlt: page.hero.workerImage.alt,
+      imagePath: page.hero.ogImage.src,
+      imageAlt: page.hero.ogImage.alt,
     })
   : buildMarketingMetadata({
       title: "Not found",

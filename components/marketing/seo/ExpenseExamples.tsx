@@ -17,7 +17,7 @@ export function ExpenseExamples({ page }: { page: IndustrySeoPage }) {
                   Expense
                 </th>
                 <th className="px-4 py-3 font-black text-white sm:px-6">
-                  Category
+                  {page.examplesCategoryHeader}
                 </th>
               </tr>
             </thead>

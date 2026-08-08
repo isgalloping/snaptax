@@ -3,7 +3,7 @@ import type { IndustrySeoPage } from "@/lib/marketing/seo/types";
 export const ELECTRICIAN_SEO_PAGE: IndustrySeoPage = {
   slug: "electrician",
   path: "/tax-deductions/electrician",
-  label: "Electricians",
+  label: "Electrician",
   indexBlurb:
     "Common tax deductions for tools, vehicles, supplies, and job-site expenses.",
   seo: {

@@ -11,7 +11,10 @@ export function IndustryHero({ page }: { page: IndustrySeoPage }) {
   return (
     <section className="border-b border-white/10">
       <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16 lg:py-20">
-        <IndustryBreadcrumb industryLabel={page.label} />
+        <IndustryBreadcrumb
+          industryLabel={page.label}
+          industryHref={page.path}
+        />
 
         <div className="mt-8 grid items-center gap-12 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:gap-10">
           <div className="min-w-0">

@@ -97,6 +97,51 @@ describe("mergeServerReceiptsIntoLocal", () => {
     assert.ok(saved.some((r) => r.id === REMOTE_IN_WINDOW));
   });
 
+  it("uses paginated sync when a complete sync is required", async () => {
+    const saved: StoredReceipt[] = [];
+    let syncCalls = 0;
+
+    await mergeServerReceiptsIntoLocal(
+      [],
+      {
+        requireComplete: true,
+        fetchSyncPages: async () => {
+          syncCalls += 1;
+          return {
+            receipts: [
+              {
+                id: REMOTE_IN_WINDOW,
+                status: "done",
+                amount: 10,
+                merchant: "A",
+                category: null,
+                taxAmount: 2,
+                dataRegion: "us",
+                capturedAt: "2026-06-14T12:00:00.000Z",
+                updatedAt: "2026-06-14T12:00:00.000Z",
+                taxSeason: null,
+                taxSeasonDate: null,
+                hasImage: true,
+              },
+            ],
+            taxSavedEstimate: 2,
+          };
+        },
+        fetchList: async () => {
+          throw new Error("list should not run for complete sync");
+        },
+        readTombstones: async () => new Set(),
+        loadVisible: async () => saved,
+        persistMerged: async (merged) => {
+          saved.push(...merged);
+        },
+      },
+    );
+
+    assert.equal(syncCalls, 1);
+    assert.ok(saved.some((r) => r.id === REMOTE_IN_WINDOW));
+  });
+
   it("does not silently fall back to top-50 when signed-in paginated sync fails", async () => {
     let fallbackCalled = false;
 

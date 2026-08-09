@@ -9,12 +9,12 @@ import {
 import { US_EXPORT_CATEGORIES } from "@/lib/tax/usExportCategories";
 
 describe("seo industries registry", () => {
-  it("publishes electrician, hvac, plumber, and roofer", () => {
+  it("publishes electrician, hvac, plumber, roofer, and landscaper", () => {
     const list = listPublishedIndustries();
-    assert.equal(list.length, 4);
+    assert.equal(list.length, 5);
     assert.deepEqual(
       list.map((p) => p.slug),
-      ["electrician", "hvac", "plumber", "roofer"],
+      ["electrician", "hvac", "plumber", "roofer", "landscaper"],
     );
   });
 
@@ -174,20 +174,86 @@ describe("seo industries registry", () => {
     assert.match(mileage.answer, /separate/i);
   });
 
-  it("each industry relatedTrades links to the other three", () => {
+  it("each industry relatedTrades links to the other four", () => {
     const all = [
       "/tax-deductions/electrician",
       "/tax-deductions/hvac",
       "/tax-deductions/plumber",
       "/tax-deductions/roofer",
+      "/tax-deductions/landscaper",
     ];
-    for (const slug of ["electrician", "hvac", "plumber", "roofer"] as const) {
+    for (const slug of [
+      "electrician",
+      "hvac",
+      "plumber",
+      "roofer",
+      "landscaper",
+    ] as const) {
       const page = getIndustryBySlug(slug);
       assert.ok(page?.relatedTrades);
-      assert.equal(page.relatedTrades.links.length, 3);
+      assert.equal(page.relatedTrades.links.length, 4);
       const hrefs = page.relatedTrades.links.map((l) => l.href).sort();
       const expected = all.filter((h) => h !== `/tax-deductions/${slug}`).sort();
       assert.deepEqual(hrefs, expected);
+    }
+  });
+
+  it("loads landscaper with PRD title/meta, UI H1, and mockup spotlight", () => {
+    const page = getIndustryBySlug("landscaper");
+    assert.ok(page);
+    assert.equal(
+      page.seo.title,
+      "Landscaper Tax Deductions: Expense Guide | SnapTax",
+    );
+    assert.match(page.seo.description, /landscaper tax deductions/i);
+    assert.equal(page.hero.h1, "Landscaping tax deductions, organized.");
+    assert.equal(page.presentation, "mockup");
+    assert.equal(page.hero.visualLayout, "spotlight");
+    assert.equal(page.hero.secondaryHref, "#deductions");
+    assert.equal(page.hero.highlights?.length, 4);
+    assert.equal(page.deductionCards.length, 8);
+    assert.equal(page.howItWorks.steps.length, 3);
+    assert.ok(page.howItWorks.stepsBanner?.src);
+    assert.equal(page.faq.length, 7);
+    assert.equal(page.examples.length, 0);
+    assert.equal(page.builtFor.features.length, 5);
+    assert.ok(page.checklist);
+    assert.ok(page.problemsClosing);
+  });
+
+  it("landscaper product copy avoids Smart Landscaping Categories", () => {
+    const page = getIndustryBySlug("landscaper");
+    assert.ok(page);
+    const blob = [
+      page.hero.trustItems.join(" "),
+      ...page.howItWorks.steps.map((s) => s.body),
+      ...page.builtFor.features.map((f) => `${f.title} ${f.body}`),
+      page.productCategoryNote,
+    ].join(" ");
+    assert.doesNotMatch(blob, /Smart Landscaping Categories/i);
+    assert.match(
+      page.hero.trustItems.join(" "),
+      /Organize expenses by category/i,
+    );
+  });
+
+  it("landscaper mileage FAQ denies full mileage tracker", () => {
+    const page = getIndustryBySlug("landscaper");
+    assert.ok(page);
+    const mileage = page.faq.find((f) => /mileage/i.test(f.question));
+    assert.ok(mileage);
+    assert.match(mileage.answer, /does not/i);
+    assert.match(mileage.answer, /separate/i);
+  });
+
+  it("landscaper phone and steps assets have alpha channel", async () => {
+    const root = process.cwd();
+    for (const rel of [
+      "public/marketing/seo/landscaper-tax-deductions-snaptax-phone.png",
+      "public/marketing/seo/landscaper-tax-deductions-snaptax-steps.png",
+    ]) {
+      const meta = await sharp(path.join(root, rel)).metadata();
+      assert.equal(meta.hasAlpha, true, `${rel} must have alpha`);
     }
   });
 

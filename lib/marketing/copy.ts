@@ -292,6 +292,10 @@ export const MARKETING_COPY = {
           { href: "/tax-deductions/hvac", label: "HVAC Tax Deductions" },
           { href: "/tax-deductions/plumber", label: "Plumber Tax Deductions" },
           { href: "/tax-deductions/roofer", label: "Roofer Tax Deductions" },
+          {
+            href: "/tax-deductions/landscaper",
+            label: "Landscaper Tax Deductions",
+          },
         ],
       },
       {

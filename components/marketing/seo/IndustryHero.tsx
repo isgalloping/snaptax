@@ -8,6 +8,7 @@ import { MARKETING_TOKENS } from "@/lib/marketing/tokens";
 export function IndustryHero({ page }: { page: IndustrySeoPage }) {
   const defaultPhone = MARKETING_HERO_SCREENS[0];
   const phoneImage = page.hero.phoneImage;
+  const isComposite = page.hero.visualLayout === "composite";
 
   return (
     <section className="border-b border-white/10">
@@ -17,7 +18,13 @@ export function IndustryHero({ page }: { page: IndustrySeoPage }) {
           industryHref={page.path}
         />
 
-        <div className="mt-8 grid items-center gap-12 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:gap-10">
+        <div
+          className={
+            isComposite
+              ? "mt-8 grid items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-10"
+              : "mt-8 grid items-center gap-12 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:gap-10"
+          }
+        >
           <div className="min-w-0">
             <h1 className="whitespace-pre-line text-3xl font-black leading-[1.1] tracking-tight text-white sm:text-4xl lg:text-[2.75rem]">
               {page.hero.h1}
@@ -66,41 +73,65 @@ export function IndustryHero({ page }: { page: IndustrySeoPage }) {
             </ul>
           </div>
 
-          <div className="relative mx-auto flex w-full max-w-md items-end justify-center gap-3 sm:max-w-lg sm:gap-4 lg:mx-0 lg:max-w-none lg:justify-end">
-            {/* Plain img: missing worker asset must not block hero render */}
-            <div className="relative w-[40%] overflow-hidden rounded-2xl border border-white/10 shadow-2xl">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={page.hero.workerImage.src}
-                alt={page.hero.workerImage.alt}
-                className="h-auto w-full object-cover"
-              />
-            </div>
-            <div className="relative w-[55%] max-w-[16rem] sm:max-w-[18rem]">
+          {isComposite && phoneImage ? (
+            <div className="relative mx-auto w-full max-w-xl lg:mx-0 lg:max-w-none">
               <div
                 className="absolute inset-0 rounded-[2rem] opacity-25 blur-3xl"
                 style={{ backgroundColor: MARKETING_TOKENS.accentGreen }}
                 aria-hidden
               />
-              {phoneImage ? (
-                /* eslint-disable-next-line @next/next/no-img-element */
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={phoneImage.src}
+                alt={phoneImage.alt}
+                className="relative h-auto w-full rounded-[1.35rem] border border-white/10 shadow-2xl"
+              />
+              <div className="absolute bottom-3 left-3 w-[30%] overflow-hidden rounded-xl border border-white/15 shadow-xl sm:bottom-4 sm:left-4 sm:rounded-2xl">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={phoneImage.src}
-                  alt={phoneImage.alt}
-                  className="relative h-auto w-full rounded-[1.35rem] border border-white/10 shadow-2xl"
+                  src={page.hero.workerImage.src}
+                  alt={page.hero.workerImage.alt}
+                  className="h-auto w-full object-cover"
                 />
-              ) : (
-                <Image
-                  src={defaultPhone.src}
-                  alt={defaultPhone.alt}
-                  width={defaultPhone.width}
-                  height={defaultPhone.height}
-                  priority
-                  className="relative h-auto w-full rounded-[1.35rem] border border-white/10 shadow-2xl"
-                />
-              )}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="relative mx-auto flex w-full max-w-md items-end justify-center gap-3 sm:max-w-lg sm:gap-4 lg:mx-0 lg:max-w-none lg:justify-end">
+              {/* Plain img: missing worker asset must not block hero render */}
+              <div className="relative w-[40%] overflow-hidden rounded-2xl border border-white/10 shadow-2xl">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={page.hero.workerImage.src}
+                  alt={page.hero.workerImage.alt}
+                  className="h-auto w-full object-cover"
+                />
+              </div>
+              <div className="relative w-[55%] max-w-[16rem] sm:max-w-[18rem]">
+                <div
+                  className="absolute inset-0 rounded-[2rem] opacity-25 blur-3xl"
+                  style={{ backgroundColor: MARKETING_TOKENS.accentGreen }}
+                  aria-hidden
+                />
+                {phoneImage ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    src={phoneImage.src}
+                    alt={phoneImage.alt}
+                    className="relative h-auto w-full rounded-[1.35rem] border border-white/10 shadow-2xl"
+                  />
+                ) : (
+                  <Image
+                    src={defaultPhone.src}
+                    alt={defaultPhone.alt}
+                    width={defaultPhone.width}
+                    height={defaultPhone.height}
+                    priority
+                    className="relative h-auto w-full rounded-[1.35rem] border border-white/10 shadow-2xl"
+                  />
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </section>

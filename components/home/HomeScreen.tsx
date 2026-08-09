@@ -1297,7 +1297,6 @@ export function HomeScreen() {
     onReceiptUpdated: (updated) => {
       void applyReceiptUpdate(updated as StoredReceipt);
     },
-    onSnap1099: () => openIncomeCapture(view),
     onExportPaymentComplete: () =>
       openPaymentSuccess("export", auth.currentSeason),
   });

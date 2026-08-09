@@ -678,10 +678,6 @@ export type UserCopy = {
     formatQifHint: string;
     formatQboTitle: string;
     formatQboHint: string;
-    snap1099Title: string;
-    snap1099Hint: string;
-    snap1099NecButton: string;
-    snap1099KButton: string;
     incomeFormsLabel: string;
     turboTaxSteps: string[];
     previewCsv: string;

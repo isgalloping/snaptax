@@ -960,11 +960,6 @@ export const FR_FR_COPY: UserCopy = {
     formatQboTitle: "QuickBooks Online",
     formatQboHint:
       "Importez comme flux bancaire dans QuickBooks Online (.qbo Web Connect).",
-    snap1099Title: "Formulaires 1099 (revenus)",
-    snap1099Hint:
-      "Photographiez votre 1099-NEC ou 1099-K — inclus dans le pack d'audit sous 01_Income_Documents.",
-    snap1099NecButton: "1099-NEC →",
-    snap1099KButton: "1099-K →",
     incomeFormsLabel: "{count} formulaires revenus (1099)",
     turboTaxSteps: [
       "Ouvrez TurboTax Self-Employed → Business",

@@ -76,7 +76,7 @@ components/marketing/seo/
 public/marketing/seo/
 ├── hvac-tax-deductions-snaptax.png
 ├── hvac-tax-deductions-snaptax-og.jpg
-└── hvac-tax-deductions-snaptax-cta.webp   ← optional Final CTA bg
+└── hvac-tax-deductions-snaptax-cta.webp   ← Final CTA background
 ```
 
 ### Type extensions
@@ -88,15 +88,18 @@ export type IndustrySlug = "electrician" | "hvac";
 checklist?: {
   title: string;
   items: string[];
-};
+}; // required on HVAC; omitted on electrician v1
 relatedTrades?: {
   title: string;
   links: { href: string; label: string }[];
-};
-// examples may be [] → ExpenseExamples not rendered
+}; // required on both trades after this work
+// examples may be [] → ExpenseExamples not rendered (HVAC uses [])
 ```
 
 `howItWorks.id` remains `"how-it-works"` for electrician secondary CTA; HVAC secondary uses `#deductions` via hero link (deduction section id), not how-it-works.
+
+**HVAC must populate:** `checklist`, `relatedTrades`, empty `examples`.  
+**Electrician must gain:** `relatedTrades` → HVAC (Examples unchanged).
 
 ### Composer order (shared view)
 
@@ -187,7 +190,7 @@ Hedged language only (`may`, `depending on circumstances`).
 
 ### Final CTA
 
-PRD/UI: “Stop letting HVAC receipts disappear in your truck” · Start Tracking Expenses → `/app` · optional cta background image.
+PRD/UI: “Stop letting HVAC receipts disappear in your truck” · Start Tracking Expenses → `/app` · use cta background image.
 
 ### Related trades
 
@@ -239,7 +242,7 @@ Google → /tax-deductions/hvac
 |--------|---------|
 | `hvac.0.0.1-hero.png` | `public/marketing/seo/hvac-tax-deductions-snaptax.png` (~≤960w, compressed) |
 | (crop/derive) | `public/marketing/seo/hvac-tax-deductions-snaptax-og.jpg` (1200×630) |
-| `hvac.0.0.1-cta.png` | `public/marketing/seo/hvac-tax-deductions-snaptax-cta.webp` (optional) |
+| `hvac.0.0.1-cta.png` | `public/marketing/seo/hvac-tax-deductions-snaptax-cta.webp` |
 | `hvac.0.0.1-mobile.png` | Used in hero phone stack (compressed) or composite into hero |
 | `hvac-seo.0.0.1.png` | Design reference only — do not ship |
 

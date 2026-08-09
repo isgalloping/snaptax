@@ -11,6 +11,7 @@ describe("TAX_DEDUCTION_SITEMAP_ENTRIES", () => {
         { path: "/tax-deductions/electrician", priority: 0.7 },
         { path: "/tax-deductions/hvac", priority: 0.7 },
         { path: "/tax-deductions/plumber", priority: 0.7 },
+        { path: "/tax-deductions/roofer", priority: 0.7 },
       ],
     );
   });

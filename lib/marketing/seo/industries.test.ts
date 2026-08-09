@@ -9,12 +9,12 @@ import {
 import { US_EXPORT_CATEGORIES } from "@/lib/tax/usExportCategories";
 
 describe("seo industries registry", () => {
-  it("publishes electrician, hvac, and plumber", () => {
+  it("publishes electrician, hvac, plumber, and roofer", () => {
     const list = listPublishedIndustries();
-    assert.equal(list.length, 3);
+    assert.equal(list.length, 4);
     assert.deepEqual(
       list.map((p) => p.slug),
-      ["electrician", "hvac", "plumber"],
+      ["electrician", "hvac", "plumber", "roofer"],
     );
   });
 
@@ -121,7 +121,7 @@ describe("seo industries registry", () => {
   });
 
   it("returns undefined for unknown slug", () => {
-    assert.equal(getIndustryBySlug("roofer"), undefined);
+    assert.equal(getIndustryBySlug("handyman"), undefined);
   });
 
   it("electrician secondaryHref points to how-it-works", () => {
@@ -174,18 +174,79 @@ describe("seo industries registry", () => {
     assert.match(mileage.answer, /separate/i);
   });
 
-  it("each industry relatedTrades links to the other two", () => {
-    for (const slug of ["electrician", "hvac", "plumber"] as const) {
+  it("each industry relatedTrades links to the other three", () => {
+    const all = [
+      "/tax-deductions/electrician",
+      "/tax-deductions/hvac",
+      "/tax-deductions/plumber",
+      "/tax-deductions/roofer",
+    ];
+    for (const slug of ["electrician", "hvac", "plumber", "roofer"] as const) {
       const page = getIndustryBySlug(slug);
       assert.ok(page?.relatedTrades);
-      assert.equal(page.relatedTrades.links.length, 2);
+      assert.equal(page.relatedTrades.links.length, 3);
       const hrefs = page.relatedTrades.links.map((l) => l.href).sort();
-      const expected = [
-        "/tax-deductions/electrician",
-        "/tax-deductions/hvac",
-        "/tax-deductions/plumber",
-      ].filter((h) => h !== `/tax-deductions/${slug}`).sort();
+      const expected = all.filter((h) => h !== `/tax-deductions/${slug}`).sort();
       assert.deepEqual(hrefs, expected);
+    }
+  });
+
+  it("loads roofer with PRD title/meta, UI H1, and mockup spotlight", () => {
+    const page = getIndustryBySlug("roofer");
+    assert.ok(page);
+    assert.equal(
+      page.seo.title,
+      "Roofer Tax Deductions: Expense Guide for Contractors | SnapTax",
+    );
+    assert.match(page.seo.description, /roofer tax deductions/i);
+    assert.equal(page.hero.h1, "Roofing tax deductions, organized.");
+    assert.equal(page.presentation, "mockup");
+    assert.equal(page.hero.visualLayout, "spotlight");
+    assert.equal(page.hero.secondaryHref, "#deductions");
+    assert.equal(page.hero.highlights?.length, 4);
+    assert.equal(page.deductionCards.length, 8);
+    assert.equal(page.howItWorks.steps.length, 3);
+    assert.ok(page.howItWorks.stepsBanner?.src);
+    assert.equal(page.faq.length, 7);
+    assert.equal(page.examples.length, 0);
+    assert.equal(page.builtFor.features.length, 5);
+    assert.ok(page.checklist);
+    assert.ok(page.problemsClosing);
+  });
+
+  it("roofer product copy avoids Smart Roofing Categories", () => {
+    const page = getIndustryBySlug("roofer");
+    assert.ok(page);
+    const blob = [
+      page.hero.trustItems.join(" "),
+      ...page.howItWorks.steps.map((s) => s.body),
+      ...page.builtFor.features.map((f) => `${f.title} ${f.body}`),
+      page.productCategoryNote,
+    ].join(" ");
+    assert.doesNotMatch(blob, /Smart Roofing Categories/i);
+    assert.match(
+      page.hero.trustItems.join(" "),
+      /Organize expenses by category/i,
+    );
+  });
+
+  it("roofer mileage FAQ denies full mileage tracker", () => {
+    const page = getIndustryBySlug("roofer");
+    assert.ok(page);
+    const mileage = page.faq.find((f) => /mileage/i.test(f.question));
+    assert.ok(mileage);
+    assert.match(mileage.answer, /does not/i);
+    assert.match(mileage.answer, /separate/i);
+  });
+
+  it("roofer phone and steps assets have alpha channel", async () => {
+    const root = process.cwd();
+    for (const rel of [
+      "public/marketing/seo/roofer-tax-deductions-snaptax-phone.png",
+      "public/marketing/seo/roofer-tax-deductions-snaptax-steps.png",
+    ]) {
+      const meta = await sharp(path.join(root, rel)).metadata();
+      assert.equal(meta.hasAlpha, true, `${rel} must have alpha`);
     }
   });
 

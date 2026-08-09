@@ -1,8 +1,8 @@
-export type IndustrySlug = "electrician" | "hvac" | "plumber";
+export type IndustrySlug = "electrician" | "hvac" | "plumber" | "roofer";
 
 export type IndustrySeoPage = {
   slug: IndustrySlug;
-  /** default when omitted. mockup = Plumber UI-fidelity section variants. */
+  /** default when omitted. mockup = UI-fidelity section variants (Plumber, Roofer, …). */
   presentation?: "default" | "mockup";
   path: `/tax-deductions/${IndustrySlug}`;
   label: string;
@@ -22,7 +22,7 @@ export type IndustrySeoPage = {
     /**
      * stacked (default when omitted): worker + phone side-by-side.
      * composite: full-width phoneImage with workerImage as corner overlay.
-     * spotlight: copy | phone | worker+highlights (Plumber UI).
+     * spotlight: copy | phone | highlights (mockup trades).
      */
     visualLayout?: "stacked" | "composite" | "spotlight";
     /** Right-column highlight rows for spotlight layout. */

@@ -28,7 +28,7 @@ test("incomeCapturePhase2SuccessMessage includes payer when present", () => {
       category: "1099-NEC",
       merchant: "Acme Corp",
       amount: 48200,
-      aiRaw: { document_kind: "1099-NEC" },
+      captureKind: "1099-NEC",
     },
     "1099-NEC",
     copy,
@@ -43,7 +43,7 @@ test("incomeCapturePhase2SuccessMessage omits payer when missing", () => {
       category: "1099-K",
       merchant: "Scanning",
       amount: 1200,
-      aiRaw: { document_kind: "1099-K" },
+      captureKind: "1099-K",
     },
     "1099-K",
     copy,
@@ -63,7 +63,7 @@ test("receiptQualifiesForIncomePhase2Success requires done income row", () => {
     receiptQualifiesForIncomePhase2Success({
       status: "processing",
       category: "1099-NEC",
-      aiRaw: null,
+      captureKind: "1099-NEC",
     }),
     false,
   );
@@ -71,8 +71,16 @@ test("receiptQualifiesForIncomePhase2Success requires done income row", () => {
     receiptQualifiesForIncomePhase2Success({
       status: "done",
       category: "TRUCK GAS",
-      aiRaw: null,
+      captureKind: null,
     }),
     false,
+  );
+  assert.equal(
+    receiptQualifiesForIncomePhase2Success({
+      status: "done",
+      category: undefined,
+      captureKind: "1099-NEC",
+    }),
+    true,
   );
 });

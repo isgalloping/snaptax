@@ -21,8 +21,13 @@ export function incomeCapturePhase1Message(
   return replaceForm(copy.phase1Scanning, kind);
 }
 
+type IncomeCaptureFeedbackReceipt = Pick<
+  Receipt,
+  "status" | "merchant" | "amount" | "category" | "captureKind"
+>;
+
 export function incomeCapturePhase2SuccessMessage(
-  receipt: Pick<Receipt, "status" | "merchant" | "amount" | "category" | "aiRaw">,
+  receipt: IncomeCaptureFeedbackReceipt,
   kind: IncomeCaptureKind,
   copy: IncomeCaptureFeedbackCopy,
 ): string | null {
@@ -55,7 +60,10 @@ export function incomeCapturePhase2BlurryMessage(
 }
 
 export function receiptQualifiesForIncomePhase2Success(
-  receipt: Pick<Receipt, "status" | "category" | "aiRaw">,
+  receipt: Pick<Receipt, "status" | "category" | "captureKind">,
 ): boolean {
-  return receipt.status === "done" && isIncomeDocument(receipt);
+  return (
+    receipt.status === "done" &&
+    (isIncomeDocument(receipt) || Boolean(receipt.captureKind))
+  );
 }

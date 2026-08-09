@@ -205,6 +205,12 @@ export const EN_US_COPY: UserCopy = {
           paused: "PAUSED",
         },
       },
+      incomeCapture: {
+        phase1Scanning: "{form} added · Scanning…",
+        phase2SuccessWithPayer: "{form} · {amount} from {payer}",
+        phase2SuccessAmountOnly: "{form} · {amount} saved",
+        phase2Blurry: "Couldn't read {form} — tap to resnap",
+      },
       trustBar: {
         message: "Your receipts stay private unless you share them.",
         learnMore: "Learn more",

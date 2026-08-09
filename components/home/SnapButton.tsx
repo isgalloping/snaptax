@@ -43,6 +43,8 @@ interface SnapButtonProps {
   syncing?: boolean;
   syncDisabled?: boolean;
   onSnapIntent?: () => boolean;
+  /** 1099 income capture — single shutter then close (not batch). */
+  forceSingleCapture?: boolean;
 }
 
 export interface SnapButtonHandle {
@@ -64,6 +66,7 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
       syncing = false,
       syncDisabled = false,
       onSnapIntent,
+      forceSingleCapture = false,
     },
     ref,
   ) {
@@ -81,7 +84,7 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
     const [reviewId, setReviewId] = useState<string | undefined>();
     const [acceptedIds, setAcceptedIds] = useState<Set<string>>(() => new Set());
 
-    const isBatchMode = !resnapId;
+    const isBatchMode = !resnapId && !forceSingleCapture;
 
     const resetSession = useCallback(() => {
       setSessionThumbs((prev) => {
@@ -108,7 +111,7 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
       if (onSnapIntent && !onSnapIntent()) return;
       if (isCameraSupported()) {
         resetSession();
-        if (!resnapId) {
+        if (!resnapId && !forceSingleCapture) {
           beginBatchCaptureDefer();
         }
         streamPromiseRef.current = openCameraStream();
@@ -116,7 +119,7 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
       } else {
         inputRef.current?.click();
       }
-    }, [onSnapIntent, resetSession, resnapId, setCamera]);
+    }, [onSnapIntent, resetSession, resnapId, forceSingleCapture, setCamera]);
 
     const waitForBatchSavesIdle = useCallback(async () => {
       while (batchSaveInFlightRef.current > 0) {
@@ -217,9 +220,9 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
       }
     };
 
-    const handleSingleShot = (file: File) => {
+    const handleSingleShot = async (file: File) => {
       streamPromiseRef.current = null;
-      onCapture(file);
+      await onCapture(file);
     };
 
     const handleFlashDone = async () => {

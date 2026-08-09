@@ -173,6 +173,12 @@ export type UserCopy = {
         paused: string;
       };
     };
+    incomeCapture: {
+      phase1Scanning: string;
+      phase2SuccessWithPayer: string;
+      phase2SuccessAmountOnly: string;
+      phase2Blurry: string;
+    };
     trustBar: {
       message: string;
       learnMore: string;

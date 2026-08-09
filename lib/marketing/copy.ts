@@ -289,6 +289,7 @@ export const MARKETING_COPY = {
             href: "/tax-deductions/electrician",
             label: "Electrician Tax Deductions",
           },
+          { href: "/tax-deductions/hvac", label: "HVAC Tax Deductions" },
         ],
       },
       {

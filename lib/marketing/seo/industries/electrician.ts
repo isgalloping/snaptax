@@ -18,6 +18,7 @@ export const ELECTRICIAN_SEO_PAGE: IndustrySeoPage = {
     body: "Electricians spend money on tools, equipment, vehicles, and supplies every day.\n\nSnapTax helps you organize receipts, track expenses, and prepare tax-ready reports before tax season.",
     primaryCta: "Start Tracking Expenses Free",
     secondaryCta: "See How SnapTax Works",
+    secondaryHref: "#how-it-works",
     trustItems: [
       "Built for Independent Electricians",
       "Receipt Scanning",
@@ -146,6 +147,15 @@ export const ELECTRICIAN_SEO_PAGE: IndustrySeoPage = {
       },
     ],
   },
+  relatedTrades: {
+    title: "Tax deductions for other trades",
+    links: [
+      {
+        href: "/tax-deductions/hvac",
+        label: "HVAC Tax Deductions",
+      },
+    ],
+  },
   faq: [
     {
       question: "Can electricians deduct tools?",
@@ -177,6 +187,10 @@ export const ELECTRICIAN_SEO_PAGE: IndustrySeoPage = {
   outboundLinks: [
     { href: "/features", label: "SnapTax features" },
     { href: "/faq", label: "FAQ" },
+    {
+      href: "/tax-deductions/hvac",
+      label: "HVAC tax deductions",
+    },
     {
       href: "/blog/how-to-organize-receipts",
       label: "How to organize receipts",

@@ -200,4 +200,13 @@ describe("seo industries registry", () => {
     assert.ok(page);
     assert.notEqual(page.hero.visualLayout, "composite");
   });
+
+  it("plumber uses mockup presentation for UI fidelity", () => {
+    const page = getIndustryBySlug("plumber");
+    assert.ok(page);
+    assert.equal(page.presentation, "mockup");
+    assert.ok(page.problemsClosing);
+    assert.equal(getIndustryBySlug("electrician")?.presentation, undefined);
+    assert.equal(getIndustryBySlug("hvac")?.presentation, undefined);
+  });
 });

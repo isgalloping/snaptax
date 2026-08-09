@@ -2,6 +2,8 @@ export type IndustrySlug = "electrician" | "hvac" | "plumber";
 
 export type IndustrySeoPage = {
   slug: IndustrySlug;
+  /** default when omitted. mockup = Plumber UI-fidelity section variants. */
+  presentation?: "default" | "mockup";
   path: `/tax-deductions/${IndustrySlug}`;
   label: string;
   indexBlurb: string;
@@ -31,6 +33,8 @@ export type IndustrySeoPage = {
   deductionsIntro: string;
   deductionCards: { title: string; body: string; examples: string[] }[];
   problemsTitle: string;
+  /** Optional green closer under problem cards (mockup). */
+  problemsClosing?: string;
   problems: { title: string; body: string; solution: string }[];
   howItWorks: {
     id: "how-it-works";

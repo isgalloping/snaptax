@@ -2,6 +2,7 @@ import type { IndustrySeoPage } from "@/lib/marketing/seo/types";
 
 export const PLUMBER_SEO_PAGE: IndustrySeoPage = {
   slug: "plumber",
+  presentation: "mockup",
   path: "/tax-deductions/plumber",
   label: "Plumber",
   indexBlurb:
@@ -119,6 +120,8 @@ export const PLUMBER_SEO_PAGE: IndustrySeoPage = {
       solution: "Keep a running digital record all year.",
     },
   ],
+  problemsClosing:
+    "SnapTax keeps every plumbing receipt organized and ready for tax time.",
   howItWorks: {
     id: "how-it-works",
     title: "How SnapTax Works for Plumbers",

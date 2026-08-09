@@ -70,16 +70,25 @@ export function HowItWorks({ page }: { page: IndustrySeoPage }) {
         </ol>
 
         {howItWorks.stepsBanner ? (
-          <div
-            className={`${isMockup ? "mt-14" : "mt-12"} overflow-hidden rounded-2xl border border-white/10`}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={howItWorks.stepsBanner.src}
-              alt={howItWorks.stepsBanner.alt}
-              className="mx-auto h-auto w-full max-w-4xl object-contain"
-            />
-          </div>
+          isMockup ? (
+            <div className="mt-14">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={howItWorks.stepsBanner.src}
+                alt={howItWorks.stepsBanner.alt}
+                className="mx-auto h-auto w-full object-contain"
+              />
+            </div>
+          ) : (
+            <div className="mt-12 overflow-hidden rounded-2xl border border-white/10">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={howItWorks.stepsBanner.src}
+                alt={howItWorks.stepsBanner.alt}
+                className="mx-auto h-auto w-full max-w-4xl object-contain"
+              />
+            </div>
+          )
         ) : null}
       </div>
     </section>

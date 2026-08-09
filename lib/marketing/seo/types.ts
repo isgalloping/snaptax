@@ -17,6 +17,11 @@ export type IndustrySeoPage = {
     trustItems: string[];
     workerImage: { src: string; alt: string };
     phoneImage?: { src: string; alt: string };
+    /**
+     * stacked (default when omitted): worker + phone side-by-side.
+     * composite: full-width phoneImage with workerImage as corner overlay.
+     */
+    visualLayout?: "stacked" | "composite";
     ogImage: { src: string; alt: string };
   };
   deductionsTitle: string;

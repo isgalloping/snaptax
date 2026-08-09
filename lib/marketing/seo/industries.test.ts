@@ -133,4 +133,18 @@ describe("seo industries registry", () => {
     assert.ok(page.relatedTrades);
     assert.equal(page.relatedTrades.links[0]?.href, "/tax-deductions/hvac");
   });
+
+  it("hvac uses composite hero visualLayout with phoneImage", () => {
+    const page = getIndustryBySlug("hvac");
+    assert.ok(page);
+    assert.equal(page.hero.visualLayout, "composite");
+    assert.ok(page.hero.phoneImage?.src);
+    assert.match(page.hero.phoneImage.src, /hvac-tax-deductions-snaptax-mobile/);
+  });
+
+  it("electrician keeps default stacked hero (no composite layout)", () => {
+    const page = getIndustryBySlug("electrician");
+    assert.ok(page);
+    assert.notEqual(page.hero.visualLayout, "composite");
+  });
 });

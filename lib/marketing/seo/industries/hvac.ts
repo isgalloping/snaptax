@@ -18,6 +18,7 @@ export const HVAC_SEO_PAGE: IndustrySeoPage = {
     primaryCta: "Track HVAC Expenses",
     secondaryCta: "View Deductions",
     secondaryHref: "#deductions",
+    visualLayout: "composite",
     trustItems: [
       "No forced sign-up",
       "Receipt scanning",

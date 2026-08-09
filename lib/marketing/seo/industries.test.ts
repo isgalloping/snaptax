@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
+import path from "node:path";
 import { describe, it } from "node:test";
+import sharp from "sharp";
 import {
   getIndustryBySlug,
   listPublishedIndustries,
@@ -208,5 +210,16 @@ describe("seo industries registry", () => {
     assert.ok(page.problemsClosing);
     assert.equal(getIndustryBySlug("electrician")?.presentation, undefined);
     assert.equal(getIndustryBySlug("hvac")?.presentation, undefined);
+  });
+
+  it("plumber phone and steps assets have alpha channel", async () => {
+    const root = process.cwd();
+    for (const rel of [
+      "public/marketing/seo/plumber-tax-deductions-snaptax-phone.png",
+      "public/marketing/seo/plumber-tax-deductions-snaptax-steps.png",
+    ]) {
+      const meta = await sharp(path.join(root, rel)).metadata();
+      assert.equal(meta.hasAlpha, true, `${rel} must have alpha`);
+    }
   });
 });

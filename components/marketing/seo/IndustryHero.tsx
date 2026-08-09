@@ -120,7 +120,7 @@ export function IndustryHero({ page }: { page: IndustrySeoPage }) {
             industryHref={page.path}
           />
 
-          <div className="mt-8 grid items-center gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.85fr)_minmax(0,0.95fr)] lg:gap-8">
+          <div className="mt-8 grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)_minmax(0,0.95fr)] lg:gap-8">
             <div className="min-w-0">
               <p
                 className="inline-block rounded-full border px-4 py-1.5 text-sm font-bold sm:text-base"
@@ -173,12 +173,12 @@ export function IndustryHero({ page }: { page: IndustrySeoPage }) {
               </div>
             </div>
 
-            <div className="mx-auto w-full max-w-[16rem]">
+            <div className="mx-auto w-full max-w-[22rem] lg:max-w-none">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={phoneImage.src}
                 alt={phoneImage.alt}
-                className="h-auto w-full rounded-[1.35rem] border border-white/10 shadow-2xl"
+                className="h-auto w-full"
               />
             </div>
 

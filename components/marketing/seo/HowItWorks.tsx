@@ -27,6 +27,7 @@ function StepArrow() {
 
 export function HowItWorks({ page }: { page: IndustrySeoPage }) {
   const { howItWorks } = page;
+  const isMockup = page.presentation === "mockup";
 
   return (
     <section
@@ -34,7 +35,13 @@ export function HowItWorks({ page }: { page: IndustrySeoPage }) {
       className="scroll-mt-24 border-t border-white/10"
     >
       <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-        <h2 className="text-center text-2xl font-black text-white sm:text-3xl">
+        <h2
+          className={
+            isMockup
+              ? "text-center text-2xl font-black text-white sm:text-3xl"
+              : "text-2xl font-black text-white sm:text-3xl"
+          }
+        >
           {howItWorks.title}
         </h2>
 
@@ -61,6 +68,28 @@ export function HowItWorks({ page }: { page: IndustrySeoPage }) {
             </Fragment>
           ))}
         </ol>
+
+        {howItWorks.stepsBanner ? (
+          isMockup ? (
+            <div className="mt-14">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={howItWorks.stepsBanner.src}
+                alt={howItWorks.stepsBanner.alt}
+                className="mx-auto h-auto w-full object-contain"
+              />
+            </div>
+          ) : (
+            <div className="mt-12 overflow-hidden rounded-2xl border border-white/10">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={howItWorks.stepsBanner.src}
+                alt={howItWorks.stepsBanner.alt}
+                className="mx-auto h-auto w-full max-w-4xl object-contain"
+              />
+            </div>
+          )
+        ) : null}
       </div>
     </section>
   );

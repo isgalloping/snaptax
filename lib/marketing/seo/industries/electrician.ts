@@ -150,10 +150,8 @@ export const ELECTRICIAN_SEO_PAGE: IndustrySeoPage = {
   relatedTrades: {
     title: "Tax deductions for other trades",
     links: [
-      {
-        href: "/tax-deductions/hvac",
-        label: "HVAC Tax Deductions",
-      },
+      { href: "/tax-deductions/hvac", label: "HVAC Tax Deductions" },
+      { href: "/tax-deductions/plumber", label: "Plumber Tax Deductions" },
     ],
   },
   faq: [
@@ -190,6 +188,10 @@ export const ELECTRICIAN_SEO_PAGE: IndustrySeoPage = {
     {
       href: "/tax-deductions/hvac",
       label: "HVAC tax deductions",
+    },
+    {
+      href: "/tax-deductions/plumber",
+      label: "Plumber tax deductions",
     },
     {
       href: "/blog/how-to-organize-receipts",

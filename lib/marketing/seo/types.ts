@@ -1,4 +1,4 @@
-export type IndustrySlug = "electrician" | "hvac";
+export type IndustrySlug = "electrician" | "hvac" | "plumber";
 
 export type IndustrySeoPage = {
   slug: IndustrySlug;
@@ -20,8 +20,11 @@ export type IndustrySeoPage = {
     /**
      * stacked (default when omitted): worker + phone side-by-side.
      * composite: full-width phoneImage with workerImage as corner overlay.
+     * spotlight: copy | phone | worker+highlights (Plumber UI).
      */
-    visualLayout?: "stacked" | "composite";
+    visualLayout?: "stacked" | "composite" | "spotlight";
+    /** Right-column highlight rows for spotlight layout. */
+    highlights?: { title: string; body: string }[];
     ogImage: { src: string; alt: string };
   };
   deductionsTitle: string;
@@ -33,6 +36,8 @@ export type IndustrySeoPage = {
     id: "how-it-works";
     title: string;
     steps: { title: string; body: string }[];
+    /** Optional three-phone (or similar) banner under steps. */
+    stepsBanner?: { src: string; alt: string };
   };
   examplesTitle: string;
   examplesCategoryHeader: string;

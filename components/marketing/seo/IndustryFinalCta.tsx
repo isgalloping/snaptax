@@ -4,10 +4,25 @@ import { MARKETING_TOKENS } from "@/lib/marketing/tokens";
 
 export function IndustryFinalCta({ page }: { page: IndustrySeoPage }) {
   const { finalCta } = page;
+  const backgroundImage = finalCta.backgroundImage;
 
   return (
-    <section className="border-t border-white/10 bg-black/20">
-      <div className="mx-auto max-w-6xl px-4 py-16 text-center sm:px-6">
+    <section
+      className={`relative overflow-hidden border-t border-white/10 ${backgroundImage ? "" : "bg-black/20"}`}
+    >
+      {backgroundImage ? (
+        <>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={backgroundImage.src}
+            alt={backgroundImage.alt}
+            className="absolute inset-0 h-full w-full object-cover"
+            aria-hidden={!backgroundImage.alt}
+          />
+          <div className="absolute inset-0 bg-black/70" aria-hidden />
+        </>
+      ) : null}
+      <div className="relative mx-auto max-w-6xl px-4 py-16 text-center sm:px-6">
         <h2 className="text-2xl font-black text-white sm:text-3xl">
           {finalCta.title}
         </h2>

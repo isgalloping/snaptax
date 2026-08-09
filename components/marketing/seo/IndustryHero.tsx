@@ -6,7 +6,8 @@ import type { IndustrySeoPage } from "@/lib/marketing/seo/types";
 import { MARKETING_TOKENS } from "@/lib/marketing/tokens";
 
 export function IndustryHero({ page }: { page: IndustrySeoPage }) {
-  const phone = MARKETING_HERO_SCREENS[0];
+  const defaultPhone = MARKETING_HERO_SCREENS[0];
+  const phoneImage = page.hero.phoneImage;
 
   return (
     <section className="border-b border-white/10">
@@ -39,7 +40,7 @@ export function IndustryHero({ page }: { page: IndustrySeoPage }) {
                 {page.hero.primaryCta}
               </MarketingAppLink>
               <a
-                href={`#${page.howItWorks.id}`}
+                href={page.hero.secondaryHref}
                 className="inline-flex min-h-12 shrink-0 items-center justify-center whitespace-nowrap rounded-xl border border-white/25 px-5 text-sm font-bold text-white transition-colors hover:border-white/50 active:scale-95 sm:min-h-14 sm:px-6 sm:text-base"
               >
                 {page.hero.secondaryCta}
@@ -81,14 +82,23 @@ export function IndustryHero({ page }: { page: IndustrySeoPage }) {
                 style={{ backgroundColor: MARKETING_TOKENS.accentGreen }}
                 aria-hidden
               />
-              <Image
-                src={phone.src}
-                alt={phone.alt}
-                width={phone.width}
-                height={phone.height}
-                priority
-                className="relative h-auto w-full rounded-[1.35rem] border border-white/10 shadow-2xl"
-              />
+              {phoneImage ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={phoneImage.src}
+                  alt={phoneImage.alt}
+                  className="relative h-auto w-full rounded-[1.35rem] border border-white/10 shadow-2xl"
+                />
+              ) : (
+                <Image
+                  src={defaultPhone.src}
+                  alt={defaultPhone.alt}
+                  width={defaultPhone.width}
+                  height={defaultPhone.height}
+                  priority
+                  className="relative h-auto w-full rounded-[1.35rem] border border-white/10 shadow-2xl"
+                />
+              )}
             </div>
           </div>
         </div>

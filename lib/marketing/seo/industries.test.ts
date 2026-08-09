@@ -30,7 +30,7 @@ describe("seo industries registry", () => {
     assert.equal(page.hero.secondaryHref, "#deductions");
     assert.equal(page.deductionCards.length, 8);
     assert.equal(page.howItWorks.steps.length, 3);
-    assert.equal(page.faq.length, 6);
+    assert.equal(page.faq.length, 7);
     assert.equal(page.examples.length, 0);
     assert.ok(page.checklist);
     assert.ok(page.checklist.items.length >= 8);
@@ -316,12 +316,59 @@ describe("seo industries registry", () => {
     }
   });
 
-  it("hvac uses composite hero visualLayout with phoneImage", () => {
+  it("loads hvac with mockup spotlight, UI H1, and honesty locks", () => {
     const page = getIndustryBySlug("hvac");
     assert.ok(page);
-    assert.equal(page.hero.visualLayout, "composite");
-    assert.ok(page.hero.phoneImage?.src);
-    assert.match(page.hero.phoneImage.src, /hvac-tax-deductions-snaptax-mobile/);
+    assert.equal(
+      page.seo.title,
+      "HVAC Tax Deductions: Expense Guide for Contractors | SnapTax",
+    );
+    assert.equal(page.hero.h1, "HVAC tax deductions, organized.");
+    assert.equal(page.presentation, "mockup");
+    assert.equal(page.hero.visualLayout, "spotlight");
+    assert.equal(page.hero.secondaryHref, "#deductions");
+    assert.equal(page.hero.highlights?.length, 4);
+    assert.equal(page.deductionCards.length, 8);
+    assert.equal(page.howItWorks.steps.length, 3);
+    assert.ok(page.howItWorks.stepsBanner?.src);
+    assert.match(
+      page.howItWorks.stepsBanner.src,
+      /hvac-tax-deductions-snaptax-steps/,
+    );
+    assert.match(page.hero.phoneImage!.src, /hvac-tax-deductions-snaptax-phone/);
+    assert.equal(page.faq.length, 7);
+    assert.equal(page.examples.length, 0);
+    assert.equal(page.builtFor.features.length, 5);
+    assert.ok(page.checklist);
+    assert.ok(page.problemsClosing);
+  });
+
+  it("hvac product copy avoids Smart HVAC Categories", () => {
+    const page = getIndustryBySlug("hvac");
+    assert.ok(page);
+    const blob = [
+      page.hero.trustItems.join(" "),
+      ...page.howItWorks.steps.map((s) => s.body),
+      ...page.builtFor.features.map((f) => `${f.title} ${f.body}`),
+      page.productCategoryNote,
+    ].join(" ");
+    assert.doesNotMatch(blob, /Smart HVAC Categories/i);
+    assert.match(
+      page.hero.trustItems.join(" "),
+      /Organize expenses by category/i,
+    );
+    assert.equal(page.builtFor.features[1]?.title, "Expense categories");
+  });
+
+  it("hvac phone and steps assets have alpha channel", async () => {
+    const root = process.cwd();
+    for (const rel of [
+      "public/marketing/seo/hvac-tax-deductions-snaptax-phone.png",
+      "public/marketing/seo/hvac-tax-deductions-snaptax-steps.png",
+    ]) {
+      const meta = await sharp(path.join(root, rel)).metadata();
+      assert.equal(meta.hasAlpha, true, `${rel} must have alpha`);
+    }
   });
 
   it("electrician keeps default stacked hero (no composite layout)", () => {
@@ -336,7 +383,7 @@ describe("seo industries registry", () => {
     assert.equal(page.presentation, "mockup");
     assert.ok(page.problemsClosing);
     assert.equal(getIndustryBySlug("electrician")?.presentation, undefined);
-    assert.equal(getIndustryBySlug("hvac")?.presentation, undefined);
+    assert.equal(getIndustryBySlug("hvac")?.presentation, "mockup");
   });
 
   it("plumber phone and steps assets have alpha channel", async () => {

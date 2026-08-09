@@ -210,6 +210,12 @@ export const FR_FR_COPY: UserCopy = {
         paused: "EN PAUSE",
       },
     },
+    incomeCapture: {
+      phase1Scanning: "{form} added · Scanning…",
+      phase2SuccessWithPayer: "{form} · {amount} from {payer}",
+      phase2SuccessAmountOnly: "{form} · {amount} saved",
+      phase2Blurry: "Couldn't read {form} — tap to resnap",
+    },
     trustBar: {
       message: "Vos reçus restent privés sauf si vous les partagez.",
       learnMore: "En savoir plus",

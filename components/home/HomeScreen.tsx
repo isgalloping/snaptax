@@ -29,6 +29,16 @@ import {
   duplicateNoticeCopy,
   scrollReceiptIntoView,
 } from "@/lib/client/duplicateReceiptNotice";
+import {
+  incomeCapturePhase1Message,
+  incomeCapturePhase2BlurryMessage,
+  incomeCapturePhase2SuccessMessage,
+} from "@/lib/client/incomeCaptureFeedback";
+import {
+  clearPendingIncomeCapture,
+  peekPendingIncomeCapture,
+  type IncomeCaptureKind,
+} from "@/lib/export/incomeCapture";
 import { shouldSubmitLateOcrDraft } from "@/lib/client/lateOcrDraftSync";
 import { prepareReceiptCapture } from "@/lib/client/prepareReceiptCapture";
 import { isClientReceiptDeleteAllowed } from "@/lib/client/receiptDeletePolicy";
@@ -225,9 +235,11 @@ export function HomeScreen() {
   const [listFilter, setListFilter] = useState<ReceiptListFilter>("all");
   const [syncStuckIds, setSyncStuckIds] = useState<Set<string>>(() => new Set());
   const [receiptNotice, setReceiptNotice] = useState<string | null>(null);
+  const [receiptNoticeKey, setReceiptNoticeKey] = useState(0);
   const [highlightReceiptId, setHighlightReceiptId] = useState<string | null>(
     null,
   );
+  const [forceIncomeSingleCapture, setForceIncomeSingleCapture] = useState(false);
   const [seasonExportTick, setSeasonExportTick] = useState(0);
   const [homeOverlay, setHomeOverlay] = useState<HomeOverlay>(null);
   const [uploadReauthSheet, setUploadReauthSheet] = useState(false);
@@ -271,6 +283,13 @@ export function HomeScreen() {
   const receiptsRef = useRef<Receipt[]>([]);
   const cameraOpenRef = useRef(false);
   const cameraReturnViewRef = useRef<CameraReturnView | null>(null);
+  const incomeCaptureIntentRef = useRef<IncomeCaptureKind | null>(null);
+  const incomeCaptureSourceRef = useRef<CameraReturnView>("home");
+  const incomeCaptureCompletedRef = useRef(false);
+  const pendingIncomeFeedbackRef = useRef<{
+    receiptId: string;
+    kind: IncomeCaptureKind;
+  } | null>(null);
   const pendingMergeRef = useRef<{
     receipts: Receipt[];
   } | null>(null);
@@ -426,7 +445,13 @@ export function HomeScreen() {
   }, [cameraOpen]);
 
   const openIncomeCapture = useCallback((returnView: CameraReturnView) => {
+    const kind = peekPendingIncomeCapture();
+    if (!kind) return;
+    incomeCaptureIntentRef.current = kind;
+    incomeCaptureSourceRef.current = returnView;
+    incomeCaptureCompletedRef.current = false;
     cameraReturnViewRef.current = returnView;
+    setForceIncomeSingleCapture(true);
     setView("home");
     deferAfterPaint(() => {
       snapButtonRef.current?.openCamera();
@@ -436,11 +461,24 @@ export function HomeScreen() {
   const handleCameraOpenChange = useCallback((open: boolean) => {
     setCameraOpen(open);
     if (open) return;
+
+    const completed = incomeCaptureCompletedRef.current;
+    const source = incomeCaptureSourceRef.current;
     const returnView = cameraReturnViewRef.current;
+
+    incomeCaptureIntentRef.current = null;
+    incomeCaptureCompletedRef.current = false;
     cameraReturnViewRef.current = null;
-    const nextView = viewAfterCameraClose(returnView);
+    incomeCaptureSourceRef.current = "home";
+    setForceIncomeSingleCapture(false);
+
+    const nextView = completed
+      ? "home"
+      : viewAfterCameraClose(returnView ?? source);
     if (nextView === "settings") {
       setView("settings");
+    } else {
+      setView("home");
     }
   }, []);
 
@@ -671,7 +709,53 @@ export function HomeScreen() {
     if (!receiptNotice) return;
     const timer = window.setTimeout(() => setReceiptNotice(null), 4000);
     return () => window.clearTimeout(timer);
-  }, [receiptNotice]);
+  }, [receiptNotice, receiptNoticeKey]);
+
+  const highlightReceipt = useCallback((receiptId: string) => {
+    setHighlightReceiptId(receiptId);
+    window.setTimeout(() => setHighlightReceiptId(null), DUPLICATE_HIGHLIGHT_MS);
+    requestAnimationFrame(() => scrollReceiptIntoView(receiptId));
+  }, []);
+
+  const showIncomeCapturePhase1 = useCallback(
+    (receiptId: string, kind: IncomeCaptureKind) => {
+      pendingIncomeFeedbackRef.current = { receiptId, kind };
+      setReceiptNotice(incomeCapturePhase1Message(kind, copy.home.incomeCapture));
+      setReceiptNoticeKey((key) => key + 1);
+      highlightReceipt(receiptId);
+    },
+    [copy.home.incomeCapture, highlightReceipt],
+  );
+
+  useEffect(() => {
+    const pending = pendingIncomeFeedbackRef.current;
+    if (!pending) return;
+
+    const receipt = receipts.find((r) => r.id === pending.receiptId);
+    if (!receipt) return;
+
+    if (receipt.status === "blurry") {
+      pendingIncomeFeedbackRef.current = null;
+      setReceiptNotice(
+        incomeCapturePhase2BlurryMessage(pending.kind, copy.home.incomeCapture),
+      );
+      setReceiptNoticeKey((key) => key + 1);
+      highlightReceipt(receipt.id);
+      return;
+    }
+
+    const successMessage = incomeCapturePhase2SuccessMessage(
+      receipt,
+      pending.kind,
+      copy.home.incomeCapture,
+    );
+    if (successMessage) {
+      pendingIncomeFeedbackRef.current = null;
+      setReceiptNotice(successMessage);
+      setReceiptNoticeKey((key) => key + 1);
+      highlightReceipt(receipt.id);
+    }
+  }, [receipts, copy.home.incomeCapture, highlightReceipt]);
 
   const persistUploadedReceipt = useCallback(
     async (prior: StoredReceipt, uploaded: ApiReceipt) => {
@@ -701,11 +785,10 @@ export function HomeScreen() {
   const showDuplicateReceiptNotice = useCallback(
     (existingReceiptId: string, matchType: "exact" | "similar") => {
       setReceiptNotice(duplicateNoticeCopy(copy.home.receiptList, matchType));
-      setHighlightReceiptId(existingReceiptId);
-      window.setTimeout(() => setHighlightReceiptId(null), DUPLICATE_HIGHLIGHT_MS);
-      requestAnimationFrame(() => scrollReceiptIntoView(existingReceiptId));
+      setReceiptNoticeKey((key) => key + 1);
+      highlightReceipt(existingReceiptId);
     },
-    [copy.home.receiptList],
+    [copy.home.receiptList, highlightReceipt],
   );
 
   const handleDuplicateUpload = useCallback(
@@ -1651,17 +1734,40 @@ export function HomeScreen() {
       const replaceId = resnapId;
       setResnapId(null);
 
-      const result = await prepareReceiptCapture(file, { replaceId });
+      const incomeKind = incomeCaptureIntentRef.current;
+      const markIncomeCaptureComplete = () => {
+        if (!incomeKind) return;
+        incomeCaptureCompletedRef.current = true;
+        cameraReturnViewRef.current = "home";
+      };
+
+      const result = await prepareReceiptCapture(file, {
+        replaceId,
+        captureKind: incomeKind ?? undefined,
+      });
+
+      if (incomeKind) {
+        clearPendingIncomeCapture();
+      }
+
       if (result.kind === "duplicate") {
+        markIncomeCaptureComplete();
         showDuplicateReceiptNotice(result.existingReceiptId, "exact");
         return;
       }
 
       const { receipt: processingReceipt } = result;
+
       setReceipts((prev) => {
         const without = replaceId ? prev.filter((r) => r.id !== replaceId) : prev;
         return top100ByUpdatedAt([processingReceipt, ...without]);
       });
+
+      if (incomeKind) {
+        markIncomeCaptureComplete();
+        showIncomeCapturePhase1(processingReceipt.id, incomeKind);
+      }
+
       scheduleOcrJob(processingReceipt.id);
 
       if (navigator.onLine) {
@@ -1696,7 +1802,7 @@ export function HomeScreen() {
         });
       }
     },
-    [resnapId, showDuplicateReceiptNotice],
+    [resnapId, showDuplicateReceiptNotice, showIncomeCapturePhase1],
   );
 
   const handleResnap = useCallback((id: string) => {
@@ -1832,6 +1938,7 @@ export function HomeScreen() {
             syncing={listSyncing}
             syncDisabled={!isOnline}
             onSnapIntent={handleSnapIntent}
+            forceSingleCapture={forceIncomeSingleCapture}
           />
         </div>
       </div>

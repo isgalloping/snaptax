@@ -39,8 +39,6 @@ import {
 import { PostDownloadGuide } from "@/components/export/PostDownloadGuide";
 import { countLocalExportReceiptsInTaxYear } from "@/lib/export/countLocalExportReceipts";
 import { buildLocalTurboTaxCsv } from "@/lib/export/buildLocalTurboTaxCsv";
-import { setPendingIncomeCapture } from "@/lib/export/incomeCapture";
-import type { IncomeCaptureKind } from "@/lib/export/incomeCapture";
 import { ExportCategoryReview } from "@/components/export/ExportCategoryReview";
 import { resolveExportDataRegion } from "@/lib/tax/resolveExportDataRegion";
 import type { TaxRegion } from "@/lib/tax/types";
@@ -57,7 +55,6 @@ interface ExportEngineSheetProps {
   onExported?: () => void | Promise<void>;
   onPaymentRequired?: () => void;
   onReceiptUpdated?: (receipt: Receipt) => void;
-  onSnap1099?: (kind: IncomeCaptureKind) => void;
 }
 
 const PROGRESS_TICK_MS = 16;
@@ -73,7 +70,6 @@ export function ExportEngineSheet({
   onExported,
   onPaymentRequired,
   onReceiptUpdated,
-  onSnap1099,
 }: ExportEngineSheetProps) {
   const { copy } = useI18n();
   const t = copy.exportEngine;
@@ -664,39 +660,6 @@ export function ExportEngineSheet({
                   {t.formatQboHint}
                 </p>
               </button>
-            </div>
-
-            <div className="mt-4 rounded-xl border-2 border-zinc-700 bg-zinc-950 p-4">
-              <p className="text-xs font-black uppercase tracking-wider text-yellow-400">
-                {t.snap1099Title}
-              </p>
-              <p className="mt-2 text-xs leading-relaxed text-zinc-400">
-                {t.snap1099Hint}
-              </p>
-              <div className="mt-4 grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPendingIncomeCapture("1099-NEC");
-                    onClose();
-                    onSnap1099?.("1099-NEC");
-                  }}
-                  className="min-h-12 rounded-lg border-2 border-yellow-500 bg-yellow-950 py-3 text-[11px] font-black uppercase tracking-wider text-yellow-400 transition-transform active:scale-95"
-                >
-                  {t.snap1099NecButton}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPendingIncomeCapture("1099-K");
-                    onClose();
-                    onSnap1099?.("1099-K");
-                  }}
-                  className="min-h-12 rounded-lg border-2 border-zinc-600 bg-zinc-800 py-3 text-[11px] font-black uppercase tracking-wider text-white transition-transform active:scale-95"
-                >
-                  {t.snap1099KButton}
-                </button>
-              </div>
             </div>
 
             {format === "csv" && (

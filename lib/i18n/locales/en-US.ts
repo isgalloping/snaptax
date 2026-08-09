@@ -943,11 +943,6 @@ export const EN_US_COPY: UserCopy = {
       formatQboTitle: "QuickBooks Online",
       formatQboHint:
         "Import as bank feed in QuickBooks Online (.qbo Web Connect).",
-      snap1099Title: "1099 income forms",
-      snap1099Hint:
-        "Snap 1099-NEC / 1099-K — included in Audit Pack under 01_Income_Documents.",
-      snap1099NecButton: "1099-NEC →",
-      snap1099KButton: "1099-K →",
       incomeFormsLabel: "{count} income forms (1099)",
       turboTaxSteps: [
         "Open TurboTax Self-Employed → Business",

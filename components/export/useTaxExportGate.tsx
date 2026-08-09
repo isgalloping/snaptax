@@ -21,7 +21,6 @@ import {
 } from "@/lib/tax/exportGate";
 import { markExportBlockedBanner } from "@/lib/settings/exportSampleState";
 import { markSeasonExportDone } from "@/lib/settings/seasonExportState";
-import type { IncomeCaptureKind } from "@/lib/export/incomeCapture";
 import type { ExportFormat } from "@/lib/export/exportFilenames";
 import type { TaxRegion } from "@/lib/tax/types";
 
@@ -42,7 +41,6 @@ interface UseTaxExportGateOptions {
   onPreExportPrepare?: (format: ExportFormat) => Promise<Receipt[] | void>;
   onPostExportSync?: () => Promise<void>;
   onReceiptUpdated?: (receipt: Receipt) => void;
-  onSnap1099?: (kind: IncomeCaptureKind) => void;
   onExportPaymentComplete?: () => void;
 }
 
@@ -59,7 +57,6 @@ export function useTaxExportGate({
   onPreExportPrepare,
   onPostExportSync,
   onReceiptUpdated,
-  onSnap1099,
   onExportPaymentComplete,
 }: UseTaxExportGateOptions) {
   const { copy } = useI18n();
@@ -279,10 +276,6 @@ export function useTaxExportGate({
             setShowPaywall(true);
           }}
           onReceiptUpdated={handleExportReceiptUpdated}
-          onSnap1099={(kind) => {
-            setShowExportSheet(false);
-            onSnap1099?.(kind);
-          }}
         />
       )}
     </>

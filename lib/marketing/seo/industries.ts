@@ -1,5 +1,6 @@
 import { ELECTRICIAN_SEO_PAGE } from "@/lib/marketing/seo/industries/electrician";
 import { HVAC_SEO_PAGE } from "@/lib/marketing/seo/industries/hvac";
+import { LANDSCAPER_SEO_PAGE } from "@/lib/marketing/seo/industries/landscaper";
 import { PLUMBER_SEO_PAGE } from "@/lib/marketing/seo/industries/plumber";
 import { ROOFER_SEO_PAGE } from "@/lib/marketing/seo/industries/roofer";
 import type { IndustrySeoPage, IndustrySlug } from "@/lib/marketing/seo/types";
@@ -9,6 +10,7 @@ const PUBLISHED: readonly IndustrySeoPage[] = [
   HVAC_SEO_PAGE,
   PLUMBER_SEO_PAGE,
   ROOFER_SEO_PAGE,
+  LANDSCAPER_SEO_PAGE,
 ];
 
 export function listPublishedIndustries(): readonly IndustrySeoPage[] {

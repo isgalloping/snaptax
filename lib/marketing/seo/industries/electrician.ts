@@ -153,6 +153,7 @@ export const ELECTRICIAN_SEO_PAGE: IndustrySeoPage = {
       { href: "/tax-deductions/hvac", label: "HVAC Tax Deductions" },
       { href: "/tax-deductions/plumber", label: "Plumber Tax Deductions" },
       { href: "/tax-deductions/roofer", label: "Roofer Tax Deductions" },
+      { href: "/tax-deductions/landscaper", label: "Landscaper Tax Deductions" },
     ],
   },
   faq: [
@@ -197,6 +198,10 @@ export const ELECTRICIAN_SEO_PAGE: IndustrySeoPage = {
     {
       href: "/tax-deductions/roofer",
       label: "Roofer tax deductions",
+    },
+    {
+      href: "/tax-deductions/landscaper",
+      label: "Landscaper tax deductions",
     },
     {
       href: "/blog/how-to-organize-receipts",

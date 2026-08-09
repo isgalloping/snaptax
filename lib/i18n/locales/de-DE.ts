@@ -210,6 +210,12 @@ export const DE_DE_COPY: UserCopy = {
         paused: "PAUSIERT",
       },
     },
+    incomeCapture: {
+      phase1Scanning: "{form} added · Scanning…",
+      phase2SuccessWithPayer: "{form} · {amount} from {payer}",
+      phase2SuccessAmountOnly: "{form} · {amount} saved",
+      phase2Blurry: "Couldn't read {form} — tap to resnap",
+    },
     trustBar: {
       message: "Ihre Belege bleiben privat, sofern Sie sie nicht teilen.",
       learnMore: "Mehr erfahren",

@@ -8,6 +8,7 @@ import {
   saveReceipt,
   type StoredReceipt,
 } from "@/lib/storage/receiptDb";
+import type { IncomeCaptureKind } from "@/lib/export/incomeCapture";
 import { utcNow } from "@/lib/time/utc";
 
 export type CapturePrepareResult =
@@ -16,7 +17,11 @@ export type CapturePrepareResult =
 
 export async function prepareReceiptCapture(
   file: File,
-  options?: { replaceId?: string | null; skipSave?: boolean },
+  options?: {
+    replaceId?: string | null;
+    skipSave?: boolean;
+    captureKind?: IncomeCaptureKind;
+  },
 ): Promise<CapturePrepareResult> {
   const { blob, width, height, contentSha256 } =
     await compressReceiptImageWithFingerprint(file);
@@ -43,6 +48,7 @@ export async function prepareReceiptCapture(
     updatedAt: snapAt,
     pendingUpload: true,
     contentSha256,
+    ...(options?.captureKind ? { captureKind: options.captureKind } : {}),
   });
 
   if (!options?.skipSave) {

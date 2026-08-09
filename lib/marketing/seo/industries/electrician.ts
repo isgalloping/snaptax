@@ -188,6 +188,10 @@ export const ELECTRICIAN_SEO_PAGE: IndustrySeoPage = {
     { href: "/features", label: "SnapTax features" },
     { href: "/faq", label: "FAQ" },
     {
+      href: "/tax-deductions/hvac",
+      label: "HVAC tax deductions",
+    },
+    {
       href: "/blog/how-to-organize-receipts",
       label: "How to organize receipts",
     },

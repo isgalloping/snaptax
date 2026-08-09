@@ -15,6 +15,29 @@ export type CapturePrepareResult =
   | { kind: "duplicate"; existingReceiptId: string }
   | { kind: "created"; receipt: StoredReceipt };
 
+export function buildPreparedProcessingReceipt({
+  id,
+  contentSha256,
+  snappedAt,
+  captureKind,
+}: {
+  id: string;
+  contentSha256: string;
+  snappedAt: Date;
+  captureKind?: IncomeCaptureKind;
+}): StoredReceipt {
+  return withFreshBudget({
+    id,
+    status: "processing",
+    merchant: "Scanning",
+    timestamp: snappedAt,
+    updatedAt: snappedAt,
+    pendingUpload: true,
+    contentSha256,
+    ...(captureKind ? { captureKind } : {}),
+  });
+}
+
 export async function prepareReceiptCapture(
   file: File,
   options?: {
@@ -40,15 +63,11 @@ export async function prepareReceiptCapture(
 
   const id = excludeId ?? crypto.randomUUID();
   const snapAt = utcNow();
-  const receipt: StoredReceipt = withFreshBudget({
+  const receipt = buildPreparedProcessingReceipt({
     id,
-    status: "processing",
-    merchant: "Scanning",
-    timestamp: snapAt,
-    updatedAt: snapAt,
-    pendingUpload: true,
     contentSha256,
-    ...(options?.captureKind ? { captureKind: options.captureKind } : {}),
+    snappedAt: snapAt,
+    captureKind: options?.captureKind,
   });
 
   if (!options?.skipSave) {

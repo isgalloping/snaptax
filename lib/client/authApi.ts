@@ -127,13 +127,13 @@ export async function fetchSeasonPaid(season: string): Promise<boolean> {
 
 export async function pollTaxRecalc(
   taxRecalcQueued: number,
-  onTick?: () => void,
+  onTick?: () => void | Promise<void>,
 ): Promise<void> {
   if (taxRecalcQueued <= 0) return;
   for (let i = 0; i < 60; i++) {
     await new Promise((r) => setTimeout(r, 2000));
     await fetchReceiptList();
-    onTick?.();
+    await onTick?.();
   }
 }
 

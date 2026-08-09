@@ -21,7 +21,6 @@ import {
 } from "@/lib/tax/exportGate";
 import { markExportBlockedBanner } from "@/lib/settings/exportSampleState";
 import { markSeasonExportDone } from "@/lib/settings/seasonExportState";
-import type { IncomeCaptureKind } from "@/lib/export/incomeCapture";
 import type { ExportFormat } from "@/lib/export/exportFilenames";
 import type { TaxRegion } from "@/lib/tax/types";
 
@@ -35,12 +34,13 @@ interface UseTaxExportGateOptions {
   onPostLoginSync?: (taxRecalcQueued: number) => Promise<void>;
   refreshSeasonPaid?: () => Promise<void>;
   /** Gate open: flush + local IDB (default path for local-first export). */
-  onExportGatePrepare?: () => Promise<Receipt[] | void>;
+  onExportGatePrepare?: (opts?: {
+    forceSignedIn?: boolean;
+  }) => Promise<Receipt[] | void>;
   /** Generate step: format-aware prep before building the pack. */
   onPreExportPrepare?: (format: ExportFormat) => Promise<Receipt[] | void>;
   onPostExportSync?: () => Promise<void>;
   onReceiptUpdated?: (receipt: Receipt) => void;
-  onSnap1099?: (kind: IncomeCaptureKind) => void;
   onExportPaymentComplete?: () => void;
 }
 
@@ -57,7 +57,6 @@ export function useTaxExportGate({
   onPreExportPrepare,
   onPostExportSync,
   onReceiptUpdated,
-  onSnap1099,
   onExportPaymentComplete,
 }: UseTaxExportGateOptions) {
   const { copy } = useI18n();
@@ -116,9 +115,11 @@ export function useTaxExportGate({
     return paid;
   };
 
-  const prepareExportReceipts = async (): Promise<Receipt[] | undefined> => {
+  const prepareExportReceipts = async (opts?: {
+    forceSignedIn?: boolean;
+  }): Promise<Receipt[] | undefined> => {
     if (onExportGatePrepare) {
-      return (await onExportGatePrepare()) ?? undefined;
+      return (await onExportGatePrepare(opts)) ?? undefined;
     }
     if (onPreExportPrepare) {
       return (await onPreExportPrepare("csv")) ?? undefined;
@@ -126,11 +127,16 @@ export function useTaxExportGate({
     return undefined;
   };
 
-  const finishExportGate = async (prepared?: Receipt[] | void) => {
+  const finishExportGate = async (
+    prepared?: Receipt[] | void,
+    opts?: { forceGoogleUserPresent?: boolean },
+  ) => {
+    const googleUserPresent =
+      opts?.forceGoogleUserPresent === true || Boolean(googleUser);
     const preAuthDecision = resolveTaxExportGateAction({
       receipts: exportableReceipts,
       preparedReceipts: prepared,
-      googleUserPresent: Boolean(googleUser),
+      googleUserPresent,
       seasonPaid: false,
     });
     if (preAuthDecision.kind === "empty") {
@@ -201,8 +207,8 @@ export function useTaxExportGate({
     await onPostLoginSync?.(result.taxRecalcQueued);
     setGoogleSheet(null);
     await runPrepareWithLoading(async () => {
-      const prepared = await prepareExportReceipts();
-      await finishExportGate(prepared);
+      const prepared = await prepareExportReceipts({ forceSignedIn: true });
+      await finishExportGate(prepared, { forceGoogleUserPresent: true });
     });
   };
 
@@ -270,10 +276,6 @@ export function useTaxExportGate({
             setShowPaywall(true);
           }}
           onReceiptUpdated={handleExportReceiptUpdated}
-          onSnap1099={(kind) => {
-            setShowExportSheet(false);
-            onSnap1099?.(kind);
-          }}
         />
       )}
     </>

@@ -22,7 +22,7 @@ export function IndustrySeoPageView({ page }: { page: IndustrySeoPage }) {
       {page.checklist ? <RecordkeepingChecklist page={page} /> : null}
       <BuiltForBand page={page} />
       {page.examples.length > 0 ? <ExpenseExamples page={page} /> : null}
-      <IndustryFaq items={page.faq} />
+      <IndustryFaq items={page.faq} presentation={page.presentation} />
       <IndustryFinalCta page={page} />
       {page.relatedTrades ? (
         <RelatedTrades relatedTrades={page.relatedTrades} />

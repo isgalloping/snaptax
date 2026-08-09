@@ -5,6 +5,8 @@ import { MARKETING_TOKENS } from "@/lib/marketing/tokens";
 export function IndustryFinalCta({ page }: { page: IndustrySeoPage }) {
   const { finalCta } = page;
   const backgroundImage = finalCta.backgroundImage;
+  const isMockup = page.presentation === "mockup";
+  const mockupHero = isMockup && backgroundImage;
 
   return (
     <section
@@ -22,7 +24,9 @@ export function IndustryFinalCta({ page }: { page: IndustrySeoPage }) {
           <div className="absolute inset-0 bg-black/70" aria-hidden />
         </>
       ) : null}
-      <div className="relative mx-auto max-w-6xl px-4 py-16 text-center sm:px-6">
+      <div
+        className={`relative mx-auto max-w-6xl px-4 py-16 text-center sm:px-6${mockupHero ? " z-10" : ""}`}
+      >
         <h2 className="text-2xl font-black text-white sm:text-3xl">
           {finalCta.title}
         </h2>

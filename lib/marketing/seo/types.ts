@@ -1,4 +1,9 @@
-export type IndustrySlug = "electrician" | "hvac" | "plumber" | "roofer";
+export type IndustrySlug =
+  | "electrician"
+  | "hvac"
+  | "plumber"
+  | "roofer"
+  | "landscaper";
 
 export type IndustrySeoPage = {
   slug: IndustrySlug;

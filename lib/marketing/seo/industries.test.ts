@@ -83,4 +83,12 @@ describe("seo industries registry", () => {
   it("returns undefined for unknown slug", () => {
     assert.equal(getIndustryBySlug("plumber"), undefined);
   });
+
+  it("electrician exposes relatedTrades to HVAC and secondaryHref how-it-works", () => {
+    const page = getIndustryBySlug("electrician");
+    assert.ok(page);
+    assert.equal(page.hero.secondaryHref, "#how-it-works");
+    assert.ok(page.relatedTrades);
+    assert.equal(page.relatedTrades.links[0]?.href, "/tax-deductions/hvac");
+  });
 });

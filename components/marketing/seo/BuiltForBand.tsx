@@ -13,7 +13,7 @@ export function BuiltForBand({ page }: { page: IndustrySeoPage }) {
           {builtFor.body}
         </p>
 
-        <ul className="mt-10 grid list-none gap-6 sm:grid-cols-3">
+        <ul className="mt-10 grid list-none gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {builtFor.features.map((feature) => (
             <li key={feature.title} className="min-w-0">
               <h3 className="text-base font-black text-white">

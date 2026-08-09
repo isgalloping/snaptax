@@ -5,11 +5,36 @@ import { MARKETING_HERO_SCREENS } from "@/lib/marketing/heroScreens";
 import type { IndustrySeoPage } from "@/lib/marketing/seo/types";
 import { MARKETING_TOKENS } from "@/lib/marketing/tokens";
 
+function renderSpotlightH1(h1: string) {
+  if (!h1.includes("organized.")) {
+    return h1;
+  }
+  const idx = h1.indexOf("organized.");
+  const before = h1.slice(0, idx);
+  const accent = h1.slice(idx);
+  return (
+    <>
+      {before}
+      <span style={{ color: MARKETING_TOKENS.accentGreen }}>{accent}</span>
+    </>
+  );
+}
+
 export function IndustryHero({ page }: { page: IndustrySeoPage }) {
   const defaultPhone = MARKETING_HERO_SCREENS[0];
   const phoneImage = page.hero.phoneImage;
+  const useSpotlight =
+    page.hero.visualLayout === "spotlight" &&
+    Boolean(phoneImage) &&
+    Boolean(page.hero.highlights?.length);
   const useComposite =
     page.hero.visualLayout === "composite" && Boolean(phoneImage);
+
+  const gridClass = useSpotlight
+    ? "mt-8 grid items-center gap-12 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.85fr)_minmax(0,0.9fr)] lg:gap-10"
+    : useComposite
+      ? "mt-8 grid items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-10"
+      : "mt-8 grid items-center gap-12 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:gap-10";
 
   return (
     <section className="border-b border-white/10">
@@ -19,23 +44,37 @@ export function IndustryHero({ page }: { page: IndustrySeoPage }) {
           industryHref={page.path}
         />
 
-        <div
-          className={
-            useComposite
-              ? "mt-8 grid items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-10"
-              : "mt-8 grid items-center gap-12 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:gap-10"
-          }
-        >
+        <div className={gridClass}>
           <div className="min-w-0">
-            <h1 className="whitespace-pre-line text-3xl font-black leading-[1.1] tracking-tight text-white sm:text-4xl lg:text-[2.75rem]">
-              {page.hero.h1}
-            </h1>
-            <p
-              className="mt-4 text-lg font-bold sm:text-xl"
-              style={{ color: MARKETING_TOKENS.accentGreen }}
-            >
-              {page.hero.subtitle}
-            </p>
+            {useSpotlight ? (
+              <>
+                <p
+                  className="inline-block rounded-full border px-4 py-1.5 text-sm font-bold sm:text-base"
+                  style={{
+                    color: MARKETING_TOKENS.accentGreen,
+                    borderColor: `${MARKETING_TOKENS.accentGreen}4D`,
+                    backgroundColor: `${MARKETING_TOKENS.accentGreen}1A`,
+                  }}
+                >
+                  {page.hero.subtitle}
+                </p>
+                <h1 className="mt-4 whitespace-pre-line text-3xl font-black leading-[1.1] tracking-tight text-white sm:text-4xl lg:text-[2.75rem]">
+                  {renderSpotlightH1(page.hero.h1)}
+                </h1>
+              </>
+            ) : (
+              <>
+                <h1 className="whitespace-pre-line text-3xl font-black leading-[1.1] tracking-tight text-white sm:text-4xl lg:text-[2.75rem]">
+                  {page.hero.h1}
+                </h1>
+                <p
+                  className="mt-4 text-lg font-bold sm:text-xl"
+                  style={{ color: MARKETING_TOKENS.accentGreen }}
+                >
+                  {page.hero.subtitle}
+                </p>
+              </>
+            )}
             <p className="mt-4 max-w-xl whitespace-pre-line text-base leading-relaxed text-zinc-300">
               {page.hero.body}
             </p>
@@ -74,7 +113,36 @@ export function IndustryHero({ page }: { page: IndustrySeoPage }) {
             </ul>
           </div>
 
-          {useComposite && phoneImage ? (
+          {useSpotlight && phoneImage ? (
+            <>
+              <div className="mx-auto w-full max-w-[16rem]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={phoneImage.src}
+                  alt={phoneImage.alt}
+                  className="h-auto w-full rounded-[1.35rem] border border-white/10 shadow-2xl"
+                />
+              </div>
+              <div className="space-y-4">
+                <div className="overflow-hidden rounded-2xl border border-white/10">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={page.hero.workerImage.src}
+                    alt={page.hero.workerImage.alt}
+                    className="h-auto w-full object-cover"
+                  />
+                </div>
+                <ul className="space-y-3">
+                  {page.hero.highlights!.map((item) => (
+                    <li key={item.title}>
+                      <p className="font-bold text-white">{item.title}</p>
+                      <p className="text-sm text-zinc-400">{item.body}</p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </>
+          ) : useComposite && phoneImage ? (
             <div className="relative mx-auto w-full max-w-xl lg:mx-0 lg:max-w-none">
               <div
                 className="absolute inset-0 rounded-[2rem] opacity-25 blur-3xl"

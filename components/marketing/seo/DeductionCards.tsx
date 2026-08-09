@@ -3,7 +3,7 @@ import { MARKETING_TOKENS } from "@/lib/marketing/tokens";
 
 export function DeductionCards({ page }: { page: IndustrySeoPage }) {
   return (
-    <section className="border-t border-white/10">
+    <section id="deductions" className="scroll-mt-24 border-t border-white/10">
       <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
         <h2 className="text-2xl font-black text-white sm:text-3xl">
           {page.deductionsTitle}

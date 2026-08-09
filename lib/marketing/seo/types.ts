@@ -1,4 +1,4 @@
-export type IndustrySlug = "electrician";
+export type IndustrySlug = "electrician" | "hvac" | "plumber";
 
 export type IndustrySeoPage = {
   slug: IndustrySlug;
@@ -12,9 +12,19 @@ export type IndustrySeoPage = {
     body: string;
     primaryCta: string;
     secondaryCta: string;
+    /** In-page hash or path for secondary CTA (e.g. "#deductions"). */
+    secondaryHref: string;
     trustItems: string[];
     workerImage: { src: string; alt: string };
-    /** Social / Open Graph image (optimized, typically 1200×630). */
+    phoneImage?: { src: string; alt: string };
+    /**
+     * stacked (default when omitted): worker + phone side-by-side.
+     * composite: full-width phoneImage with workerImage as corner overlay.
+     * spotlight: copy | phone | worker+highlights (Plumber UI).
+     */
+    visualLayout?: "stacked" | "composite" | "spotlight";
+    /** Right-column highlight rows for spotlight layout. */
+    highlights?: { title: string; body: string }[];
     ogImage: { src: string; alt: string };
   };
   deductionsTitle: string;
@@ -26,16 +36,22 @@ export type IndustrySeoPage = {
     id: "how-it-works";
     title: string;
     steps: { title: string; body: string }[];
+    /** Optional three-phone (or similar) banner under steps. */
+    stepsBanner?: { src: string; alt: string };
   };
   examplesTitle: string;
-  /** Column header for examples table — must not imply fake App labels. */
   examplesCategoryHeader: string;
   examples: { expense: string; category: string }[];
   productCategoryNote: string;
+  checklist?: { title: string; items: string[] };
   builtFor: {
     title: string;
     body: string;
     features: { title: string; body: string }[];
+  };
+  relatedTrades?: {
+    title: string;
+    links: { href: string; label: string }[];
   };
   faq: { question: string; answer: string }[];
   finalCta: {
@@ -43,6 +59,7 @@ export type IndustrySeoPage = {
     body: string;
     button: string;
     noCardRequired: string;
+    backgroundImage?: { src: string; alt: string };
   };
   outboundLinks: { href: string; label: string }[];
   disclaimer: string;

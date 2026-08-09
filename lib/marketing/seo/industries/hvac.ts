@@ -1,7 +1,9 @@
+
 import type { IndustrySeoPage } from "@/lib/marketing/seo/types";
 
 export const HVAC_SEO_PAGE: IndustrySeoPage = {
   slug: "hvac",
+  presentation: "mockup",
   path: "/tax-deductions/hvac",
   label: "HVAC",
   indexBlurb:
@@ -12,17 +14,17 @@ export const HVAC_SEO_PAGE: IndustrySeoPage = {
       "Explore common HVAC tax deductions and learn how to track tools, supplies, vehicle costs, certifications, and receipts with SnapTax.",
   },
   hero: {
-    h1: "Tax Deductions for HVAC Technicians and Contractors",
+    h1: "HVAC tax deductions, organized.",
     subtitle: "Built for HVAC Technicians & Contractors",
     body: "Track receipts, organize HVAC business expenses, and prepare tax-ready reports without digging through your truck at tax time.",
     primaryCta: "Track HVAC Expenses",
     secondaryCta: "View Deductions",
     secondaryHref: "#deductions",
-    visualLayout: "composite",
+    visualLayout: "spotlight",
     trustItems: [
-      "No forced sign-up",
-      "Receipt scanning",
-      "Tax-ready reports",
+      "AI receipt scanning",
+      "Organize expenses by category",
+      "Export tax reports",
       "Works offline",
     ],
     workerImage: {
@@ -30,13 +32,31 @@ export const HVAC_SEO_PAGE: IndustrySeoPage = {
       alt: "HVAC technician working on an outdoor air conditioning unit",
     },
     phoneImage: {
-      src: "/marketing/seo/hvac-tax-deductions-snaptax-mobile.png",
-      alt: "SnapTax app showing HVAC supplier receipt tracking",
+      src: "/marketing/seo/hvac-tax-deductions-snaptax-phone.png",
+      alt: "SnapTax app showing HVAC supplier receipts and tax saved",
     },
     ogImage: {
       src: "/marketing/seo/hvac-tax-deductions-snaptax-og.jpg",
       alt: "HVAC tax deductions and expense tracking with SnapTax",
     },
+    highlights: [
+      {
+        title: "Built for HVAC work",
+        body: "Designed for how technicians actually work between jobs and in the service truck.",
+      },
+      {
+        title: "Tax-ready reports",
+        body: "Export organized expense reports when you need them.",
+      },
+      {
+        title: "Secure & private",
+        body: "Keep receipt and expense records protected on your device and in sync.",
+      },
+      {
+        title: "One-time payment",
+        body: "Pay once per tax season — no subscription required.",
+      },
+    ],
   },
   deductionsTitle: "Common HVAC Tax Deductions",
   deductionsIntro:
@@ -45,37 +65,37 @@ export const HVAC_SEO_PAGE: IndustrySeoPage = {
     {
       title: "Tools & Equipment",
       body: "Specialized tools used on HVAC jobs.",
-      examples: ["Gauges", "Drills", "Vacuum pumps", "Recovery machines"],
+      examples: ["Gauges", "Meters", "Drills", "Vacuum pumps"],
     },
     {
       title: "Parts & Supplies",
       body: "Job parts and consumables purchased for installs and repairs.",
-      examples: ["Filters", "Capacitors", "Fittings", "Sealants"],
+      examples: ["Filters", "Capacitors", "Fittings", "Wiring"],
     },
     {
-      title: "Refrigerants",
+      title: "Refrigerants & Chemicals",
       body: "Refrigerant and related service chemicals for HVAC work.",
-      examples: ["R-410A", "R-22", "R-32", "Coil cleaner"],
+      examples: ["Refrigerant", "Cleaners", "Leak detection"],
     },
     {
       title: "Safety Gear",
       body: "Protective equipment required for field work.",
-      examples: ["Gloves", "Eye protection", "Respirators", "Hard hats"],
+      examples: ["Gloves", "Goggles", "Respirators"],
     },
     {
       title: "Vehicle Expenses",
       body: "Business vehicle costs between job sites and suppliers.",
-      examples: ["Fuel", "Parking", "Tolls", "Eligible maintenance"],
+      examples: ["Fuel", "Tolls", "Eligible service-truck costs"],
     },
     {
       title: "Training & Certifications",
       body: "Training that supports your HVAC trade.",
-      examples: ["EPA 608", "Safety courses", "Manufacturer training"],
+      examples: ["EPA 608", "Code training", "Safety training"],
     },
     {
       title: "Licenses & Permits",
       body: "License renewals and local permit fees.",
-      examples: ["Contractor license", "Local permits", "Business fees"],
+      examples: ["Contractor licenses", "Local permits"],
     },
     {
       title: "Software & Services",
@@ -83,7 +103,7 @@ export const HVAC_SEO_PAGE: IndustrySeoPage = {
       examples: ["Scheduling", "Invoicing", "Cloud storage"],
     },
   ],
-  problemsTitle: "HVAC receipts are easy to lose—and expensive to forget",
+  problemsTitle: "HVAC receipts are easy to lose",
   problems: [
     {
       title: "Receipts disappear",
@@ -93,67 +113,80 @@ export const HVAC_SEO_PAGE: IndustrySeoPage = {
     {
       title: "Expenses get mixed together",
       body: "Tools, parts, fuel, uniforms, and personal purchases often appear on the same card or account.",
-      solution: "Organize each receipt with a clear business purpose.",
+      solution: "Categorize each purchase while the job is still fresh.",
     },
     {
       title: "Tax-time cleanup takes hours",
       body: "Waiting until tax season means searching through bank statements, emails, glove boxes, and tool bags.",
-      solution: "Build a cleaner record throughout the year.",
+      solution: "Keep a running digital record all year.",
     },
   ],
+  problemsClosing:
+    "SnapTax keeps every HVAC receipt organized and ready for tax time.",
   howItWorks: {
     id: "how-it-works",
     title: "How SnapTax Works for HVAC",
     steps: [
       {
         title: "Capture Receipts",
-        body: "Snap supplier, fuel, and tool receipts before they disappear.",
+        body: "Snap supplier, fuel, tool, and parts receipts as you work.",
       },
       {
-        title: "Organize Expenses",
-        body: "Review details and organize into useful categories such as Tools, Truck Gas, Supplies, Equipment, Materials, and Other. Add a short job note when helpful.",
+        title: "Review the Result",
+        body: "Check the merchant, amount, and category — using Tools, Supplies, Truck Gas, Equipment, Materials, and Other — plus the Schedule C line when shown.",
       },
       {
-        title: "Export & File",
-        body: "Create an organized tax-ready expense report for your records or tax professional. SnapTax does not file tax returns.",
+        title: "Organize & Export",
+        body: "Review ready items and create a tax-ready expense report for your records or tax professional.",
       },
     ],
+    stepsBanner: {
+      src: "/marketing/seo/hvac-tax-deductions-snaptax-steps.png",
+      alt: "SnapTax capture, review, and home screens for HVAC expenses",
+    },
   },
-  examplesTitle: "Examples of HVAC Expenses",
-  examplesCategoryHeader: "SnapTax category",
+  examplesTitle: "Example HVAC expenses",
+  examplesCategoryHeader: "Category",
   examples: [],
   productCategoryNote:
-    "In SnapTax, expenses often map to Tools, Truck Gas, Supplies, Equipment, Materials, or Other.",
+    "SnapTax organizes expenses using Tools, Truck Gas, Supplies, Equipment, Materials, and Other — the same categories used in US exports.",
   checklist: {
     title: "HVAC Expense Recordkeeping Checklist",
     items: [
-      "Photograph paper receipts as soon as possible",
-      "Save email and online purchase receipts",
-      "Record the merchant, date, and total",
-      "Note the business purpose",
-      "Add the customer or job when relevant",
-      "Separate personal and business purchases",
+      "Photograph every business receipt",
+      "Separate personal and business expenses",
+      "Record merchant, date, and amount",
+      "Add the customer, project, or job",
       "Keep mileage records separately",
-      "Review uncertain transactions regularly",
-      "Export an annual expense summary",
-      "Ask a qualified tax professional about uncertain deductions",
+      "Save license and certification records",
+      "Save EPA 608 and training receipts",
+      "Review Needs Action items",
+      "Export your annual report",
     ],
   },
   builtFor: {
-    title: "Built for independent HVAC professionals",
-    body: "SnapTax is an expense organization tool for technicians and small HVAC businesses. It is not payroll software, a full accounting platform, or a tax-filing service.",
+    title: "Built for HVAC Contractors",
+    body: "Receipt capture and expense organization for independent HVAC technicians — not a full accounting suite and not a tax-filing product.",
     features: [
       {
-        title: "Receipt Scanner",
-        body: "Capture supplier and job-site receipts quickly.",
+        title: "AI Receipt Scanner",
+        body: "Extracts the merchant, date, amount, and other receipt details.",
       },
       {
-        title: "Expense Tracking",
-        body: "Keep business purchases organized before tax season.",
+        title: "Expense categories",
+        body: "Helps organize tools, parts, refrigerants, vehicle costs, training, and supplies.",
       },
       {
         title: "Tax Reports",
-        body: "Export structured records for your accountant.",
+        body: "Exports clean expense reports for your records or tax professional.",
+      },
+      {
+        title: "Offline Mode",
+        body: "Capture receipts on the job and sync when connectivity returns.",
+      },
+      {
+        title: "Secure & Private",
+        body: "Helps protect sensitive receipt and business expense information.",
       },
     ],
   },
@@ -168,7 +201,7 @@ export const HVAC_SEO_PAGE: IndustrySeoPage = {
   },
   faq: [
     {
-      question: "What can HVAC technicians deduct?",
+      question: "What can HVAC technicians deduct on their taxes?",
       answer:
         "Potential business expenses may include qualifying tools, equipment, parts, supplies, safety gear, licenses, training, insurance, business vehicle costs, software, advertising, and professional services. Deductibility depends on the nature of the expense, its business use, and your circumstances.",
     },
@@ -178,31 +211,36 @@ export const HVAC_SEO_PAGE: IndustrySeoPage = {
         "Tools purchased for HVAC work may qualify as business expenses. Tax treatment can depend on cost, useful life, and business-use percentage.",
     },
     {
-      question: "Can I deduct service truck expenses?",
+      question: "Can I deduct my HVAC service truck expenses?",
       answer:
         "Business vehicle expenses may be deductible, but personal commuting and business travel must be distinguished. Keep records that support the business use of the vehicle.",
     },
     {
-      question: "Can I deduct EPA 608 certification?",
+      question: "Can I deduct EPA 608 certification costs?",
       answer:
         "Certification, renewal, and training expenses related to skills used in an existing HVAC business may qualify, depending on the circumstances.",
+    },
+    {
+      question: "Do I need to keep every HVAC receipt?",
+      answer:
+        "Keeping receipts and supporting records helps document the amount, date, vendor, and business purpose of an expense. Additional records may be needed for vehicle, equipment, and mixed-use expenses.",
+    },
+    {
+      question: "Can I give my SnapTax report to my accountant?",
+      answer:
+        "Yes. You can export an organized expense report and use it when reviewing your records with an accountant or tax preparer.",
     },
     {
       question: "Does SnapTax track mileage?",
       answer:
         "SnapTax can help organize vehicle-related receipts, but it does not currently replace a complete mileage log. Keep a separate record of the date, destination, distance, and business purpose of each trip.",
     },
-    {
-      question: "Can I export reports for my accountant?",
-      answer:
-        "Yes. You can export an organized expense report and use it when reviewing your records with an accountant or tax preparer.",
-    },
   ],
   finalCta: {
     title: "Stop letting HVAC receipts disappear in your truck",
     body: "Capture each receipt when you get it, organize the expense, and build a cleaner record for tax season.",
     button: "Start Tracking Expenses",
-    noCardRequired: "No forced sign-up. No complicated accounting setup.",
+    noCardRequired: "No credit card required to start.",
     backgroundImage: {
       src: "/marketing/seo/hvac-tax-deductions-snaptax-cta.webp",
       alt: "",
@@ -237,5 +275,5 @@ export const HVAC_SEO_PAGE: IndustrySeoPage = {
     },
   ],
   disclaimer:
-    "SnapTax helps users organize receipts and business expense records. It does not provide tax, legal, or accounting advice and does not prepare or file tax returns. Tax rules vary by situation and may change. Consult a qualified tax professional regarding your specific circumstances.",
+    "For educational purposes only. Not tax advice. Confirm deductions with a qualified professional. See our disclaimer for details.",
 };

@@ -30,8 +30,21 @@ describe("pickProcessReceiptTaxRoute", () => {
     );
     assert.equal(
       pickProcessReceiptTaxRoute({
+        dataRegion: "us",
+      }),
+      "standard_receipt_tax",
+    );
+    assert.equal(
+      pickProcessReceiptTaxRoute({
         dataRegion: "eu",
         captureKind: "1099-NEC",
+      }),
+      "standard_receipt_tax",
+    );
+    assert.equal(
+      pickProcessReceiptTaxRoute({
+        dataRegion: "eu",
+        captureKind: "1099-K",
       }),
       "standard_receipt_tax",
     );

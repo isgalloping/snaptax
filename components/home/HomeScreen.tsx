@@ -92,6 +92,7 @@ import {
   captureKindForUpload,
   shouldSkipUploadAttempt,
 } from "@/lib/client/receiptUploadFlow";
+import { resolveReceiptCaptureKind } from "@/lib/client/receiptCaptureIntent";
 import {
   getBudget,
   isSyncStuck,
@@ -1739,7 +1740,9 @@ export function HomeScreen() {
       const replaceId = resnapId;
       setResnapId(null);
 
-      const incomeKind = incomeCaptureIntentRef.current;
+      const incomeKind = resolveReceiptCaptureKind(
+        incomeCaptureIntentRef.current,
+      );
       const markIncomeCaptureComplete = () => {
         if (!incomeKind) return;
         incomeCaptureCompletedRef.current = true;

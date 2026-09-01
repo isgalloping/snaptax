@@ -31,7 +31,7 @@ import { beginBatchCaptureDefer, endBatchCaptureDefer } from "@/lib/client/sched
 import type { LegalDoc } from "@/lib/legal/content";
 
 interface SnapButtonProps {
-  onCapture: (file: File) => void;
+  onCapture: (file: File) => void | Promise<void>;
   onBatchShot: (file: File) => Promise<string | null>;
   onBatchDone: (sessionIds: string[]) => Promise<void>;
   onBatchClose: (sessionIds: string[]) => Promise<void>;
@@ -49,6 +49,19 @@ interface SnapButtonProps {
 
 export interface SnapButtonHandle {
   openCamera: () => void;
+}
+
+export async function captureGalleryFileBeforeCameraClose(
+  file: File | undefined,
+  onCapture: (file: File) => void | Promise<void>,
+  closeCamera: () => void,
+): Promise<void> {
+  if (!file) return;
+  try {
+    await onCapture(file);
+  } finally {
+    closeCamera();
+  }
 }
 
 export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
@@ -131,9 +144,18 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
 
     useImperativeHandle(ref, () => ({ openCamera }), [openCamera]);
 
+    const closeCameraAfterGalleryCapture = useCallback(() => {
+      streamPromiseRef.current = null;
+      setCamera(false);
+    }, [setCamera]);
+
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
-      if (file) onCapture(file);
+      void captureGalleryFileBeforeCameraClose(
+        file,
+        onCapture,
+        closeCameraAfterGalleryCapture,
+      );
       e.target.value = "";
     };
 
@@ -309,8 +331,6 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
     };
 
     const handleFallback = () => {
-      streamPromiseRef.current = null;
-      setCamera(false);
       inputRef.current?.click();
     };
 

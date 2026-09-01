@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { process1099Vision } from "@/lib/openai/process1099Vision";
 import type { OcrDraftPayload } from "@/lib/ocr/types";
 import { normalizeMerchantName } from "@/lib/receipts/normalizeMerchantName";
+import { pickProcessReceiptTaxRoute } from "@/lib/receipts/processReceiptTaxMode";
 import { routeStandardReceiptTax } from "@/lib/receipts/processReceiptTaxRouter";
 import { baseLogEntry } from "@/lib/server/log/context";
 import { logEvent } from "@/lib/server/log/logEvent";
@@ -24,9 +25,13 @@ export async function processReceiptTax(params: {
   };
 }) {
   const started = Date.now();
+  const processingRoute = pickProcessReceiptTaxRoute({
+    dataRegion: params.dataRegion,
+    captureKind: params.captureKind,
+  });
 
   const { result, route } =
-    params.captureKind && params.dataRegion === "us"
+    processingRoute === "us_1099_vision"
       ? {
           result: await process1099Vision(params.imageBuffer, params.mime),
           route: "vision_fallback" as const,

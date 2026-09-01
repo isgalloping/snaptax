@@ -87,6 +87,7 @@ import {
   top100ByUpdatedAt,
   UI_RECEIPT_LIMIT,
 } from "@/lib/client/receiptSync";
+import { runPostLoginSync } from "@/lib/client/postLoginSyncFlow";
 import {
   applyPhotoMissingState,
   captureKindForUpload,
@@ -1208,35 +1209,24 @@ export function HomeScreen() {
 
   const handlePostLoginSync = useCallback(
     async (taxRecalcQueued: number) => {
-      assertCompleteSyncAvailable(navigator.onLine, { requireComplete: true });
-      try {
-        await ensureGhostSession();
-      } catch {
-        throw new Error("FETCH_RECEIPT_SYNC_FAILED");
-      }
-      await mergeOrphanGhostsOnLogin();
-      await flushPendingUploadsRef.current();
-      await flushPendingDeletesRef.current();
-      try {
-        await flushReceiptEventBatch({ force: true });
-      } catch {
-        // Event sync is best-effort; receipt merge must still run after login.
-      }
-      const stored = await loadAllReceipts();
-      const merged = await syncFromServer(stored, "immediate", {
-        requireComplete: true,
+      await runPostLoginSync(taxRecalcQueued, {
+        isOnline: () => navigator.onLine,
+        ensureGhostSession,
+        mergeOrphanGhostsOnLogin,
+        flushPendingUploads: () => flushPendingUploadsRef.current(),
+        flushPendingDeletes: () => flushPendingDeletesRef.current(),
+        flushReceiptEventBatch,
+        loadAllReceipts,
+        syncFromServer,
+        pollTaxRecalc,
+        onInitialMerge: (merged) => {
+          const stuck = stuckIdsFromReceipts(merged as StoredReceipt[]);
+          setSyncStuckIds((prev) => new Set([...prev, ...stuck]));
+          queueRef.current?.bootstrapFromList(
+            merged.filter((r) => !stuck.has(r.id)),
+          );
+        },
       });
-      const stuck = stuckIdsFromReceipts(merged as StoredReceipt[]);
-      setSyncStuckIds((prev) => new Set([...prev, ...stuck]));
-      queueRef.current?.bootstrapFromList(
-        merged.filter((r) => !stuck.has(r.id)),
-      );
-      if (taxRecalcQueued > 0) {
-        await pollTaxRecalc(taxRecalcQueued, async () => {
-          const latest = await loadAllReceipts();
-          await syncFromServer(latest, "immediate", { requireComplete: true });
-        });
-      }
     },
     [syncFromServer],
   );

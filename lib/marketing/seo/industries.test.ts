@@ -198,6 +198,25 @@ describe("seo industries registry", () => {
     }
   });
 
+  it("each industry review step names real US export category labels", () => {
+    for (const page of listPublishedIndustries()) {
+      const reviewStep = page.howItWorks.steps[1];
+      assert.ok(reviewStep, `${page.slug} has a review/organize step`);
+      for (const label of ["Tools", "Truck Gas", "Supplies"]) {
+        assert.match(
+          reviewStep.body,
+          new RegExp(`\\b${label}\\b`, "i"),
+          `${page.slug} review step includes ${label}`,
+        );
+      }
+      assert.doesNotMatch(
+        reviewStep.body,
+        /\bSmart [A-Z][a-z]+ Categories\b/,
+        `${page.slug} review step avoids fake smart trade categories`,
+      );
+    }
+  });
+
   it("loads landscaper with PRD title/meta, UI H1, and mockup spotlight", () => {
     const page = getIndustryBySlug("landscaper");
     assert.ok(page);

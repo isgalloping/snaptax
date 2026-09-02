@@ -19,6 +19,12 @@ export function clearPendingIncomeCapture(): void {
   sessionStorage.removeItem(CAPTURE_KIND_KEY);
 }
 
+export function resolveIncomeCaptureKindForSingleCapture(
+  activeKind: IncomeCaptureKind | null | undefined,
+): IncomeCaptureKind | null {
+  return activeKind ?? null;
+}
+
 export function parseCaptureKindHeader(
   header: string | null,
 ): IncomeCaptureKind | null {

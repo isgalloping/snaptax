@@ -4,6 +4,7 @@ import {
   clearPendingIncomeCapture,
   peekPendingIncomeCapture,
   parseCaptureKindHeader,
+  resolveIncomeCaptureKindForSingleCapture,
   setPendingIncomeCapture,
 } from "@/lib/export/incomeCapture";
 
@@ -69,6 +70,14 @@ describe("income capture session handoff", () => {
 
     clearPendingIncomeCapture();
     assert.equal(peekPendingIncomeCapture(), null);
+  });
+
+  it("does not treat a stale pending kind as an active single-capture intent", () => {
+    withSessionStorage(new MemoryStorage());
+    setPendingIncomeCapture("1099-K");
+
+    assert.equal(resolveIncomeCaptureKindForSingleCapture(null), null);
+    assert.equal(peekPendingIncomeCapture(), "1099-K");
   });
 });
 

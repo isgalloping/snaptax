@@ -3,6 +3,7 @@
 import {
   forwardRef,
   useCallback,
+  useEffect,
   useImperativeHandle,
   useRef,
   useState,
@@ -31,7 +32,7 @@ import { beginBatchCaptureDefer, endBatchCaptureDefer } from "@/lib/client/sched
 import type { LegalDoc } from "@/lib/legal/content";
 
 interface SnapButtonProps {
-  onCapture: (file: File) => void;
+  onCapture: (file: File) => void | Promise<void>;
   onBatchShot: (file: File) => Promise<string | null>;
   onBatchDone: (sessionIds: string[]) => Promise<void>;
   onBatchClose: (sessionIds: string[]) => Promise<void>;
@@ -76,6 +77,9 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
     const sessionIdsRef = useRef<string[]>([]);
     const batchSaveInFlightRef = useRef(0);
     const resnapSlotIndexRef = useRef<number | null>(null);
+    const filePickerClosesCaptureRef = useRef(false);
+    const filePickerSelectionInFlightRef = useRef(false);
+    const filePickerFocusTimerRef = useRef<number | null>(null);
     const [cameraOpen, setCameraOpen] = useState(false);
     const [legalDoc, setLegalDoc] = useState<LegalDoc | null>(null);
     const [sessionThumbs, setSessionThumbs] = useState<BatchThumb[]>([]);
@@ -107,6 +111,56 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
       [onCameraOpenChange],
     );
 
+    const clearFilePickerFocusTimer = useCallback(() => {
+      if (filePickerFocusTimerRef.current == null) return;
+      window.clearTimeout(filePickerFocusTimerRef.current);
+      filePickerFocusTimerRef.current = null;
+    }, []);
+
+    const closeFilePickerCapture = useCallback(() => {
+      clearFilePickerFocusTimer();
+      filePickerClosesCaptureRef.current = false;
+      filePickerSelectionInFlightRef.current = false;
+      streamPromiseRef.current = null;
+      setCamera(false);
+    }, [clearFilePickerFocusTimer, setCamera]);
+
+    const handleFilePickerFocus = useCallback(() => {
+      clearFilePickerFocusTimer();
+      filePickerFocusTimerRef.current = window.setTimeout(() => {
+        filePickerFocusTimerRef.current = null;
+        if (
+          filePickerClosesCaptureRef.current &&
+          !filePickerSelectionInFlightRef.current
+        ) {
+          closeFilePickerCapture();
+        }
+      }, 350);
+    }, [clearFilePickerFocusTimer, closeFilePickerCapture]);
+
+    const openFilePicker = useCallback(
+      (closeCaptureAfterSelection: boolean) => {
+        const input = inputRef.current;
+        if (!input) {
+          if (closeCaptureAfterSelection) closeFilePickerCapture();
+          return;
+        }
+
+        clearFilePickerFocusTimer();
+        filePickerSelectionInFlightRef.current = false;
+        filePickerClosesCaptureRef.current = closeCaptureAfterSelection;
+        if (closeCaptureAfterSelection) {
+          window.addEventListener("focus", handleFilePickerFocus, { once: true });
+        }
+        input.click();
+      },
+      [
+        clearFilePickerFocusTimer,
+        closeFilePickerCapture,
+        handleFilePickerFocus,
+      ],
+    );
+
     const openCamera = useCallback(() => {
       if (onSnapIntent && !onSnapIntent()) return;
       if (isCameraSupported()) {
@@ -117,9 +171,16 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
         streamPromiseRef.current = openCameraStream();
         setCamera(true);
       } else {
-        inputRef.current?.click();
+        openFilePicker(true);
       }
-    }, [onSnapIntent, resetSession, resnapId, forceSingleCapture, setCamera]);
+    }, [
+      onSnapIntent,
+      openFilePicker,
+      resetSession,
+      resnapId,
+      forceSingleCapture,
+      setCamera,
+    ]);
 
     const waitForBatchSavesIdle = useCallback(async () => {
       while (batchSaveInFlightRef.current > 0) {
@@ -132,10 +193,39 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
     useImperativeHandle(ref, () => ({ openCamera }), [openCamera]);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (file) onCapture(file);
-      e.target.value = "";
+      const input = e.currentTarget;
+      const file = input.files?.[0];
+      if (!file) {
+        input.value = "";
+        if (filePickerClosesCaptureRef.current) {
+          closeFilePickerCapture();
+        }
+        return;
+      }
+
+      const shouldCloseCapture = filePickerClosesCaptureRef.current;
+      filePickerSelectionInFlightRef.current = true;
+      clearFilePickerFocusTimer();
+      void (async () => {
+        try {
+          await onCapture(file);
+        } finally {
+          input.value = "";
+          if (shouldCloseCapture) {
+            closeFilePickerCapture();
+          } else {
+            filePickerSelectionInFlightRef.current = false;
+          }
+        }
+      })();
     };
+
+    useEffect(() => {
+      return () => {
+        clearFilePickerFocusTimer();
+        window.removeEventListener("focus", handleFilePickerFocus);
+      };
+    }, [clearFilePickerFocusTimer, handleFilePickerFocus]);
 
     const removeFromSession = useCallback((id: string) => {
       setSessionThumbs((prev) => {
@@ -230,7 +320,7 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
       await finishSession();
     };
 
-    const handleBatchPreviewEnter = (_id: string) => {
+    const handleBatchPreviewEnter = () => {
       const id =
         selectedId ?? sessionIdsRef.current[sessionIdsRef.current.length - 1];
       if (!id) return;
@@ -310,8 +400,7 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
 
     const handleFallback = () => {
       streamPromiseRef.current = null;
-      setCamera(false);
-      inputRef.current?.click();
+      openFilePicker(true);
     };
 
     return (

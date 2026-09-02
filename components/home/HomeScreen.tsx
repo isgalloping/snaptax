@@ -37,6 +37,7 @@ import {
 import {
   clearPendingIncomeCapture,
   peekPendingIncomeCapture,
+  resolveIncomeCaptureKindForSingleCapture,
   type IncomeCaptureKind,
 } from "@/lib/export/incomeCapture";
 import { shouldSubmitLateOcrDraft } from "@/lib/client/lateOcrDraftSync";
@@ -465,6 +466,11 @@ export function HomeScreen() {
     const completed = incomeCaptureCompletedRef.current;
     const source = incomeCaptureSourceRef.current;
     const returnView = cameraReturnViewRef.current;
+    const hadIncomeCaptureIntent = incomeCaptureIntentRef.current != null;
+
+    if (!completed && hadIncomeCaptureIntent) {
+      clearPendingIncomeCapture();
+    }
 
     incomeCaptureIntentRef.current = null;
     incomeCaptureCompletedRef.current = false;
@@ -1739,7 +1745,9 @@ export function HomeScreen() {
       const replaceId = resnapId;
       setResnapId(null);
 
-      const incomeKind = incomeCaptureIntentRef.current;
+      const incomeKind = resolveIncomeCaptureKindForSingleCapture(
+        incomeCaptureIntentRef.current,
+      );
       const markIncomeCaptureComplete = () => {
         if (!incomeKind) return;
         incomeCaptureCompletedRef.current = true;

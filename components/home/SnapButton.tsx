@@ -31,7 +31,7 @@ import { beginBatchCaptureDefer, endBatchCaptureDefer } from "@/lib/client/sched
 import type { LegalDoc } from "@/lib/legal/content";
 
 interface SnapButtonProps {
-  onCapture: (file: File) => void;
+  onCapture: (file: File) => void | Promise<void>;
   onBatchShot: (file: File) => Promise<string | null>;
   onBatchDone: (sessionIds: string[]) => Promise<void>;
   onBatchClose: (sessionIds: string[]) => Promise<void>;
@@ -45,6 +45,33 @@ interface SnapButtonProps {
   onSnapIntent?: () => boolean;
   /** 1099 income capture — single shutter then close (not batch). */
   forceSingleCapture?: boolean;
+}
+
+export interface GalleryFallbackState {
+  pending: boolean;
+}
+
+export function beginGalleryFallbackSelection(
+  state: GalleryFallbackState,
+  openFilePicker: () => boolean,
+) {
+  state.pending = openFilePicker();
+}
+
+export async function finishGalleryFallbackSelection(
+  state: GalleryFallbackState,
+  file: File,
+  onCapture: (file: File) => void | Promise<void>,
+  closeCamera: () => void,
+) {
+  try {
+    await onCapture(file);
+  } finally {
+    if (state.pending) {
+      state.pending = false;
+      closeCamera();
+    }
+  }
 }
 
 export interface SnapButtonHandle {
@@ -76,6 +103,9 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
     const sessionIdsRef = useRef<string[]>([]);
     const batchSaveInFlightRef = useRef(0);
     const resnapSlotIndexRef = useRef<number | null>(null);
+    const galleryFallbackStateRef = useRef<GalleryFallbackState>({
+      pending: false,
+    });
     const [cameraOpen, setCameraOpen] = useState(false);
     const [legalDoc, setLegalDoc] = useState<LegalDoc | null>(null);
     const [sessionThumbs, setSessionThumbs] = useState<BatchThumb[]>([]);
@@ -131,10 +161,24 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
 
     useImperativeHandle(ref, () => ({ openCamera }), [openCamera]);
 
+    const closeFallbackCamera = useCallback(() => {
+      streamPromiseRef.current = null;
+      setCamera(false);
+      if (!resnapId && !forceSingleCapture) {
+        endBatchCaptureDefer();
+      }
+    }, [forceSingleCapture, resnapId, setCamera]);
+
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
-      if (file) onCapture(file);
       e.target.value = "";
+      if (!file) return;
+      void finishGalleryFallbackSelection(
+        galleryFallbackStateRef.current,
+        file,
+        onCapture,
+        closeFallbackCamera,
+      );
     };
 
     const removeFromSession = useCallback((id: string) => {
@@ -309,9 +353,11 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
     };
 
     const handleFallback = () => {
-      streamPromiseRef.current = null;
-      setCamera(false);
-      inputRef.current?.click();
+      beginGalleryFallbackSelection(galleryFallbackStateRef.current, () => {
+        if (!inputRef.current) return false;
+        inputRef.current.click();
+        return true;
+      });
     };
 
     return (

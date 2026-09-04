@@ -19,10 +19,7 @@ import { clientTimeZone } from "@/lib/time/timeZone";
 import { runLocalTaxExport } from "@/lib/client/runLocalTaxExport";
 import { runLocalCpaExport } from "@/lib/client/runLocalCpaExport";
 import type { LocalCpaPackProgress } from "@/lib/export/buildLocalCpaPackZip";
-import {
-  exportTaxPack,
-  type ExportTaxPackMeta,
-} from "@/lib/client/authApi";
+import type { ExportTaxPackMeta } from "@/lib/client/authApi";
 import {
   exportPreviewCsvFilename,
   exportShareTitle,
@@ -37,6 +34,12 @@ import {
   type DownloadedFileInfo,
 } from "@/lib/export/downloadWithGuide";
 import { PostDownloadGuide } from "@/components/export/PostDownloadGuide";
+import {
+  ExportFormatOptions,
+  exportFormatTitle,
+  isLocalTaxExportFormat,
+  type ExportEngineFormat,
+} from "@/components/export/ExportFormatOptions";
 import { countLocalExportReceiptsInTaxYear } from "@/lib/export/countLocalExportReceipts";
 import { buildLocalTurboTaxCsv } from "@/lib/export/buildLocalTurboTaxCsv";
 import { ExportCategoryReview } from "@/components/export/ExportCategoryReview";
@@ -90,7 +93,7 @@ export function ExportEngineSheet({
     pickDefaultExportTaxYear(activeReceipts, timeZone, currentSeason),
   );
   const [step1Hint, setStep1Hint] = useState<string | null>(null);
-  const [format, setFormat] = useState<ExportFormat>("cpa_pdf");
+  const [format, setFormat] = useState<ExportEngineFormat>("cpa_pdf");
   const [generating, setGenerating] = useState(false);
   const [previewing, setPreviewing] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -306,31 +309,24 @@ export function ExportEngineSheet({
       } else {
         startProgressRamp(format, exportReceiptCount);
       }
-      const taxYearStr = String(taxYear);
-      const result =
-        format === "csv" || format === "txf" || format === "qif" || format === "qbo"
-          ? await runLocalTaxExport({
-              receipts: receiptsForExport,
-              taxYear,
-              timeZone,
-              format,
-              userLockedRegion,
-            })
-          : format === "cpa_pdf" || format === "cpa_pack"
-            ? await runLocalCpaExport({
-                receipts: receiptsForExport,
-                taxYear,
-                timeZone,
-                format,
-                taxpayerName,
-                userLockedRegion,
-                onPackProgress:
-                  format === "cpa_pack" ? applyPackProgress : undefined,
-              })
-            : await exportTaxPack({
-                taxYear: taxYearStr,
-                format,
-              });
+      const result = isLocalTaxExportFormat(format)
+        ? await runLocalTaxExport({
+            receipts: receiptsForExport,
+            taxYear,
+            timeZone,
+            format,
+            userLockedRegion,
+          })
+        : await runLocalCpaExport({
+            receipts: receiptsForExport,
+            taxYear,
+            timeZone,
+            format,
+            taxpayerName,
+            userLockedRegion,
+            onPackProgress:
+              format === "cpa_pack" ? applyPackProgress : undefined,
+          });
       if (format === "cpa_pack") {
         finishPackProgress();
       }
@@ -376,18 +372,7 @@ export function ExportEngineSheet({
     }
   };
 
-  const selectedFormatLabel =
-    format === "csv"
-      ? t.formatCsvTitle
-      : format === "txf"
-        ? t.formatTxfTitle
-        : format === "qif"
-          ? t.formatQifTitle
-          : format === "qbo"
-            ? t.formatQboTitle
-            : format === "cpa_pdf"
-            ? t.formatCpaPdfTitle
-            : t.formatCpaTitle;
+  const selectedFormatLabel = exportFormatTitle(t, format);
 
   const imageWarning =
     exportMeta?.imagesMissing != null && exportMeta.imagesMissing > 0
@@ -557,110 +542,11 @@ export function ExportEngineSheet({
                 .replace("{count}", String(yearReceipts.length))}
             </p>
             <p className="mb-4 text-sm font-bold text-zinc-300">{t.stepFormatHeading}</p>
-            <div className="space-y-3">
-              <button
-                type="button"
-                onClick={() => setFormat("cpa_pdf")}
-                className={`w-full min-h-[88px] rounded-xl border-2 p-4 text-left transition-transform active:scale-95 ${
-                  format === "cpa_pdf"
-                    ? "border-yellow-500 bg-yellow-950"
-                    : "border-zinc-600 bg-zinc-800"
-                }`}
-              >
-                <p className="text-sm font-black uppercase tracking-wider text-white">
-                  {format === "cpa_pdf" ? "✓ " : ""}
-                  {t.formatCpaPdfTitle}
-                </p>
-                <p className="mt-2 text-xs leading-relaxed text-zinc-400">
-                  {t.formatCpaPdfHint}
-                </p>
-              </button>
-              <button
-                type="button"
-                onClick={() => setFormat("txf")}
-                className={`w-full min-h-[88px] rounded-xl border-2 p-4 text-left transition-transform active:scale-95 ${
-                  format === "txf"
-                    ? "border-yellow-500 bg-yellow-950"
-                    : "border-zinc-600 bg-zinc-800"
-                }`}
-              >
-                <p className="text-sm font-black uppercase tracking-wider text-white">
-                  {format === "txf" ? "✓ " : ""}
-                  {t.formatTxfTitle}
-                </p>
-                <p className="mt-2 text-xs leading-relaxed text-zinc-400">
-                  {t.formatTxfHint}
-                </p>
-              </button>
-              <button
-                type="button"
-                onClick={() => setFormat("csv")}
-                className={`w-full min-h-[88px] rounded-xl border-2 p-4 text-left transition-transform active:scale-95 ${
-                  format === "csv"
-                    ? "border-yellow-500 bg-yellow-950"
-                    : "border-zinc-600 bg-zinc-800"
-                }`}
-              >
-                <p className="text-sm font-black uppercase tracking-wider text-white">
-                  {format === "csv" ? "✓ " : ""}
-                  {t.formatCsvTitle}
-                </p>
-                <p className="mt-2 text-xs leading-relaxed text-zinc-400">
-                  {t.formatCsvHint}
-                </p>
-              </button>
-              <button
-                type="button"
-                onClick={() => setFormat("cpa_pack")}
-                className={`w-full min-h-[88px] rounded-xl border-2 p-4 text-left transition-transform active:scale-95 ${
-                  format === "cpa_pack"
-                    ? "border-yellow-500 bg-yellow-950"
-                    : "border-zinc-600 bg-zinc-800"
-                }`}
-              >
-                <p className="text-sm font-black uppercase tracking-wider text-white">
-                  {format === "cpa_pack" ? "✓ " : ""}
-                  {t.formatCpaTitle}
-                </p>
-                <p className="mt-2 text-xs leading-relaxed text-zinc-400">
-                  {t.formatCpaHint}
-                </p>
-              </button>
-              <button
-                type="button"
-                onClick={() => setFormat("qif")}
-                className={`w-full min-h-[88px] rounded-xl border-2 p-4 text-left transition-transform active:scale-95 ${
-                  format === "qif"
-                    ? "border-yellow-500 bg-yellow-950"
-                    : "border-zinc-600 bg-zinc-800"
-                }`}
-              >
-                <p className="text-sm font-black uppercase tracking-wider text-white">
-                  {format === "qif" ? "✓ " : ""}
-                  {t.formatQifTitle}
-                </p>
-                <p className="mt-2 text-xs leading-relaxed text-zinc-400">
-                  {t.formatQifHint}
-                </p>
-              </button>
-              <button
-                type="button"
-                onClick={() => setFormat("qbo")}
-                className={`w-full min-h-[88px] rounded-xl border-2 p-4 text-left transition-transform active:scale-95 ${
-                  format === "qbo"
-                    ? "border-yellow-500 bg-yellow-950"
-                    : "border-zinc-600 bg-zinc-800"
-                }`}
-              >
-                <p className="text-sm font-black uppercase tracking-wider text-white">
-                  {format === "qbo" ? "✓ " : ""}
-                  {t.formatQboTitle}
-                </p>
-                <p className="mt-2 text-xs leading-relaxed text-zinc-400">
-                  {t.formatQboHint}
-                </p>
-              </button>
-            </div>
+            <ExportFormatOptions
+              copy={t}
+              format={format}
+              onFormatChange={setFormat}
+            />
 
             {format === "csv" && (
               <div className="mt-4 rounded-xl border-2 border-zinc-700 bg-zinc-950 p-4">

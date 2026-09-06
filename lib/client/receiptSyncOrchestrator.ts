@@ -2,6 +2,7 @@ import {
   fetchReceiptList,
   fetchReceiptSyncPage,
   type ReceiptListResponse,
+  type ReceiptSyncPageResponse,
 } from "@/lib/client/receiptApi";
 import { readDeletedReceiptIds } from "@/lib/client/receiptDeleteTombstones";
 import {
@@ -42,14 +43,23 @@ export function assertCompleteSyncAvailable(
   }
 }
 
-export async function fetchAllRemoteReceiptsViaSync(): Promise<ReceiptListResponse> {
+type FetchReceiptSyncPage = (
+  cursor?: string,
+) => Promise<ReceiptSyncPageResponse>;
+
+export async function fetchAllRemoteReceiptsViaSync(
+  fetchPage: FetchReceiptSyncPage = fetchReceiptSyncPage,
+): Promise<ReceiptListResponse> {
   const receipts = [];
   let cursor: string | undefined;
   let hasMore = true;
 
   while (hasMore) {
-    const page = await fetchReceiptSyncPage(cursor);
+    const page = await fetchPage(cursor);
     receipts.push(...page.receipts);
+    if (page.hasMore && !page.nextCursor) {
+      throw new Error("FETCH_RECEIPT_SYNC_FAILED");
+    }
     cursor = page.nextCursor ?? undefined;
     hasMore = page.hasMore;
   }

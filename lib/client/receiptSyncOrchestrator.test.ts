@@ -2,8 +2,10 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   assertCompleteSyncAvailable,
+  fetchAllRemoteReceiptsViaSync,
   mergeServerReceiptsIntoLocal,
 } from "./receiptSyncOrchestrator.ts";
+import type { ApiReceipt } from "./receiptApi.ts";
 import type { StoredReceipt } from "@/lib/storage/receiptDb";
 
 const LOCAL_OUTSIDE_WINDOW = "6ba7b810-9dad-11d1-80b4-00c04fd430c8";
@@ -18,6 +20,74 @@ function localRow(id: string): StoredReceipt {
     pendingUpload: false,
   };
 }
+
+function apiReceipt(id: string): ApiReceipt {
+  return {
+    id,
+    status: "done",
+    amount: 10,
+    merchant: "A",
+    category: null,
+    taxAmount: 2,
+    dataRegion: "us",
+    capturedAt: "2026-06-14T12:00:00.000Z",
+    updatedAt: "2026-06-14T12:00:00.000Z",
+    taxSeason: null,
+    taxSeasonDate: null,
+    hasImage: true,
+  };
+}
+
+describe("fetchAllRemoteReceiptsViaSync", () => {
+  it("concatenates sync pages using each returned cursor", async () => {
+    const firstPageId = "9c0d29ac-82c6-4a4b-9b2e-8616d05c1731";
+    const secondPageId = "b771b8b2-19e4-4a10-a391-40980592c95e";
+    const seenCursors: Array<string | undefined> = [];
+
+    const result = await fetchAllRemoteReceiptsViaSync(async (cursor) => {
+      seenCursors.push(cursor);
+      if (cursor === undefined) {
+        return {
+          receipts: [apiReceipt(firstPageId)],
+          nextCursor: "cursor-1",
+          hasMore: true,
+        };
+      }
+      assert.equal(cursor, "cursor-1");
+      return {
+        receipts: [apiReceipt(secondPageId)],
+        nextCursor: null,
+        hasMore: false,
+      };
+    });
+
+    assert.deepEqual(seenCursors, [undefined, "cursor-1"]);
+    assert.deepEqual(
+      result.receipts.map((r) => r.id),
+      [firstPageId, secondPageId],
+    );
+    assert.equal(result.taxSavedEstimate, 0);
+  });
+
+  it("rejects a non-advancing sync page instead of refetching forever", async () => {
+    let calls = 0;
+
+    await assert.rejects(
+      () =>
+        fetchAllRemoteReceiptsViaSync(async () => {
+          calls += 1;
+          return {
+            receipts: [apiReceipt(REMOTE_IN_WINDOW)],
+            nextCursor: null,
+            hasMore: true,
+          };
+        }),
+      /FETCH_RECEIPT_SYNC_FAILED/,
+    );
+
+    assert.equal(calls, 1);
+  });
+});
 
 describe("mergeServerReceiptsIntoLocal", () => {
   it("does not drop local rows missing from top-50 remote window", async () => {

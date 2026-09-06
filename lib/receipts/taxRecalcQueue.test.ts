@@ -116,6 +116,38 @@ describe("recalcReceiptsInBackground", () => {
     ]);
   });
 
+  it("preserves 1099 capture kind when reprocessing income documents", async () => {
+    const jpegBytes = Uint8Array.from([0xff, 0xd8, 0xff, 0x01]);
+    let captureKind: unknown;
+
+    await recalcReceiptsInBackground(
+      [
+        {
+          id: "income-1099",
+          imageUrl: "photos/income-1099.jpg",
+          status: "done",
+          category: "1099-K",
+          aiRaw: null,
+        },
+      ],
+      "us",
+      null,
+      {
+        getBlob: async () => ({
+          statusCode: 200,
+          stream: new Response(jpegBytes).body,
+        }),
+        resetReceiptForRecalc: async () => ({ count: 1 }),
+        processReceipt: async (params) => {
+          captureKind = params.captureKind;
+        },
+        log: () => {},
+      },
+    );
+
+    assert.equal(captureKind, "1099-K");
+  });
+
   it("skips tax processing when the reset no longer matches an unfiled receipt", async () => {
     const calls: string[] = [];
     const jpegBytes = Uint8Array.from([0xff, 0xd8, 0xff, 0x01]);

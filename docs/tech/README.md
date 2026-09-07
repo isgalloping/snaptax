@@ -61,3 +61,4 @@
 | 小票 AI | 本地 OCR + 文本分类 + Vision 兜底 | Event Store / sync lifecycle 见 topic doc |
 | 付费 UI | Paddle Overlay + Webhook | Export hard gate + entitlement cache |
 | 存储 | IndexedDB（`snaptax_*` stores）+ 本地 auth/付费状态 | IndexedDB + **PostgreSQL** sync |
+| 营销 SEO | `/tax-deductions/*` 行业落地页 registry + shared composer | 新工种按 [02-frontend.md §2.2.2](./02-frontend.md) checklist 接入 |

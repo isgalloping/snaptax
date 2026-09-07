@@ -26,6 +26,50 @@
 - 产品：`AppBrowserEntryGate`（Landing 后全屏门控，可跳过）
 - 营销 CTA：`MarketingAppLink` 原生 `<a href="/app">`（Android WebAPK）
 
+## 2.2.2 行业 SEO 落地页（`/tax-deductions/*`）
+
+**意图：** 复用一套营销页组件，为具体工种发布 tax deduction checklist；页面只教育和转化，产品入口仍统一去 `/app`，不进入 PWA scope。
+
+### 架构地图
+
+| 层 | 路径 | 职责 |
+|----|------|------|
+| Registry | `lib/marketing/seo/industries.ts` | `PUBLISHED` 列表、`listPublishedIndustries()`、`getIndustryBySlug(slug)` |
+| 类型 | `lib/marketing/seo/types.ts` | `IndustrySeoPage` schema；`presentation?: "default" \| "mockup"`；hero `visualLayout` |
+| 单工种内容 | `lib/marketing/seo/industries/*.ts` | 文案、FAQ、deduction cards、素材路径、related trades |
+| Index | `app/(marketing)/tax-deductions/page.tsx` → `TaxDeductionsIndex` | 列出 `listPublishedIndustries()` 返回的已发布工种 |
+| 工种路由 | `app/(marketing)/tax-deductions/{slug}/page.tsx` | 薄路由：metadata + JSON-LD + `IndustrySeoPageView` |
+| 页面组合器 | `components/marketing/seo/IndustrySeoPage.tsx` | 固定区块顺序：Hero → Deductions → How it works → Problems → Checklist → Built for → Examples → FAQ → CTA → Related trades → Disclaimer |
+| Sitemap | `lib/marketing/seo/sitemapEntries.ts` + `app/sitemap.ts` | `/tax-deductions` priority `0.6`，每个工种 priority `0.7` |
+| 素材清单 | `docs/seo/{slug}/ASSETS.md` + `public/marketing/seo/` | 记录 hero、phone、steps、OG、CTA 背景等文件 |
+
+当前发布顺序（与测试一致）：`electrician`、`hvac`、`plumber`、`roofer`、`landscaper`。`electrician` 使用默认 presentation；`hvac`、`plumber`、`roofer`、`landscaper` 使用 `presentation: "mockup"` + `hero.visualLayout: "spotlight"`。
+
+### 新增或修改工种 Checklist
+
+1. 在 `lib/marketing/seo/industries/{slug}.ts` 新增 `IndustrySeoPage` 数据；只使用真实产品分类（如 `Tools`、`Truck Gas`、`Supplies`、`Equipment`、`Materials`、`Other`），不要发明 “Smart {trade} Categories”。
+2. 在 `lib/marketing/seo/types.ts` 扩展 union（如需新 slug）和字段；避免在组件里写 `slug === "..."` 分支，优先使用 `presentation`、`visualLayout` 或可选字段。
+3. 在 `lib/marketing/seo/industries.ts` 注册到 `PUBLISHED`；这会驱动 index 页。
+4. 新增 `app/(marketing)/tax-deductions/{slug}/page.tsx`，模式同现有工种：`buildMarketingMetadata()`、`buildIndustryJsonLd()`、`IndustrySeoPageView`，找不到 registry 数据时 `notFound()`。
+5. 在 `lib/marketing/seo/sitemapEntries.ts` 添加 sitemap entry，并同步更新 `sitemapEntries.test.ts`。
+6. 将公开素材放在 `public/marketing/seo/`，并在 `docs/seo/{slug}/ASSETS.md` 记录尺寸/用途；mockup phone 和 steps PNG 需要透明 alpha（现有测试用 `sharp().metadata().hasAlpha` 校验）。
+7. 更新/新增 `lib/marketing/seo/industries.test.ts`：发布顺序、metadata、区块数量、related trades、FAQ 约束、素材路径和 alpha 约束。
+
+### 约束与常见坑
+
+- CTA 必须使用 `MarketingAppLink`，保持原生 `<a href="/app">`；Android Chrome 依赖该行为触发 WebAPK link capture（详见 [13-pwa-install-architecture.md](./13-pwa-install-architecture.md)）。
+- 工种页属于营销站：不要注册 Serwist，不要引入 `/app` 的 `PwaProvider` / install gate。
+- `hero.secondaryHref` 必须指向页面内存在的 anchor：默认 electrician 用 `#how-it-works`，mockup 工种用 `#deductions`。
+- `IndustrySeoPageView` 的区块顺序是共享契约；改顺序会同时影响所有工种。
+- `examples` 可为空；组合器会跳过 `ExpenseExamples`，适合 mockup 工种只展示 checklist / cards。
+- 每个工种的 `relatedTrades.links` 应链接到其他已发布工种，避免自链。
+
+推荐验证：
+
+```bash
+npm run test:unit -- lib/marketing/seo/industries.test.ts lib/marketing/seo/sitemapEntries.test.ts lib/marketing/seo/jsonLd.test.ts lib/marketing/metadata.test.ts
+```
+
 ## 2.3 客户端状态
 
 ```
@@ -43,7 +87,7 @@ HomeScreen
 
 | 操作 | 离线 | 在线 |
 |------|------|------|
-| 打开主界面 | SW 缓存 `/` | 正常 |
+| 打开主界面 | `/app` layout 注册 SW；文档 fallback `/offline` | 正常 |
 | 拍照 | getUserMedia → **压缩 1280×960/q75** → OPFS + IDB meta | + 上传 API |
 | 列表展示 | IndexedDB 本地 | merge API |
 | AI 分类 | 本地 OCR + 队列（离线可跑 Worker） | upload → Path A 文本分类 / Path B Vision |
@@ -67,7 +111,7 @@ HomeScreen
 
 - `app/manifest.ts`：standalone, portrait, theme `#000000`, **`short_name`: SnapTax**, **`scope`/`start_url`: `/app`**
 - SW（Serwist）：**仅 `/app` 产品路由** 经 `PwaProvider` 注册 `/serwist/sw.js`
-- SW 预缓存：`/app` + static chunks（见 `app/serwist/[path]/route.ts`）
+- SW 预缓存：构建 manifest + additional `/`、`/offline`；document fallback `/offline`（见 `app/serwist/[path]/route.ts`、`app/sw.ts`）
 - **API 写操作：** `app/sw.ts` 在 `defaultCache` 前注册 `POST/PUT/PATCH/DELETE` → `/api/*` 的 `NetworkOnly`
 - 安装 UI：见 [13-pwa-install-architecture.md](./13-pwa-install-architecture.md)（`InstallPrompt` · `AppBrowserEntryGate` · 营销 shell）
 

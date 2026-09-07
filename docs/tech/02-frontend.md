@@ -87,7 +87,7 @@ HomeScreen
 
 | 操作 | 离线 | 在线 |
 |------|------|------|
-| 打开主界面 | SW 缓存 `/app` | 正常 |
+| 打开主界面 | `/app` layout 注册 SW；文档 fallback `/offline` | 正常 |
 | 拍照 | getUserMedia → **压缩 1280×960/q75** → OPFS + IDB meta | + 上传 API |
 | 列表展示 | IndexedDB 本地 | merge API |
 | AI 分类 | 本地 OCR + 队列（离线可跑 Worker） | upload → Path A 文本分类 / Path B Vision |
@@ -111,7 +111,7 @@ HomeScreen
 
 - `app/manifest.ts`：standalone, portrait, theme `#000000`, **`short_name`: SnapTax**, **`scope`/`start_url`: `/app`**
 - SW（Serwist）：**仅 `/app` 产品路由** 经 `PwaProvider` 注册 `/serwist/sw.js`
-- SW 预缓存：`/app` + static chunks（见 `app/serwist/[path]/route.ts`）
+- SW 预缓存：构建 manifest + additional `/`、`/offline`；document fallback `/offline`（见 `app/serwist/[path]/route.ts`、`app/sw.ts`）
 - **API 写操作：** `app/sw.ts` 在 `defaultCache` 前注册 `POST/PUT/PATCH/DELETE` → `/api/*` 的 `NetworkOnly`
 - 安装 UI：见 [13-pwa-install-architecture.md](./13-pwa-install-architecture.md)（`InstallPrompt` · `AppBrowserEntryGate` · 营销 shell）
 

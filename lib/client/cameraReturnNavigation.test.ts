@@ -11,4 +11,11 @@ describe("cameraReturnNavigation", () => {
     assert.equal(viewAfterCameraClose("home"), "home");
     assert.equal(viewAfterCameraClose(null), "home");
   });
+
+  it("returns home after a completed income capture even when launched from settings", () => {
+    assert.equal(
+      viewAfterCameraClose("settings", { incomeCaptureCompleted: true }),
+      "home",
+    );
+  });
 });

@@ -472,9 +472,9 @@ export function HomeScreen() {
     incomeCaptureSourceRef.current = "home";
     setForceIncomeSingleCapture(false);
 
-    const nextView = completed
-      ? "home"
-      : viewAfterCameraClose(returnView ?? source);
+    const nextView = viewAfterCameraClose(returnView ?? source, {
+      incomeCaptureCompleted: completed,
+    });
     if (nextView === "settings") {
       setView("settings");
     } else {

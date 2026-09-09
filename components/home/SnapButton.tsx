@@ -3,6 +3,7 @@
 import {
   forwardRef,
   useCallback,
+  useEffect,
   useImperativeHandle,
   useRef,
   useState,
@@ -27,11 +28,15 @@ import {
   type BatchThumb,
 } from "@/lib/camera/batchSession";
 import { isCameraSupported, openCameraStream } from "@/lib/camera/capturePhoto";
+import {
+  beginCameraFilePickerFlow,
+  type CameraFilePickerFlow,
+} from "@/lib/client/cameraFilePickerFlow";
 import { beginBatchCaptureDefer, endBatchCaptureDefer } from "@/lib/client/scheduleOcrJob";
 import type { LegalDoc } from "@/lib/legal/content";
 
 interface SnapButtonProps {
-  onCapture: (file: File) => void;
+  onCapture: (file: File) => void | Promise<void>;
   onBatchShot: (file: File) => Promise<string | null>;
   onBatchDone: (sessionIds: string[]) => Promise<void>;
   onBatchClose: (sessionIds: string[]) => Promise<void>;
@@ -72,6 +77,7 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
   ) {
     const copy = useUserCopy();
     const inputRef = useRef<HTMLInputElement>(null);
+    const filePickerFlowRef = useRef<CameraFilePickerFlow | null>(null);
     const streamPromiseRef = useRef<Promise<MediaStream> | null>(null);
     const sessionIdsRef = useRef<string[]>([]);
     const batchSaveInFlightRef = useRef(0);
@@ -107,6 +113,32 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
       [onCameraOpenChange],
     );
 
+    const openFilePicker = useCallback(
+      (options?: { releaseBatchDefer?: boolean }) => {
+        filePickerFlowRef.current?.dispose();
+        filePickerFlowRef.current = beginCameraFilePickerFlow({
+          input: inputRef.current,
+          onCapture,
+          onClose: () => {
+            filePickerFlowRef.current = null;
+            streamPromiseRef.current = null;
+            setCamera(false);
+            if (options?.releaseBatchDefer) {
+              endBatchCaptureDefer();
+            }
+          },
+        });
+
+        if (!filePickerFlowRef.current) {
+          setCamera(false);
+          if (options?.releaseBatchDefer) {
+            endBatchCaptureDefer();
+          }
+        }
+      },
+      [onCapture, setCamera],
+    );
+
     const openCamera = useCallback(() => {
       if (onSnapIntent && !onSnapIntent()) return;
       if (isCameraSupported()) {
@@ -117,9 +149,25 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
         streamPromiseRef.current = openCameraStream();
         setCamera(true);
       } else {
-        inputRef.current?.click();
+        resetSession();
+        setCamera(true);
+        openFilePicker();
       }
-    }, [onSnapIntent, resetSession, resnapId, forceSingleCapture, setCamera]);
+    }, [
+      onSnapIntent,
+      openFilePicker,
+      resetSession,
+      resnapId,
+      forceSingleCapture,
+      setCamera,
+    ]);
+
+    useEffect(() => {
+      return () => {
+        filePickerFlowRef.current?.dispose();
+        filePickerFlowRef.current = null;
+      };
+    }, []);
 
     const waitForBatchSavesIdle = useCallback(async () => {
       while (batchSaveInFlightRef.current > 0) {
@@ -130,12 +178,6 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
     }, []);
 
     useImperativeHandle(ref, () => ({ openCamera }), [openCamera]);
-
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (file) onCapture(file);
-      e.target.value = "";
-    };
 
     const removeFromSession = useCallback((id: string) => {
       setSessionThumbs((prev) => {
@@ -310,8 +352,7 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
 
     const handleFallback = () => {
       streamPromiseRef.current = null;
-      setCamera(false);
-      inputRef.current?.click();
+      openFilePicker({ releaseBatchDefer: isBatchMode });
     };
 
     return (
@@ -343,7 +384,6 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
             accept="image/*"
             capture="environment"
             className="hidden"
-            onChange={handleFileChange}
             aria-hidden
           />
         </main>

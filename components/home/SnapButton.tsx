@@ -27,11 +27,19 @@ import {
   type BatchThumb,
 } from "@/lib/camera/batchSession";
 import { isCameraSupported, openCameraStream } from "@/lib/camera/capturePhoto";
-import { beginBatchCaptureDefer, endBatchCaptureDefer } from "@/lib/client/scheduleOcrJob";
+import {
+  beginBatchCaptureDefer,
+  endBatchCaptureDefer,
+} from "@/lib/client/scheduleOcrJob";
+import {
+  beginCameraFilePickerFlow,
+  createCameraFilePickerFlowState,
+  finishCameraFilePickerFlow,
+} from "@/lib/client/cameraFilePickerFlow";
 import type { LegalDoc } from "@/lib/legal/content";
 
 interface SnapButtonProps {
-  onCapture: (file: File) => void;
+  onCapture: (file: File) => void | Promise<void>;
   onBatchShot: (file: File) => Promise<string | null>;
   onBatchDone: (sessionIds: string[]) => Promise<void>;
   onBatchClose: (sessionIds: string[]) => Promise<void>;
@@ -73,8 +81,10 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
     const copy = useUserCopy();
     const inputRef = useRef<HTMLInputElement>(null);
     const streamPromiseRef = useRef<Promise<MediaStream> | null>(null);
+    const filePickerFlowRef = useRef(createCameraFilePickerFlowState());
     const sessionIdsRef = useRef<string[]>([]);
     const batchSaveInFlightRef = useRef(0);
+    const batchDeferActiveRef = useRef(false);
     const resnapSlotIndexRef = useRef<number | null>(null);
     const [cameraOpen, setCameraOpen] = useState(false);
     const [legalDoc, setLegalDoc] = useState<LegalDoc | null>(null);
@@ -107,19 +117,48 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
       [onCameraOpenChange],
     );
 
+    const releaseBatchDefer = useCallback(() => {
+      if (!batchDeferActiveRef.current) return;
+      batchDeferActiveRef.current = false;
+      endBatchCaptureDefer();
+    }, []);
+
+    const closeFilePickerCamera = useCallback(() => {
+      streamPromiseRef.current = null;
+      setCamera(false);
+      releaseBatchDefer();
+    }, [releaseBatchDefer, setCamera]);
+
+    const beginFilePicker = useCallback(() => {
+      const opened = beginCameraFilePickerFlow(filePickerFlowRef.current, {
+        input: inputRef.current,
+        onClose: closeFilePickerCamera,
+      });
+      if (!opened) closeFilePickerCamera();
+    }, [closeFilePickerCamera]);
+
     const openCamera = useCallback(() => {
       if (onSnapIntent && !onSnapIntent()) return;
+      resetSession();
       if (isCameraSupported()) {
-        resetSession();
         if (!resnapId && !forceSingleCapture) {
           beginBatchCaptureDefer();
+          batchDeferActiveRef.current = true;
         }
         streamPromiseRef.current = openCameraStream();
         setCamera(true);
       } else {
-        inputRef.current?.click();
+        setCamera(true);
+        beginFilePicker();
       }
-    }, [onSnapIntent, resetSession, resnapId, forceSingleCapture, setCamera]);
+    }, [
+      onSnapIntent,
+      resetSession,
+      resnapId,
+      forceSingleCapture,
+      setCamera,
+      beginFilePicker,
+    ]);
 
     const waitForBatchSavesIdle = useCallback(async () => {
       while (batchSaveInFlightRef.current > 0) {
@@ -132,9 +171,11 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
     useImperativeHandle(ref, () => ({ openCamera }), [openCamera]);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (file) onCapture(file);
+      const file = e.target.files?.[0] ?? null;
       e.target.value = "";
+      void finishCameraFilePickerFlow(filePickerFlowRef.current, file, {
+        onCapture,
+      });
     };
 
     const removeFromSession = useCallback((id: string) => {
@@ -159,12 +200,16 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
         try {
           await onBatchDone(ids);
         } finally {
-          if (!resnapId) {
-            endBatchCaptureDefer();
-          }
+          releaseBatchDefer();
         }
       })();
-    }, [onBatchDone, resetSession, resnapId, setCamera, waitForBatchSavesIdle]);
+    }, [
+      onBatchDone,
+      resetSession,
+      releaseBatchDefer,
+      setCamera,
+      waitForBatchSavesIdle,
+    ]);
 
     const advanceAfterReviewAction = useCallback(
       async (removedId: string, nextAccepted: Set<string>) => {
@@ -301,17 +346,14 @@ export const SnapButton = forwardRef<SnapButtonHandle, SnapButtonProps>(
         try {
           await onBatchClose(ids);
         } finally {
-          if (!resnapId) {
-            endBatchCaptureDefer();
-          }
+          releaseBatchDefer();
         }
       })();
     };
 
     const handleFallback = () => {
       streamPromiseRef.current = null;
-      setCamera(false);
-      inputRef.current?.click();
+      beginFilePicker();
     };
 
     return (

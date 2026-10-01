@@ -26,8 +26,13 @@ import {
 import {
   exportPreviewCsvFilename,
   exportShareTitle,
-  type ExportFormat,
 } from "@/lib/export/exportFilenames";
+import type { ExportFormat } from "@/lib/export/exportFilenames";
+import {
+  EXPORT_ENGINE_FORMAT_OPTIONS,
+  exportEngineFormatTitle,
+  type ExportEngineFormat,
+} from "@/lib/export/exportEngineFormatOptions";
 import {
   isWebShareAvailable,
   shareTaxPackFile,
@@ -90,7 +95,7 @@ export function ExportEngineSheet({
     pickDefaultExportTaxYear(activeReceipts, timeZone, currentSeason),
   );
   const [step1Hint, setStep1Hint] = useState<string | null>(null);
-  const [format, setFormat] = useState<ExportFormat>("cpa_pdf");
+  const [format, setFormat] = useState<ExportEngineFormat>("cpa_pdf");
   const [generating, setGenerating] = useState(false);
   const [previewing, setPreviewing] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -376,18 +381,7 @@ export function ExportEngineSheet({
     }
   };
 
-  const selectedFormatLabel =
-    format === "csv"
-      ? t.formatCsvTitle
-      : format === "txf"
-        ? t.formatTxfTitle
-        : format === "qif"
-          ? t.formatQifTitle
-          : format === "qbo"
-            ? t.formatQboTitle
-            : format === "cpa_pdf"
-            ? t.formatCpaPdfTitle
-            : t.formatCpaTitle;
+  const selectedFormatLabel = exportEngineFormatTitle(t, format);
 
   const imageWarning =
     exportMeta?.imagesMissing != null && exportMeta.imagesMissing > 0
@@ -558,108 +552,26 @@ export function ExportEngineSheet({
             </p>
             <p className="mb-4 text-sm font-bold text-zinc-300">{t.stepFormatHeading}</p>
             <div className="space-y-3">
-              <button
-                type="button"
-                onClick={() => setFormat("cpa_pdf")}
-                className={`w-full min-h-[88px] rounded-xl border-2 p-4 text-left transition-transform active:scale-95 ${
-                  format === "cpa_pdf"
-                    ? "border-yellow-500 bg-yellow-950"
-                    : "border-zinc-600 bg-zinc-800"
-                }`}
-              >
-                <p className="text-sm font-black uppercase tracking-wider text-white">
-                  {format === "cpa_pdf" ? "✓ " : ""}
-                  {t.formatCpaPdfTitle}
-                </p>
-                <p className="mt-2 text-xs leading-relaxed text-zinc-400">
-                  {t.formatCpaPdfHint}
-                </p>
-              </button>
-              <button
-                type="button"
-                onClick={() => setFormat("txf")}
-                className={`w-full min-h-[88px] rounded-xl border-2 p-4 text-left transition-transform active:scale-95 ${
-                  format === "txf"
-                    ? "border-yellow-500 bg-yellow-950"
-                    : "border-zinc-600 bg-zinc-800"
-                }`}
-              >
-                <p className="text-sm font-black uppercase tracking-wider text-white">
-                  {format === "txf" ? "✓ " : ""}
-                  {t.formatTxfTitle}
-                </p>
-                <p className="mt-2 text-xs leading-relaxed text-zinc-400">
-                  {t.formatTxfHint}
-                </p>
-              </button>
-              <button
-                type="button"
-                onClick={() => setFormat("csv")}
-                className={`w-full min-h-[88px] rounded-xl border-2 p-4 text-left transition-transform active:scale-95 ${
-                  format === "csv"
-                    ? "border-yellow-500 bg-yellow-950"
-                    : "border-zinc-600 bg-zinc-800"
-                }`}
-              >
-                <p className="text-sm font-black uppercase tracking-wider text-white">
-                  {format === "csv" ? "✓ " : ""}
-                  {t.formatCsvTitle}
-                </p>
-                <p className="mt-2 text-xs leading-relaxed text-zinc-400">
-                  {t.formatCsvHint}
-                </p>
-              </button>
-              <button
-                type="button"
-                onClick={() => setFormat("cpa_pack")}
-                className={`w-full min-h-[88px] rounded-xl border-2 p-4 text-left transition-transform active:scale-95 ${
-                  format === "cpa_pack"
-                    ? "border-yellow-500 bg-yellow-950"
-                    : "border-zinc-600 bg-zinc-800"
-                }`}
-              >
-                <p className="text-sm font-black uppercase tracking-wider text-white">
-                  {format === "cpa_pack" ? "✓ " : ""}
-                  {t.formatCpaTitle}
-                </p>
-                <p className="mt-2 text-xs leading-relaxed text-zinc-400">
-                  {t.formatCpaHint}
-                </p>
-              </button>
-              <button
-                type="button"
-                onClick={() => setFormat("qif")}
-                className={`w-full min-h-[88px] rounded-xl border-2 p-4 text-left transition-transform active:scale-95 ${
-                  format === "qif"
-                    ? "border-yellow-500 bg-yellow-950"
-                    : "border-zinc-600 bg-zinc-800"
-                }`}
-              >
-                <p className="text-sm font-black uppercase tracking-wider text-white">
-                  {format === "qif" ? "✓ " : ""}
-                  {t.formatQifTitle}
-                </p>
-                <p className="mt-2 text-xs leading-relaxed text-zinc-400">
-                  {t.formatQifHint}
-                </p>
-              </button>
-              <button
-                type="button"
-                onClick={() => setFormat("qbo")}
-                className={`w-full min-h-[88px] rounded-xl border-2 p-4 text-left transition-transform active:scale-95 ${
-                  format === "qbo"
-                    ? "border-yellow-500 bg-yellow-950"
-                    : "border-zinc-600 bg-zinc-800"
-                }`}
-              >
-                <p className="text-sm font-black uppercase tracking-wider text-white">
-                  {format === "qbo" ? "✓ " : ""}
-                  {t.formatQboTitle}
-                </p>
-                <p className="mt-2 text-xs leading-relaxed text-zinc-400">
-                  {t.formatQboHint}
-                </p>
-              </button>
+              {EXPORT_ENGINE_FORMAT_OPTIONS.map((option) => (
+                <button
+                  key={option.format}
+                  type="button"
+                  onClick={() => setFormat(option.format)}
+                  className={`w-full min-h-[88px] rounded-xl border-2 p-4 text-left transition-transform active:scale-95 ${
+                    format === option.format
+                      ? "border-yellow-500 bg-yellow-950"
+                      : "border-zinc-600 bg-zinc-800"
+                  }`}
+                >
+                  <p className="text-sm font-black uppercase tracking-wider text-white">
+                    {format === option.format ? "✓ " : ""}
+                    {t[option.titleKey]}
+                  </p>
+                  <p className="mt-2 text-xs leading-relaxed text-zinc-400">
+                    {t[option.hintKey]}
+                  </p>
+                </button>
+              ))}
             </div>
 
             {format === "csv" && (

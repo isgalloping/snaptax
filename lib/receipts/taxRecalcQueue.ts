@@ -1,8 +1,9 @@
-import type { Prisma } from "@prisma/client";
+import type { Prisma, SnaptaxReceipt } from "@prisma/client";
 import { get } from "@vercel/blob";
 import { prisma } from "@/lib/prisma";
 import { unfiledReceiptWhere } from "@/lib/receipts/filedStatus";
 import { processReceiptTax } from "@/lib/receipts/processReceiptTax";
+import { incomeFormTypeFromReceipt } from "@/lib/export/incomeDocuments";
 import {
   assertValidReceiptImage,
   mimeForKind,
@@ -21,6 +22,10 @@ type ResetReceiptForRecalc = (receiptId: string) => Promise<{ count: number }>;
 type ProcessReceiptForRecalc = (
   params: Parameters<typeof processReceiptTax>[0],
 ) => Promise<unknown>;
+type TaxRecalcReceipt = Pick<
+  SnaptaxReceipt,
+  "id" | "imageUrl" | "status" | "category" | "aiRaw"
+>;
 
 export type RecalcReceiptsInBackgroundDeps = {
   getBlob?: (pathname: string) => Promise<RecalcBlobResult | null>;
@@ -86,7 +91,13 @@ export async function enqueueTaxRecalc(params: {
 }): Promise<number> {
   const receipts = await prisma.snaptaxReceipt.findMany({
     where: taxRecalcReceiptWhere(params.userId),
-    select: { id: true, imageUrl: true, status: true },
+    select: {
+      id: true,
+      imageUrl: true,
+      status: true,
+      category: true,
+      aiRaw: true,
+    },
   });
 
   if (receipts.length === 0) return 0;
@@ -110,7 +121,7 @@ function resetReceiptForRecalc(receiptId: string) {
 }
 
 export async function recalcReceiptsInBackground(
-  receipts: Array<{ id: string; imageUrl: string; status: string }>,
+  receipts: TaxRecalcReceipt[],
   lockedRegion: TaxRegion,
   industry?: string | null,
   deps: RecalcReceiptsInBackgroundDeps = {},
@@ -157,6 +168,7 @@ export async function recalcReceiptsInBackground(
         imageBuffer: bytes,
         mime,
         industry,
+        captureKind: incomeFormTypeFromReceipt(receipt),
       });
     } catch (err) {
       log({

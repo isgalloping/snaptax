@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { MARKETING_COPY } from "@/lib/marketing/copy";
+import { listPublishedIndustries } from "@/lib/marketing/seo/industries";
 
 describe("marketing footer", () => {
   it("matches mockup column titles and key links", () => {
@@ -45,6 +46,25 @@ describe("marketing footer", () => {
     assert.deepEqual(
       MARKETING_COPY.footer.social.map((item) => item.id),
       ["facebook", "x", "instagram", "email"],
+    );
+  });
+
+  it("links every published tax-deduction industry from the Product column", () => {
+    const product = MARKETING_COPY.footer.columns.find(
+      (column) => column.title === "Product",
+    );
+    assert.ok(product);
+
+    const productIndustryLinks = product.links
+      .filter((link) => link.href.startsWith("/tax-deductions/"))
+      .map((link) => ({ href: link.href, label: link.label }));
+
+    assert.deepEqual(
+      productIndustryLinks,
+      listPublishedIndustries().map((industry) => ({
+        href: industry.path,
+        label: `${industry.label} Tax Deductions`,
+      })),
     );
   });
 });
